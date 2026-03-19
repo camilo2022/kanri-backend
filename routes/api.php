@@ -1,0 +1,76 @@
+<?php
+
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SubmoduleController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route;
+
+Route::prefix('/auth')->group(function () {
+    Route::controller(AuthController::class)->group(function () {
+        Route::post('/login', 'login');
+        Route::post('/logout', 'logout')->middleware(['auth:sanctum']);
+        Route::get('/user', 'user')->middleware(['auth:sanctum']);
+    });
+});
+
+Route::prefix('/authorization')->group(function () {
+    Route::prefix('/roles')->group(function () {
+        Route::controller(RoleController::class)->group(function () {
+            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:authorization,authorization.roles.all']);
+            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:authorization,authorization.roles.find']);
+            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:authorization,authorization.roles.store']);
+            Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:authorization,authorization.roles.update']);
+        });
+    });
+
+    Route::prefix('/permissions')->group(function () {
+        Route::controller(PermissionController::class)->group(function () {
+            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:authorization,authorization.permissions.all']);
+            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:authorization,authorization.permissions.find']);
+            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:authorization,authorization.permissions.store']);
+            Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:authorization,authorization.permissions.update']);
+        });
+    });
+});
+
+Route::prefix('/users')->group(function () {
+    Route::controller(UserController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:users,users.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:users,users.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:users,users.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:users,users.update']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:users,users.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:users,users.restore']);
+        Route::prefix('/authorization')->group(function () {
+            Route::post('/assign', 'assign')->middleware(['auth:sanctum', 'can:users,users.authorization.assign']);
+            Route::post('/remove', 'remove')->middleware(['auth:sanctum', 'can:users,users.authorization.remove']);
+        });
+    });
+});
+
+Route::prefix('/navegation')->group(function () {
+    Route::prefix('/modules')->group(function () {
+        Route::controller(ModuleController::class)->group(function () {
+            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:navegation,navegation.modules.all']);
+            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:navegation,navegation.modules.find']);
+            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:navegation,navegation.modules.store']);
+            Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:navegation,navegation.modules.update']);
+            Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:navegation,navegation.modules.delete']);
+            Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:navegation,navegation.modules.restore']);
+        });
+
+        Route::prefix('/submodules')->group(function () {
+            Route::controller(SubmoduleController::class)->group(function () {
+                Route::get('/all/{module_id}', 'all')->middleware(['auth:sanctum', 'can:navegation,navegation.submodules.all']);
+                Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:navegation,navegation.submodules.find']);
+                Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:navegation,navegation.submodules.store']);
+                Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:navegation,navegation.submodules.update']);
+                Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:navegation,navegation.submodules.delete']);
+                Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:navegation,navegation.submodules.restore']);
+            });
+        });
+    });
+});
