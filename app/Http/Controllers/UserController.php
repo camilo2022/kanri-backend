@@ -127,9 +127,10 @@ class UserController extends Controller
     public function all(UserAllRequest $request)
     {
         try {
-            $users = User::when($request->filled('search'), function ($query) use ($request) {
-                return $query->search($request->input('search'));
-            })
+            $users = User::with(['roles', 'permissions'])
+                ->when($request->filled('search'), function ($query) use ($request) {
+                    return $query->search($request->input('search'));
+                })
                 ->withTrashed()
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
                     return $query->orderBy($request->input('column'), $request->input('dir'));
@@ -860,15 +861,17 @@ class UserController extends Controller
      *     )
      * )
      */
-    public function assign(UserAssignRequest $request)
+    public function assign(UserAssignRequest $request, $id)
     {
         try {
             $permission = Permission::findOrFail($request->input('permission_id'));
-            $user = User::findOrFail($request->input('id'));
+            $user = User::findOrFail($id);
 
             $user->givePermissionTo($permission);
 
             $user->assignRole($permission->roles);
+
+            $user->load(['roles', 'permissions']);
 
             return $this->successResponse(
                 [
@@ -979,11 +982,11 @@ class UserController extends Controller
      *     )
      * )
      */
-    public function remove(UserRemoveRequest $request)
+    public function remove(UserRemoveRequest $request, $id)
     {
         try {
             $permission = Permission::findOrFail($request->input('permission_id'));
-            $user = User::findOrFail($request->input('id'));
+            $user = User::findOrFail($id);
 
             $user->revokePermissionTo($permission);
 
@@ -1004,6 +1007,8 @@ class UserController extends Controller
                     $user->removeRole($role);
                 }
             }
+
+            $user->load(['roles', 'permissions']);
 
             return $this->successResponse(
                 [

@@ -25,6 +25,7 @@ class PermissionAllRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'role_id' => ['nullable', 'numeric', 'exists:roles,id'],
             'per_page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
             'column' => ['nullable', 'string', 'in:id,name,title,description,created_at,updated_at'],
@@ -47,10 +48,11 @@ class PermissionAllRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'per_page' => 'Registros por pagina. ',
-            'search' => 'Filtro de Busqueda. ',
-            'column' => 'Columna a ordenar. ',
-            'dir' => 'Sentido del orden. ',
+            'role_id' => '',
+            'per_page' => 'Registros por pagina.',
+            'search' => 'Filtro de Busqueda.',
+            'column' => 'Columna a ordenar.',
+            'dir' => 'Sentido del orden.',
 
         ];
     }

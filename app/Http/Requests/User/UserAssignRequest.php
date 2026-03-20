@@ -47,4 +47,9 @@ class UserAssignRequest extends FormRequest
             'permission_id' => 'Identificador del permiso'
         ];
     }
+
+    protected function prepareForValidation()
+    {
+        $this->merge(['id' => $this->route('id')]);
+    }
 }

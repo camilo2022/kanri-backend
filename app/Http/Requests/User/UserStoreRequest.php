@@ -25,9 +25,11 @@ class UserStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:40', 'unique:users,name', 'regex:/^[a-z ]+$/'],
+            'name' => ['required', 'string', 'max:40', 'unique:users,name'],
             'email' => ['required', 'string', 'email', 'max:40', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'regex:/^(?=.*\p{Ll})(?=.*\p{Lu})(?=.*\d)(?=.*[@$!%*#?&._-]).{8,}$/u']
+            'password' => ['required', 'string', 'min:8', 'regex:~^(?=.*\p{Ll})(?=.*\p{Lu})(?=.*\d)(?=.*[@$!%*#?&._-]).{8,}$~u', 'confirmed'],
+            'password_confirmation' => ['required', 'string', 'min:8', 'regex:~^(?=.*\p{Ll})(?=.*\p{Lu})(?=.*\d)(?=.*[@$!%*#?&._-]).{8,}$~u']
+
         ];
     }
 
@@ -35,12 +37,13 @@ class UserStoreRequest extends FormRequest
     {
         return [
             'required' => 'Es obligatorio.',
-            'regex' => 'Formato inválido. ',
+            'regex' => "Formato inválido:\n- Al menos una letra mayúscula\n- Al menos una letra minúscula\n- Al menos un número\n- Al menos un carácter especial",
             'string' => 'Debe ser una cadena de texto.',
             'unique' => 'Ya está registrado.',
             'max' => 'Se permite máximo :max caracteres.',
             'min' => 'Se permite mínimo :min caracteres.',
-            'email' => 'Debe ser un correo electrónico.'
+            'email' => 'Debe ser un correo electrónico.',
+            'confirmed' => 'Las contraseñas no coinciden.'
         ];
     }
 
@@ -50,6 +53,7 @@ class UserStoreRequest extends FormRequest
             'name' => 'Nombre del usuario',
             'email' => 'Correo electrónico del usuario',
             'password' => 'Contraseña del usuario',
+            'password_confirmation' => 'Confirmación contraseña del usuario',
         ];
     }
 }

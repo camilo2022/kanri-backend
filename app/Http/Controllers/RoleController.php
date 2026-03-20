@@ -121,9 +121,10 @@ class RoleController extends Controller
     public function all(RoleAllRequest $request)
     {
         try {
-            $roles = Role::when($request->filled('search'), function ($query) use ($request) {
-                return $query->search($request->input('search'));
-            })
+            $roles = Role::with(['permissions'])
+                ->when($request->filled('search'), function ($query) use ($request) {
+                    return $query->search($request->input('search'));
+                })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
                     return $query->orderBy($request->input('column'), $request->input('dir'));
                 });

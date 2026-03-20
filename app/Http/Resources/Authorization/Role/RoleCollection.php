@@ -19,6 +19,7 @@ class RoleCollection extends ResourceCollection
                     'description' => $role->description,
                     'created_at' => $this->formatDate($role->created_at),
                     'updated_at' => $this->formatDate($role->updated_at),
+                    'permissions' => $role->permissions,
                 ];
             }),
             'meta' => [

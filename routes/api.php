@@ -45,8 +45,8 @@ Route::prefix('/users')->group(function () {
         Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:users,users.delete']);
         Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:users,users.restore']);
         Route::prefix('/authorization')->group(function () {
-            Route::post('/assign', 'assign')->middleware(['auth:sanctum', 'can:users,users.authorization.assign']);
-            Route::post('/remove', 'remove')->middleware(['auth:sanctum', 'can:users,users.authorization.remove']);
+            Route::post('/assign/{id}', 'assign')->middleware(['auth:sanctum', 'can:users,users.authorization.assign']);
+            Route::post('/remove/{id}', 'remove')->middleware(['auth:sanctum', 'can:users,users.authorization.remove']);
         });
     });
 });

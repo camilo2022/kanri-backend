@@ -131,12 +131,13 @@ class PermissionController extends Controller
     {
         try {
             $permissions = Permission::with(['roles'])
-            ->when($request->filled('search'), function ($query) use ($request) {
-                return $query->search($request->input('search'));
-            })
-            ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                return $query->orderBy($request->input('column'), $request->input('dir'));
-            });
+                ->when($request->filled('role_id'), fn($query) => $query->whereHas('roles', fn($q) => $q->where('id', $request->input('role_id'))))
+                ->when($request->filled('search'), function ($query) use ($request) {
+                    return $query->search($request->input('search'));
+                })
+                ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
+                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                });
 
             $permissions = $permissions->paginate($request->integer('per_page', $permissions->count()));
 

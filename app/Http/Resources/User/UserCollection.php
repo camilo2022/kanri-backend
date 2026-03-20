@@ -19,6 +19,8 @@ class UserCollection extends ResourceCollection
                     'created_at' => $this->formatDate($user->created_at),
                     'updated_at' => $this->formatDate($user->updated_at),
                     'deleted_at' => $this->formatDate($user->deleted_at),
+                    'roles' => $user->roles,
+                    'permissions' => $user->permissions,
                 ];
             }),
             'meta' => [
