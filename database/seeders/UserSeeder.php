@@ -13,18 +13,18 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $user = User::create([
-            'name' => 'Juan Perez',
-            'email' => 'juan@example.com',
-            'password' => Hash::make('password123'),
-        ]);
-
         $roles = Role::all();
-
-        $user->syncRoles($roles);
-
         $permissions = Permission::all();
 
-        $user->syncPermissions($permissions);
+        for ($i = 1; $i <= 10; $i++) {
+            $user = User::create([
+                'name' => "Usuario $i",
+                'email' => "usuario$i@example.com",
+                'password' => Hash::make('password123'),
+            ]);
+
+            $user->syncRoles($roles);
+            $user->syncPermissions($permissions);
+        }
     }
 }

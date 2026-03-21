@@ -122,6 +122,7 @@ class AuthController extends Controller
 
             $user->tokens()->delete();
             $token = $user->createToken('auth_token')->plainTextToken;
+            $user->load(['roles', 'permissions']);
 
             return $this->successResponse(
                 [
@@ -150,8 +151,8 @@ class AuthController extends Controller
             $user->load(['roles', 'permissions']);
 
             $navegation = Module::with(['submodules' => fn($query) => $query->whereIn('permission_id', Auth::user()->permissions->pluck('id')->toArray())])
-            ->whereHas('submodules', fn($query) => $query->whereIn('permission_id', Auth::user()->permissions->pluck('id')->toArray()))
-            ->get();
+                ->whereHas('submodules', fn($query) => $query->whereIn('permission_id', Auth::user()->permissions->pluck('id')->toArray()))
+                ->get();
 
             return $this->successResponse(
                 [

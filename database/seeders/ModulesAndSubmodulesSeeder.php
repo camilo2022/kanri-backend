@@ -15,41 +15,31 @@ class ModulesAndSubmodulesSeeder extends Seeder
         $modules_and_submodules = [
             [
                 'module' => [
-                    'name' => 'Usuarios',
-                    'icon' => 'cisGroup',
+                    'name' => 'Gestion',
+                    'icon' => 'FaGear',
                 ],
 
                 'submodules' => [
                     [
-                        'name' => 'Listar usuarios',
-                        'url' => '',
-                        'icon' => 'cibSitepoint',
+                        'name' => 'Usuarios',
+                        'url' => '/users',
+                        'icon' => 'FaUser',
                         'permission_id' => '1'
                     ],
-                ]
-            ],
-
-            [
-                'module' => [
-                    'name' => 'authorization',
-                    'icon' => 'cilLockLocked',
-                ],
-
-                'submodules' => [
                     [
-                        'name' => 'Roles',
-                        'url' => '/roles',
-                        'icon' => 'cilUser',
+                        'name' => 'Autenticación',
+                        'url' => '/autentication',
+                        'icon' => 'FaAddressCard',
                         'permission_id' => '9'
                     ],
                     [
-                        'name' => 'Permisos',
-                        'url' => '/permissions',
-                        'icon' => 'cilShieldAlt',
-                        'permission_id' => '13'
+                        'name' => 'Navegación',
+                        'url' => '/navegation',
+                        'icon' => 'FaBars',
+                        'permission_id' => '17'
                     ],
                 ]
-            ]
+            ],
         ];
 
         foreach ($modules_and_submodules as $item) {
