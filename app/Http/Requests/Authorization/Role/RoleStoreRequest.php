@@ -25,7 +25,7 @@ class RoleStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'unique:roles,name', 'max:80', 'regex:/^[a-z]+$/'],
+            'name' => ['required', 'string', 'unique:roles,name', 'max:80', 'regex:/^[a-z_]+$/'],
             'title' => ['required', 'string', 'unique:roles,title', 'max:100'],
             'description' => ['required', 'string', 'unique:roles,description', 'max:255'],
         ];
@@ -35,7 +35,7 @@ class RoleStoreRequest extends FormRequest
     {
         return [
             'required' => 'Es obligatorio.',
-            'regex' => 'Formato inválido. Solo permite letras minúsculas.',
+            'regex' => 'Formato inválido. Solo permite letras minúsculas y sin espacios.',
             'string' => 'Debe ser una cadena de texto.',
             'unique' => 'Ya está registrado.',
             'max' => 'Se permite maximo :max caracteres.',

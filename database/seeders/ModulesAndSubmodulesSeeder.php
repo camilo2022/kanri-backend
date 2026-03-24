@@ -24,19 +24,31 @@ class ModulesAndSubmodulesSeeder extends Seeder
                         'name' => 'Usuarios',
                         'url' => '/users',
                         'icon' => 'FaUser',
-                        'permission_id' => '1'
+                        'permission_id' => 1
                     ],
                     [
-                        'name' => 'Autenticación',
-                        'url' => '/autentication',
+                        'name' => 'Roles',
+                        'url' => '/roles',
                         'icon' => 'FaAddressCard',
-                        'permission_id' => '9'
+                        'permission_id' => 9
                     ],
                     [
-                        'name' => 'Navegación',
-                        'url' => '/navegation',
+                        'name' => 'Permisos',
+                        'url' => '/permisos',
+                        'icon' => 'FaAddressCard',
+                        'permission_id' => 13
+                    ],
+                    [
+                        'name' => 'Módulos',
+                        'url' => '/modulos',
                         'icon' => 'FaBars',
-                        'permission_id' => '17'
+                        'permission_id' => 17
+                    ],
+                    [
+                        'name' => 'Subódulos',
+                        'url' => '/submodulos',
+                        'icon' => 'FaBars',
+                        'permission_id' => 23
                     ],
                 ]
             ],

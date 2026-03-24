@@ -29,6 +29,7 @@ class UserUpdateRequest extends FormRequest
             'name' => ['required', 'string', 'max:40', 'unique:users,name,' . $this->route('id') . ',id'],
             'email' => ['required', 'string', 'email', 'max:40', 'unique:users,email,' . $this->route('id') . ',id',],
             'password' => ['nullable', 'string', 'min:8', 'regex:~^(?=.*\p{Ll})(?=.*\p{Lu})(?=.*\d)(?=.*[@$!%*#?&._-]).{8,}$~u', 'confirmed'],
+            'password_confirmation' => ['required', 'string', 'min:8', 'regex:~^(?=.*\p{Ll})(?=.*\p{Lu})(?=.*\d)(?=.*[@$!%*#?&._-]).{8,}$~u', 'confirmed']
         ];
     }
 
@@ -55,6 +56,7 @@ class UserUpdateRequest extends FormRequest
             'name' => 'Nombre del usuario',
             'email' => 'Correo electrónico del usuario',
             'password' => 'Contraseña del usuario',
+            'password_confirmation' => 'Confirmación contraseña del usuario',
         ];
     }
 

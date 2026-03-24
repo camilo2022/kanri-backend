@@ -1,8 +1,14 @@
 <?php
 
+use App\Http\Controllers\AreaController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BloodTypeController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\GenderController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\PersonController;
+use App\Http\Controllers\PositionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SubmoduleController;
 use App\Http\Controllers\UserController;
@@ -72,5 +78,71 @@ Route::prefix('/navegation')->group(function () {
                 Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:navegation,navegation.submodules.restore']);
             });
         });
+    });
+});
+
+Route::prefix('/people')->group(function () {
+    Route::controller(PersonController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:people,people.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:people,people.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:people,people.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:people,people.update']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:people,people.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:people,people.restore']);
+    });
+});
+
+Route::prefix('/employees')->group(function () {
+    Route::controller(EmployeeController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:employees,employees.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:employees,employees.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:employees,employees.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:employees,employees.update']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:employees,employees.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:employees,employees.restore']);
+    });
+});
+
+Route::prefix('/areas')->group(function () {
+    Route::controller(AreaController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:areas,areas.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:areas,areas.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:areas,areas.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:areas,areas.update']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:areas,areas.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:areas,areas.restore']);
+    });
+});
+
+Route::prefix('/positions')->group(function () {
+    Route::controller(PositionController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:positions,positions.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:positions,positions.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:positions,positions.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:positions,positions.update']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:positions,positions.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:positions,positions.restore']);
+    });
+});
+
+Route::prefix('/genders')->group(function () {
+    Route::controller(GenderController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:genders,genders.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:genders,genders.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:genders,genders.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:genders,genders.update']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:genders,genders.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:genders,genders.restore']);
+    });
+});
+
+Route::prefix('/blood_types')->group(function () {
+    Route::controller(BloodTypeController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:blood_types,blood_types.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:blood_types,blood_types.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:blood_types,blood_types.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:blood_types,blood_types.update']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:blood_types,blood_types.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:blood_types,blood_types.restore']);
     });
 });

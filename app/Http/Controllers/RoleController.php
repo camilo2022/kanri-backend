@@ -226,7 +226,8 @@ class RoleController extends Controller
     public function find(RoleFindRequest $request)
     {
         try {
-            $role = Role::findOrFail($request->id);
+            $role = Role::with(['permissions'])
+                ->findOrFail($request->id);
 
             return $this->successResponse(
                 [
