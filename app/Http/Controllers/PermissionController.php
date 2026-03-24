@@ -236,7 +236,8 @@ class PermissionController extends Controller
     public function find(PermissionFindRequest $request)
     {
         try {
-            $permission = permission::findOrFail($request->id);
+            $permission = permission::with(['roles'])
+                ->findOrFail($request->id);
 
             return $this->successResponse(
                 [
