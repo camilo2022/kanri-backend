@@ -108,7 +108,7 @@ class AuthController extends Controller
     public function login(LoginRequest $request)
     {
         try {
-            $user = User::where('email', $request->input('email'))->firstOrFail();
+            $user = User::with(['employee' => ['person']])->where('email', $request->input('email'))->firstOrFail();
 
             if (!Hash::check($request->input('password'), $user->password)) {
                 return $this->errorResponse(
@@ -148,7 +148,7 @@ class AuthController extends Controller
         try {
             $user = Auth::user();
 
-            $user->load(['roles', 'permissions']);
+            $user->load(['employee' => ['person'], 'roles', 'permissions']);
 
             $navegation = Module::with(['submodules' => fn($query) => $query->whereIn('permission_id', Auth::user()->permissions->pluck('id')->toArray())])
                 ->whereHas('submodules', fn($query) => $query->whereIn('permission_id', Auth::user()->permissions->pluck('id')->toArray()))

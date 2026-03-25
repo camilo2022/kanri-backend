@@ -14,7 +14,7 @@ class UserCollection extends ResourceCollection
             'users' => $this->collection->map(function ($user) {
                 return [
                     'id' => $user->id,
-                    'name' => $user->name,
+                    'employee' => $user->employee,
                     'email' => $user->email,
                     'created_at' => $this->formatDate($user->created_at),
                     'updated_at' => $this->formatDate($user->updated_at),

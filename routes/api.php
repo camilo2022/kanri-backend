@@ -1,11 +1,15 @@
 <?php
 
 use App\Http\Controllers\AreaController;
+use App\Http\Controllers\ArlController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BloodTypeController;
+use App\Http\Controllers\CompensationFundController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\EpsController;
 use App\Http\Controllers\GenderController;
 use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\PensionFundController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PositionController;
@@ -70,12 +74,12 @@ Route::prefix('/navegation')->group(function () {
 
         Route::prefix('/submodules')->group(function () {
             Route::controller(SubmoduleController::class)->group(function () {
-                Route::get('/all/{module_id}', 'all')->middleware(['auth:sanctum', 'can:navegation,navegation.submodules.all']);
-                Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:navegation,navegation.submodules.find']);
-                Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:navegation,navegation.submodules.store']);
-                Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:navegation,navegation.submodules.update']);
-                Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:navegation,navegation.submodules.delete']);
-                Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:navegation,navegation.submodules.restore']);
+                Route::get('/all/{module_id}', 'all')->middleware(['auth:sanctum', 'can:navegation,navegation.modules.submodules.all']);
+                Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:navegation,navegation.modules.submodules.find']);
+                Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:navegation,navegation.modules.submodules.store']);
+                Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:navegation,navegation.modules.submodules.update']);
+                Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:navegation,navegation.modules.submodules.delete']);
+                Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:navegation,navegation.modules.submodules.restore']);
             });
         });
     });
@@ -122,6 +126,10 @@ Route::prefix('/positions')->group(function () {
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:positions,positions.update']);
         Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:positions,positions.delete']);
         Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:positions,positions.restore']);
+        Route::prefix('/authorization')->group(function () {
+            Route::post('/assign/{id}', 'assign')->middleware(['auth:sanctum', 'can:positions,positions.authorization.assign']);
+            Route::post('/remove/{id}', 'remove')->middleware(['auth:sanctum', 'can:positions,positions.authorization.remove']);
+        });
     });
 });
 
@@ -144,5 +152,49 @@ Route::prefix('/blood_types')->group(function () {
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:blood_types,blood_types.update']);
         Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:blood_types,blood_types.delete']);
         Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:blood_types,blood_types.restore']);
+    });
+});
+
+Route::prefix('/arl')->group(function () {
+    Route::controller(ArlController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:arl,arl.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:arl,arl.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:arl,arl.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:arl,arl.update']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:arl,arl.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:arl,arl.restore']);
+    });
+});
+
+Route::prefix('/eps')->group(function () {
+    Route::controller(EpsController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:eps,eps.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:eps,eps.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:eps,eps.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:eps,eps.update']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:eps,eps.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:eps,eps.restore']);
+    });
+});
+
+Route::prefix('/pension_funds')->group(function () {
+    Route::controller(PensionFundController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:pension_funds,pension_funds.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:pension_funds,pension_funds.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:pension_funds,pension_funds.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:pension_funds,pension_funds.update']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:pension_funds,pension_funds.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:pension_funds,pension_funds.restore']);
+    });
+});
+
+Route::prefix('/compensation_funds')->group(function () {
+    Route::controller(CompensationFundController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:compensation_funds,compensation_funds.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:compensation_funds,compensation_funds.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:compensation_funds,compensation_funds.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:compensation_funds,compensation_funds.update']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:compensation_funds,compensation_funds.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:compensation_funds,compensation_funds.restore']);
     });
 });

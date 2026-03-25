@@ -14,6 +14,8 @@ class Position extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
 
+    public const ITEM_ID = 2;
+
     protected $table = 'subitems';
 
     protected $fillable = [
@@ -37,15 +39,15 @@ class Position extends Model implements Auditable
     protected static function booted()
     {
         static::addGlobalScope('item_id', function (Builder $builder) {
-            $builder->where('item_id', 2);
+            $builder->where('item_id', self::ITEM_ID);
         });
 
         static::creating(function ($model) {
-            $model->item_id = 2;
+            $model->item_id = self::ITEM_ID;
         });
 
         static::updating(function ($model) {
-            $model->item_id = 2;
+            $model->item_id = self::ITEM_ID;
         });
     }
 

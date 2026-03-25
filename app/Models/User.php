@@ -11,6 +11,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable implements Auditable
 {
@@ -19,13 +20,13 @@ class User extends Authenticatable implements Auditable
     protected $guard_name = 'api';
 
     protected $fillable = [
-        'name',
+        'employee_id',
         'email',
         'password',
     ];
 
     protected $auditInclude = [
-        'name',
+        'employee_id',
         'email',
         'password',
     ];
@@ -53,6 +54,11 @@ class User extends Authenticatable implements Auditable
         static::updating(function ($model) {
             $model->guard_name = 'api';
         });
+    }
+
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class);
     }
 
     public function scopeSearch(Builder $query, ?string $search = null): Builder
