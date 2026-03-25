@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\User\UserAllRequest;
-use App\Http\Requests\User\UserAssignRequest;
+use App\Http\Requests\User\UserAuthorizationAssignRequest;
 use App\Http\Requests\User\UserDeleteRequest;
 use App\Http\Requests\User\UserFindRequest;
-use App\Http\Requests\User\UserRemoveRequest;
+use App\Http\Requests\User\UserAuthorizationRemoveRequest;
 use App\Http\Requests\User\UserRestoreRequest;
 use App\Http\Requests\User\UserStoreRequest;
 use App\Http\Requests\User\UserUpdateRequest;
@@ -127,11 +127,13 @@ class UserController extends Controller
     public function all(UserAllRequest $request)
     {
         try {
-            $users = User::with(['roles', 'permissions'])
+            $users = User::with(['employee' => ['person'], 'roles', 'permissions'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
-                ->withTrashed()
+                ->when($request->boolean('with_trashed'), function ($query) use ($request) {
+                    return $query->withTrashed();
+                })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
                     return $query->orderBy($request->input('column'), $request->input('dir'));
                 });
@@ -281,10 +283,11 @@ class UserController extends Controller
      *     )
      * )
      */
-    public function find(UserFindRequest $request)
+    public function find(UserFindRequest $request, $id)
     {
         try {
-            $user = User::with(['roles', 'permissions'])->findOrFail($request->id);
+            $user = User::with(['employee' => ['person'], 'roles', 'permissions'])
+                ->findOrFail($id);
             return $this->successResponse(
                 [
                     'user' => $user
@@ -408,7 +411,7 @@ class UserController extends Controller
         try {
             $user = new User();
 
-            $user->name = $request->input('name');
+            $user->employee_id = $request->input('employee_id');
             $user->email = $request->input('email');
             $user->password = Hash::make($request->input('password'));
 
@@ -542,7 +545,7 @@ class UserController extends Controller
         try {
             $user = User::findorFail($id);
 
-            $user->name = $request->input('name');
+            $user->employee_id = $request->integer('employee_id');
             $user->email = $request->input('email');
             $user->password = Hash::make($request->input('password'));
 
@@ -644,10 +647,10 @@ class UserController extends Controller
      *     )
      * )
      */
-    public function delete(UserDeleteRequest $request)
+    public function delete(UserDeleteRequest $request, $id)
     {
         try {
-            $user = User::findOrFail($request->id);
+            $user = User::findOrFail($id);
             $user->delete();
 
             return $this->successResponse(
@@ -746,10 +749,10 @@ class UserController extends Controller
      *     )
      * )
      */
-    public function restore(UserRestoreRequest $request)
+    public function restore(UserRestoreRequest $request, $id)
     {
         try {
-            $user = User::withTrashed()->findOrFail($request->id);
+            $user = User::withTrashed()->findOrFail($id);
             $user->restore();
 
             return $this->successResponse(
@@ -861,7 +864,7 @@ class UserController extends Controller
      *     )
      * )
      */
-    public function assign(UserAssignRequest $request, $id)
+    public function assign(UserAuthorizationAssignRequest $request, $id)
     {
         try {
             $permission = Permission::findOrFail($request->input('permission_id'));
@@ -982,7 +985,7 @@ class UserController extends Controller
      *     )
      * )
      */
-    public function remove(UserRemoveRequest $request, $id)
+    public function remove(UserAuthorizationRemoveRequest $request, $id)
     {
         try {
             $permission = Permission::findOrFail($request->input('permission_id'));

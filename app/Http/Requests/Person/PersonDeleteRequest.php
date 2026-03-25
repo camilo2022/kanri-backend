@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Requests\User;
+namespace App\Http\Requests\Person;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class UserAssignRequest extends FormRequest
+class PersonDeleteRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -25,8 +25,7 @@ class UserAssignRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'permission_id' => ['required', 'numeric', 'max:40', 'exists:permissions,id'],
-            'id' => ['required', 'numeric', 'max:40', 'exists:users,id'],
+            'id' => ['required', 'exists:people,id,deleted_at,NULL'],
         ];
     }
 
@@ -34,17 +33,14 @@ class UserAssignRequest extends FormRequest
     {
         return [
             'required' => 'Es obligatorio.',
-            'numeric' => 'Debe ser un número.',
             'exists' => 'No hay ningún registro.'
-
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador del usuario',
-            'permission_id' => 'Identificador del permiso'
+            'id' => 'Identificador de la persona'
         ];
     }
 
