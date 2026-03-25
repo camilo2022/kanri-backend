@@ -3,7 +3,6 @@
 namespace App\Http\Resources\User;
 
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class UserCollection extends ResourceCollection

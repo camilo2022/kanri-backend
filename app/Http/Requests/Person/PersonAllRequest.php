@@ -26,6 +26,7 @@ class PersonAllRequest extends FormRequest
     {
         return [
             'per_page' => ['nullable', 'numeric'],
+            'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
             'column' => ['nullable', 'string', 'in:id,document,names,last_names,gender_id,birth_date,blood_type_id,address,phone,created_at,updated_at,deleted_at'],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
@@ -48,6 +49,7 @@ class PersonAllRequest extends FormRequest
     {
         return [
             'per_page' => 'Registros por pagina.',
+            'page' => 'N° de pagina.',
             'search' => 'Filtro de Busqueda.',
             'column' => 'Columna a ordenar.',
             'dir' => 'Sentido del orden.',

@@ -49,6 +49,7 @@ class UserAllRequest extends FormRequest
     {
         return [
             'per_page' => 'Registros por pagina.',
+            'page' => 'N° de pagina.',
             'search' => 'Filtro de Busqueda.',
             'column' => 'Columna a ordenar.',
             'dir' => 'Sentido del orden.',

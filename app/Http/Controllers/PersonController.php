@@ -12,19 +12,20 @@ use App\Http\Resources\Person\PersonCollection;
 use App\Models\Person;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
-use Illuminate\Http\Request;
-use OpenApi\Annotations as OA;
 
 class PersonController extends Controller
 {
     use ApiMessage, ApiResponser;
-    
+
     public function all(PersonAllRequest $request)
     {
         try {
-            $people = Person::with(['employee'])
+            $people = Person::with(['gender', 'blood_type', 'employee'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
+                })
+                ->when($request->boolean('with_trashed'), function ($query) use ($request) {
+                    return $query->withTrashed();
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
                     return $query->orderBy($request->input('column'), $request->input('dir'));
@@ -51,7 +52,7 @@ class PersonController extends Controller
     public function find(PersonFindRequest $request, $id)
     {
         try {
-            $person = Person::with(['employee'])
+            $person = Person::with(['gender', 'blood_type', 'employee'])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -71,7 +72,7 @@ class PersonController extends Controller
             );
         }
     }
-    
+
     public function store(PersonStoreRequest $request)
     {
         try {
@@ -103,7 +104,7 @@ class PersonController extends Controller
             );
         }
     }
-    
+
     public function update(PersonUpdateRequest $request, $id)
     {
         try {

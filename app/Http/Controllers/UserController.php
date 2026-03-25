@@ -16,7 +16,6 @@ use App\Models\User;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Traits\HasPermissions;
 
 /**
  * @OA\Tag(
