@@ -36,21 +36,21 @@ class RoleAllRequest extends FormRequest
     {
         return [
             'per_page.numeric' => 'Debe ser un valor numérico.',
-            'search.string' => 'Debe ser un registro válido de busqueda. ',
-            'column.string' => 'Debe ser una columna válida. ',
-            'column.in' => 'El valor de la columna no es válido. ',
-            'dir.string' => 'Debe ser un valor de orden válido. ',
-            'dir.in' => 'El valor del orden no es válido. ',
+            'search.string' => 'Debe ser un registro válido de busqueda.',
+            'column.string' => 'Debe ser una columna válida.',
+            'column.in' => 'El valor de la columna no es válido.',
+            'dir.string' => 'Debe ser un valor de orden válido.',
+            'dir.in' => 'El valor del orden no es válido.',
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'per_page' => 'Registros por pagina. ',
-            'search' => 'Filtro de Busqueda. ',
-            'column' => 'Columna a ordenar. ',
-            'dir' => 'Sentido del orden. ',
+            'per_page' => 'Registros por pagina.',
+            'search' => 'Filtro de Busqueda.',
+            'column' => 'Columna a ordenar.',
+            'dir' => 'Sentido del orden.',
 
         ];
     }

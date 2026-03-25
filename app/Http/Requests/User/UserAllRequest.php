@@ -29,30 +29,35 @@ class UserAllRequest extends FormRequest
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
             'column' => ['nullable', 'string', 'in:id,name,email,created_at,updated_at'],
-            'dir' => ['nullable', 'string', 'in:asc,desc']
+            'dir' => ['nullable', 'string', 'in:asc,desc'],
+            'with_trashed' => ['required', 'boolean']
         ];
     }
 
     public function messages(): array
     {
         return [
-            'per_page.numeric' => 'Debe ser un valor numérico.',
-            'search.string' => 'Debe ser un registro válido de busqueda. ',
-            'column.string' => 'Debe ser una columna válida. ',
-            'column.in' => 'El valor de la columna no es válido. ',
-            'dir.string' => 'Debe ser un valor de orden válido. ',
-            'dir.in' => 'El valor del orden no es válido. ',
+            'required' => 'Es obligatorio.',
+            'string' => 'Debe ser una cadena de caracteres.',
+            'numeric' => 'Debe ser un valor numérico.',
+            'in' => 'Valor inválido. Permitidos: :values.',
+            'boolean' => 'Deber ser verdadero o falso.'
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'per_page' => 'Registros por pagina. ',
-            'search' => 'Filtro de Busqueda. ',
-            'column' => 'Columna a ordenar. ',
-            'dir' => 'Sentido del orden. ',
-
+            'per_page' => 'Registros por pagina.',
+            'search' => 'Filtro de Busqueda.',
+            'column' => 'Columna a ordenar.',
+            'dir' => 'Sentido del orden.',
+            'with_trashed' => 'Registros inactivos'
         ];
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->merge(['with_trashed' => $this->boolean('with_trashed')]);
     }
 }

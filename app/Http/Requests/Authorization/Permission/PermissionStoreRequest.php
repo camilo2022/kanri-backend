@@ -35,7 +35,7 @@ class PermissionStoreRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'exists' => 'El identificador del rol no existe.',
+            'exists' => 'No está registrado.',
             'required' => 'Es obligatorio.',
             'regex' => 'Formato inválido. Solo permite letras minúsculas y punto.',
             'string' => 'Debe ser una cadena de texto.',

@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'siesa' => [
+        'username' => env('SIESA_USERNAME'),
+        'password' => env('SIESA_PASSWORD'),
+    ],
+
 ];
