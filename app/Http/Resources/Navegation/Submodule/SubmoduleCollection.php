@@ -19,7 +19,7 @@ class SubmoduleCollection extends ResourceCollection
                     'icon' => $submodule->icon,
                     'created_at' => $this->formatDate($submodule->created_at),
                     'updated_at' => $this->formatDate($submodule->updated_at),
-                    'delete_at' => $this->formatDate($submodule->delete_at),
+                    'deleted_at' => $this->formatDate($submodule->deleted_at),
                     'module' => $submodule->module,
                     'permission' => $submodule->permission,
                 ];
@@ -32,7 +32,7 @@ class SubmoduleCollection extends ResourceCollection
 
     protected function formatDate($date)
     {
-        return $date ? Carbon::parse($date)->format('Y-m-d H:i:s') : "null";
+        return $date ? Carbon::parse($date)->format('Y-m-d H:i:s') : null;
     }
 
     protected function paginationMeta()

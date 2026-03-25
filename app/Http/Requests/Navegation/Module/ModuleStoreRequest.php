@@ -25,8 +25,8 @@ class ModuleStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:20', 'unique:modules,name', 'regex:/^[a-z]+$/'],
-            'icon' => ['required', 'string', 'max:40', 'regex:/^Fa[A-Z][a-zA-Z0-9]*$/']
+            'name' => ['required', 'string', 'max:20', 'unique:modules,name', 'regex:/^[A-Z][a-z]+$/'],
+            'icon' => ['required', 'string', 'max:40', 'regex:/^Fa([A-Z][a-zA-Z0-9]*|[0-9][a-zA-Z0-9]*)$/']
         ];
     }
 

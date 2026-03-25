@@ -126,6 +126,7 @@ class ModuleController extends Controller
             $modules = Module::when($request->input('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
+                ->withTrashed()
                 ->when($request->input('column') && $request->input('dir'), function ($query) use ($request) {
                     return $query->orderBy($request->input('column'), $request->input('dir'));
                 });
@@ -240,10 +241,10 @@ class ModuleController extends Controller
      *     )
      * )
      */
-    public function find(ModuleFindRequest $request)
+    public function find(ModuleFindRequest $request, $id)
     {
         try {
-            $module = Module::findOrFail($request->id);
+            $module = Module::findOrFail($id);
 
             $module->load(['submodules']);
 

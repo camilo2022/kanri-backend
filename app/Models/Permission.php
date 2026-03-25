@@ -58,9 +58,14 @@ class Permission extends SpatiePermission implements Auditable
         return $query->where(function (Builder $q) use ($terms) {
             foreach ($terms as $term) {
                 $q->orWhere(function (Builder $sq) use ($term) {
-                    $sq->orWhere('name', 'LIKE', '%' . $term . '%')
-                        ->orWhere('title', 'LIKE', '%' . $term . '%')
-                        ->orWhere('description', 'LIKE', '%' . $term . '%');
+                    $sq->where('name', 'LIKE', "%{$term}%")
+                        ->orWhere('title', 'LIKE', "%{$term}%")
+                        ->orWhere('description', 'LIKE', "%{$term}%")
+                        ->orWhereHas('roles', function (Builder $roleQuery) use ($term) {
+                            $roleQuery->where('name', 'LIKE', "%{$term}%")
+                                ->orWhere('title', 'LIKE', "%{$term}%")
+                                ->orWhere('description', 'LIKE', "%{$term}%");
+                        });
                 });
             }
         });

@@ -10,7 +10,6 @@ use App\Http\Resources\Authorization\Permission\PermissionCollection;
 use App\Models\Permission;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
-use Illuminate\Http\Request;
 
 /**
  * @OA\Tag(

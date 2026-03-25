@@ -18,7 +18,7 @@ class ModuleCollection extends ResourceCollection
                     'icon' => $module->icon,
                     'created_at' => $this->formatDate($module->created_at),
                     'updated_at' => $this->formatDate($module->updated_at),
-                    'delete_at' => $this->formatDate($module->delete_at),
+                    'deleted_at' => $this->formatDate($module->deleted_at),
                 ];
             }),
             'meta' => [
@@ -29,7 +29,7 @@ class ModuleCollection extends ResourceCollection
 
     protected function formatDate($date)
     {
-        return $date ? Carbon::parse($date)->format('Y-m-d H:i:s') : "null";
+        return $date ? Carbon::parse($date)->format('Y-m-d H:i:s') : null;
     }
 
     protected function paginationMeta()
