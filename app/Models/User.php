@@ -17,6 +17,8 @@ class User extends Authenticatable implements Auditable
 {
     use HasFactory, Notifiable, HasApiTokens, Auditing, HasRoles, SoftDeletes;
 
+    protected $table = 'users';
+
     protected $guard_name = 'api';
 
     protected $fillable = [

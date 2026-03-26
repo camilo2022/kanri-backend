@@ -16,11 +16,11 @@ use App\Traits\ApiResponser;
 class AreaController extends Controller
 {
     use ApiMessage, ApiResponser;
-    
+
     public function all(AreaAllRequest $request)
     {
         try {
-            $areas = Area::with(['person'])
+            $areas = Area::with(['positions'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -52,7 +52,7 @@ class AreaController extends Controller
     public function find(AreaFindRequest $request, $id)
     {
         try {
-            $area = Area::with(['person', 'position' => ['area'], 'arl', 'eps', 'pension_fund', 'compensation_fund'])
+            $area = Area::with(['positions'])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -72,20 +72,13 @@ class AreaController extends Controller
             );
         }
     }
-    
+
     public function store(AreaStoreRequest $request)
     {
         try {
             $area = new Area();
-            $area->person_id = $request->integer('person_id');
-            $area->operation_center = $request->input('operation_center', null);
-            $area->position_id = $request->integer('position_id');
-            $area->arl_id = $request->integer('arl_id');
-            $area->eps_id = $request->integer('eps_id');
-            $area->pension_fund_id = $request->integer('pension_fund_id');
-            $area->compensation_fund_id = $request->integer('compensation_fund_id');
-            $area->start_date = $request->input('start_date');
-            $area->end_date = $request->input('end_date', null);
+            $area->name = $request->input('name');
+            $area->description = $request->input('description');
             $area->save();
 
             return $this->successResponse(
@@ -105,20 +98,13 @@ class AreaController extends Controller
             );
         }
     }
-    
+
     public function update(AreaUpdateRequest $request, $id)
     {
         try {
             $area = Area::findOrFail($id);
-            $area->person_id = $request->integer('person_id');
-            $area->operation_center = $request->input('operation_center', null);
-            $area->position_id = $request->integer('position_id');
-            $area->arl_id = $request->integer('arl_id');
-            $area->eps_id = $request->integer('eps_id');
-            $area->pension_fund_id = $request->integer('pension_fund_id');
-            $area->compensation_fund_id = $request->integer('compensation_fund_id');
-            $area->start_date = $request->input('start_date');
-            $area->end_date = $request->input('end_date', null);
+            $area->name = $request->input('name');
+            $area->description = $request->input('description');
             $area->save();
 
             return $this->successResponse(

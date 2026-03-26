@@ -992,23 +992,11 @@ class UserController extends Controller
 
             $user->revokePermissionTo($permission);
 
-            foreach ($user->roles as $role) {
-
-                $rolePermissions = $role->permissions;
-                $hasPermissionFromRole = false;
-
-                foreach ($rolePermissions as $rolePermission) {
-
-                    if ($user->hasDirectPermission($rolePermission)) {
-                        $hasPermissionFromRole = true;
-                        break;
-                    }
-                }
-
-                if (!$hasPermissionFromRole) {
+            $user->roles->each(function ($role) use ($user) {
+                if (!$user->hasAnyPermission($role->permissions)) {
                     $user->removeRole($role);
                 }
-            }
+            });
 
             $user->load(['roles', 'permissions']);
 

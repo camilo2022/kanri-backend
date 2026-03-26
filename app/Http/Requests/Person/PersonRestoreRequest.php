@@ -26,8 +26,7 @@ class PersonRestoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', Rule::exists('people', 'id')->whereNotNull('deleted_at')
-            ]
+            'id' => ['required', Rule::exists('people', 'id')->whereNotNull('deleted_at')]
         ];
     }
 
