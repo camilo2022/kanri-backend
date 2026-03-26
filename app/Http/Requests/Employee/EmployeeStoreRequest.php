@@ -2,27 +2,74 @@
 
 namespace App\Http\Requests\Employee;
 
+use App\Models\Arl;
+use App\Models\CompensationFund;
+use App\Models\Eps;
+use App\Models\PensionFund;
+use App\Models\Position;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class EmployeeStoreRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
+    protected function failedValidation(Validator $validator)
     {
-        return false;
+        throw new HttpResponseException(response()->json([
+            'message' => 'Error de validación.',
+            'attributes' => $this->attributes(),
+            'errors' => $validator->errors()
+        ], 422));
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
     public function rules(): array
     {
         return [
-            //
+            'person_id' => ['required', 'numeric', 'exists:people,id,deleted_at,NULL', 'unique:employees,person_id'],
+            'operation_center' => ['nullable', 'string'],
+            'position_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.Position::ITEM_ID.',deleted_at,NULL'],
+            'arl_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.Arl::ITEM_ID.',deleted_at,NULL'],
+            'eps_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.Eps::ITEM_ID.',deleted_at,NULL'],
+            'pension_fund_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.PensionFund::ITEM_ID.',deleted_at,NULL'],
+            'compensation_fund_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.CompensationFund::ITEM_ID.',deleted_at,NULL'],
+            'start_date' => ['required', 'date', 'date_format:Y-m-d'],
+            'end_date' => ['nullable', 'date', 'date_format:Y-m-d', 'after:start_date']
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'required' => 'Es obligatorio.',
+            'string' => 'Debe ser una cadena de texto.',
+            'max' => 'Se permite máximo :max caracteres.',
+            'min' => 'Se permite mínimo :min caracteres.',
+            'unique' => 'Ya está registrado.',
+            'regex' => "Formato inválido:\n- Solo letras.",
+            'exists' => 'No hay ningún registro.',
+            'date' => 'Debe ser una fecha válida.',
+            'date_format' => 'Formato inválido. Permitido :format.',
+            'after' => 'Debe ser una fecha posterior a :date.'
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'person_id' => 'Persona',
+            'operation_center' => 'Centro de operaciones',
+            'position_id' => 'Cargo',
+            'arl_id' => 'Arl',
+            'eps_id' => 'Eps',
+            'pension_fund_id' => 'Fondo de pensión',
+            'compensation_fund_id' => 'Caja de compensación',
+            'start_date' => 'Fecha inicio',
+            'end_date' => 'Fecha fin'
         ];
     }
 }

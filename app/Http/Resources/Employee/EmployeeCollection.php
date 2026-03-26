@@ -1,0 +1,51 @@
+<?php
+
+namespace App\Http\Resources\Employee;
+
+use Carbon\Carbon;
+use Illuminate\Http\Resources\Json\ResourceCollection;
+
+class EmployeeCollection extends ResourceCollection
+{
+    public function toArray($request)
+    {
+        return [
+            'employees' => $this->collection->map(function ($employee) {
+                return [
+                    'id' => $employee->id,
+                    'person' => $employee->person,
+                    'operation_center' => $employee->operation_center,
+                    'position' => $employee->position,
+                    'arl' => $employee->arl,
+                    'eps' => $employee->eps,
+                    'pension_fund' => $employee->pension_fund,
+                    'compensation_fund' => $employee->compensation_fund,
+                    'start_date' => $employee->start_date,
+                    'end_date' => $employee->end_date,
+                    'created_at' => $this->formatDate($employee->created_at),
+                    'updated_at' => $this->formatDate($employee->updated_at),
+                    'deleted_at' => $this->formatDate($employee->deleted_at)
+                ];
+            }),
+            'meta' => [
+                'pagination' => $this->paginationMeta(),
+            ],
+        ];
+    }
+
+    protected function formatDate($date)
+    {
+        return $date ? Carbon::parse($date)->format('Y-m-d H:i:s') : null;
+    }
+
+    protected function paginationMeta()
+    {
+        return [
+            'total' => $this->total(),
+            'count' => $this->count(),
+            'per_page' => $this->perPage(),
+            'current_page' => $this->currentPage(),
+            'total_pages' => $this->lastPage(),
+        ];
+    }
+}

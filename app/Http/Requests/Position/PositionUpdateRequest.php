@@ -2,27 +2,59 @@
 
 namespace App\Http\Requests\Position;
 
+use App\Models\Position;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class PositionUpdateRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
+    protected function failedValidation(Validator $validator)
     {
-        return false;
+        throw new HttpResponseException(response()->json([
+            'message' => 'Error de validación.',
+            'attributes' => $this->attributes(),
+            'errors' => $validator->errors()
+        ], 422));
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
     public function rules(): array
     {
         return [
-            //
+            'id' => ['required', 'exists:subitems,id,item_id,'.Position::ITEM_ID],
+            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.Position::ITEM_ID],
+            'description' => ['nullable', 'string', 'max:255']
         ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'required' => 'Es obligatorio.',
+            'string' => 'Debe ser una cadena de texto.',
+            'max' => 'Se permite máximo :max caracteres.',
+            'min' => 'Se permite mínimo :min caracteres.',
+            'unique' => 'Ya está registrado.',
+            'exists' => 'No está registrado.'
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'id' => 'Identificador del cargo',
+            'name' => 'Nombre',
+            'description' => 'Descripción'
+        ];
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->merge(['id' => $this->route('id')]);
     }
 }

@@ -37,7 +37,7 @@ class PermissionUpdateRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'role_id.exist' => 'No está registrado.',
+            'role_id.exist' => 'No hay ningún registro.',
             'required' => 'Es obligatorio.',
             'exists' => 'No hay ningún registro.',
             'required' => 'Es obligatorio.',

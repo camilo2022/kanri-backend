@@ -40,7 +40,7 @@ class UserStoreRequest extends FormRequest
             'regex' => "Formato inválido:\n- Al menos una letra mayúscula.\n- Al menos una letra minúscula.\n- Al menos un número.\n- Al menos un carácter especial.",
             'string' => 'Debe ser una cadena de texto.',
             'unique' => 'Ya está registrado.',
-            'exists' => 'No está registrado.',
+            'exists' => 'No hay ningún registro.',
             'max' => 'Se permite máximo :max caracteres.',
             'min' => 'Se permite mínimo :min caracteres.',
             'email' => 'Debe ser un correo electrónico.',

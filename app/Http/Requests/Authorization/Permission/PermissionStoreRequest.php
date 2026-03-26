@@ -35,7 +35,7 @@ class PermissionStoreRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'exists' => 'No está registrado.',
+            'exists' => 'No hay ningún registro.',
             'required' => 'Es obligatorio.',
             'regex' => 'Formato inválido. Solo permite letras minúsculas y punto.',
             'string' => 'Debe ser una cadena de texto.',

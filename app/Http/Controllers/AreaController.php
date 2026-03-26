@@ -2,64 +2,174 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Area\AreaAllRequest;
+use App\Http\Requests\Area\AreaDeleteRequest;
+use App\Http\Requests\Area\AreaFindRequest;
+use App\Http\Requests\Area\AreaRestoreRequest;
+use App\Http\Requests\Area\AreaStoreRequest;
+use App\Http\Requests\Area\AreaUpdateRequest;
+use App\Http\Resources\Area\AreaCollection;
 use App\Models\Area;
-use Illuminate\Http\Request;
+use App\Traits\ApiMessage;
+use App\Traits\ApiResponser;
 
 class AreaController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    use ApiMessage, ApiResponser;
+
+    public function all(AreaAllRequest $request)
     {
-        //
+        try {
+            $areas = Area::with(['positions'])
+                ->when($request->filled('search'), function ($query) use ($request) {
+                    return $query->search($request->input('search'));
+                })
+                ->when($request->boolean('with_trashed'), function ($query) {
+                    return $query->withTrashed();
+                })
+                ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
+                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                });
+
+            $areas = $areas->paginate($request->integer('per_page', $areas->count()));
+
+            return $this->successResponse(
+                new AreaCollection($areas),
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function find(AreaFindRequest $request, $id)
     {
-        //
+        try {
+            $area = Area::with(['positions'])
+                ->findOrFail($id);
+
+            return $this->successResponse(
+                [
+                    'area' => $area
+                ],
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(AreaStoreRequest $request)
     {
-        //
+        try {
+            $area = new Area();
+            $area->name = $request->input('name');
+            $area->description = $request->input('description');
+            $area->save();
+
+            return $this->successResponse(
+                [
+                    'area' => $area
+                ],
+                $this->getMessage('Success'),
+                201
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Area $area)
+    public function update(AreaUpdateRequest $request, $id)
     {
-        //
+        try {
+            $area = Area::findOrFail($id);
+            $area->name = $request->input('name');
+            $area->description = $request->input('description');
+            $area->save();
+
+            return $this->successResponse(
+                [
+                    'area' => $area
+                ],
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Area $area)
+    public function delete(AreaDeleteRequest $request, $id)
     {
-        //
+        try {
+            $area = Area::findOrFail($id);
+            $area->delete();
+
+            return $this->successResponse(
+                [
+                    'area' => $area
+                ],
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Area $area)
+    public function restore(AreaRestoreRequest $request, $id)
     {
-        //
-    }
+        try {
+            $area = Area::withTrashed()->findOrFail($id);
+            $area->restore();
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Area $area)
-    {
-        //
+            return $this->successResponse(
+                [
+                    'area' => $area
+                ],
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
     }
 }

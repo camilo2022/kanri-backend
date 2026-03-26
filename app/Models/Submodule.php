@@ -13,6 +13,8 @@ class Submodule extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
 
+    protected $table = 'submodules';
+
     protected $fillable = [
         'name',
         'url',

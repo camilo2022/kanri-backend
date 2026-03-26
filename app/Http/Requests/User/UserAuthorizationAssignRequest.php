@@ -25,8 +25,8 @@ class UserAuthorizationAssignRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'permission_id' => ['required', 'numeric', 'max:40', 'exists:permissions,id'],
-            'id' => ['required', 'numeric', 'max:40', 'exists:users,id'],
+            'id' => ['required', 'numeric', 'exists:users,id'],
+            'permission_id' => ['required', 'numeric', 'exists:permissions,id']
         ];
     }
 
@@ -36,7 +36,6 @@ class UserAuthorizationAssignRequest extends FormRequest
             'required' => 'Es obligatorio.',
             'numeric' => 'Debe ser un número.',
             'exists' => 'No hay ningún registro.'
-
         ];
     }
 

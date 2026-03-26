@@ -47,7 +47,7 @@ class PersonStoreRequest extends FormRequest
             'min' => 'Se permite mínimo :min caracteres.',
             'unique' => 'Ya está registrado.',
             'regex' => "Formato inválido:\n- Solo letras.",
-            'exists' => 'No está registrado.',
+            'exists' => 'No hay ningún registro.',
             'date' => 'Debe ser una fecha válida.',
             'date_format' => 'Formato inválido. Permitido :format.',
             'before' => 'Debe ser una fecha anterior a :date.'

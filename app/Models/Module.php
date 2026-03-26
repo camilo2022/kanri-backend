@@ -13,6 +13,8 @@ class Module extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
 
+    protected $table = 'modules';
+
     protected $guard_name = 'api';
 
     protected $fillable = [
