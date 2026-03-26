@@ -150,8 +150,8 @@ class AuthController extends Controller
 
             $user->load(['employee' => ['person'], 'roles', 'permissions']);
 
-            $navegation = Module::with(['submodules' => fn($query) => $query->whereIn('permission_id', Auth::user()->permissions->pluck('id')->toArray())])
-                ->whereHas('submodules', fn($query) => $query->whereIn('permission_id', Auth::user()->permissions->pluck('id')->toArray()))
+            $navegation = Module::with(['submodules' => fn($query) => $query->whereIn('permission_id', Auth::user()->permissions->modelKeys())])
+                ->whereHas('submodules', fn($query) => $query->whereIn('permission_id', Auth::user()->permissions->modelKeys()))
                 ->get();
 
             return $this->successResponse(
