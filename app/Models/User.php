@@ -71,8 +71,11 @@ class User extends Authenticatable implements Auditable
         return $query->where(function (Builder $q) use ($terms) {
             foreach ($terms as $term) {
                 $q->orWhere(function (Builder $sq) use ($term) {
-                    $sq->orWhere('name', 'LIKE', '%' . $term . '%')
-                        ->orWhere('email', 'LIKE', '%' . $term . '%');
+                    $sq->orWhere('email', 'LIKE', '%' . $term . '%')
+                        ->orWhereHas('employee.person', function (Builder $employeeQuery) use ($term) {
+                            $employeeQuery->where('names', 'LIKE', "%{$term}%")
+                                ->orWhere('last_names', 'LIKE', "%{$term}%");
+                        });
                 });
             }
         });

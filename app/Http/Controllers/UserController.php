@@ -17,6 +17,7 @@ use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Traits\HasPermissions;
+use Illuminate\Http\Request;
 
 /**
  * @OA\Tag(
@@ -127,7 +128,7 @@ class UserController extends Controller
     public function all(UserAllRequest $request)
     {
         try {
-            $users = User::with(['employee' => ['person'], 'roles', 'permissions'])
+            $users = User::with(['employee' => ['person', 'position' => ['area']], 'roles', 'permissions'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -286,7 +287,7 @@ class UserController extends Controller
     public function find(UserFindRequest $request, $id)
     {
         try {
-            $user = User::with(['employee' => ['person'], 'roles', 'permissions'])
+            $user = User::with(['employee' => ['person', 'position' => ['area']], 'roles', 'permissions'])
                 ->findOrFail($id);
             return $this->successResponse(
                 [
