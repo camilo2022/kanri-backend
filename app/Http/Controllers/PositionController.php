@@ -215,7 +215,7 @@ class PositionController extends Controller
             $position->revokePermissionTo($permission);
 
             $position->roles->each(function ($role) use ($position) {
-                if (!$position->hasAnyPermission($role->permissions)) {
+                if ($position->permissions->pluck('name')->intersect($role->permissions->pluck('name'))->isEmpty()) {
                     $position->removeRole($role);
                 }
             });

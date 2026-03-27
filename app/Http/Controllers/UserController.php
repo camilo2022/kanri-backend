@@ -409,12 +409,14 @@ class UserController extends Controller
     {
         try {
             $user = new User();
-
             $user->employee_id = $request->input('employee_id');
             $user->email = $request->input('email');
             $user->password = Hash::make($request->input('password'));
-
             $user->save();
+
+            $user->load(['employee' => ['position' => ['roles', 'permissions']]]);
+            $user->syncRoles($user->employee->position->roles);
+            $user->syncPermissions($user->employee->position->permissions);
 
             return $this->successResponse(
                 [
@@ -543,11 +545,9 @@ class UserController extends Controller
     {
         try {
             $user = User::findorFail($id);
-
             $user->employee_id = $request->integer('employee_id');
             $user->email = $request->input('email');
             $user->password = Hash::make($request->input('password'));
-
             $user->save();
 
             return $this->successResponse(
@@ -754,6 +754,10 @@ class UserController extends Controller
             $user = User::withTrashed()->findOrFail($id);
             $user->restore();
 
+            $user->load(['employee' => ['position' => ['roles', 'permissions']]]);
+            $user->syncRoles($user->employee->position->roles);
+            $user->syncPermissions($user->employee->position->permissions);
+
             return $this->successResponse(
                 [
                     'user' => $user
@@ -873,7 +877,7 @@ class UserController extends Controller
 
             $user->assignRole($permission->roles);
 
-            $user->load(['roles', 'permissions']);
+            $user->load(['employee' => ['person', 'position' => ['area']], 'roles', 'permissions']);
 
             return $this->successResponse(
                 [
@@ -993,12 +997,12 @@ class UserController extends Controller
             $user->revokePermissionTo($permission);
 
             $user->roles->each(function ($role) use ($user) {
-                if (!$user->hasAnyPermission($role->permissions)) {
+                if ($user->permissions->pluck('name')->intersect($role->permissions->pluck('name'))->isEmpty()) {
                     $user->removeRole($role);
                 }
             });
 
-            $user->load(['roles', 'permissions']);
+            $user->load(['employee' => ['person', 'position' => ['area']], 'roles', 'permissions']);
 
             return $this->successResponse(
                 [
