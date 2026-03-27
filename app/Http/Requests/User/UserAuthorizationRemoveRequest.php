@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\User;
 
+use App\Models\User;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -26,7 +27,7 @@ class UserAuthorizationRemoveRequest extends FormRequest
     {
         return [
             'id' => ['required', 'numeric', 'exists:users,id'],
-            'permission_id' => ['required', 'numeric', 'exists:permissions,id']
+            'permission_id' => ['required', 'numeric', 'exists:permissions,id', 'exists:model_has_permissions,permission_id,model_type,'.User::class.',model_id,'.$this->route('id')]
         ];
     }
 
