@@ -36,6 +36,7 @@ class PersonUpdateRequest extends FormRequest
             'blood_type_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.BloodType::ITEM_ID.',deleted_at,NULL'],
             'address' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string'],
+            'photo' => ['sometimes', 'image', 'mimes:jpg,jpeg,png', 'max:2048']
         ];
     }
 
@@ -51,7 +52,10 @@ class PersonUpdateRequest extends FormRequest
             'exists' => 'No hay ningún registro.',
             'date' => 'Debe ser una fecha válida.',
             'date_format' => 'Formato inválido. Permitido :format.',
-            'before' => 'Debe ser una fecha anterior a :date.'
+            'before' => 'Debe ser una fecha anterior a :date.',
+            'image' => 'Debe ser una imagen.',
+            'mimes' => 'Extensión inválida. Permitidas :values.',
+            'photo.max' => 'Se permite máximo :max KB.'
         ];
     }
 
@@ -67,6 +71,7 @@ class PersonUpdateRequest extends FormRequest
             'blood_type_id' => 'Tipo de sangre',
             'address' => 'Dirección',
             'phone' => 'Número de teléfono',
+            'photo' => 'Foto'
         ];
     }
 
