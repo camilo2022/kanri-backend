@@ -10,6 +10,7 @@ use App\Http\Requests\Person\PersonStoreRequest;
 use App\Http\Requests\Person\PersonUpdateRequest;
 use App\Http\Resources\Person\PersonCollection;
 use App\Models\Person;
+use App\Services\FileService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 
@@ -87,6 +88,17 @@ class PersonController extends Controller
             $person->phone = $request->input('phone');
             $person->save();
 
+            if ($request->hasFile('photo')) {
+                app(FileService::class)->save(
+                    $person,
+                    $request->file('photo'),
+                    $request->integer('photo_type_id'),
+                    $request->integer('photo_subtype_id'),
+                    'public',
+                    'person'
+                );
+            }
+
             return $this->successResponse(
                 [
                     'person' => $person
@@ -118,6 +130,17 @@ class PersonController extends Controller
             $person->address = $request->input('address');
             $person->phone = $request->input('phone');
             $person->save();
+
+            if ($request->hasFile('photo')) {
+                app(FileService::class)->save(
+                    $person,
+                    $request->file('photo'),
+                    $request->integer('photo_type_id'),
+                    $request->integer('photo_subtype_id'),
+                    'public',
+                    'person'
+                );
+            }
 
             return $this->successResponse(
                 [
