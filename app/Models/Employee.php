@@ -14,7 +14,7 @@ class Employee extends Model implements Auditable
     use Auditing, SoftDeletes;
 
     protected $table = 'employees';
-    
+
     protected $fillable = [
         'person_id',
         'operation_center',

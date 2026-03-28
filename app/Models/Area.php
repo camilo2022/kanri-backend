@@ -9,10 +9,11 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
+use Spatie\Permission\Traits\HasRoles;
 
 class Area extends Model implements Auditable
 {
-    use Auditing, SoftDeletes;
+    use Auditing, HasRoles, SoftDeletes;
 
     public const ITEM_ID = 3;
 
@@ -74,7 +75,7 @@ class Area extends Model implements Auditable
 
                 $q->where(function (Builder $sq) use ($like) {
                     $sq->orWhere('name', 'ILIKE', $like)
-                       ->orWhere('description', 'ILIKE', $like);
+                        ->orWhere('description', 'ILIKE', $like);
                 });
             }
         });

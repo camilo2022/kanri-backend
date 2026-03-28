@@ -649,7 +649,12 @@ class UserController extends Controller
     public function delete(UserDeleteRequest $request, $id)
     {
         try {
-            $user = User::findOrFail($id);
+            $user = User::with(['roles', 'permissions'])
+                ->findOrFail($id);
+            $user->syncRoles([]);
+            $user->permissions->each(function ($permission) use ($user) {
+                $user->revokePermissionTo($permission);
+            });
             $user->delete();
 
             return $this->successResponse(
@@ -753,6 +758,7 @@ class UserController extends Controller
         try {
             $user = User::withTrashed()->findOrFail($id);
             $user->restore();
+
 
             $user->load(['employee' => ['position' => ['roles', 'permissions']]]);
             $user->syncRoles($user->employee->position->roles);
