@@ -27,14 +27,14 @@ class PersonStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'document' => ['required', 'string', 'min:5', 'max:14', 'unique:people,document'],
+            'document' => ['required', 'numeric', 'digits_between:5,14', 'unique:people,document'],
             'names' => ['required', 'string', 'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/'],
             'last_names' => ['required', 'string', 'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/'],
-            'gender_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.Gender::ITEM_ID.',deleted_at,NULL'],
+            'gender_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Gender::ITEM_ID . ',deleted_at,NULL'],
             'birth_date' => ['required', 'date', 'date_format:Y-m-d', 'before:now'],
-            'blood_type_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.BloodType::ITEM_ID.',deleted_at,NULL'],
+            'blood_type_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . BloodType::ITEM_ID . ',deleted_at,NULL'],
             'address' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string'],
+            'phone' => ['required', 'numeric', 'digits:10'],
             'photo' => ['sometimes', 'image', 'mimes:jpg,jpeg,png', 'max:2048']
         ];
     }
@@ -44,8 +44,11 @@ class PersonStoreRequest extends FormRequest
         return [
             'required' => 'Es obligatorio.',
             'string' => 'Debe ser una cadena de texto.',
+            'numeric' => 'Debe ser un dato númerico.',
+            'digits_between' => 'Debe tener entre 5 y 14 dígitos.',
             'max' => 'Se permite máximo :max caracteres.',
             'min' => 'Se permite mínimo :min caracteres.',
+            'size' => 'Se permite la longitud de :value caracteres.',
             'unique' => 'Ya está registrado.',
             'regex' => "Formato inválido:\n- Solo letras.",
             'exists' => 'No hay ningún registro.',

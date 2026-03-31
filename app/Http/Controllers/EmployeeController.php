@@ -20,7 +20,7 @@ class EmployeeController extends Controller
     public function all(EmployeeAllRequest $request)
     {
         try {
-            $employees = Employee::with(['person', 'position' => ['area'], 'arl', 'eps', 'pension_fund', 'compensation_fund'])
+            $employees = Employee::with(['person' => ['photo'], 'position' => ['area', 'roles', 'permissions'], 'arl', 'eps', 'pension_fund', 'compensation_fund'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -52,7 +52,7 @@ class EmployeeController extends Controller
     public function find(EmployeeFindRequest $request, $id)
     {
         try {
-            $employee = Employee::with(['person', 'position' => ['area'], 'arl', 'eps', 'pension_fund', 'compensation_fund'])
+            $employee = Employee::with(['person' => ['photo'], 'position' => ['area', 'roles', 'permissions'], 'arl', 'eps', 'pension_fund', 'compensation_fund', 'user' => ['roles', 'permissions']])
                 ->findOrFail($id);
 
             return $this->successResponse(

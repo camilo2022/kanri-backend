@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Position;
 
+use App\Models\Area;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -25,6 +26,7 @@ class PositionAllRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'area_id' => ['nullable', 'numeric', 'exists:subitems,id,item_id,'.Area::ITEM_ID],
             'per_page' => ['nullable', 'numeric'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
@@ -41,6 +43,7 @@ class PositionAllRequest extends FormRequest
             'string' => 'Debe ser una cadena de texto.',
             'numeric' => 'Debe ser un valor numérico.',
             'in' => 'Valor inválido. Permitidos: :values.',
+            'exists' => 'No hay ningún registro.',
             'boolean' => 'Deber ser verdadero o falso.'
         ];
     }

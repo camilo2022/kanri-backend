@@ -24,6 +24,9 @@ class PositionController extends Controller
     {
         try {
             $positions = Position::with(['area', 'roles', 'permissions'])
+                ->when($request->filled('area_id'), function ($query) use ($request) {
+                    return $query->whereHas('area', fn($r) => $r->where('id', $request->integer('area_id')));
+                })
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })

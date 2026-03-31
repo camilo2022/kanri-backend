@@ -19,8 +19,10 @@ class PersonCollection extends ResourceCollection
                     'gender' => $person->gender,
                     'birth_date' => $person->birth_date,
                     'blood_type' => $person->blood_type,
+                    'photo' => $person->photo,
                     'address' => $person->address,
                     'phone' => $person->phone,
+                    'employee' => $person->employee,
                     'created_at' => $this->formatDate($person->created_at),
                     'updated_at' => $this->formatDate($person->updated_at),
                     'deleted_at' => $this->formatDate($person->deleted_at)

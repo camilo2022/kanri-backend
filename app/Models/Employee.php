@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
 
@@ -77,5 +78,34 @@ class Employee extends Model implements Auditable
     public function compensation_fund(): BelongsTo
     {
         return $this->belongsTo(CompensationFund::class);
+    }
+
+    public function scopeSearch(Builder $query, ?string $search = null): Builder
+    {
+        $search = trim((string) $search);
+        if ($search === '') return $query;
+
+        $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
+
+        return $query->where(function (Builder $q) use ($terms) {
+            foreach ($terms as $term) {
+                $q->orWhere(function (Builder $sq) use ($term) {
+                    $sq->orWhereHas('person', function (Builder $personQuery) use ($term) {
+                        $personQuery->where('document', 'LIKE', '%' . $term . '%')
+                            ->orWhere('names', 'LIKE', '%' . $term . '%')
+                            ->orWhere('last_names', 'LIKE', '%' . $term . '%');
+                    })->orWhereHas('position', function (Builder $positionQuery) use ($term) {
+                        $positionQuery->where('name', 'LIKE', "%{$term}%")
+                            ->orWhereHas('area', function (Builder $areaQuery) use ($term) {
+                                $areaQuery->where('name', 'LIKE', "%{$term}%");
+                            });
+                    })->orWhereHas('arl', function (Builder $arlQuery) use ($term) {
+                        $arlQuery->where('name', 'LIKE', "%{$term}%");
+                    })->orWhereHas('eps', function (Builder $epsQuery) use ($term) {
+                        $epsQuery->where('name', 'LIKE', "%{$term}%");
+                    });
+                });
+            }
+        });
     }
 }

@@ -32,11 +32,11 @@ class EmployeeStoreRequest extends FormRequest
         return [
             'person_id' => ['required', 'numeric', 'exists:people,id,deleted_at,NULL', 'unique:employees,person_id'],
             'operation_center' => ['nullable', 'string'],
-            'position_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.Position::ITEM_ID.',deleted_at,NULL'],
-            'arl_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.Arl::ITEM_ID.',deleted_at,NULL'],
-            'eps_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.Eps::ITEM_ID.',deleted_at,NULL'],
-            'pension_fund_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.PensionFund::ITEM_ID.',deleted_at,NULL'],
-            'compensation_fund_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.CompensationFund::ITEM_ID.',deleted_at,NULL'],
+            'position_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Position::ITEM_ID . ',deleted_at,NULL'],
+            'arl_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Arl::ITEM_ID . ',deleted_at,NULL'],
+            'eps_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Eps::ITEM_ID . ',deleted_at,NULL'],
+            'pension_fund_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . PensionFund::ITEM_ID . ',deleted_at,NULL'],
+            'compensation_fund_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . CompensationFund::ITEM_ID . ',deleted_at,NULL'],
             'start_date' => ['required', 'date', 'date_format:Y-m-d'],
             'end_date' => ['nullable', 'date', 'date_format:Y-m-d', 'after:start_date']
         ];

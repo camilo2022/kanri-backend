@@ -21,12 +21,20 @@ class PersonController extends Controller
     public function all(PersonAllRequest $request)
     {
         try {
-            $people = Person::with(['gender', 'blood_type', 'employee'])
+            $people = Person::with(['gender', 'blood_type', 'employee', 'photo'])
+                ->when($request->boolean('with_employee'), function ($query) use ($request) {
+                    return $query;
+                })
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
                 ->when($request->boolean('with_trashed'), function ($query) use ($request) {
                     return $query->withTrashed();
+                })
+                ->when($request->has('with_employee'), function ($query) use ($request) {
+                    return $request->boolean('with_employee')
+                        ? $query->whereHas('employee')
+                        : $query->whereDoesntHave('employee');
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
                     return $query->orderBy($request->input('column'), $request->input('dir'));
@@ -53,7 +61,7 @@ class PersonController extends Controller
     public function find(PersonFindRequest $request, $id)
     {
         try {
-            $person = Person::with(['gender', 'blood_type', 'employee'])
+            $person = Person::with(['gender', 'blood_type', 'employee', 'photo'])
                 ->findOrFail($id);
 
             return $this->successResponse(

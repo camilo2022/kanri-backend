@@ -30,7 +30,8 @@ class PersonAllRequest extends FormRequest
             'search' => ['nullable', 'string'],
             'column' => ['nullable', 'string', 'in:id,document,names,last_names,gender_id,birth_date,blood_type_id,address,phone,created_at,updated_at,deleted_at'],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
-            'with_trashed' => ['required', 'boolean']
+            'with_trashed' => ['required', 'boolean'],
+            'with_employee' => ['boolean']
         ];
     }
 
@@ -53,12 +54,16 @@ class PersonAllRequest extends FormRequest
             'search' => 'Filtro de Busqueda.',
             'column' => 'Columna a ordenar.',
             'dir' => 'Sentido del orden.',
-            'with_trashed' => 'Registros inactivos'
+            'with_trashed' => 'Registros inactivos',
+            'with_employee' => 'Empleado asociado'
         ];
     }
 
     protected function prepareForValidation()
     {
         $this->merge(['with_trashed' => $this->boolean('with_trashed')]);
+        if ($this->has('with_employee')) {
+            $this->merge(['with_employee' => $this->boolean('with_employee')]);
+        }
     }
 }

@@ -79,7 +79,7 @@ class Person extends Model implements Auditable
                         ->orWhere('birth_date', 'LIKE', '%' . $term . '%')
                         ->orWhere('phone', 'LIKE', '%' . $term . '%')
                         ->orWhereHas('gender', function (Builder $genderQuery) use ($term) {
-                            $genderQuery->where('name', 'LIKE', "%{$term}%");
+                            $genderQuery->where('description', 'LIKE', "%{$term}%");
                         })->orWhereHas('blood_type', function (Builder $bloodQuery) use ($term) {
                             $bloodQuery->where('name', 'LIKE', "%{$term}%");
                         });

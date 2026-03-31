@@ -28,20 +28,20 @@ class EmployeeSeeder extends Seeder
 
         $username = config('services.siesa.username');
         $password = config('services.siesa.password');
-    
+
         $token = Http::asForm()->post("$baseUrl/login/authenticate", [
-                'Username' => $username,
-                'Password' => $password
-            ])
+            'Username' => $username,
+            'Password' => $password
+        ])
             ->throw()
             ->body();
-    
-        $token = trim($token,'"');
-    
+
+        $token = trim($token, '"');
+
         $response = Http::withToken($token)->get("$baseUrl/orgBless/getEmpleados")->throw();
 
         $items = $response->json('detail');
-        
+
         foreach ($items as $item) {
             $area = Area::firstOrCreate(
                 ['name' => $item['Area']],
@@ -57,7 +57,7 @@ class EmployeeSeeder extends Seeder
 
             $gender = Gender::firstOrCreate(
                 ['name' => $item['Genero']],
-                ['description' => $item['Genero']]
+                ['description' => $item['Genero'] == 'F' ? 'Femenino' : 'Masculino']
             );
 
             $blood_type = BloodType::firstOrCreate(

@@ -1313,6 +1313,7 @@ namespace App\Models {
      * @method static \Illuminate\Database\Eloquent\Builder<Employee>|Employee newModelQuery()
      * @method static \Illuminate\Database\Eloquent\Builder<Employee>|Employee newQuery()
      * @method static \Illuminate\Database\Eloquent\Builder<Employee>|Employee query()
+     * @method static \Illuminate\Database\Eloquent\Builder<Employee>|Employee search(?string $search = null) {@see App\Models\Employee::scopeSearch()}
      * @method static mixed select($columns)
      * @method static mixed selectSub($query, $as)
      * @method static mixed selectRaw($expression, array $bindings)
