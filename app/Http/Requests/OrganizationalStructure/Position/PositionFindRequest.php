@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Requests\Area;
+namespace App\Http\Requests\OrganizationalStructure\Position;
 
-use App\Models\Area;
+use App\Models\Position;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class AreaUpdateRequest extends FormRequest
+class PositionFindRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -26,9 +26,7 @@ class AreaUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:subitems,id,item_id,'.Area::ITEM_ID],
-            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.Area::ITEM_ID],
-            'description' => ['nullable', 'string', 'max:255']
+            'id' => ['required', 'exists:subitems,id,item_id,'.Position::ITEM_ID],
         ];
     }
 
@@ -36,20 +34,14 @@ class AreaUpdateRequest extends FormRequest
     {
         return [
             'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.',
-            'exists' => 'No está registrado.'
+            'exists' => 'No hay ningún registro.'
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador del area',
-            'name' => 'Nombre',
-            'description' => 'Descripción'
+            'id' => 'Identificador del cargo'
         ];
     }
 

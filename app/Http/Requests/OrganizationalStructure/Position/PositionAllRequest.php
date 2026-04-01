@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Position;
+namespace App\Http\Requests\OrganizationalStructure\Position;
 
 use App\Models\Area;
 use Illuminate\Contracts\Validation\Validator;
@@ -26,7 +26,7 @@ class PositionAllRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'area_id' => ['nullable', 'numeric', 'exists:subitems,id,item_id,'.Area::ITEM_ID],
+            'area_id' => ['nullable', 'numeric', 'exists:subitems,id,item_id,' . Area::ITEM_ID],
             'per_page' => ['nullable', 'numeric'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],

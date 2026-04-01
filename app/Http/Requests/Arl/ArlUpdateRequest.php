@@ -26,8 +26,8 @@ class ArlUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:subitems,id,item_id,'.Arl::ITEM_ID],
-            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.Arl::ITEM_ID],
+            'id' => ['required', 'exists:subitems,id,item_id,' . Arl::ITEM_ID],
+            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Arl::ITEM_ID],
             'description' => ['nullable', 'string', 'max:255']
         ];
     }

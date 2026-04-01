@@ -19,6 +19,8 @@ class Area extends Model implements Auditable
 
     protected $table = 'subitems';
 
+    protected $guard_name = 'api';
+
     protected $fillable = [
         'item_id',
         'name',
@@ -72,10 +74,9 @@ class Area extends Model implements Auditable
         return $query->where(function (Builder $q) use ($terms) {
             foreach ($terms as $term) {
                 $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $term) . '%';
-
                 $q->where(function (Builder $sq) use ($like) {
-                    $sq->orWhere('name', 'ILIKE', $like)
-                        ->orWhere('description', 'ILIKE', $like);
+                    $sq->orWhere('name', 'LIKE', $like)
+                        ->orWhere('description', 'LIKE', $like);
                 });
             }
         });

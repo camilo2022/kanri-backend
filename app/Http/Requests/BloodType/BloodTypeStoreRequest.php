@@ -26,7 +26,7 @@ class BloodTypeStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.BloodType::ITEM_ID],
+            'name' => ['required', 'string', 'min:2', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . BloodType::ITEM_ID],
             'description' => ['nullable', 'string', 'max:255']
         ];
     }

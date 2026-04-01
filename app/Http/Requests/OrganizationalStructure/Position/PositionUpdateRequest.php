@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Requests\Position;
+namespace App\Http\Requests\OrganizationalStructure\Position;
 
 use App\Models\Position;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class PositionAuthorizationAssignRequest extends FormRequest
+class PositionUpdateRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -26,8 +26,9 @@ class PositionAuthorizationAssignRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.Position::ITEM_ID],
-            'permission_id' => ['required', 'numeric', 'exists:permissions,id']
+            'id' => ['required', 'exists:subitems,id,item_id,' . Position::ITEM_ID],
+            'name' => ['required', 'string', 'uppercase', 'min:5', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Position::ITEM_ID],
+            'description' => ['nullable', 'uppercase', 'string', 'max:255']
         ];
     }
 
@@ -35,8 +36,11 @@ class PositionAuthorizationAssignRequest extends FormRequest
     {
         return [
             'required' => 'Es obligatorio.',
-            'numeric' => 'Debe ser un número.',
-            'exists' => 'No hay ningún registro.'
+            'string' => 'Debe ser una cadena de texto.',
+            'max' => 'Se permite máximo :max caracteres.',
+            'min' => 'Se permite mínimo :min caracteres.',
+            'unique' => 'Ya está registrado.',
+            'exists' => 'No está registrado.'
         ];
     }
 
@@ -44,7 +48,8 @@ class PositionAuthorizationAssignRequest extends FormRequest
     {
         return [
             'id' => 'Identificador del cargo',
-            'permission_id' => 'Identificador del permiso'
+            'name' => 'Nombre',
+            'description' => 'Descripción'
         ];
     }
 

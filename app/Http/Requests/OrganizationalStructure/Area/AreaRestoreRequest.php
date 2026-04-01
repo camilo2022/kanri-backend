@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Http\Requests\Area;
+namespace App\Http\Requests\OrganizationalStructure\Area;
 
 use App\Models\Area;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 
-class AreaFindRequest extends FormRequest
+class AreaRestoreRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -26,7 +27,7 @@ class AreaFindRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:subitems,id,item_id,'.Area::ITEM_ID],
+            'id' => ['required', Rule::exists('subitems', 'id')->where('item_id', Area::ITEM_ID)->whereNotNull('deleted_at')]
         ];
     }
 
@@ -41,7 +42,7 @@ class AreaFindRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador del area'
+            'id' => 'Identificador de la area'
         ];
     }
 

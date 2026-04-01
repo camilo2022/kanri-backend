@@ -107,28 +107,30 @@ Route::prefix('/employees')->group(function () {
     });
 });
 
-Route::prefix('/areas')->group(function () {
-    Route::controller(AreaController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:areas,areas.all']);
-        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:areas,areas.find']);
-        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:areas,areas.store']);
-        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:areas,areas.update']);
-        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:areas,areas.delete']);
-        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:areas,areas.restore']);
-    });
-});
+Route::prefix('/organizational_structure')->group(function () {
+    Route::prefix('/areas')->group(function () {
+        Route::controller(AreaController::class)->group(function () {
+            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:organizational_structure,organizational_structure.areas.all']);
+            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:organizational_structure,organizational_structure.areas.find']);
+            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:organizational_structure,organizational_structure.areas.store']);
+            Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:organizational_structure,organizational_structure.areas.update']);
+            Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:organizational_structure,organizational_structure.areas.delete']);
+            Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:organizational_structure,organizational_structure.areas.restore']);
+        });
 
-Route::prefix('/positions')->group(function () {
-    Route::controller(PositionController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:positions,positions.all']);
-        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:positions,positions.find']);
-        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:positions,positions.store']);
-        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:positions,positions.update']);
-        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:positions,positions.delete']);
-        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:positions,positions.restore']);
-        Route::prefix('/authorization')->group(function () {
-            Route::post('/assign/{id}', 'assign')->middleware(['auth:sanctum', 'can:positions,positions.authorization.assign']);
-            Route::post('/remove/{id}', 'remove')->middleware(['auth:sanctum', 'can:positions,positions.authorization.remove']);
+        Route::prefix('/positions')->group(function () {
+            Route::controller(PositionController::class)->group(function () {
+                Route::get('/all/{area_id}', 'all')->middleware(['auth:sanctum', 'can:organizational_structure,organizational_structure.areas.positions.all']);
+                Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:organizational_structure,organizational_structure.areas.positions.find']);
+                Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:organizational_structure,organizational_structure.areas.positions.store']);
+                Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:organizational_structure,organizational_structure.areas.positions.update']);
+                Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:organizational_structure,organizational_structure.areas.positions.delete']);
+                Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:organizational_structure,organizational_structure.areas.positions.restore']);
+                Route::prefix('/authorization')->group(function () {
+                    Route::post('/assign/{id}', 'assign')->middleware(['auth:sanctum', 'can:organizational_structure,organizational_structure.areas.positions.authorization.assign']);
+                    Route::post('/remove/{id}', 'remove')->middleware(['auth:sanctum', 'can:organizational_structure,organizational_structure.areas.positions.authorization.remove']);
+                });
+            });
         });
     });
 });

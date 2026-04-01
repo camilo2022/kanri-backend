@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Resources\Area;
+namespace App\Http\Resources\OrganizationalStructure\Area;
 
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\ResourceCollection;

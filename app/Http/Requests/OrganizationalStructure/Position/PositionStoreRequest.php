@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Http\Requests\Area;
+namespace App\Http\Requests\OrganizationalStructure\Position;
 
 use App\Models\Area;
+use App\Models\Position;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class AreaStoreRequest extends FormRequest
+class PositionStoreRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -26,19 +27,22 @@ class AreaStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.Area::ITEM_ID],
-            'description' => ['nullable', 'string', 'max:255']
+            'area_id' => ['required', 'exists:subitems,id,item_id,' . Area::ITEM_ID],
+            'name' => ['required', 'uppercase', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Position::ITEM_ID],
+            'description' => ['nullable', 'uppercase', 'string', 'max:255']
         ];
     }
 
     public function messages(): array
     {
         return [
+            'exists' => 'No está registrado.',
             'required' => 'Es obligatorio.',
             'string' => 'Debe ser una cadena de texto.',
             'max' => 'Se permite máximo :max caracteres.',
             'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.'
+            'unique' => 'Ya está registrado.',
+            'uppercase' => 'El campo debe estar en mayúsculas.'
         ];
     }
 

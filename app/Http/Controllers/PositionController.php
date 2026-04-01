@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Position\PositionAllRequest;
-use App\Http\Requests\Position\PositionAuthorizationAssignRequest;
-use App\Http\Requests\Position\PositionAuthorizationRemoveRequest;
-use App\Http\Requests\Position\PositionDeleteRequest;
-use App\Http\Requests\Position\PositionFindRequest;
-use App\Http\Requests\Position\PositionRestoreRequest;
-use App\Http\Requests\Position\PositionStoreRequest;
-use App\Http\Requests\Position\PositionUpdateRequest;
-use App\Http\Resources\Position\PositionCollection;
+use App\Http\Requests\OrganizationalStructure\Position\PositionAllRequest;
+use App\Http\Requests\OrganizationalStructure\Position\PositionAuthorizationAssignRequest;
+use App\Http\Requests\OrganizationalStructure\Position\PositionAuthorizationRemoveRequest;
+use App\Http\Requests\OrganizationalStructure\Position\PositionDeleteRequest;
+use App\Http\Requests\OrganizationalStructure\Position\PositionFindRequest;
+use App\Http\Requests\OrganizationalStructure\Position\PositionRestoreRequest;
+use App\Http\Requests\OrganizationalStructure\Position\PositionStoreRequest;
+use App\Http\Requests\OrganizationalStructure\Position\PositionUpdateRequest;
+use App\Http\Resources\OrganizationalStructure\Position\PositionCollection;
 use App\Models\Permission;
 use App\Models\Position;
 use App\Traits\ApiMessage;
@@ -20,13 +20,11 @@ class PositionController extends Controller
 {
     use ApiMessage, ApiResponser;
 
-    public function all(PositionAllRequest $request)
+    public function all(PositionAllRequest $request, $area_id)
     {
         try {
             $positions = Position::with(['area', 'roles', 'permissions'])
-                ->when($request->filled('area_id'), function ($query) use ($request) {
-                    return $query->whereHas('area', fn($r) => $r->where('id', $request->integer('area_id')));
-                })
+                ->whereHas('area', fn($r) => $r->where('id', $area_id))
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -87,6 +85,8 @@ class PositionController extends Controller
             $position->description = $request->input('description');
             $position->save();
 
+            $position->area()->sync([$request->integer('area_id')]);
+
             return $this->successResponse(
                 [
                     'position' => $position
@@ -112,6 +112,8 @@ class PositionController extends Controller
             $position->name = $request->input('name');
             $position->description = $request->input('description');
             $position->save();
+
+            $position->area()->sync([$request->integer('area_id')]);
 
             return $this->successResponse(
                 [

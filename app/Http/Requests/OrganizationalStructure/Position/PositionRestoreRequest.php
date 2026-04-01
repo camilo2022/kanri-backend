@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Http\Requests\Position;
+namespace App\Http\Requests\OrganizationalStructure\Position;
 
 use App\Models\Position;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 
-class PositionDeleteRequest extends FormRequest
+class PositionRestoreRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -26,7 +27,7 @@ class PositionDeleteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:subitems,id,deleted_at,NULL,item_id,'.Position::ITEM_ID],
+            'id' => ['required', Rule::exists('subitems', 'id')->where('item_id', Position::ITEM_ID)->whereNotNull('deleted_at')]
         ];
     }
 
@@ -41,7 +42,7 @@ class PositionDeleteRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador del cargo'
+            'id' => 'Identificador de la cargo'
         ];
     }
 

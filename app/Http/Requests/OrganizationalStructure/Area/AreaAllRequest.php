@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Area;
+namespace App\Http\Requests\OrganizationalStructure\Area;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;

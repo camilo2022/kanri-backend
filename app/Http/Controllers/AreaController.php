@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Area\AreaAllRequest;
-use App\Http\Requests\Area\AreaDeleteRequest;
-use App\Http\Requests\Area\AreaFindRequest;
-use App\Http\Requests\Area\AreaRestoreRequest;
-use App\Http\Requests\Area\AreaStoreRequest;
-use App\Http\Requests\Area\AreaUpdateRequest;
-use App\Http\Resources\Area\AreaCollection;
+use App\Http\Requests\OrganizationalStructure\Area\AreaAllRequest;
+use App\Http\Requests\OrganizationalStructure\Area\AreaDeleteRequest;
+use App\Http\Requests\OrganizationalStructure\Area\AreaFindRequest;
+use App\Http\Requests\OrganizationalStructure\Area\AreaRestoreRequest;
+use App\Http\Requests\OrganizationalStructure\Area\AreaStoreRequest;
+use App\Http\Requests\OrganizationalStructure\Area\AreaUpdateRequest;
+use App\Http\Resources\OrganizationalStructure\Area\AreaCollection;
 use App\Models\Area;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;

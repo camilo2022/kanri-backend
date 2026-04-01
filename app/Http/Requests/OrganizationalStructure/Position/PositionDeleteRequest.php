@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Requests\Area;
+namespace App\Http\Requests\OrganizationalStructure\Position;
 
-use App\Models\Area;
+use App\Models\Position;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class AreaDeleteRequest extends FormRequest
+class PositionDeleteRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -26,7 +26,7 @@ class AreaDeleteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:subitems,id,deleted_at,NULL,item_id,'.Area::ITEM_ID],
+            'id' => ['required', 'exists:subitems,id,deleted_at,NULL,item_id,'.Position::ITEM_ID],
         ];
     }
 
@@ -41,7 +41,7 @@ class AreaDeleteRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador del area'
+            'id' => 'Identificador del cargo'
         ];
     }
 

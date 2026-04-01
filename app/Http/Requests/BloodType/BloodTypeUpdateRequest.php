@@ -26,8 +26,8 @@ class BloodTypeUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:subitems,id,item_id,'.BloodType::ITEM_ID],
-            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.BloodType::ITEM_ID],
+            'id' => ['required', 'exists:subitems,id,item_id,' . BloodType::ITEM_ID],
+            'name' => ['required', 'string', 'min:2', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . BloodType::ITEM_ID],
             'description' => ['nullable', 'string', 'max:255']
         ];
     }

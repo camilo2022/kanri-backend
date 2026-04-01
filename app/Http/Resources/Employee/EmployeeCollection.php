@@ -20,6 +20,7 @@ class EmployeeCollection extends ResourceCollection
                     'eps' => $employee->eps,
                     'pension_fund' => $employee->pension_fund,
                     'compensation_fund' => $employee->compensation_fund,
+                    'user' => $employee->user,
                     'start_date' => $employee->start_date,
                     'end_date' => $employee->end_date,
                     'created_at' => $this->formatDate($employee->created_at),

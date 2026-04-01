@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Requests\Position;
+namespace App\Http\Requests\OrganizationalStructure\Area;
 
-use App\Models\Position;
+use App\Models\Area;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class PositionAuthorizationRemoveRequest extends FormRequest
+class AreaStoreRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -26,8 +26,8 @@ class PositionAuthorizationRemoveRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.Position::ITEM_ID],
-            'permission_id' => ['required', 'numeric', 'exists:permissions,id']
+            'name' => ['required', 'uppercase', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Area::ITEM_ID],
+            'description' => ['nullable', 'string', 'max:255', 'uppercase']
         ];
     }
 
@@ -35,21 +35,19 @@ class PositionAuthorizationRemoveRequest extends FormRequest
     {
         return [
             'required' => 'Es obligatorio.',
-            'numeric' => 'Debe ser un número.',
-            'exists' => 'No hay ningún registro.'
+            'string' => 'Debe ser una cadena de texto.',
+            'max' => 'Se permite máximo :max caracteres.',
+            'min' => 'Se permite mínimo :min caracteres.',
+            'unique' => 'Ya está registrado.',
+            'uppercase' => 'El campo debe estar en mayúsculas.'
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador del cargo',
-            'permission_id' => 'Identificador del permiso'
+            'name' => 'Nombre',
+            'description' => 'Descripción'
         ];
-    }
-
-    protected function prepareForValidation()
-    {
-        $this->merge(['id' => $this->route('id')]);
     }
 }
