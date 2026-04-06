@@ -26,8 +26,8 @@ class CompensationFundUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:subitems,id,item_id,'.CompensationFund::ITEM_ID],
-            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.CompensationFund::ITEM_ID],
+            'id' => ['required', 'exists:subitems,id,item_id,' . CompensationFund::ITEM_ID],
+            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . CompensationFund::ITEM_ID],
             'description' => ['nullable', 'string', 'max:255']
         ];
     }
@@ -47,7 +47,7 @@ class CompensationFundUpdateRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador de la eps',
+            'id' => 'Identificador de la caja de compensación',
             'name' => 'Nombre',
             'description' => 'Descripción'
         ];

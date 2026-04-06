@@ -28,9 +28,10 @@ class EmployeeAllRequest extends FormRequest
             'per_page' => ['nullable', 'numeric'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
-            'column' => ['nullable', 'string', 'in:id,person_id,operation_center,position_id,arl_id,eps_id,pension_fund_id,compensation_fund_id,start_date,end_date,created_at,updated_at,deleted_at'],
+            'column' => ['nullable', 'string', 'in:id,person_id,operation_center,position_id,risk_manager_id,health_entity_id,pension_fund_id,compensation_fund_id,start_date,end_date,created_at,updated_at,deleted_at'],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
-            'with_trashed' => ['required', 'boolean']
+            'with_trashed' => ['required', 'boolean'],
+            'with_user' => ['nullable', 'boolean']
         ];
     }
 
@@ -53,12 +54,17 @@ class EmployeeAllRequest extends FormRequest
             'search' => 'Filtro de Busqueda.',
             'column' => 'Columna a ordenar.',
             'dir' => 'Sentido del orden.',
-            'with_trashed' => 'Registros inactivos'
+            'with_trashed' => 'Registros inactivos',
+            'with_user' => 'Usuario asociado'
+
         ];
     }
 
     protected function prepareForValidation()
     {
         $this->merge(['with_trashed' => $this->boolean('with_trashed')]);
+        if ($this->has('with_user')) {
+            $this->merge(['with_user' => $this->boolean('with_user')]);
+        }
     }
 }

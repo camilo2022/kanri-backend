@@ -9,13 +9,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
 
-class Arl extends Model implements Auditable
+class HealthEntity extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
 
-    public const ITEM_ID = 7;
+    public const ITEM_ID = 8;
 
     protected $table = 'subitems';
+
+    protected $guard_name = 'api';
 
     protected $fillable = [
         'item_id',
@@ -67,8 +69,8 @@ class Arl extends Model implements Auditable
                 $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $term) . '%';
 
                 $q->where(function (Builder $sq) use ($like) {
-                    $sq->orWhere('name', 'ILIKE', $like)
-                       ->orWhere('description', 'ILIKE', $like);
+                    $sq->orWhere('name', 'LIKE', $like)
+                        ->orWhere('description', 'LIKE', $like);
                 });
             }
         });

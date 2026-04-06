@@ -28,7 +28,8 @@ class ModuleAllRequest extends FormRequest
             'per_page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
             'column' => ['nullable', 'string', 'in:id,name,icon,created_at,updated_at'],
-            'dir' => ['nullable', 'string', 'in:asc,desc']
+            'dir' => ['nullable', 'string', 'in:asc,desc'],
+            'with_trashed' => ['required', 'boolean']
         ];
     }
 
@@ -51,7 +52,12 @@ class ModuleAllRequest extends FormRequest
             'search' => 'Filtro de Busqueda. ',
             'column' => 'Columna a ordenar. ',
             'dir' => 'Sentido del orden. ',
-
+            'with_trashed' => 'Registros inactivos'
         ];
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->merge(['with_trashed' => $this->boolean('with_trashed')]);
     }
 }

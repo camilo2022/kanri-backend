@@ -41,7 +41,7 @@ class PensionFundFindRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador de la eps'
+            'id' => 'Identificador del fondo de pensión'
         ];
     }
 

@@ -286,33 +286,33 @@ class RolesAndPermissionsSeeder extends Seeder
 
             [
                 'role' => [
-                    'name' => 'arl',
-                    'title' => 'ARL',
-                    'description' => 'Gestión de ARL.',
+                    'name' => 'risk_manager',
+                    'title' => 'Admininistradoras de riesgos',
+                    'description' => 'Gestión de Administradoras de riesgos.',
                 ],
                 'permissions' => [
-                    ['name' => 'arl.all', 'title' => 'Listar ARL', 'description' => 'Permite listar ARL.'],
-                    ['name' => 'arl.find', 'title' => 'Consultar ARL', 'description' => 'Permite consultar ARL.'],
-                    ['name' => 'arl.store', 'title' => 'Crear ARL', 'description' => 'Permite crear ARL.'],
-                    ['name' => 'arl.update', 'title' => 'Actualizar ARL', 'description' => 'Permite actualizar ARL.'],
-                    ['name' => 'arl.delete', 'title' => 'Eliminar ARL', 'description' => 'Permite eliminar ARL.'],
-                    ['name' => 'arl.restore', 'title' => 'Restaurar ARL', 'description' => 'Permite restaurar ARL.'],
+                    ['name' => 'risk_manager.all', 'title' => 'Listar Administradoras de riesgos.', 'description' => 'Permite listar Administradoras de riesgos..'],
+                    ['name' => 'risk_manager.find', 'title' => 'Consultar Administradoras de riesgos.', 'description' => 'Permite consultar Administradoras de riesgos..'],
+                    ['name' => 'risk_manager.store', 'title' => 'Crear Administradoras de riesgos.', 'description' => 'Permite crear Administradoras de riesgos..'],
+                    ['name' => 'risk_manager.update', 'title' => 'Actualizar Administradoras de riesgos.', 'description' => 'Permite actualizar Administradoras de riesgos..'],
+                    ['name' => 'risk_manager.delete', 'title' => 'Eliminar Administradoras de riesgos.', 'description' => 'Permite eliminar Administradoras de riesgos..'],
+                    ['name' => 'risk_manager.restore', 'title' => 'Restaurar Administradoras de riesgos.', 'description' => 'Permite restaurar Administradoras de riesgos..'],
                 ]
             ],
 
             [
                 'role' => [
-                    'name' => 'eps',
-                    'title' => 'EPS',
-                    'description' => 'Gestión de EPS.',
+                    'name' => 'health_entity',
+                    'title' => 'Entidades de Salud',
+                    'description' => 'Gestión de Entidades de Salud.',
                 ],
                 'permissions' => [
-                    ['name' => 'eps.all', 'title' => 'Listar EPS', 'description' => 'Permite listar EPS.'],
-                    ['name' => 'eps.find', 'title' => 'Consultar EPS', 'description' => 'Permite consultar EPS.'],
-                    ['name' => 'eps.store', 'title' => 'Crear EPS', 'description' => 'Permite crear EPS.'],
-                    ['name' => 'eps.update', 'title' => 'Actualizar EPS', 'description' => 'Permite actualizar EPS.'],
-                    ['name' => 'eps.delete', 'title' => 'Eliminar EPS', 'description' => 'Permite eliminar EPS.'],
-                    ['name' => 'eps.restore', 'title' => 'Restaurar EPS', 'description' => 'Permite restaurar EPS.'],
+                    ['name' => 'health_entity.all', 'title' => 'Listar Entidades de Salud', 'description' => 'Permite listar Entidades de Salud.'],
+                    ['name' => 'health_entity.find', 'title' => 'Consultar Entidades de Salud', 'description' => 'Permite consultar Entidades de Salud.'],
+                    ['name' => 'health_entity.store', 'title' => 'Crear Entidades de Salud', 'description' => 'Permite crear Entidades de Salud.'],
+                    ['name' => 'health_entity.update', 'title' => 'Actualizar Entidades de Salud', 'description' => 'Permite actualizar Entidades de Salud.'],
+                    ['name' => 'health_entity.delete', 'title' => 'Eliminar Entidades de Salud', 'description' => 'Permite eliminar Entidades de Salud.'],
+                    ['name' => 'health_entity.restore', 'title' => 'Restaurar Entidades de Salud', 'description' => 'Permite restaurar Entidades de Salud.'],
                 ]
             ],
 

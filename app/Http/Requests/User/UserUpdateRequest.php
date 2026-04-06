@@ -29,7 +29,7 @@ class UserUpdateRequest extends FormRequest
             'employee_id' => ['required', 'numeric', 'exists:employees,id,deleted_at,NULL', 'unique:users,employee_id,' . $this->route('id') . ',id'],
             'email' => ['required', 'string', 'email', 'max:40', 'unique:users,email,' . $this->route('id') . ',id',],
             'password' => ['nullable', 'string', 'min:8', 'regex:~^(?=.*\p{Ll})(?=.*\p{Lu})(?=.*\d)(?=.*[@$!%*#?&._-]).{8,}$~u', 'confirmed'],
-            'password_confirmation' => ['nullable', 'string', 'min:8', 'regex:~^(?=.*\p{Ll})(?=.*\p{Lu})(?=.*\d)(?=.*[@$!%*#?&._-]).{8,}$~u', 'confirmed']
+            'password_confirmation' => ['required', 'string', 'min:8', 'regex:~^(?=.*\p{Ll})(?=.*\p{Lu})(?=.*\d)(?=.*[@$!%*#?&._-]).{8,}$~u',]
         ];
     }
 

@@ -148,7 +148,7 @@ class AuthController extends Controller
         try {
             $user = Auth::user();
 
-            $user->load(['employee' => ['person' => ['gender', 'blood_type'], 'position' => ['area'], 'arl', 'eps', 'pension_fund', 'compensation_fund'], 'roles', 'permissions']);
+            $user->load(['employee' => ['person' => ['gender', 'blood_type'], 'position' => ['area'], 'risk_manager', 'health_entity', 'pension_fund', 'compensation_fund'], 'roles', 'permissions']);
 
             $navegation = Module::with(['submodules' => fn($query) => $query->whereIn('permission_id', Auth::user()->permissions->modelKeys())])
                 ->whereHas('submodules', fn($query) => $query->whereIn('permission_id', Auth::user()->permissions->modelKeys()))

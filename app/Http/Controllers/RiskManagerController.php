@@ -2,27 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Arl\ArlAllRequest;
-use App\Http\Requests\Arl\ArlDeleteRequest;
-use App\Http\Requests\Arl\ArlFindRequest;
-use App\Http\Requests\Arl\ArlRestoreRequest;
-use App\Http\Requests\Arl\ArlStoreRequest;
-use App\Http\Requests\Arl\ArlUpdateRequest;
-use App\Http\Resources\Arl\ArlCollection;
-use App\Models\Arl;
+use App\Http\Requests\RiskManager\RiskManagerAllRequest;
+use App\Http\Requests\RiskManager\RiskManagerDeleteRequest;
+use App\Http\Requests\RiskManager\RiskManagerFindRequest;
+use App\Http\Requests\RiskManager\RiskManagerRestoreRequest;
+use App\Http\Requests\RiskManager\RiskManagerStoreRequest;
+use App\Http\Requests\RiskManager\RiskManagerUpdateRequest;
+use App\Http\Resources\RiskManager\RiskManagerCollection;
+use App\Models\RiskManager;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 
-class ArlController extends Controller
+class RiskManagerController extends Controller
 {
     use ApiMessage, ApiResponser;
 
-    public function all(ArlAllRequest $request)
+    public function all(RiskManagerAllRequest $request)
     {
         try {
-            $arls = Arl::when($request->filled('search'), function ($query) use ($request) {
-                    return $query->search($request->input('search'));
-                })
+            $risk_managers = RiskManager::when($request->filled('search'), function ($query) use ($request) {
+                return $query->search($request->input('search'));
+            })
                 ->when($request->boolean('with_trashed'), function ($query) {
                     return $query->withTrashed();
                 })
@@ -30,10 +30,10 @@ class ArlController extends Controller
                     return $query->orderBy($request->input('column'), $request->input('dir'));
                 });
 
-            $arls = $arls->paginate($request->integer('per_page', $arls->count()));
+            $risk_managers = $risk_managers->paginate($request->integer('per_page', $risk_managers->count()));
 
             return $this->successResponse(
-                new ArlCollection($arls),
+                new RiskManagerCollection($risk_managers),
                 $this->getMessage('Success'),
                 200
             );
@@ -48,14 +48,14 @@ class ArlController extends Controller
         }
     }
 
-    public function find(ArlFindRequest $request, $id)
+    public function find(RiskManagerFindRequest $request, $id)
     {
         try {
-            $arl = Arl::findOrFail($id);
+            $risk_manager = RiskManager::findOrFail($id);
 
             return $this->successResponse(
                 [
-                    'arl' => $arl
+                    'risk_manager' => $risk_manager
                 ],
                 $this->getMessage('Success'),
                 200
@@ -71,17 +71,17 @@ class ArlController extends Controller
         }
     }
 
-    public function store(ArlStoreRequest $request)
+    public function store(RiskManagerStoreRequest $request)
     {
         try {
-            $arl = new Arl();
-            $arl->name = $request->input('name');
-            $arl->description = $request->input('description');
-            $arl->save();
+            $risk_manager = new RiskManager();
+            $risk_manager->name = $request->input('name');
+            $risk_manager->description = $request->input('description');
+            $risk_manager->save();
 
             return $this->successResponse(
                 [
-                    'arl' => $arl
+                    'risk_manager' => $risk_manager
                 ],
                 $this->getMessage('Success'),
                 201
@@ -97,17 +97,17 @@ class ArlController extends Controller
         }
     }
 
-    public function update(ArlUpdateRequest $request, $id)
+    public function update(RiskManagerUpdateRequest $request, $id)
     {
         try {
-            $arl = Arl::findOrFail($id);
-            $arl->name = $request->input('name');
-            $arl->description = $request->input('description');
-            $arl->save();
+            $risk_manager = RiskManager::findOrFail($id);
+            $risk_manager->name = $request->input('name');
+            $risk_manager->description = $request->input('description');
+            $risk_manager->save();
 
             return $this->successResponse(
                 [
-                    'arl' => $arl
+                    'risk_manager' => $risk_manager
                 ],
                 $this->getMessage('Success'),
                 200
@@ -123,15 +123,15 @@ class ArlController extends Controller
         }
     }
 
-    public function delete(ArlDeleteRequest $request, $id)
+    public function delete(RiskManagerDeleteRequest $request, $id)
     {
         try {
-            $arl = Arl::findOrFail($id);
-            $arl->delete();
+            $risk_manager = RiskManager::findOrFail($id);
+            $risk_manager->delete();
 
             return $this->successResponse(
                 [
-                    'arl' => $arl
+                    'risk_manager' => $risk_manager
                 ],
                 $this->getMessage('Success'),
                 200
@@ -147,15 +147,15 @@ class ArlController extends Controller
         }
     }
 
-    public function restore(ArlRestoreRequest $request, $id)
+    public function restore(RiskManagerRestoreRequest $request, $id)
     {
         try {
-            $arl = Arl::withTrashed()->findOrFail($id);
-            $arl->restore();
+            $risk_manager = RiskManager::withTrashed()->findOrFail($id);
+            $risk_manager->restore();
 
             return $this->successResponse(
                 [
-                    'arl' => $arl
+                    'risk_manager' => $risk_manager
                 ],
                 $this->getMessage('Success'),
                 200

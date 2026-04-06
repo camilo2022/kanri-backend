@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Requests\Arl;
+namespace App\Http\Requests\RiskManager;
 
-use App\Models\Arl;
+use App\Models\RiskManager;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class ArlFindRequest extends FormRequest
+class RiskManagerUpdateRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -26,7 +26,9 @@ class ArlFindRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:subitems,id,item_id,'.Arl::ITEM_ID],
+            'id' => ['required', 'exists:subitems,id,item_id,' . RiskManager::ITEM_ID],
+            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . RiskManager::ITEM_ID],
+            'description' => ['nullable', 'string', 'max:255']
         ];
     }
 
@@ -34,14 +36,20 @@ class ArlFindRequest extends FormRequest
     {
         return [
             'required' => 'Es obligatorio.',
-            'exists' => 'No hay ningún registro.'
+            'string' => 'Debe ser una cadena de texto.',
+            'max' => 'Se permite máximo :max caracteres.',
+            'min' => 'Se permite mínimo :min caracteres.',
+            'unique' => 'Ya está registrado.',
+            'exists' => 'No está registrado.'
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador de la arl'
+            'id' => 'Identificador de la empresa administradora de riesgos',
+            'name' => 'Nombre',
+            'description' => 'Descripción'
         ];
     }
 

@@ -3,10 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\Area;
-use App\Models\Arl;
+use App\Models\RiskManager;
 use App\Models\BloodType;
 use App\Models\CompensationFund;
-use App\Models\Eps;
+use App\Models\HealthEntity;
 use App\Models\FileSubtype;
 use App\Models\FileType;
 use App\Models\Gender;
@@ -94,24 +94,24 @@ class ItemsAndSubitemsSeeder extends Seeder
         $blood_type->save();
 
         $item = new Item();
-        $item->name = 'ARL';
+        $item->name = 'Administrador de Riesgos';
         $item->description = 'Listado de administradoras de riesgos laborales.';
         $item->save();
 
-        $arl = new Arl();
-        $arl->name = 'No aplica';
-        $arl->description = 'No aplica';
-        $arl->save();
+        $risk_manager = new RiskManager();
+        $risk_manager->name = 'No aplica';
+        $risk_manager->description = 'No aplica';
+        $risk_manager->save();
 
         $item = new Item();
-        $item->name = 'EPS';
+        $item->name = 'Entidades de Salud';
         $item->description = 'Listado de entidades promotoras de salud.';
         $item->save();
 
-        $eps = new Eps();
-        $eps->name = 'No aplica';
-        $eps->description = 'No aplica';
-        $eps->save();
+        $health_entity = new HealthEntity();
+        $health_entity->name = 'No aplica';
+        $health_entity->description = 'No aplica';
+        $health_entity->save();
 
         $item = new Item();
         $item->name = 'Fondo de pensión';

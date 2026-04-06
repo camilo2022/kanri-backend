@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Requests\Eps;
+namespace App\Http\Requests\HealthEntity;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class EpsAllRequest extends FormRequest
+class HealthEntityAllRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {

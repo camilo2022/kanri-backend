@@ -1,14 +1,13 @@
 <?php
 
-namespace App\Http\Requests\Arl;
+namespace App\Http\Requests\RiskManager;
 
-use App\Models\Arl;
+use App\Models\RiskManager;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\Rule;
 
-class ArlRestoreRequest extends FormRequest
+class RiskManagerFindRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -27,7 +26,7 @@ class ArlRestoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', Rule::exists('subitems', 'id')->where('item_id', Arl::ITEM_ID)->whereNotNull('deleted_at')]
+            'id' => ['required', 'exists:subitems,id,item_id,' . RiskManager::ITEM_ID],
         ];
     }
 
@@ -42,7 +41,7 @@ class ArlRestoreRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador de la arl'
+            'id' => 'Identificador de la empresa administradora de riesgos'
         ];
     }
 

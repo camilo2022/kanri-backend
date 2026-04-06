@@ -26,10 +26,11 @@ class PositionAuthorizationRemoveRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.Position::ITEM_ID],
-            'permission_id' => ['required', 'numeric', 'exists:permissions,id']
+            'id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Position::ITEM_ID],
+            'permission_id' => ['required', 'numeric', 'exists:permissions,id', 'exists:model_has_permissions,permission_id,model_type,' . Position::class . ',model_id,' . $this->route('id')]
         ];
     }
+
 
     public function messages(): array
     {

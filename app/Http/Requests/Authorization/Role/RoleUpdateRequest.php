@@ -26,9 +26,9 @@ class RoleUpdateRequest extends FormRequest
     {
         return [
             'id' => ['required', 'exists:roles,id'],
-            'name' => ['required', 'string', 'unique:roles,name,'.$this->route('id').',id', 'max:80', 'regex:/^[a-z.]+$/'],
-            'title' => ['required', 'string', 'unique:roles,title,'.$this->route('id').',id', 'max:100'],
-            'description' => ['required', 'string', 'unique:roles,description,'.$this->route('id').',id', 'max:255'],
+            'name' => ['required', 'string', 'unique:roles,name,' . $this->route('id') . ',id', 'max:80', 'regex:/^[a-z_]+$/'],
+            'title' => ['required', 'string', 'unique:roles,title,' . $this->route('id') . ',id', 'max:100'],
+            'description' => ['required', 'string', 'unique:roles,description,' . $this->route('id') . ',id', 'max:255'],
         ];
     }
 

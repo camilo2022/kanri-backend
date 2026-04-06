@@ -20,12 +20,20 @@ class EmployeeController extends Controller
     public function all(EmployeeAllRequest $request)
     {
         try {
-            $employees = Employee::with(['person' => ['photo'], 'position' => ['area'], 'arl', 'eps', 'pension_fund', 'compensation_fund', 'user' => ['roles', 'permissions']])
+            $employees = Employee::with(['person' => ['photo'], 'position' => ['area'], 'risk_manager', 'health_entity', 'pension_fund', 'compensation_fund', 'user' => ['roles', 'permissions']])
+                ->when($request->boolean('with_user'), function ($query) use ($request) {
+                    return $query;
+                })
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
                 ->when($request->boolean('with_trashed'), function ($query) {
                     return $query->withTrashed();
+                })
+                ->when($request->has('with_user'), function ($query) use ($request) {
+                    return $request->boolean('with_user')
+                        ? $query->whereHas('user')
+                        : $query->whereDoesntHave('user');
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
                     return $query->orderBy($request->input('column'), $request->input('dir'));
@@ -52,7 +60,7 @@ class EmployeeController extends Controller
     public function find(EmployeeFindRequest $request, $id)
     {
         try {
-            $employee = Employee::with(['person' => ['photo'], 'position' => ['area'], 'arl', 'eps', 'pension_fund', 'compensation_fund', 'user' => ['roles', 'permissions']])
+            $employee = Employee::with(['person' => ['photo'], 'position' => ['area'], 'risk_manager', 'health_entity', 'pension_fund', 'compensation_fund', 'user' => ['roles', 'permissions']])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -80,8 +88,8 @@ class EmployeeController extends Controller
             $employee->person_id = $request->integer('person_id');
             $employee->operation_center = $request->input('operation_center', null);
             $employee->position_id = $request->integer('position_id');
-            $employee->arl_id = $request->integer('arl_id');
-            $employee->eps_id = $request->integer('eps_id');
+            $employee->risk_manager_id = $request->integer('risk_manager_id');
+            $employee->health_entity_id = $request->integer('health_entity_id');
             $employee->pension_fund_id = $request->integer('pension_fund_id');
             $employee->compensation_fund_id = $request->integer('compensation_fund_id');
             $employee->start_date = $request->input('start_date');
@@ -113,8 +121,8 @@ class EmployeeController extends Controller
             $employee->person_id = $request->integer('person_id');
             $employee->operation_center = $request->input('operation_center', null);
             $employee->position_id = $request->integer('position_id');
-            $employee->arl_id = $request->integer('arl_id');
-            $employee->eps_id = $request->integer('eps_id');
+            $employee->risk_manager_id = $request->integer('risk_manager_id');
+            $employee->health_entity_id = $request->integer('health_entity_id');
             $employee->pension_fund_id = $request->integer('pension_fund_id');
             $employee->compensation_fund_id = $request->integer('compensation_fund_id');
             $employee->start_date = $request->input('start_date');

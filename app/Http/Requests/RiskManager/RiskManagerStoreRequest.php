@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Requests\Arl;
+namespace App\Http\Requests\RiskManager;
 
-use App\Models\Arl;
+use App\Models\RiskManager;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class ArlStoreRequest extends FormRequest
+class RiskManagerStoreRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -26,7 +26,7 @@ class ArlStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.Arl::ITEM_ID],
+            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . RiskManager::ITEM_ID],
             'description' => ['nullable', 'string', 'max:255']
         ];
     }

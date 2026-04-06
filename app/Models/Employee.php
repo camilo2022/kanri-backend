@@ -20,8 +20,8 @@ class Employee extends Model implements Auditable
         'person_id',
         'operation_center',
         'position_id',
-        'arl_id',
-        'eps_id',
+        'risk_manager_id',
+        'health_entity_id',
         'pension_fund_id',
         'compensation_fund_id',
         'start_date',
@@ -32,8 +32,8 @@ class Employee extends Model implements Auditable
         'person_id',
         'operation_center',
         'position_id',
-        'arl',
-        'eps',
+        'risk_manager',
+        'health_entity',
         'pension_fund',
         'compensation_fund',
         'start_date',
@@ -60,14 +60,14 @@ class Employee extends Model implements Auditable
         return $this->belongsTo(Position::class);
     }
 
-    public function arl(): BelongsTo
+    public function risk_manager(): BelongsTo
     {
-        return $this->belongsTo(Arl::class);
+        return $this->belongsTo(RiskManager::class);
     }
 
-    public function eps(): BelongsTo
+    public function health_entity(): BelongsTo
     {
-        return $this->belongsTo(Eps::class);
+        return $this->belongsTo(HealthEntity::class);
     }
 
     public function pension_fund(): BelongsTo
@@ -99,10 +99,10 @@ class Employee extends Model implements Auditable
                             ->orWhereHas('area', function (Builder $areaQuery) use ($term) {
                                 $areaQuery->where('name', 'LIKE', "%{$term}%");
                             });
-                    })->orWhereHas('arl', function (Builder $arlQuery) use ($term) {
-                        $arlQuery->where('name', 'LIKE', "%{$term}%");
-                    })->orWhereHas('eps', function (Builder $epsQuery) use ($term) {
-                        $epsQuery->where('name', 'LIKE', "%{$term}%");
+                    })->orWhereHas('risk_manager', function (Builder $risk_managerQuery) use ($term) {
+                        $risk_managerQuery->where('name', 'LIKE', "%{$term}%");
+                    })->orWhereHas('health_entity', function (Builder $healthEntityQuery) use ($term) {
+                        $healthEntityQuery->where('name', 'LIKE', "%{$term}%");
                     });
                 });
             }

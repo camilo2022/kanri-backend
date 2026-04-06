@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Arl;
+use App\Models\RiskManager;
 use App\Models\CompensationFund;
-use App\Models\Eps;
+use App\Models\HealthEntity;
 use App\Models\PensionFund;
 use App\Models\Person;
 use App\Models\Position;
@@ -22,8 +22,8 @@ return new class extends Migration
             $table->foreignIdFor(Person::class)->unique()->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Item');
             $table->string('operation_center')->nullable();
             $table->foreignIdFor(Position::class)->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Item');
-            $table->foreignIdFor(Arl::class)->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Item');
-            $table->foreignIdFor(Eps::class)->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Item');
+            $table->foreignIdFor(RiskManager::class)->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Item');
+            $table->foreignIdFor(HealthEntity::class)->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Item');
             $table->foreignIdFor(PensionFund::class)->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Item');
             $table->foreignIdFor(CompensationFund::class)->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Item');
             $table->date('start_date');

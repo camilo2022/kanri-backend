@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Requests\Arl;
+namespace App\Http\Requests\HealthEntity;
 
-use App\Models\Arl;
+use App\Models\HealthEntity;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class ArlDeleteRequest extends FormRequest
+class HealthEntityStoreRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -26,7 +26,8 @@ class ArlDeleteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:subitems,id,deleted_at,NULL,item_id,'.Arl::ITEM_ID],
+            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.HealthEntity::ITEM_ID],
+            'description' => ['nullable', 'string', 'max:255']
         ];
     }
 
@@ -34,19 +35,18 @@ class ArlDeleteRequest extends FormRequest
     {
         return [
             'required' => 'Es obligatorio.',
-            'exists' => 'No hay ningún registro.'
+            'string' => 'Debe ser una cadena de texto.',
+            'max' => 'Se permite máximo :max caracteres.',
+            'min' => 'Se permite mínimo :min caracteres.',
+            'unique' => 'Ya está registrado.'
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador de la arl'
+            'name' => 'Nombre',
+            'description' => 'Descripción'
         ];
-    }
-
-    protected function prepareForValidation()
-    {
-        $this->merge(['id' => $this->route('id')]);
     }
 }

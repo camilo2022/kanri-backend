@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Http\Requests\Eps;
+namespace App\Http\Requests\HealthEntity;
 
-use App\Models\Eps;
+use App\Models\HealthEntity;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 
-class EpsStoreRequest extends FormRequest
+class HealthEntityRestoreRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -26,8 +27,7 @@ class EpsStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.Eps::ITEM_ID],
-            'description' => ['nullable', 'string', 'max:255']
+            'id' => ['required', Rule::exists('subitems', 'id')->where('item_id', HealthEntity::ITEM_ID)->whereNotNull('deleted_at')]
         ];
     }
 
@@ -35,18 +35,19 @@ class EpsStoreRequest extends FormRequest
     {
         return [
             'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.'
+            'exists' => 'No hay ningún registro.'
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'name' => 'Nombre',
-            'description' => 'Descripción'
+            'id' => 'Identificador de la entidad de salud'
         ];
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->merge(['id' => $this->route('id')]);
     }
 }

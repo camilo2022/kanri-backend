@@ -2,27 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Eps\EpsAllRequest;
-use App\Http\Requests\Eps\EpsDeleteRequest;
-use App\Http\Requests\Eps\EpsFindRequest;
-use App\Http\Requests\Eps\EpsRestoreRequest;
-use App\Http\Requests\Eps\EpsStoreRequest;
-use App\Http\Requests\Eps\EpsUpdateRequest;
-use App\Http\Resources\Eps\EpsCollection;
-use App\Models\Eps;
+use App\Http\Requests\HealthEntity\HealthEntityAllRequest;
+use App\Http\Requests\HealthEntity\HealthEntityDeleteRequest;
+use App\Http\Requests\HealthEntity\HealthEntityFindRequest;
+use App\Http\Requests\HealthEntity\HealthEntityRestoreRequest;
+use App\Http\Requests\HealthEntity\HealthEntityStoreRequest;
+use App\Http\Requests\HealthEntity\HealthEntityUpdateRequest;
+use App\Http\Resources\HealthEntity\HealthEntityCollection;
+use App\Models\HealthEntity;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 
-class EpsController extends Controller
+class HealthEntityController extends Controller
 {
     use ApiMessage, ApiResponser;
 
-    public function all(EpsAllRequest $request)
+    public function all(HealthEntityAllRequest $request)
     {
         try {
-            $epss = Eps::when($request->filled('search'), function ($query) use ($request) {
-                    return $query->search($request->input('search'));
-                })
+            $health_entitys = HealthEntity::when($request->filled('search'), function ($query) use ($request) {
+                return $query->search($request->input('search'));
+            })
                 ->when($request->boolean('with_trashed'), function ($query) {
                     return $query->withTrashed();
                 })
@@ -30,10 +30,10 @@ class EpsController extends Controller
                     return $query->orderBy($request->input('column'), $request->input('dir'));
                 });
 
-            $epss = $epss->paginate($request->integer('per_page', $epss->count()));
+            $health_entitys = $health_entitys->paginate($request->integer('per_page', $health_entitys->count()));
 
             return $this->successResponse(
-                new EpsCollection($epss),
+                new HealthEntityCollection($health_entitys),
                 $this->getMessage('Success'),
                 200
             );
@@ -48,14 +48,14 @@ class EpsController extends Controller
         }
     }
 
-    public function find(EpsFindRequest $request, $id)
+    public function find(HealthEntityFindRequest $request, $id)
     {
         try {
-            $eps = Eps::findOrFail($id);
+            $health_entity = HealthEntity::findOrFail($id);
 
             return $this->successResponse(
                 [
-                    'eps' => $eps
+                    'health_entity' => $health_entity
                 ],
                 $this->getMessage('Success'),
                 200
@@ -71,17 +71,17 @@ class EpsController extends Controller
         }
     }
 
-    public function store(EpsStoreRequest $request)
+    public function store(HealthEntityStoreRequest $request)
     {
         try {
-            $eps = new Eps();
-            $eps->name = $request->input('name');
-            $eps->description = $request->input('description');
-            $eps->save();
+            $health_entity = new HealthEntity();
+            $health_entity->name = $request->input('name');
+            $health_entity->description = $request->input('description');
+            $health_entity->save();
 
             return $this->successResponse(
                 [
-                    'eps' => $eps
+                    'health_entity' => $health_entity
                 ],
                 $this->getMessage('Success'),
                 201
@@ -97,17 +97,17 @@ class EpsController extends Controller
         }
     }
 
-    public function update(EpsUpdateRequest $request, $id)
+    public function update(HealthEntityUpdateRequest $request, $id)
     {
         try {
-            $eps = Eps::findOrFail($id);
-            $eps->name = $request->input('name');
-            $eps->description = $request->input('description');
-            $eps->save();
+            $health_entity = HealthEntity::findOrFail($id);
+            $health_entity->name = $request->input('name');
+            $health_entity->description = $request->input('description');
+            $health_entity->save();
 
             return $this->successResponse(
                 [
-                    'eps' => $eps
+                    'health_entity' => $health_entity
                 ],
                 $this->getMessage('Success'),
                 200
@@ -123,15 +123,15 @@ class EpsController extends Controller
         }
     }
 
-    public function delete(EpsDeleteRequest $request, $id)
+    public function delete(HealthEntityDeleteRequest $request, $id)
     {
         try {
-            $eps = Eps::findOrFail($id);
-            $eps->delete();
+            $health_entity = HealthEntity::findOrFail($id);
+            $health_entity->delete();
 
             return $this->successResponse(
                 [
-                    'eps' => $eps
+                    'health_entity' => $health_entity
                 ],
                 $this->getMessage('Success'),
                 200
@@ -147,15 +147,15 @@ class EpsController extends Controller
         }
     }
 
-    public function restore(EpsRestoreRequest $request, $id)
+    public function restore(HealthEntityRestoreRequest $request, $id)
     {
         try {
-            $eps = Eps::withTrashed()->findOrFail($id);
-            $eps->restore();
+            $health_entity = HealthEntity::withTrashed()->findOrFail($id);
+            $health_entity->restore();
 
             return $this->successResponse(
                 [
-                    'eps' => $eps
+                    'health_entity' => $health_entity
                 ],
                 $this->getMessage('Success'),
                 200

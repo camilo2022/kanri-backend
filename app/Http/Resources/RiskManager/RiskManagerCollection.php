@@ -1,24 +1,24 @@
 <?php
 
-namespace App\Http\Resources\Eps;
+namespace App\Http\Resources\RiskManager;
 
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
-class EpsCollection extends ResourceCollection
+class RiskManagerCollection extends ResourceCollection
 {
     public function toArray($request)
     {
         return [
-            'epss' => $this->collection->map(function ($eps) {
+            'risk_managers' => $this->collection->map(function ($risk_manager) {
                 return [
-                    'id' => $eps->id,
-                    'item' => $eps->item,
-                    'name' => $eps->name,
-                    'description' => $eps->description,
-                    'created_at' => $this->formatDate($eps->created_at),
-                    'updated_at' => $this->formatDate($eps->updated_at),
-                    'deleted_at' => $this->formatDate($eps->deleted_at)
+                    'id' => $risk_manager->id,
+                    'item' => $risk_manager->item,
+                    'name' => $risk_manager->name,
+                    'description' => $risk_manager->description,
+                    'created_at' => $this->formatDate($risk_manager->created_at),
+                    'updated_at' => $this->formatDate($risk_manager->updated_at),
+                    'deleted_at' => $this->formatDate($risk_manager->deleted_at)
                 ];
             }),
             'meta' => [

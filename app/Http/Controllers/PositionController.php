@@ -189,7 +189,9 @@ class PositionController extends Controller
 
             $position->givePermissionTo($permission);
 
-            $position->assignRole($permission->roles);
+            if (!$position->hasRole($permission->roles)) {
+                $position->assignRole($permission->roles);
+            }
 
             $position->load(['roles', 'permissions']);
 

@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Requests\Arl;
+namespace App\Http\Requests\RiskManager;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class ArlAllRequest extends FormRequest
+class RiskManagerAllRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {

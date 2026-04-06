@@ -26,7 +26,7 @@ class PermissionStoreRequest extends FormRequest
     {
         return [
             'role_id' => ['required', 'numeric', 'exists:roles,id'],
-            'name' => ['required', 'string', 'unique:permissions,name', 'max:80', 'regex:/^[a-z.]+$/'],
+            'name' => ['required', 'string', 'unique:permissions,name', 'max:80', 'regex:/^[a-z._]+$/'],
             'title' => ['required', 'string', 'unique:permissions,title', 'max:100'],
             'description' => ['required', 'string', 'unique:permissions,description', 'max:255'],
         ];

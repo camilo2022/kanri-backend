@@ -1,13 +1,13 @@
 <?php
 
 use App\Http\Controllers\AreaController;
-use App\Http\Controllers\ArlController;
+use App\Http\Controllers\RiskManagerController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BloodTypeController;
 use App\Http\Controllers\CompensationFundController;
 use App\Http\Controllers\EmployeeController;
-use App\Http\Controllers\EpsController;
 use App\Http\Controllers\GenderController;
+use App\Http\Controllers\HealthEntityController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\PensionFundController;
 use App\Http\Controllers\PermissionController;
@@ -157,25 +157,25 @@ Route::prefix('/blood_types')->group(function () {
     });
 });
 
-Route::prefix('/arl')->group(function () {
-    Route::controller(ArlController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:arl,arl.all']);
-        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:arl,arl.find']);
-        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:arl,arl.store']);
-        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:arl,arl.update']);
-        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:arl,arl.delete']);
-        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:arl,arl.restore']);
+Route::prefix('/health_entities')->group(function () {
+    Route::controller(HealthEntityController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:health_entities,health_entities.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:health_entities,health_entities.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:health_entities,health_entities.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:health_entities,health_entities.update']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:health_entities,health_entities.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:health_entities,health_entities.restore']);
     });
 });
 
-Route::prefix('/eps')->group(function () {
-    Route::controller(EpsController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:eps,eps.all']);
-        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:eps,eps.find']);
-        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:eps,eps.store']);
-        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:eps,eps.update']);
-        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:eps,eps.delete']);
-        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:eps,eps.restore']);
+Route::prefix('/risk_manager')->group(function () {
+    Route::controller(RiskManagerController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.update']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.restore']);
     });
 });
 

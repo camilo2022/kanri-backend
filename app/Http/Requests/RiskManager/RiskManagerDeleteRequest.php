@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Requests\Eps;
+namespace App\Http\Requests\RiskManager;
 
-use App\Models\Eps;
+use App\Models\RiskManager;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class EpsFindRequest extends FormRequest
+class RiskManagerDeleteRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -26,7 +26,7 @@ class EpsFindRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:subitems,id,item_id,'.Eps::ITEM_ID],
+            'id' => ['required', 'exists:subitems,id,deleted_at,NULL,item_id,' . RiskManager::ITEM_ID],
         ];
     }
 
@@ -41,7 +41,7 @@ class EpsFindRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador de la eps'
+            'id' => 'Identificador de la administradora de riesgos'
         ];
     }
 

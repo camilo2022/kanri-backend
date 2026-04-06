@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests\Employee;
 
-use App\Models\Arl;
+use App\Models\RiskManager;
 use App\Models\CompensationFund;
-use App\Models\Eps;
+use App\Models\HealthEntity;
 use App\Models\PensionFund;
 use App\Models\Position;
 use Illuminate\Contracts\Validation\Validator;
@@ -33,8 +33,8 @@ class EmployeeStoreRequest extends FormRequest
             'person_id' => ['required', 'numeric', 'exists:people,id,deleted_at,NULL', 'unique:employees,person_id'],
             'operation_center' => ['nullable', 'string'],
             'position_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Position::ITEM_ID . ',deleted_at,NULL'],
-            'arl_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Arl::ITEM_ID . ',deleted_at,NULL'],
-            'eps_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Eps::ITEM_ID . ',deleted_at,NULL'],
+            'risk_manager_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . RiskManager::ITEM_ID . ',deleted_at,NULL'],
+            'health_entity_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . HealthEntity::ITEM_ID . ',deleted_at,NULL'],
             'pension_fund_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . PensionFund::ITEM_ID . ',deleted_at,NULL'],
             'compensation_fund_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . CompensationFund::ITEM_ID . ',deleted_at,NULL'],
             'start_date' => ['required', 'date', 'date_format:Y-m-d'],
@@ -64,8 +64,8 @@ class EmployeeStoreRequest extends FormRequest
             'person_id' => 'Persona',
             'operation_center' => 'Centro de operaciones',
             'position_id' => 'Cargo',
-            'arl_id' => 'Arl',
-            'eps_id' => 'Eps',
+            'risk_manager_id' => 'Administradora de Riesgos',
+            'health_entity_id' => 'Entidad de Salud',
             'pension_fund_id' => 'Fondo de pensión',
             'compensation_fund_id' => 'Caja de compensación',
             'start_date' => 'Fecha inicio',

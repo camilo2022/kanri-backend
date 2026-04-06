@@ -33,8 +33,8 @@ class UserSeeder extends Seeder
         $employee->person_id = $person->id;
         $employee->operation_center = 'Principal';
         $employee->position_id = 2;
-        $employee->arl_id = 5;
-        $employee->eps_id = 6;
+        $employee->risk_manager_id = 5;
+        $employee->health_entity_id = 6;
         $employee->pension_fund_id = 7;
         $employee->compensation_fund_id = 8;
         $employee->start_date = Carbon::now();

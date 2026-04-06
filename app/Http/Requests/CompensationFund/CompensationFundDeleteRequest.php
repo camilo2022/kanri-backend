@@ -26,7 +26,7 @@ class CompensationFundDeleteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:subitems,id,deleted_at,NULL,item_id,'.CompensationFund::ITEM_ID],
+            'id' => ['required', 'exists:subitems,id,deleted_at,NULL,item_id,' . CompensationFund::ITEM_ID],
         ];
     }
 
@@ -41,7 +41,7 @@ class CompensationFundDeleteRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador de la eps'
+            'id' => 'Identificador de la caja de compensación'
         ];
     }
 

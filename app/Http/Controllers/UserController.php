@@ -881,7 +881,9 @@ class UserController extends Controller
 
             $user->givePermissionTo($permission);
 
-            $user->assignRole($permission->roles);
+            if (!$user->hasRole($permission->roles)) {
+                $user->assignRole($permission->roles);
+            }
 
             $user->load(['employee' => ['person', 'position' => ['area']], 'roles', 'permissions']);
 

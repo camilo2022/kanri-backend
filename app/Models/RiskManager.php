@@ -9,11 +9,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
 
-class Eps extends Model implements Auditable
+class RiskManager extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
 
-    public const ITEM_ID = 8;
+    public const ITEM_ID = 7;
 
     protected $table = 'subitems';
 

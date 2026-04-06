@@ -1,14 +1,13 @@
 <?php
 
-namespace App\Http\Requests\Eps;
+namespace App\Http\Requests\HealthEntity;
 
-use App\Models\Eps;
+use App\Models\HealthEntity;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\Rule;
 
-class EpsRestoreRequest extends FormRequest
+class HealthEntityDeleteRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -27,7 +26,7 @@ class EpsRestoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', Rule::exists('subitems', 'id')->where('subitem_id', Eps::ITEM_ID)->whereNotNull('deleted_at')]
+            'id' => ['required', 'exists:subitems,id,deleted_at,NULL,item_id,' . HealthEntity::ITEM_ID],
         ];
     }
 
@@ -42,7 +41,7 @@ class EpsRestoreRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador de la eps'
+            'id' => 'Identificador de la entidad de salud'
         ];
     }
 

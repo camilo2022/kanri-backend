@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Requests\Eps;
+namespace App\Http\Requests\HealthEntity;
 
-use App\Models\Eps;
+use App\Models\HealthEntity;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class EpsUpdateRequest extends FormRequest
+class HealthEntityUpdateRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -26,8 +26,8 @@ class EpsUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:subitems,id,item_id,'.Eps::ITEM_ID],
-            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.Eps::ITEM_ID],
+            'id' => ['required', 'exists:subitems,id,item_id,' . HealthEntity::ITEM_ID],
+            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . HealthEntity::ITEM_ID],
             'description' => ['nullable', 'string', 'max:255']
         ];
     }
@@ -47,7 +47,7 @@ class EpsUpdateRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador de la eps',
+            'id' => 'Identificador de la entidad de salud',
             'name' => 'Nombre',
             'description' => 'Descripción'
         ];
