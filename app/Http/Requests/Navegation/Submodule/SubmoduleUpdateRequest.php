@@ -28,7 +28,7 @@ class SubmoduleUpdateRequest extends FormRequest
             'id' => ['required', 'exists:submodules,id'],
             'module_id' => ['required', 'numeric', 'exists:modules,id'],
             'permission_id' => ['required', 'numeric', 'unique:submodules,permission_id,' . $this->route('id') . ',id', 'exists:permissions,id'],
-            'name' => ['required', 'string', 'max:40', 'unique:submodules,name,' . $this->route('id') . ',id', 'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ]+(?:\.?\s[A-Za-zÁÉÍÓÚáéíóúÑñ]+)*$/'],
+            'name' => ['required', 'string', 'max:18', 'unique:submodules,name,' . $this->route('id') . ',id', 'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ]+(?:\.?\s[A-Za-zÁÉÍÓÚáéíóúÑñ]+)*$/'],
             'url' => ['required', 'string', 'max:40', 'unique:submodules,url,' . $this->route('id') . ',id', 'regex:/^\/[a-z_]+(\/[a-z_]+)*\/?$/'],
             'icon' => ['required', 'string', 'max:40', 'regex:/^Fa([A-Z][a-zA-Z0-9]*|[0-9][a-zA-Z0-9]*)$/']
         ];

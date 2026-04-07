@@ -15,6 +15,7 @@ use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SubmoduleController;
+use App\Http\Controllers\TrademarkController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -198,5 +199,17 @@ Route::prefix('/compensation_funds')->group(function () {
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:compensation_funds,compensation_funds.update']);
         Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:compensation_funds,compensation_funds.delete']);
         Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:compensation_funds,compensation_funds.restore']);
+    });
+});
+
+Route::prefix('/trademarks')->group(function () {
+    Route::controller(TrademarkController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.update']);
+        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.setting']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.restore']);
     });
 });

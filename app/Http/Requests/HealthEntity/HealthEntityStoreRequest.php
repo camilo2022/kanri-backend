@@ -26,8 +26,8 @@ class HealthEntityStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.HealthEntity::ITEM_ID],
-            'description' => ['nullable', 'string', 'max:255']
+            'name' => ['required', 'uppercase', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . HealthEntity::ITEM_ID],
+            'description' => ['nullable', 'uppercase', 'string', 'max:255']
         ];
     }
 
@@ -38,7 +38,8 @@ class HealthEntityStoreRequest extends FormRequest
             'string' => 'Debe ser una cadena de texto.',
             'max' => 'Se permite máximo :max caracteres.',
             'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.'
+            'unique' => 'Ya está registrado.',
+            'uppercase' => 'Debe de ingresar mayúsculas.'
         ];
     }
 
