@@ -28,7 +28,7 @@ class SilhouetteUpdateRequest extends FormRequest
         return [
             'id' => ['required', 'exists:subitems,id,item_id,' . Silhouette::ITEM_ID],
             'name' => ['required', 'regex:/^[A-Z]+$/', 'min:5', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Silhouette::ITEM_ID],
-            'description' => ['nullable', 'regex:/^[A-Z]+$/', 'max:255']
+            'description' => ['required', 'regex:/^[A-Z]+$/', 'max:255']
         ];
     }
 
@@ -48,7 +48,7 @@ class SilhouetteUpdateRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador del area',
+            'id' => 'Identificador de la silueta',
             'name' => 'Nombre',
             'description' => 'Descripción'
         ];

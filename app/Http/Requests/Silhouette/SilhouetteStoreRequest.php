@@ -27,7 +27,7 @@ class SilhouetteStoreRequest extends FormRequest
     {
         return [
             'name' => ['required', 'regex:/^[A-Z]+$/', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Silhouette::ITEM_ID],
-            'description' => ['nullable', 'regex:/^[A-Z]+$/', 'max:255', 'uppercase']
+            'description' => ['required', 'regex:/^[A-Z]+$/', 'max:255', 'uppercase']
         ];
     }
 
@@ -39,7 +39,7 @@ class SilhouetteStoreRequest extends FormRequest
             'max' => 'Se permite máximo :max caracteres.',
             'min' => 'Se permite mínimo :min caracteres.',
             'unique' => 'Ya está registrado.',
-            
+
         ];
     }
 

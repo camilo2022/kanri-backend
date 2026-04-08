@@ -15,6 +15,7 @@ use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SilhouetteController;
+use App\Http\Controllers\SizeController;
 use App\Http\Controllers\SubmoduleController;
 use App\Http\Controllers\TrademarkController;
 use App\Http\Controllers\UserController;
@@ -224,5 +225,17 @@ Route::prefix('/silhouettes')->group(function () {
         Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:silhouettes,silhouettes.setting']);
         Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:silhouettes,silhouettes.delete']);
         Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:silhouettes,silhouettes.restore']);
+    });
+});
+
+Route::prefix('/sizes')->group(function () {
+    Route::controller(SizeController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:sizes,sizes.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:sizes,sizes.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:sizes,sizes.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:sizes,sizes.update']);
+        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:sizes,sizes.setting']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:sizes,sizes.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:sizes,sizes.restore']);
     });
 });

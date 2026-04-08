@@ -42,7 +42,7 @@ class SilhouetteRestoreRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador de la area'
+            'id' => 'Identificador de la silueta'
         ];
     }
 
