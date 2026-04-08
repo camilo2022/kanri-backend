@@ -14,6 +14,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SilhouetteController;
 use App\Http\Controllers\SubmoduleController;
 use App\Http\Controllers\TrademarkController;
 use App\Http\Controllers\UserController;
@@ -204,12 +205,24 @@ Route::prefix('/compensation_funds')->group(function () {
 
 Route::prefix('/trademarks')->group(function () {
     Route::controller(TrademarkController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.all']);
-        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.find']);
-        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.store']);
-        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.update']);
-        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.setting']);
-        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.delete']);
-        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:risk_managers,risk_managers.restore']);
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:trademarks,trademarks.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:trademarks,trademarks.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:trademarks,trademarks.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:trademarks,trademarks.update']);
+        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:trademarks,trademarks.setting']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:trademarks,trademarks.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:trademarks,trademarks.restore']);
+    });
+});
+
+Route::prefix('/silhouettes')->group(function () {
+    Route::controller(SilhouetteController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:silhouettes,silhouettes.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:silhouettes,silhouettes.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:silhouettes,silhouettes.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:silhouettes,silhouettes.update']);
+        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:silhouettes,silhouettes.setting']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:silhouettes,silhouettes.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:silhouettes,silhouettes.restore']);
     });
 });

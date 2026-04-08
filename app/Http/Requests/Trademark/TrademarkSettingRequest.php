@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Location\Country;
+namespace App\Http\Requests\Trademark;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
@@ -29,7 +29,7 @@ class TrademarkSettingRequest extends FormRequest
             'settings.validations' => ['required', 'array', 'min:1'],
             'settings.validations.*' => ['required', 'array'],
             'settings.validations.*.id' => ['required', 'numeric', 'distinct'],
-            'settings.validations.*.regex' => ['required', 'string', 'distinct'],
+            'settings.validations.*.regex' => ['required', 'string'],
             'settings.validations.*.message' => ['required', 'string', 'max:255'],
             'settings.validations.*.created_at' => ['required', 'date'],
             'settings.validations.*.updated_at' => ['nullable', 'date'],
@@ -90,7 +90,7 @@ class TrademarkSettingRequest extends FormRequest
                 if (!array_key_exists('regex', $v)) {
                     continue;
                 }
-                $regex = (string) $v['regex']; // normalizamos a string
+                $regex = (string) $v['regex'];
                 if (isset($seen[$regex])) {
                     $primera = $seen[$regex] + 1;
                     $validator->errors()->add(

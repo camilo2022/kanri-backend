@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Trademark\TrademarkSettingRequest;
 use App\Http\Requests\Trademark\TrademarkAllRequest;
 use App\Http\Requests\Trademark\TrademarkDeleteRequest;
 use App\Http\Requests\Trademark\TrademarkFindRequest;
@@ -152,6 +153,32 @@ class TrademarkController extends Controller
         try {
             $trademark = Trademark::withTrashed()->findOrFail($id);
             $trademark->restore();
+
+            return $this->successResponse(
+                [
+                    'trademark' => $trademark
+                ],
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    public function setting(TrademarkSettingRequest $request, $id)
+    {
+        try {
+            $trademark = Trademark::findOrFail($id);
+            $trademark->settings = $request->input('settings');
+
+            $trademark->save();
 
             return $this->successResponse(
                 [
