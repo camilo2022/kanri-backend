@@ -27,8 +27,8 @@ class SilhouetteUpdateRequest extends FormRequest
     {
         return [
             'id' => ['required', 'exists:subitems,id,item_id,' . Silhouette::ITEM_ID],
-            'name' => ['required', 'regex:/^[A-Z]+$/', 'min:5', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Silhouette::ITEM_ID],
-            'description' => ['required', 'regex:/^[A-Z]+$/', 'max:255']
+            'name' => ['required', 'regex:/^[A-Z ]+$/', 'min:5', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Silhouette::ITEM_ID],
+            'description' => ['required', 'regex:/^[A-Z ]+$/', 'max:255']
         ];
     }
 

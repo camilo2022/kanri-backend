@@ -46,7 +46,7 @@
                         "schema": {
                             "type": "string",
                             "format": "email",
-                            "example": "juan@example.com"
+                            "example": "superadmin@kanri.com"
                         }
                     },
                     {
@@ -57,7 +57,7 @@
                         "schema": {
                             "type": "string",
                             "format": "password",
-                            "example": "password123"
+                            "example": "P4ssw0rd."
                         }
                     }
                 ],
@@ -71,42 +71,271 @@
                                         "data": {
                                             "properties": {
                                                 "user": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": "id_example"
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "employee_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "email_user_example"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2026-03-12 20:01:03"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2026-03-12 20:01:03"
+                                                            },
+                                                            "deleted_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": null
+                                                            },
+                                                            "employee": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "person_id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "operation_center": {
+                                                                        "type": "string",
+                                                                        "example": "Principal"
+                                                                    },
+                                                                    "position_id": {
+                                                                        "type": "integer",
+                                                                        "example": 2
+                                                                    },
+                                                                    "risk_manager_id": {
+                                                                        "type": "integer",
+                                                                        "example": 5
+                                                                    },
+                                                                    "health_entity_id": {
+                                                                        "type": "integer",
+                                                                        "example": 6
+                                                                    },
+                                                                    "pension_fund_id": {
+                                                                        "type": "integer",
+                                                                        "example": 7
+                                                                    },
+                                                                    "compensation_fund_id": {
+                                                                        "type": "integer",
+                                                                        "example": 8
+                                                                    },
+                                                                    "start_date": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": "2026-03-30 00:00:00"
+                                                                    },
+                                                                    "end_date": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "created_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": "2026-03-30T13:17:31.000000Z"
+                                                                    },
+                                                                    "updated_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": "2026-03-30T13:17:31.000000Z"
+                                                                    },
+                                                                    "deleted_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "person": {
+                                                                        "properties": {
+                                                                            "id": {
+                                                                                "type": "integer",
+                                                                                "example": 1
+                                                                            },
+                                                                            "document": {
+                                                                                "type": "string",
+                                                                                "example": "0000000000"
+                                                                            },
+                                                                            "names": {
+                                                                                "type": "string",
+                                                                                "example": "Super"
+                                                                            },
+                                                                            "last_names": {
+                                                                                "type": "string",
+                                                                                "example": "Admin"
+                                                                            },
+                                                                            "gender_id": {
+                                                                                "type": "integer",
+                                                                                "example": 15
+                                                                            },
+                                                                            "birth_date": {
+                                                                                "type": "string",
+                                                                                "format": "date",
+                                                                                "example": "1990-01-01"
+                                                                            },
+                                                                            "blood_type_id": {
+                                                                                "type": "integer",
+                                                                                "example": 16
+                                                                            },
+                                                                            "address": {
+                                                                                "type": "string",
+                                                                                "example": "Dirección principal"
+                                                                            },
+                                                                            "phone": {
+                                                                                "type": "string",
+                                                                                "example": "0000000000"
+                                                                            },
+                                                                            "created_at": {
+                                                                                "type": "string",
+                                                                                "format": "date-time",
+                                                                                "example": "2026-03-30T13:17:31.000000Z"
+                                                                            },
+                                                                            "updated_at": {
+                                                                                "type": "string",
+                                                                                "format": "date-time",
+                                                                                "example": "2026-03-31T15:37:40.000000Z"
+                                                                            },
+                                                                            "deleted_at": {
+                                                                                "type": "string",
+                                                                                "format": "date-time",
+                                                                                "example": null,
+                                                                                "nullable": true
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "roles": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "name": {
+                                                                            "type": "string",
+                                                                            "example": "users"
+                                                                        },
+                                                                        "guard_name": {
+                                                                            "type": "string",
+                                                                            "example": "api"
+                                                                        },
+                                                                        "title": {
+                                                                            "type": "string",
+                                                                            "example": "Usuarios."
+                                                                        },
+                                                                        "description": {
+                                                                            "type": "string",
+                                                                            "example": "Gestión de usuarios."
+                                                                        },
+                                                                        "created_at": {
+                                                                            "type": "string",
+                                                                            "format": "date-time",
+                                                                            "example": "2026-03-30T13:17:29.000000Z"
+                                                                        },
+                                                                        "updated_at": {
+                                                                            "type": "string",
+                                                                            "format": "date-time",
+                                                                            "example": "2026-04-06T15:21:16.000000Z"
+                                                                        },
+                                                                        "pivot": {
+                                                                            "properties": {
+                                                                                "model_type": {
+                                                                                    "type": "string",
+                                                                                    "example": "App\\\\Models\\\\User"
+                                                                                },
+                                                                                "model_id": {
+                                                                                    "type": "integer",
+                                                                                    "example": 1
+                                                                                },
+                                                                                "subitem_id": {
+                                                                                    "type": "integer",
+                                                                                    "example": 1
+                                                                                }
+                                                                            },
+                                                                            "type": "object"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "permissions": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "name": {
+                                                                            "type": "string",
+                                                                            "example": "users.all"
+                                                                        },
+                                                                        "guard_name": {
+                                                                            "type": "string",
+                                                                            "example": "api"
+                                                                        },
+                                                                        "title": {
+                                                                            "type": "string",
+                                                                            "example": "Usuarios."
+                                                                        },
+                                                                        "description": {
+                                                                            "type": "string",
+                                                                            "example": "Gestión de usuarios."
+                                                                        },
+                                                                        "created_at": {
+                                                                            "type": "string",
+                                                                            "format": "date-time",
+                                                                            "example": "2026-03-30T13:17:29.000000Z"
+                                                                        },
+                                                                        "updated_at": {
+                                                                            "type": "string",
+                                                                            "format": "date-time",
+                                                                            "example": "2026-04-06T15:21:16.000000Z"
+                                                                        },
+                                                                        "pivot": {
+                                                                            "properties": {
+                                                                                "model_type": {
+                                                                                    "type": "string",
+                                                                                    "example": "App\\\\Models\\\\User"
+                                                                                },
+                                                                                "model_id": {
+                                                                                    "type": "integer",
+                                                                                    "example": 1
+                                                                                },
+                                                                                "role_id": {
+                                                                                    "type": "integer",
+                                                                                    "example": 1
+                                                                                }
+                                                                            },
+                                                                            "type": "object"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            }
                                                         },
-                                                        "name": {
-                                                            "type": "string",
-                                                            "example": "name_example"
-                                                        },
-                                                        "email": {
-                                                            "type": "string",
-                                                            "format": "email",
-                                                            "example": "email_example"
-                                                        },
-                                                        "email_verified_at": {
-                                                            "type": "string",
-                                                            "format": "date-time",
-                                                            "nullable": true
-                                                        },
-                                                        "created_at": {
-                                                            "type": "string",
-                                                            "format": "date-time",
-                                                            "example": "2026-03-12T20:01:04.000000Z"
-                                                        },
-                                                        "updated_at": {
-                                                            "type": "string",
-                                                            "format": "date-time",
-                                                            "example": "2026-03-12T20:01:04.000000Z"
-                                                        },
-                                                        "deleted_at": {
-                                                            "type": "string",
-                                                            "format": "date-time",
-                                                            "nullable": true
-                                                        }
-                                                    },
-                                                    "type": "object"
+                                                        "type": "object"
+                                                    }
                                                 },
                                                 "token": {
                                                     "type": "string",
@@ -4740,7 +4969,7 @@
                     {
                         "name": "search",
                         "in": "query",
-                        "description": "Texto de búsqueda en los usuarios",
+                        "description": "Filtro de Busqueda.",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -4750,31 +4979,52 @@
                     {
                         "name": "column",
                         "in": "query",
-                        "description": "Columna por la que se ordena",
+                        "description": "Columna a ordenar.",
                         "required": false,
                         "schema": {
                             "type": "string",
+                            "enum": [
+                                "id",
+                                "name",
+                                "email",
+                                "created_at",
+                                "updated_at"
+                            ],
                             "example": "name"
                         }
                     },
                     {
                         "name": "dir",
                         "in": "query",
-                        "description": "Dirección de ordenamiento",
+                        "description": "Dirección de ordenamiento.",
                         "required": false,
                         "schema": {
                             "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ],
                             "example": "asc"
                         }
                     },
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Cantidad de registros por página",
+                        "description": "Registros por páagina.",
                         "required": false,
                         "schema": {
                             "type": "integer",
                             "example": 10
+                        }
+                    },
+                    {
+                        "name": "with_trashed",
+                        "in": "query",
+                        "description": "Registros inactivos.",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
                         }
                     }
                 ],
@@ -4790,36 +5040,7 @@
                                                 "users": {
                                                     "type": "array",
                                                     "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": "id_example"
-                                                            },
-                                                            "name": {
-                                                                "type": "string",
-                                                                "example": "name_user_example"
-                                                            },
-                                                            "email": {
-                                                                "type": "string",
-                                                                "example": "email_user_example"
-                                                            },
-                                                            "created_at": {
-                                                                "type": "string",
-                                                                "format": "date-time",
-                                                                "example": "2026-03-12 20:01:03"
-                                                            },
-                                                            "updated_at": {
-                                                                "type": "string",
-                                                                "format": "date-time",
-                                                                "example": "2026-03-12 20:01:03"
-                                                            },
-                                                            "deleted_at": {
-                                                                "type": "string",
-                                                                "format": "date-time",
-                                                                "example": "2026-03-12 20:01:03"
-                                                            }
-                                                        },
-                                                        "type": "object"
+                                                        "$ref": "#/components/schemas/UserDetail"
                                                     }
                                                 },
                                                 "meta": {
@@ -4948,155 +5169,7 @@
                                         "data": {
                                             "properties": {
                                                 "user": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 0
-                                                            },
-                                                            "name": {
-                                                                "type": "string",
-                                                                "example": "name_user_example"
-                                                            },
-                                                            "email": {
-                                                                "type": "string",
-                                                                "example": "email_user_example"
-                                                            },
-                                                            "created_at": {
-                                                                "type": "string",
-                                                                "format": "date-time",
-                                                                "example": "2026-03-12 20:01:03"
-                                                            },
-                                                            "updated_at": {
-                                                                "type": "string",
-                                                                "format": "date-time",
-                                                                "example": "2026-03-12 20:01:03"
-                                                            },
-                                                            "deleted_at": {
-                                                                "type": "string",
-                                                                "format": "date-time",
-                                                                "example": "2026-03-12 20:01:03"
-                                                            },
-                                                            "roles": {
-                                                                "type": "array",
-                                                                "items": {
-                                                                    "properties": {
-                                                                        "id": {
-                                                                            "type": "integer",
-                                                                            "example": 0
-                                                                        },
-                                                                        "name": {
-                                                                            "type": "string",
-                                                                            "example": "name_rol_example"
-                                                                        },
-                                                                        "guard_name": {
-                                                                            "type": "string",
-                                                                            "example": "guard_name_rol_example"
-                                                                        },
-                                                                        "title": {
-                                                                            "type": "string",
-                                                                            "example": "title_rol_example"
-                                                                        },
-                                                                        "description": {
-                                                                            "type": "string",
-                                                                            "example": "description_rol_example"
-                                                                        },
-                                                                        "created_at": {
-                                                                            "type": "string",
-                                                                            "format": "date-time",
-                                                                            "example": "2026-03-12 20:01:03"
-                                                                        },
-                                                                        "updated_at": {
-                                                                            "type": "string",
-                                                                            "format": "date-time",
-                                                                            "example": "2026-03-12 20:01:03"
-                                                                        },
-                                                                        "pivot": {
-                                                                            "type": "array",
-                                                                            "items": {
-                                                                                "properties": {
-                                                                                    "model_type": {
-                                                                                        "type": "strig",
-                                                                                        "example": "Example\\\\Example\\\\Example"
-                                                                                    },
-                                                                                    "model_id": {
-                                                                                        "type": "integer",
-                                                                                        "example": 0
-                                                                                    },
-                                                                                    "role_id": {
-                                                                                        "type": "integer",
-                                                                                        "example": 0
-                                                                                    }
-                                                                                },
-                                                                                "type": "object"
-                                                                            }
-                                                                        }
-                                                                    },
-                                                                    "type": "object"
-                                                                }
-                                                            },
-                                                            "permission": {
-                                                                "type": "array",
-                                                                "items": {
-                                                                    "properties": {
-                                                                        "id": {
-                                                                            "type": "integer",
-                                                                            "example": 0
-                                                                        },
-                                                                        "name": {
-                                                                            "type": "string",
-                                                                            "example": "name_permission_example"
-                                                                        },
-                                                                        "guard_name": {
-                                                                            "type": "string",
-                                                                            "example": "guard_name_permission_example"
-                                                                        },
-                                                                        "title": {
-                                                                            "type": "string",
-                                                                            "example": "title_permission_example"
-                                                                        },
-                                                                        "description": {
-                                                                            "type": "string",
-                                                                            "example": "description_permission_example"
-                                                                        },
-                                                                        "created_at": {
-                                                                            "type": "string",
-                                                                            "format": "date-time",
-                                                                            "example": "2026-03-12 20:01:03"
-                                                                        },
-                                                                        "updated_at": {
-                                                                            "type": "string",
-                                                                            "format": "date-time",
-                                                                            "example": "2026-03-12 20:01:03"
-                                                                        },
-                                                                        "pivot": {
-                                                                            "type": "array",
-                                                                            "items": {
-                                                                                "properties": {
-                                                                                    "model_type": {
-                                                                                        "type": "strig",
-                                                                                        "example": "Example\\\\Example\\\\Example"
-                                                                                    },
-                                                                                    "model_id": {
-                                                                                        "type": "integer",
-                                                                                        "example": 0
-                                                                                    },
-                                                                                    "permission_id": {
-                                                                                        "type": "integer",
-                                                                                        "example": 0
-                                                                                    }
-                                                                                },
-                                                                                "type": "object"
-                                                                            }
-                                                                        }
-                                                                    },
-                                                                    "type": "object"
-                                                                }
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
+                                                    "$ref": "#/components/schemas/UserDetail"
                                                 }
                                             },
                                             "type": "object"
@@ -6333,6 +6406,372 @@
         }
     },
     "components": {
+        "schemas": {
+            "UserDetail": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "employee_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "email_user_example"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "employee": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "person_id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "operation_center": {
+                                "type": "string",
+                                "example": "Principal"
+                            },
+                            "position_id": {
+                                "type": "integer",
+                                "example": 2
+                            },
+                            "risk_manager_id": {
+                                "type": "integer",
+                                "example": 5
+                            },
+                            "health_entity_id": {
+                                "type": "integer",
+                                "example": 6
+                            },
+                            "pension_fund_id": {
+                                "type": "integer",
+                                "example": 7
+                            },
+                            "compensation_fund_id": {
+                                "type": "integer",
+                                "example": 8
+                            },
+                            "start_date": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2026-03-30 00:00:00"
+                            },
+                            "end_date": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": null,
+                                "nullable": true
+                            },
+                            "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2026-03-30T13:17:31.000000Z"
+                            },
+                            "updated_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2026-03-30T13:17:31.000000Z"
+                            },
+                            "deleted_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": null,
+                                "nullable": true
+                            },
+                            "position": {
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "item_id": {
+                                        "type": "integer",
+                                        "example": 4
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Super"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Admin"
+                                    },
+                                    "settings": {
+                                        "type": "object",
+                                        "nullable": true
+                                    },
+                                    "created_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2026-03-30T13:17:31.000000Z"
+                                    },
+                                    "updated_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2026-03-31T15:37:40.000000Z"
+                                    },
+                                    "deleted_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": null,
+                                        "nullable": true
+                                    },
+                                    "area": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "item_id": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Super"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Admin"
+                                                },
+                                                "settings": {
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-03-30T13:17:29.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-04-06T15:21:16.000000Z"
+                                                },
+                                                "deleted_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "pivot": {
+                                                    "properties": {
+                                                        "model_type": {
+                                                            "type": "string",
+                                                            "example": "App\\\\Models\\\\Position"
+                                                        },
+                                                        "model_id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "subitem_id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "person": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "document": {
+                                                "type": "string",
+                                                "example": "0000000000"
+                                            },
+                                            "names": {
+                                                "type": "string",
+                                                "example": "Super"
+                                            },
+                                            "last_names": {
+                                                "type": "string",
+                                                "example": "Admin"
+                                            },
+                                            "gender_id": {
+                                                "type": "integer",
+                                                "example": 15
+                                            },
+                                            "birth_date": {
+                                                "type": "string",
+                                                "format": "date",
+                                                "example": "1990-01-01"
+                                            },
+                                            "blood_type_id": {
+                                                "type": "integer",
+                                                "example": 16
+                                            },
+                                            "address": {
+                                                "type": "string",
+                                                "example": "Dirección principal"
+                                            },
+                                            "phone": {
+                                                "type": "string",
+                                                "example": "0000000000"
+                                            },
+                                            "created_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2026-03-30T13:17:31.000000Z"
+                                            },
+                                            "updated_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2026-03-31T15:37:40.000000Z"
+                                            },
+                                            "deleted_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": null,
+                                                "nullable": true
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "roles": {
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "users"
+                                        },
+                                        "guard_name": {
+                                            "type": "string",
+                                            "example": "api"
+                                        },
+                                        "title": {
+                                            "type": "string",
+                                            "example": "Usuarios."
+                                        },
+                                        "description": {
+                                            "type": "string",
+                                            "example": "Gestión de usuarios."
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2026-03-30T13:17:29.000000Z"
+                                        },
+                                        "updated_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2026-04-06T15:21:16.000000Z"
+                                        },
+                                        "pivot": {
+                                            "properties": {
+                                                "model_type": {
+                                                    "type": "string",
+                                                    "example": "App\\\\Models\\\\User"
+                                                },
+                                                "model_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "role_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "permissions": {
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "users.all"
+                                        },
+                                        "guard_name": {
+                                            "type": "string",
+                                            "example": "api"
+                                        },
+                                        "title": {
+                                            "type": "string",
+                                            "example": "Usuarios."
+                                        },
+                                        "description": {
+                                            "type": "string",
+                                            "example": "Gestión de usuarios."
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2026-03-30T13:17:29.000000Z"
+                                        },
+                                        "updated_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2026-04-06T15:21:16.000000Z"
+                                        },
+                                        "pivot": {
+                                            "properties": {
+                                                "model_type": {
+                                                    "type": "string",
+                                                    "example": "App\\\\Models\\\\User"
+                                                },
+                                                "model_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "permission_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            }
+        },
         "securitySchemes": {
             "sanctum": {
                 "type": "http",

@@ -42,7 +42,7 @@ class PositionRestoreRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador de la cargo'
+            'id' => 'Identificador del cargo'
         ];
     }
 

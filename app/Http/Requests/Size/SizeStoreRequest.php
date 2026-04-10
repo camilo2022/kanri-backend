@@ -26,7 +26,7 @@ class SizeStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'regex:/^(?:\d{2}|X{0,2}(?:S|M|L)|XXL)$/', 'string', 'min:2', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Size::ITEM_ID],
+            'name' => ['required', 'regex:/^(?:\d[02468]|XXS|XS|S|M|L|XL|XXL|U)$/', 'string', 'min:2', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Size::ITEM_ID],
             'description' => ['required', 'regex:/^T\d{2,}$/', 'max:50']
         ];
     }
@@ -39,7 +39,8 @@ class SizeStoreRequest extends FormRequest
             'max' => 'Se permite máximo :max caracteres.',
             'min' => 'Se permite mínimo :min caracteres.',
             'unique' => 'Ya está registrado.',
-            'regex' => 'Formato Inválido.',
+            'name.regex' => 'Formato Inválido. Use números pares de dos dígitos o tallas como XS, M, XL, U.',
+            'description.regex' => 'Formato Inválido. Debe iniciar con T.',
         ];
     }
 
