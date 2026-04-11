@@ -10,6 +10,7 @@ use App\Http\Requests\Employee\EmployeeStoreRequest;
 use App\Http\Requests\Employee\EmployeeUpdateRequest;
 use App\Http\Resources\Employee\EmployeeCollection;
 use App\Models\Employee;
+use App\Models\User;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 
@@ -20,7 +21,11 @@ class EmployeeController extends Controller
     public function all(EmployeeAllRequest $request)
     {
         try {
-            $employees = Employee::with(['person' => ['photo'], 'position' => ['area'], 'risk_manager', 'health_entity', 'pension_fund', 'compensation_fund', 'user' => ['roles', 'permissions']])
+            logger($request);
+            $employees = Employee::with(['person' => ['photo'], 'position' => ['area'], 'risk_manager', 'health_entity', 'pension_fund', 'compensation_fund', 'user' => function ($q) {
+                $q->withTrashed()
+                    ->with(['roles', 'permissions']);
+            }])
                 ->when($request->boolean('with_user'), function ($query) use ($request) {
                     return $query;
                 })
@@ -32,8 +37,8 @@ class EmployeeController extends Controller
                 })
                 ->when($request->has('with_user'), function ($query) use ($request) {
                     return $request->boolean('with_user')
-                        ? $query->whereHas('user')
-                        : $query->whereDoesntHave('user');
+                        ? $query->whereHas('user', fn($wq) => $wq->withTrashed())
+                        : $query->whereDoesntHave('user', fn($wq) => $wq->withTrashed());
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
                     return $query->orderBy($request->input('column'), $request->input('dir'));

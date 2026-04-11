@@ -24,6 +24,39 @@ use Illuminate\Http\Request;
  *     path="/modules/submodules",
  *     description="Rutas de Gestion de Submódulos"
  * )
+ *
+ * @OA\Schema(
+ *     schema="Submodule",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="name", type="string", example="users"),
+ *     @OA\Property(property="url", type="string", example="/users"),
+ *     @OA\Property(property="icon", type="string", example="FaUser"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *     @OA\Property(
+ *         property="module",
+ *         type="object",
+ *         @OA\Property(property="id", type="integer", example=1),
+ *         @OA\Property(property="name", type="string", example="users"),
+ *         @OA\Property(property="icon", type="string", example="FaUser"),
+ *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
+ *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
+ *     ),
+ *     @OA\Property(
+ *         property="permission",
+ *         type="object",
+ *         @OA\Property(property="id", type="integer", example=1),
+ *         @OA\Property(property="name", type="string", example="users"),
+ *         @OA\Property(property="title", type="string", example="Usuarios."),
+ *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
+ *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
+ *     )
+ *
+ * )
  */
 class SubmoduleController extends Controller
 {
@@ -40,39 +73,46 @@ class SubmoduleController extends Controller
      *         in="path",
      *         description="Identificador del módulo",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Texto de búsqueda en los submódulos",
+     *         description="Filtro de Busqueda.",
      *         required=false,
-     *         @OA\Schema(type="string", example="navegation")
+     *         @OA\Schema(type="string", example="juan")
      *     ),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
-     *         description="Columna por la que se ordena",
+     *         description="Columna a ordenar.",
      *         required=false,
-     *         @OA\Schema(type="string", example="name")
+     *         @OA\Schema(type="string", enum={"id","name","title", "description","created_at", "updated_at"}, example="name")
      *     ),
      *     @OA\Parameter(
      *         name="dir",
      *         in="query",
-     *         description="Dirección de ordenamiento",
+     *         description="Dirección de ordenamiento.",
      *         required=false,
-     *         @OA\Schema(type="string", example="asc")
+     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
      *     ),
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
-     *         description="Cantidad de registros por página",
+     *         description="Registros por páagina.",
      *         required=false,
      *         @OA\Schema(type="integer", example=10)
      *     ),
+     *     @OA\Parameter(
+     *         name="with_trashed",
+     *         in="query",
+     *         description="Registros inactivos.",
+     *         required=false,
+     *         @OA\Schema(type="boolean", example=true)
+     *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Lista de submódulos cargada con éxito",
+     *         description="Lista de submódulos cargada correctamente",
      *         @OA\JsonContent(
      *             @OA\Property(
      *                 property="data",
@@ -82,40 +122,7 @@ class SubmoduleController extends Controller
      *                     type="array",
      *                     @OA\Items(
      *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=0),
-     *                         @OA\Property(property="name", type="string", example="name_submodule_example"),
-     *                         @OA\Property(property="url", type="string", example="url/example"),
-     *                         @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="delete_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(
-     *                             property= "module",
-     *                             type="array",
-     *                             @OA\Items(
-     *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=0),
-     *                                 @OA\Property(property="name", type="string", example="name_module_example"),
-     *                                 @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="delete_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                             )
-     *                         ),
-     *                         @OA\Property(
-     *                             property= "permission",
-     *                             type="array",
-     *                             @OA\Items(
-     *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=0),
-     *                                 @OA\Property(property="name", type="string", example="name_permission_example"),
-     *                                 @OA\Property(property="guard_name", type="string", example="guard_name_permission_example"),
-     *                                 @OA\Property(property="title", type="string", example="title_permission_example"),
-     *                                 @OA\Property(property="description", type="string", example="description_permission_example"),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                             )
-     *                         )
+     *                         @OA\Items(ref="#/components/schemas/Submodule")
      *                     )
      *                 ),
      *                 @OA\Property(
@@ -134,14 +141,6 @@ class SubmoduleController extends Controller
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
      *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
      *         )
      *     ),
      *     @OA\Response(
@@ -170,12 +169,17 @@ class SubmoduleController extends Controller
      *         )
      *     ),
      *     @OA\Response(
+     *         response=401,
+     *         description="No autenticado",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/UnauthorizedResponse"
+     *         )
+     *     ),
+     *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -223,7 +227,7 @@ class SubmoduleController extends Controller
      *         in="path",
      *         description="Identificador del submódulo",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -234,55 +238,11 @@ class SubmoduleController extends Controller
      *                 type="object",
      *                 @OA\Property(
      *                     property="submodule",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=0),
-     *                         @OA\Property(property="name", type="string", example="name_submodule_example"),
-     *                         @OA\Property(property="url", type="string", example="url/example"),
-     *                         @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="delete_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(
-     *                             property= "permission",
-     *                             type="array",
-     *                             @OA\Items(
-     *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=0),
-     *                                 @OA\Property(property="name", type="string", example="name_permission_example"),
-     *                                 @OA\Property(property="title", type="string", example="title_permission_example"),
-     *                                 @OA\Property(property="description", type="string", example="description_permission_example"),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                             )
-     *                         ),
-     *                         @OA\Property(
-     *                             property= "module",
-     *                             type="array",
-     *                             @OA\Items(
-     *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=0),
-     *                                 @OA\Property(property="name", type="string", example="name_module_example"),
-     *                                 @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="delete_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                             )
-     *                         )
-     *                     )
-     *                 )
+     *                     ref="#/components/schemas/Submodule"
+     *                 ),
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
      *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
      *         )
      *     ),
      *     @OA\Response(
@@ -307,12 +267,17 @@ class SubmoduleController extends Controller
      *         )
      *     ),
      *     @OA\Response(
+     *         response=401,
+     *         description="No autenticado",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/UnauthorizedResponse"
+     *         )
+     *     ),
+     *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -383,64 +348,56 @@ class SubmoduleController extends Controller
      *         required=true,
      *         @OA\Schema(type="integer", example=0)
      *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"module_id","permission_id","name","url","icon"},
+     *             @OA\Property(
+     *                 property="module_id",
+     *                 type="integer",
+     *                 example=1,
+     *                 description="Identificador del módulo"
+     *             ),
+     *             @OA\Property(
+     *                 property="permission_id",
+     *                 type="integer",
+     *                 example=1,
+     *                 description="Identificador del permiso"
+     *             ),
+     *              @OA\Property(
+     *                 property="name",
+     *                 type="string",
+     *                 example="Usuarios",
+     *                 description="Nombre del submódulo"
+     *             ),
+     *             @OA\Property(
+     *                 property="url",
+     *                 type="string",
+     *                 example="/users",
+     *                 description="URL del submódulo"
+     *              ),
+     *             @OA\Property(
+     *                 property="icon",
+     *                 type="string",
+     *                 example="FaUser",
+     *                 description="Icono del submódulo"
+     *              )
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Submódulo creado con éxito",
+     *         description="Submódulo creado correctamente",
      *         @OA\JsonContent(
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
      *                     property="submodule",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="name", type="string", example="name_submodule_example"),
-     *                         @OA\Property(property="url", type="string", example="url/example"),
-     *                         @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="id", type="integer", example=0),
-     *                         @OA\Property(
-     *                             property= "module",
-     *                             type="array",
-     *                             @OA\Items(
-     *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=0),
-     *                                 @OA\Property(property="name", type="string", example="name_module_example"),
-     *                                 @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="delete_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                             )
-     *                         ),
-     *                         @OA\Property(
-     *                             property= "permission",
-     *                             type="array",
-     *                             @OA\Items(
-     *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=0),
-     *                                 @OA\Property(property="name", type="string", example="name_permission_example"),
-     *                                 @OA\Property(property="title", type="string", example="title_permission_example"),
-     *                                 @OA\Property(property="description", type="string", example="description_permission_example"),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="deleted_at", type="string", example="null")
-     *                             )
-     *                         )
-     *                     )
+     *                     ref="#/components/schemas/Submodule"
      *                 )
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
      *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
      *         )
      *     ),
      *     @OA\Response(
@@ -479,12 +436,17 @@ class SubmoduleController extends Controller
      *         )
      *     ),
      *     @OA\Response(
+     *         response=401,
+     *         description="No autenticado",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/UnauthorizedResponse"
+     *         )
+     *     ),
+     *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -533,42 +495,43 @@ class SubmoduleController extends Controller
      *         in="path",
      *         description="Identificador del submódulo",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     @OA\Parameter(
-     *         name="name",
-     *         in="query",
-     *         description="Nombre del submódulo",
+     *     @OA\RequestBody(
      *         required=true,
-     *         @OA\Schema(type="string", example="name_submodule")
-     *     ),
-     *     @OA\Parameter(
-     *         name="icon",
-     *         in="query",
-     *         description="Icono del submódulo",
-     *         required=true,
-     *         @OA\Schema(type="string", example="icon_submodule")
-     *     ),
-     *     @OA\Parameter(
-     *         name="url",
-     *         in="query",
-     *         description="Url del submódulo",
-     *         required=true,
-     *         @OA\Schema(type="string", example="url_submodule")
-     *     ),
-     *     @OA\Parameter(
-     *         name="module_id",
-     *         in="query",
-     *         description="Identificador del módulo",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=0)
-     *     ),
-     *     @OA\Parameter(
-     *         name="permission_id",
-     *         in="query",
-     *         description="Identificador del módulo",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=0)
+     *         @OA\JsonContent(
+     *             required={"module_id","permission_id","name","url","icon"},
+     *             @OA\Property(
+     *                 property="module_id",
+     *                 type="integer",
+     *                 example=1,
+     *                 description="Identificador del módulo"
+     *             ),
+     *             @OA\Property(
+     *                 property="permission_id",
+     *                 type="integer",
+     *                 example=1,
+     *                 description="Identificador del permiso"
+     *             ),
+     *              @OA\Property(
+     *                 property="name",
+     *                 type="string",
+     *                 example="Usuarios",
+     *                 description="Nombre del submódulo"
+     *             ),
+     *             @OA\Property(
+     *                 property="url",
+     *                 type="string",
+     *                 example="/users",
+     *                 description="URL del submódulo"
+     *              ),
+     *             @OA\Property(
+     *                 property="icon",
+     *                 type="string",
+     *                 example="FaUser",
+     *                 description="Icono del submódulo"
+     *              )
+     *         )
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -579,56 +542,11 @@ class SubmoduleController extends Controller
      *                 type="object",
      *                 @OA\Property(
      *                     property="submodule",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=0),
-     *                         @OA\Property(property="name", type="string", example="name_submodule_example"),
-     *                         @OA\Property(property="url", type="string", example="url/example"),
-     *                         @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="deleted_at", type="string", example="null"),
-     *                         @OA\Property(
-     *                             property= "module",
-     *                             type="array",
-     *                             @OA\Items(
-     *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=0),
-     *                                 @OA\Property(property="name", type="string", example="name_module_example"),
-     *                                 @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="delete_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                             )
-     *                         ),
-     *                         @OA\Property(
-     *                             property= "permission",
-     *                             type="array",
-     *                             @OA\Items(
-     *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=0),
-     *                                 @OA\Property(property="name", type="string", example="name_permission_example"),
-     *                                 @OA\Property(property="title", type="string", example="title_permission_example"),
-     *                                 @OA\Property(property="description", type="string", example="description_permission_example"),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="deleted_at", type="string", example="null")
-     *                             )
-     *                         )
-     *                     )
+     *                     ref="#/components/schemas/Submodule"
      *                 )
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
      *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
      *         )
      *     ),
      *     @OA\Response(
@@ -672,12 +590,17 @@ class SubmoduleController extends Controller
      *         )
      *     ),
      *     @OA\Response(
+     *         response=401,
+     *         description="No autenticado",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/UnauthorizedResponse"
+     *         )
+     *     ),
+     *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -726,7 +649,7 @@ class SubmoduleController extends Controller
      *         in="path",
      *         description="Identificador del submódulo",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -737,56 +660,11 @@ class SubmoduleController extends Controller
      *                 type="object",
      *                 @OA\Property(
      *                     property="submodule",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=0),
-     *                         @OA\Property(property="name", type="string", example="name_submodule_example"),
-     *                         @OA\Property(property="url", type="string", example="url/example"),
-     *                         @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="deleted_at", type="string", example="null"),
-     *                         @OA\Property(
-     *                             property= "module",
-     *                             type="array",
-     *                             @OA\Items(
-     *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=0),
-     *                                 @OA\Property(property="name", type="string", example="name_module_example"),
-     *                                 @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="delete_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                             )
-     *                         ),
-     *                         @OA\Property(
-     *                             property= "permission",
-     *                             type="array",
-     *                             @OA\Items(
-     *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=0),
-     *                                 @OA\Property(property="name", type="string", example="name_permission_example"),
-     *                                 @OA\Property(property="title", type="string", example="title_permission_example"),
-     *                                 @OA\Property(property="description", type="string", example="description_permission_example"),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="deleted_at", type="string", example="null")
-     *                             )
-     *                         )
-     *                     )
+     *                     ref="#/components/schemas/Submodule"
      *                 )
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
      *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
      *         )
      *     ),
      *     @OA\Response(
@@ -811,12 +689,17 @@ class SubmoduleController extends Controller
      *         )
      *     ),
      *     @OA\Response(
+     *         response=401,
+     *         description="No autenticado",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/UnauthorizedResponse"
+     *         )
+     *     ),
+     *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -858,7 +741,7 @@ class SubmoduleController extends Controller
      *         in="path",
      *         description="Identificador del submódulo",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -869,56 +752,11 @@ class SubmoduleController extends Controller
      *                 type="object",
      *                 @OA\Property(
      *                     property="submodule",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=0),
-     *                         @OA\Property(property="name", type="string", example="name_submodule_example"),
-     *                         @OA\Property(property="url", type="string", example="url/example"),
-     *                         @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="deleted_at", type="string", example="null"),
-     *                         @OA\Property(
-     *                             property= "module",
-     *                             type="array",
-     *                             @OA\Items(
-     *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=0),
-     *                                 @OA\Property(property="name", type="string", example="name_module_example"),
-     *                                 @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="delete_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                             )
-     *                         ),
-     *                         @OA\Property(
-     *                             property= "permission",
-     *                             type="array",
-     *                             @OA\Items(
-     *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=0),
-     *                                 @OA\Property(property="name", type="string", example="name_permission_example"),
-     *                                 @OA\Property(property="title", type="string", example="title_permission_example"),
-     *                                 @OA\Property(property="description", type="string", example="description_permission_example"),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="deleted_at", type="string", example="null")
-     *                             )
-     *                         )
-     *                     )
+     *                     ref="#/components/schemas/Submodule"
      *                 )
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
      *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
      *         )
      *     ),
      *     @OA\Response(
@@ -943,12 +781,17 @@ class SubmoduleController extends Controller
      *         )
      *     ),
      *     @OA\Response(
+     *         response=401,
+     *         description="No autenticado",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/UnauthorizedResponse"
+     *         )
+     *     ),
+     *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )

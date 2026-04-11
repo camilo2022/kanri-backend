@@ -27,6 +27,194 @@ use Illuminate\Support\Facades\Hash;
  *     path="/users",
  *     description="Rutas de gestión de usuarios"
  * )
+ *
+ * @OA\Schema(
+ *   schema="Role",
+ *   type="object",
+ *   @OA\Property(property="id", type="integer", example=1),
+ *   @OA\Property(property="name", type="string", example="users"),
+ *   @OA\Property(property="guard_name", type="string", example="api"),
+ *   @OA\Property(property="title", type="string", example="Usuarios."),
+ *   @OA\Property(property="description", type="string", example="Gestión de usuarios."),
+ *   @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
+ *   @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z")
+ * )
+ *
+ * @OA\Schema(
+ *   schema="Permission",
+ *   type="object",
+ *   @OA\Property(property="id", type="integer", example=1),
+ *   @OA\Property(property="name", type="string", example="users"),
+ *   @OA\Property(property="guard_name", type="string", example="api"),
+ *   @OA\Property(property="title", type="string", example="Usuarios."),
+ *   @OA\Property(property="description", type="string", example="Gestión de usuarios."),
+ *   @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
+ *   @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="Position",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="item_id", type="integer", example=4),
+ *     @OA\Property(property="name", type="string", example="Super"),
+ *     @OA\Property(property="description", type="string", example="Admin"),
+ *     @OA\Property(property="settings", type="object", nullable=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-31T15:37:40.000000Z"),
+ *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *     @OA\Property(
+ *         property="area",
+ *         type="array",
+ *         @OA\Items(
+ *             type="object",
+ *             @OA\Property(property="id", type="integer", example=1),
+ *             @OA\Property(property="item_id", type="integer", example=4),
+ *             @OA\Property(property="name", type="string", example="Super"),
+ *             @OA\Property(property="description", type="string", example="Admin"),
+ *             @OA\Property(property="settings", type="object", nullable=true),
+ *             @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
+ *             @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *             @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *             @OA\Property(
+ *                 property="pivot",
+ *                 type="object",
+ *                 @OA\Property(property="model_type", type="string", example="App\\Models\\Position"),
+ *                 @OA\Property(property="model_id", type="integer", example=1),
+ *                 @OA\Property(property="subitem_id", type="integer", example=1)
+ *             )
+ *         )
+ *     )
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PositionWithRelations",
+ *     allOf={
+ *            @OA\Schema(ref="#/components/schemas/Position"),
+ *            @OA\Schema(
+ *                @OA\Property(
+ *                    property="roles",
+ *                    type="array",
+ *                    @OA\Items(
+ *                        allOf={
+ *                            @OA\Schema(ref="#/components/schemas/Role"),
+ *                            @OA\Schema(
+ *                                @OA\Property(
+ *                                    property="pivot",
+ *                                    type="object",
+ *                                    @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
+ *                                    @OA\Property(property="model_id", type="integer", example=1),
+ *                                    @OA\Property(property="role_id", type="integer", example=1)
+ *                                )
+ *                            )
+ *                        }
+ *                    )
+ *                ),
+ *                @OA\Property(
+ *                    property="permissions",
+ *                    type="array",
+ *                    @OA\Items(
+ *                        allOf={
+ *                            @OA\Schema(ref="#/components/schemas/Permission"),
+ *                            @OA\Schema(
+ *                                @OA\Property(
+ *                                    property="pivot",
+ *                                    type="object",
+ *                                    @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
+ *                                    @OA\Property(property="model_id", type="integer", example=1),
+ *                                    @OA\Property(property="role_id", type="integer", example=1)
+ *                                )
+ *                            )
+ *                        }
+ *                    )
+ *                )
+ *            )
+ *     }
+ * )
+ *
+ * @OA\Schema(
+ *     schema="User",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="email", type="string", example="email_user_example"),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time"),
+ *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true),
+ *     @OA\Property(
+ *         property="employee",
+ *         type="object",
+ *         @OA\Property(property="id", type="integer", example=1),
+ *         @OA\Property(property="employee_id", type="integer", example=1),
+ *         @OA\Property(property="person_id", type="integer", example=1),
+ *         @OA\Property(property="operation_center", type="string", example="Principal"),
+ *         @OA\Property(property="position_id", type="integer", example=2),
+ *         @OA\Property(property="risk_manager_id", type="integer", example=5),
+ *         @OA\Property(property="health_entity_id", type="integer", example=6),
+ *         @OA\Property(property="pension_fund_id", type="integer", example=7),
+ *         @OA\Property(property="compensation_fund_id", type="integer", example=8),
+ *         @OA\Property(property="start_date", type="string", format="date-time", example="2026-03-30 00:00:00"),
+ *         @OA\Property(property="end_date", type="string", format="date-time", nullable=true, example=null),
+ *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
+ *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
+ *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *         @OA\Property(
+ *             property="position",
+ *             ref="#/components/schemas/Position"
+ *         ),
+ *         @OA\Property(
+ *             property="person",
+ *             type="object",
+ *             @OA\Property(property="id", type="integer", example=1),
+ *             @OA\Property(property="document", type="string", example="0000000000"),
+ *             @OA\Property(property="names", type="string", example="Super"),
+ *             @OA\Property(property="last_names", type="string", example="Admin"),
+ *             @OA\Property(property="gender_id", type="integer", example=15),
+ *             @OA\Property(property="birth_date", type="string", format="date", example="1990-01-01"),
+ *             @OA\Property(property="blood_type_id", type="integer", example=16),
+ *             @OA\Property(property="address", type="string", example="Dirección principal"),
+ *             @OA\Property(property="phone", type="string", example="0000000000"),
+ *             @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
+ *             @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-31T15:37:40.000000Z"),
+ *             @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
+ *         )
+ *     ),
+ *     @OA\Property(
+ *         property="roles",
+ *         type="array",
+ *         @OA\Items(
+ *             allOf={
+ *                  @OA\Schema(ref="#/components/schemas/Role"),
+ *                  @OA\Schema(
+ *                      @OA\Property(
+ *                          property="pivot",
+ *                          type="object",
+ *                          @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
+ *                          @OA\Property(property="model_id", type="integer", example=1),
+ *                          @OA\Property(property="role_id", type="integer", example=1)
+ *                      )
+ *                  )
+ *             }
+ *         )
+ *     ),
+ *     @OA\Property(
+ *         property="permissions",
+ *         type="array",
+ *         @OA\Items(
+ *             allOf={
+ *                  @OA\Schema(ref="#/components/schemas/Permission"),
+ *                  @OA\Schema(
+ *                      @OA\Property(
+ *                          property="pivot",
+ *                          type="object",
+ *                          @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
+ *                          @OA\Property(property="model_id", type="integer", example=1),
+ *                          @OA\Property(property="role_id", type="integer", example=1)
+ *                      )
+ *                  )
+ *             }
+ *         )
+ *     )
+ * )
  */
 
 
@@ -52,7 +240,7 @@ class UserController extends Controller
      *         in="query",
      *         description="Columna a ordenar.",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"id","name","email","created_at", "updated_at"}, example="name")
+     *         @OA\Schema(type="string", enum={"id","email","created_at", "updated_at"}, example="email")
      *     ),
      *     @OA\Parameter(
      *         name="dir",
@@ -85,7 +273,7 @@ class UserController extends Controller
      *                 @OA\Property(
      *                     property= "users",
      *                     type="array",
-     *                     @OA\Items(ref="#/components/schemas/UserDetail")
+     *                     @OA\Items(ref="#/components/schemas/User")
      *                 ),
      *                 @OA\Property(
      *                     property="meta",
@@ -109,17 +297,14 @@ class UserController extends Controller
      *         response=401,
      *         description="No autenticado",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
+     *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -168,7 +353,7 @@ class UserController extends Controller
      *         in="path",
      *         description="Identificador del usuario",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -179,7 +364,7 @@ class UserController extends Controller
      *                 type="object",
      *                 @OA\Property(
      *                   property="user",
-     *                   ref="#/components/schemas/UserDetail"
+     *                   ref="#/components/schemas/User"
      *                 )
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
@@ -211,17 +396,14 @@ class UserController extends Controller
      *         response=401,
      *         description="No autenticado",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
+     *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -231,6 +413,7 @@ class UserController extends Controller
         try {
             $user = User::with(['employee' => ['person', 'position' => ['area']], 'roles', 'permissions'])
                 ->findOrFail($id);
+
             return $this->successResponse(
                 [
                     'user' => $user
@@ -297,15 +480,32 @@ class UserController extends Controller
      *                 type="object",
      *                 @OA\Property(
      *                     property= "user",
-     *                     type="array",
-     *                     @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="employee_id", type="integer", example=1),
+     *                     @OA\Property(property="email", type="string", example="email_user_example"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time"),
+     *                     @OA\Property(property="created_at", type="string", format="date-time"),
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(
+     *                         property="employee",
      *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example="id_example"),
-     *                         @OA\Property(property="name", type="string", example="name_user_example"),
-     *                         @OA\Property(property="email", type="string", example="email_user_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="delete_at", type="string", format="date-time", example="2026-03-12 20:01:03")
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="person_id", type="integer", example=1),
+     *                         @OA\Property(property="operation_center", type="string", example="Principal"),
+     *                         @OA\Property(property="position_id", type="integer", example=2),
+     *                         @OA\Property(property="risk_manager_id", type="integer", example=5),
+     *                         @OA\Property(property="health_entity_id", type="integer", example=6),
+     *                         @OA\Property(property="pension_fund_id", type="integer", example=7),
+     *                         @OA\Property(property="compensation_fund_id", type="integer", example=8),
+     *                         @OA\Property(property="start_date", type="string", format="date-time", example="2026-03-30 00:00:00"),
+     *                         @OA\Property(property="end_date", type="string", format="date-time", nullable=true, example=null),
+     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
+     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
+     *                         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+     *                         @OA\Property(
+     *                             property="position",
+     *                             ref="#/components/schemas/PositionWithRelations"
+     *                         ),
      *                     )
      *                 )
      *             ),
@@ -321,23 +521,18 @@ class UserController extends Controller
      *             @OA\Property(
      *                 property="attributes",
      *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del usuario"),
-     *                 @OA\Property(property="name", type="string", example="Nombre del usuario"),
+     *                 @OA\Property(property="employee_id", type="string", example="Empleado"),
      *                 @OA\Property(property="email", type="string", example="Correo electrónico del usuario"),
-     *                 @OA\Property(property="password", type="string", example="Contraseña del usuario")
+     *                 @OA\Property(property="password", type="string", example="Contraseña del usuario"),
+     *                 @OA\Property(property="password_confirmation", type="string", example="Confirmación contraseña del usuario")
      *             ),
      *             @OA\Property(
      *                 property="errors",
      *                 type="object",
      *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Ya está registrado.")
-     *                 ),
-     *                 @OA\Property(
      *                     property="email",
      *                     type="array",
-     *                     @OA\Items(type="string", example="Debe ser un correo electrónico válido.")
+     *                     @OA\Items(type="string", example="Ya está registrado.")
      *                 )
      *             )
      *         )
@@ -346,17 +541,14 @@ class UserController extends Controller
      *         response=401,
      *         description="No autenticado",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
+     *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -370,7 +562,7 @@ class UserController extends Controller
             $user->password = Hash::make($request->input('password'));
             $user->save();
 
-            $user->load(['employee' => ['position' => ['roles', 'permissions']]]);
+            $user->load(['employee' => ['position' => ['area', 'roles', 'permissions']]]);
             $user->syncRoles($user->employee->position->roles);
             $user->syncPermissions($user->employee->position->permissions);
 
@@ -403,32 +595,44 @@ class UserController extends Controller
      *         in="path",
      *         description="Identificador del usuario",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     @OA\Parameter(
-     *         name="name",
-     *         in="query",
-     *         description="Nombre del usuario",
+     *     @OA\RequestBody(
      *         required=true,
-     *         @OA\Schema(type="string", example="user name")
-     *     ),
-     *     @OA\Parameter(
-     *         name="email",
-     *         in="query",
-     *         description="Correo electrónico del usuario",
-     *         required=true,
-     *         @OA\Schema(type="string", format="email", example="user@example.com")
-     *     ),
-     *     @OA\Parameter(
-     *         name="password",
-     *         in="query",
-     *         description="Contraseña del usuario",
-     *         required=true,
-     *         @OA\Schema(type="string", example="Contraseña12!!")
+     *         @OA\JsonContent(
+     *             required={"employee_id","email","password","password_confirmation"},
+     *             @OA\Property(
+     *                 property="employee_id",
+     *                 type="string",
+     *                 example="1",
+     *                 description="Empleado"
+     *             ),
+     *             @OA\Property(
+     *                 property="email",
+     *                 type="string",
+     *                 format="email",
+     *                 example="user@example.com",
+     *                 description="Correo electrónico del usuario"
+     *             ),
+     *             @OA\Property(
+     *                 property="password",
+     *                 type="string",
+     *                 format="password",
+     *                 example="Contrasena12!",
+     *                 description="Contraseña del usuario"
+     *              ),
+     *              @OA\Property(
+     *                  property="password_confirmation",
+     *                  type="string",
+     *                  format="password",
+     *                  example="Contrasena12!",
+     *                  description="Confirmación contraseña del usuario"
+     *              )
+     *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Usuario obtenido correctamente",
+     *         description="Información del usuario actualizada correctamente",
      *         @OA\JsonContent(
      *             @OA\Property(
      *                 property="data",
@@ -438,11 +642,12 @@ class UserController extends Controller
      *                     type="array",
      *                     @OA\Items(
      *                         type="object",
-     *                         @OA\Property(property="name", type="string", example="name_user_example"),
+     *                         @OA\Property(property="id", type="integer", example=2),
+     *                         @OA\Property(property="employee_id", type="integer", example=4),
      *                         @OA\Property(property="email", type="string", example="email_user_example"),
      *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
      *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="id", type="integer", example="id_example")
+     *                         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true)
      *                     )
      *                 )
      *             ),
@@ -450,7 +655,7 @@ class UserController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
-     *     @OA\Response(
+     *      @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
      *         @OA\JsonContent(
@@ -458,18 +663,14 @@ class UserController extends Controller
      *             @OA\Property(
      *                 property="attributes",
      *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del usuario"),
+     *                 @OA\Property(property="employee_id", type="string", example="Empleado"),
      *                 @OA\Property(property="email", type="string", example="Correo electrónico del usuario"),
-     *                 @OA\Property(property="password", type="string", example="Contraseña del usuario")
+     *                 @OA\Property(property="password", type="string", example="Contraseña del usuario"),
+     *                 @OA\Property(property="password_confirmation", type="string", example="Confirmación contraseña del usuario")
      *             ),
      *             @OA\Property(
      *                 property="errors",
      *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Ya está registrado.")
-     *                 ),
      *                 @OA\Property(
      *                     property="email",
      *                     type="array",
@@ -482,17 +683,14 @@ class UserController extends Controller
      *         response=401,
      *         description="No autenticado",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
+     *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -535,7 +733,7 @@ class UserController extends Controller
      *         in="path",
      *         description="Identificador del usuario",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -549,8 +747,8 @@ class UserController extends Controller
      *                     type="array",
      *                     @OA\Items(
      *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example="id_example"),
-     *                         @OA\Property(property="name", type="string", example="name_user_example"),
+     *                         @OA\Property(property="id", type="integer", example=14),
+     *                         @OA\Property(property="employee_id", type="integer", example=1),
      *                         @OA\Property(property="email", type="string", example="email_user_example"),
      *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
      *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
@@ -587,17 +785,14 @@ class UserController extends Controller
      *         response=401,
      *         description="No autenticado",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
+     *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -642,28 +837,45 @@ class UserController extends Controller
      *         in="path",
      *         description="Identificador del usuario",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     @OA\Response(
+     *    @OA\Response(
      *         response=200,
-     *         description="Usuario restaurado correctamente",
+     *         description="Usuario creado correctamente",
      *         @OA\JsonContent(
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
      *                     property= "user",
-     *                     type="array",
-     *                     @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="employee_id", type="integer", example=1),
+     *                     @OA\Property(property="email", type="string", example="email_user_example"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time"),
+     *                     @OA\Property(property="created_at", type="string", format="date-time"),
+     *                     @OA\Property(
+     *                         property="employee",
      *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example="id_example"),
-     *                         @OA\Property(property="name", type="string", example="name_user_example"),
-     *                         @OA\Property(property="email", type="string", example="email_user_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="deleted_at", type="string", format="date-time", example="null")
-     *                     ),
-     *                 ),
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="person_id", type="integer", example=1),
+     *                         @OA\Property(property="operation_center", type="string", example="Principal"),
+     *                         @OA\Property(property="position_id", type="integer", example=2),
+     *                         @OA\Property(property="risk_manager_id", type="integer", example=5),
+     *                         @OA\Property(property="health_entity_id", type="integer", example=6),
+     *                         @OA\Property(property="pension_fund_id", type="integer", example=7),
+     *                         @OA\Property(property="compensation_fund_id", type="integer", example=8),
+     *                         @OA\Property(property="start_date", type="string", format="date-time", example="2026-03-30 00:00:00"),
+     *                         @OA\Property(property="end_date", type="string", format="date-time", nullable=true, example=null),
+     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
+     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
+     *                         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+     *                         @OA\Property(
+     *                             property="position",
+     *                             ref="#/components/schemas/PositionWithRelations"
+     *                         ),
+     *                     )
+     *                 )
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
      *             @OA\Property(property="error", type="boolean", example=false)
@@ -694,17 +906,14 @@ class UserController extends Controller
      *         response=401,
      *         description="No autenticado",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
+     *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -716,7 +925,7 @@ class UserController extends Controller
             $user->restore();
 
 
-            $user->load(['employee' => ['position' => ['roles', 'permissions']]]);
+            $user->load(['employee' => ['position' => ['area', 'roles', 'permissions']]]);
             $user->syncRoles($user->employee->position->roles);
             $user->syncPermissions($user->employee->position->permissions);
 
@@ -745,18 +954,23 @@ class UserController extends Controller
      *     summary="Asignar un permiso a un usuario específio",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
-     *         name="permission_id",
-     *         in="query",
-     *         description="Identificador del Permiso",
-     *         required=true,
-     *         @OA\Schema(type="integer", example="1")
-     *     ),
-     *     @OA\Parameter(
      *         name="id",
      *         in="query",
      *         description="Identificador del usuario",
      *         required=true,
-     *         @OA\Schema(type="integer", example="1")
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"permission_id"},
+     *             @OA\Property(
+     *                 property="permission_id",
+     *                 type="integer",
+     *                 example=1,
+     *                 description="Identificador del Permiso"
+     *             )
+     *         )
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -766,17 +980,8 @@ class UserController extends Controller
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
-     *                     property= "user",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example="id_example"),
-     *                         @OA\Property(property="name", type="string", example="name_user_example"),
-     *                         @OA\Property(property="email", type="string", example="email_user_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="delete_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                     )
+     *                   property="user",
+     *                   ref="#/components/schemas/User"
      *                 )
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
@@ -814,17 +1019,14 @@ class UserController extends Controller
      *         response=401,
      *         description="No autenticado",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
+     *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -865,21 +1067,26 @@ class UserController extends Controller
      * @OA\Post(
      *     path="/users/authorization/remove",
      *     tags={"Users"},
-     *     summary="Remover un permiso a un usuario específio",
+     *     summary="Remover un permiso a un usuario específico",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="permission_id",
-     *         in="query",
-     *         description="Identificador del Permiso",
-     *         required=true,
-     *         @OA\Schema(type="integer", example="1")
-     *     ),
      *     @OA\Parameter(
      *         name="id",
      *         in="query",
      *         description="Identificador del usuario",
      *         required=true,
-     *         @OA\Schema(type="integer", example="1")
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"permission_id"},
+     *             @OA\Property(
+     *                 property="permission_id",
+     *                 type="integer",
+     *                 example=1,
+     *                 description="Identificador del Permiso"
+     *             )
+     *         )
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -888,19 +1095,86 @@ class UserController extends Controller
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="email", type="string", example="email_user_example"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time"),
+     *                 @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true),
      *                 @OA\Property(
-     *                     property= "user",
+     *                     property="roles",
      *                     type="array",
      *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example="id_example"),
-     *                         @OA\Property(property="name", type="string", example="name_user_example"),
-     *                         @OA\Property(property="email", type="string", example="email_user_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="delete_at", type="string", format="date-time", example="2026-03-12 20:01:03")
+     *                         allOf={
+     *                              @OA\Schema(ref="#/components/schemas/Role"),
+     *                              @OA\Schema(
+     *                                  @OA\Property(
+     *                                      property="pivot",
+     *                                      type="object",
+     *                                      @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
+     *                                      @OA\Property(property="model_id", type="integer", example=1),
+     *                                      @OA\Property(property="role_id", type="integer", example=1)
+     *                                  )
+     *                              )
+     *                         }
      *                     )
-     *                 )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="permissions",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         allOf={
+     *                              @OA\Schema(ref="#/components/schemas/Permission"),
+     *                              @OA\Schema(
+     *                                  @OA\Property(
+     *                                      property="pivot",
+     *                                      type="object",
+     *                                      @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
+     *                                      @OA\Property(property="model_id", type="integer", example=1),
+     *                                      @OA\Property(property="role_id", type="integer", example=1)
+     *                                  )
+     *                              )
+     *                         }
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="employee",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="employee_id", type="integer", example=1),
+     *                     @OA\Property(property="person_id", type="integer", example=1),
+     *                     @OA\Property(property="operation_center", type="string", example="Principal"),
+     *                     @OA\Property(property="position_id", type="integer", example=2),
+     *                     @OA\Property(property="risk_manager_id", type="integer", example=5),
+     *                     @OA\Property(property="health_entity_id", type="integer", example=6),
+     *                     @OA\Property(property="pension_fund_id", type="integer", example=7),
+     *                     @OA\Property(property="compensation_fund_id", type="integer", example=8),
+     *                     @OA\Property(property="start_date", type="string", format="date-time", example="2026-03-30 00:00:00"),
+     *                     @OA\Property(property="end_date", type="string", format="date-time", nullable=true, example=null),
+     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
+     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+     *                     @OA\Property(
+     *                         property="position",
+     *                         ref="#/components/schemas/Position"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="person",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="document", type="string", example="0000000000"),
+     *                         @OA\Property(property="names", type="string", example="Super"),
+     *                         @OA\Property(property="last_names", type="string", example="Admin"),
+     *                         @OA\Property(property="gender_id", type="integer", example=15),
+     *                         @OA\Property(property="birth_date", type="string", format="date", example="1990-01-01"),
+     *                         @OA\Property(property="blood_type_id", type="integer", example=16),
+     *                         @OA\Property(property="address", type="string", example="Dirección principal"),
+     *                         @OA\Property(property="phone", type="string", example="0000000000"),
+     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
+     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-31T15:37:40.000000Z"),
+     *                         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
+     *                     )
+     *                 ),
+     *
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
      *             @OA\Property(property="error", type="boolean", example=false)
@@ -937,17 +1211,14 @@ class UserController extends Controller
      *         response=401,
      *         description="No autenticado",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
+     *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )

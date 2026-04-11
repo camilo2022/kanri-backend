@@ -34,6 +34,21 @@ use OpenApi\Annotations as OA;
  *     name="Navegation",
  *     description="Endpoints para gestionar módulos y submódulos del sistema"
  * )
+ *
+ * @OA\Schema(
+ *   schema="UnauthorizedResponse",
+ *   type="object",
+ *   @OA\Property(property="message", type="string", example="No autenticado."),
+ *   @OA\Property(property="error", type="string", example="Unauthenticated.")
+ *)
+ *
+ * @OA\Schema(
+ *    schema="ServerErrorResponse",
+ *    type="object",
+ *    @OA\Property(property="data", type="object"),
+ *    @OA\Property(property="message", type="string", example="Error del servidor"),
+ *    @OA\Property(property="error", type="string", example="Detalles internos del error")
+ *)
  */
 class Swagger
 {
