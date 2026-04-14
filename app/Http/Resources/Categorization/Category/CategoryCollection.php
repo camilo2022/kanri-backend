@@ -13,13 +13,14 @@ class CategoryCollection extends ResourceCollection
             'categories' => $this->collection->map(function ($category) {
                 return [
                     'id' => $category->id,
-                    'item' => $category->item,
+                    'item_id' => $category->item_id,
                     'name' => $category->name,
                     'description' => $category->description,
                     'created_at' => $this->formatDate($category->created_at),
                     'updated_at' => $this->formatDate($category->updated_at),
                     'deleted_at' => $this->formatDate($category->deleted_at),
-                    'positions' => $category->positions,
+                    'item' => $category->item,
+                    'subcategories' => $category->subcategories
                 ];
             }),
             'meta' => [

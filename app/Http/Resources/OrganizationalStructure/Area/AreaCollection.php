@@ -13,12 +13,13 @@ class AreaCollection extends ResourceCollection
             'areas' => $this->collection->map(function ($area) {
                 return [
                     'id' => $area->id,
-                    'item' => $area->item,
+                    'item_id' => $area->item_id,
                     'name' => $area->name,
                     'description' => $area->description,
                     'created_at' => $this->formatDate($area->created_at),
                     'updated_at' => $this->formatDate($area->updated_at),
                     'deleted_at' => $this->formatDate($area->deleted_at),
+                    'item' => $area->item,
                     'positions' => $area->positions,
                 ];
             }),

@@ -16,16 +16,16 @@ class PersonCollection extends ResourceCollection
                     'document' => $person->document,
                     'names' => $person->names,
                     'last_names' => $person->last_names,
-                    'gender' => $person->gender,
                     'birth_date' => $person->birth_date,
-                    'blood_type' => $person->blood_type,
-                    'photo' => $person->photo,
                     'address' => $person->address,
                     'phone' => $person->phone,
-                    'employee' => $person->employee,
                     'created_at' => $this->formatDate($person->created_at),
                     'updated_at' => $this->formatDate($person->updated_at),
-                    'deleted_at' => $this->formatDate($person->deleted_at)
+                    'deleted_at' => $this->formatDate($person->deleted_at),
+                    'gender' => $person->gender,
+                    'photo' => $person->photo,
+                    'blood_type' => $person->blood_type,
+                    'employee' => $person->employee
                 ];
             }),
             'meta' => [

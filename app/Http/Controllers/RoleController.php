@@ -89,7 +89,7 @@ class RoleController extends Controller
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
-     *         description="Registros por páagina.",
+     *         description="Registros por página.",
      *         required=false,
      *         @OA\Schema(type="integer", example=10)
      *     ),

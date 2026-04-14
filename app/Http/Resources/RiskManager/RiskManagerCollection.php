@@ -13,12 +13,13 @@ class RiskManagerCollection extends ResourceCollection
             'risk_managers' => $this->collection->map(function ($risk_manager) {
                 return [
                     'id' => $risk_manager->id,
-                    'item' => $risk_manager->item,
+                    'item_id' => $risk_manager->item_id,
                     'name' => $risk_manager->name,
                     'description' => $risk_manager->description,
                     'created_at' => $this->formatDate($risk_manager->created_at),
                     'updated_at' => $this->formatDate($risk_manager->updated_at),
-                    'deleted_at' => $this->formatDate($risk_manager->deleted_at)
+                    'deleted_at' => $this->formatDate($risk_manager->deleted_at),
+                    'item' => $risk_manager->item,
                 ];
             }),
             'meta' => [

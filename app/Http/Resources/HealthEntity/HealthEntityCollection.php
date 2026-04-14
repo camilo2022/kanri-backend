@@ -13,12 +13,13 @@ class HealthEntityCollection extends ResourceCollection
             'health_entities' => $this->collection->map(function ($health_entity) {
                 return [
                     'id' => $health_entity->id,
-                    'item' => $health_entity->item,
+                    'item_id' => $health_entity->item_id,
                     'name' => $health_entity->name,
                     'description' => $health_entity->description,
                     'created_at' => $this->formatDate($health_entity->created_at),
                     'updated_at' => $this->formatDate($health_entity->updated_at),
-                    'deleted_at' => $this->formatDate($health_entity->deleted_at)
+                    'deleted_at' => $this->formatDate($health_entity->deleted_at),
+                    'item' => $health_entity->item,
                 ];
             }),
             'meta' => [

@@ -13,12 +13,13 @@ class BloodTypeCollection extends ResourceCollection
             'blood_types' => $this->collection->map(function ($blood_type) {
                 return [
                     'id' => $blood_type->id,
-                    'item' => $blood_type->item,
+                    'item_id' => $blood_type->item_id,
                     'name' => $blood_type->name,
                     'description' => $blood_type->description,
                     'created_at' => $this->formatDate($blood_type->created_at),
                     'updated_at' => $this->formatDate($blood_type->updated_at),
-                    'deleted_at' => $this->formatDate($blood_type->deleted_at)
+                    'deleted_at' => $this->formatDate($blood_type->deleted_at),
+                    'item' => $blood_type->item
                 ];
             }),
             'meta' => [

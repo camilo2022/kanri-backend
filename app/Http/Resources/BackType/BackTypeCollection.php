@@ -13,12 +13,13 @@ class BackTypeCollection extends ResourceCollection
             'back_types' => $this->collection->map(function ($back_type) {
                 return [
                     'id' => $back_type->id,
-                    'item' => $back_type->item,
+                    'item_id' => $back_type->item_id,
                     'name' => $back_type->name,
                     'description' => $back_type->description,
                     'created_at' => $this->formatDate($back_type->created_at),
                     'updated_at' => $this->formatDate($back_type->updated_at),
                     'deleted_at' => $this->formatDate($back_type->deleted_at),
+                    'item' => $back_type->item,
                 ];
             }),
             'meta' => [

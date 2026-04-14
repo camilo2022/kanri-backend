@@ -27,7 +27,7 @@ class BloodTypeUpdateRequest extends FormRequest
     {
         return [
             'id' => ['required', 'exists:subitems,id,item_id,' . BloodType::ITEM_ID],
-            'name' => ['required', 'string', 'min:2', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . BloodType::ITEM_ID],
+            'name' => ['required', 'regex:/^(A|B|AB|O)[+-]$/', 'string', 'min:2', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . BloodType::ITEM_ID],
             'description' => ['nullable', 'string', 'max:255']
         ];
     }
@@ -40,7 +40,8 @@ class BloodTypeUpdateRequest extends FormRequest
             'max' => 'Se permite máximo :max caracteres.',
             'min' => 'Se permite mínimo :min caracteres.',
             'unique' => 'Ya está registrado.',
-            'exists' => 'No está registrado.'
+            'exists' => 'No está registrado.',
+            'regex' => 'Formato Inválido. Es un tipo de sangre no válido.'
         ];
     }
 

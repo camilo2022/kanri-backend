@@ -19,117 +19,13 @@ use Illuminate\Support\Facades\Hash;
 
 /**
  * @OA\Tag(
- *     name="Users",
+ *     name="Administración - Users",
  *     description="Endpoints para gestionar usuarios"
  * )
  *
  * @OA\PathItem(
  *     path="/users",
  *     description="Rutas de gestión de usuarios"
- * )
- *
- * @OA\Schema(
- *   schema="Role",
- *   type="object",
- *   @OA\Property(property="id", type="integer", example=1),
- *   @OA\Property(property="name", type="string", example="users"),
- *   @OA\Property(property="guard_name", type="string", example="api"),
- *   @OA\Property(property="title", type="string", example="Usuarios."),
- *   @OA\Property(property="description", type="string", example="Gestión de usuarios."),
- *   @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *   @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z")
- * )
- *
- * @OA\Schema(
- *   schema="Permission",
- *   type="object",
- *   @OA\Property(property="id", type="integer", example=1),
- *   @OA\Property(property="name", type="string", example="users"),
- *   @OA\Property(property="guard_name", type="string", example="api"),
- *   @OA\Property(property="title", type="string", example="Usuarios."),
- *   @OA\Property(property="description", type="string", example="Gestión de usuarios."),
- *   @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *   @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z")
- * )
- *
- * @OA\Schema(
- *     schema="Position",
- *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="item_id", type="integer", example=4),
- *     @OA\Property(property="name", type="string", example="Super"),
- *     @OA\Property(property="description", type="string", example="Admin"),
- *     @OA\Property(property="settings", type="object", nullable=true),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-31T15:37:40.000000Z"),
- *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
- *     @OA\Property(
- *         property="area",
- *         type="array",
- *         @OA\Items(
- *             type="object",
- *             @OA\Property(property="id", type="integer", example=1),
- *             @OA\Property(property="item_id", type="integer", example=4),
- *             @OA\Property(property="name", type="string", example="Super"),
- *             @OA\Property(property="description", type="string", example="Admin"),
- *             @OA\Property(property="settings", type="object", nullable=true),
- *             @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *             @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *             @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
- *             @OA\Property(
- *                 property="pivot",
- *                 type="object",
- *                 @OA\Property(property="model_type", type="string", example="App\\Models\\Position"),
- *                 @OA\Property(property="model_id", type="integer", example=1),
- *                 @OA\Property(property="subitem_id", type="integer", example=1)
- *             )
- *         )
- *     )
- * )
- *
- * @OA\Schema(
- *     schema="PositionWithRelations",
- *     allOf={
- *            @OA\Schema(ref="#/components/schemas/Position"),
- *            @OA\Schema(
- *                @OA\Property(
- *                    property="roles",
- *                    type="array",
- *                    @OA\Items(
- *                        allOf={
- *                            @OA\Schema(ref="#/components/schemas/Role"),
- *                            @OA\Schema(
- *                                @OA\Property(
- *                                    property="pivot",
- *                                    type="object",
- *                                    @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
- *                                    @OA\Property(property="model_id", type="integer", example=1),
- *                                    @OA\Property(property="role_id", type="integer", example=1)
- *                                )
- *                            )
- *                        }
- *                    )
- *                ),
- *                @OA\Property(
- *                    property="permissions",
- *                    type="array",
- *                    @OA\Items(
- *                        allOf={
- *                            @OA\Schema(ref="#/components/schemas/Permission"),
- *                            @OA\Schema(
- *                                @OA\Property(
- *                                    property="pivot",
- *                                    type="object",
- *                                    @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
- *                                    @OA\Property(property="model_id", type="integer", example=1),
- *                                    @OA\Property(property="role_id", type="integer", example=1)
- *                                )
- *                            )
- *                        }
- *                    )
- *                )
- *            )
- *     }
  * )
  *
  * @OA\Schema(
@@ -225,7 +121,7 @@ class UserController extends Controller
     /**
      * @OA\Get(
      *     path="/users/all",
-     *     tags={"Users"},
+     *     tags={"Administración - Users"},
      *     summary="Listar los usuarios",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
@@ -252,7 +148,7 @@ class UserController extends Controller
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
-     *         description="Registros por páagina.",
+     *         description="Registros por página.",
      *         required=false,
      *         @OA\Schema(type="integer", example=10)
      *     ),
@@ -949,7 +845,7 @@ class UserController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/users/authorization/assign",
+     *     path="/users/authorization/assign/{id}",
      *     tags={"Users"},
      *     summary="Asignar un permiso a un usuario específio",
      *     security={{"sanctum":{}}},
@@ -1065,7 +961,7 @@ class UserController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/users/authorization/remove",
+     *     path="/users/authorization/remove/{id}",
      *     tags={"Users"},
      *     summary="Remover un permiso a un usuario específico",
      *     security={{"sanctum":{}}},

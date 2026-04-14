@@ -13,12 +13,13 @@ class BootTypeCollection extends ResourceCollection
             'boot_types' => $this->collection->map(function ($boot_type) {
                 return [
                     'id' => $boot_type->id,
-                    'item' => $boot_type->item,
+                    'item_id' => $boot_type->item_id,
                     'name' => $boot_type->name,
                     'description' => $boot_type->description,
                     'created_at' => $this->formatDate($boot_type->created_at),
                     'updated_at' => $this->formatDate($boot_type->updated_at),
                     'deleted_at' => $this->formatDate($boot_type->deleted_at),
+                    'item' => $boot_type->item,
                 ];
             }),
             'meta' => [

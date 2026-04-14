@@ -99,7 +99,7 @@ class SubmoduleController extends Controller
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
-     *         description="Registros por páagina.",
+     *         description="Registros por página.",
      *         required=false,
      *         @OA\Schema(type="integer", example=10)
      *     ),
@@ -120,10 +120,7 @@ class SubmoduleController extends Controller
      *                 @OA\Property(
      *                     property="submodules",
      *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Items(ref="#/components/schemas/Submodule")
-     *                     )
+     *                     @OA\Items(ref="#/components/schemas/Submodule")
      *                 ),
      *                 @OA\Property(
      *                     property="meta",

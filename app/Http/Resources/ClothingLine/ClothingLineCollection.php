@@ -13,12 +13,13 @@ class ClothingLineCollection extends ResourceCollection
             'clothing_lines' => $this->collection->map(function ($clothing_line) {
                 return [
                     'id' => $clothing_line->id,
-                    'item' => $clothing_line->item,
+                    'item_id' => $clothing_line->item_id,
                     'name' => $clothing_line->name,
                     'description' => $clothing_line->description,
                     'created_at' => $this->formatDate($clothing_line->created_at),
                     'updated_at' => $this->formatDate($clothing_line->updated_at),
                     'deleted_at' => $this->formatDate($clothing_line->deleted_at),
+                    'item' => $clothing_line->item
                 ];
             }),
             'meta' => [

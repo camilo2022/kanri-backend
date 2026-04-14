@@ -13,13 +13,14 @@ class PositionCollection extends ResourceCollection
             'positions' => $this->collection->map(function ($position) {
                 return [
                     'id' => $position->id,
-                    'item' => $position->item,
-                    'area' => $position->area->first(),
                     'name' => $position->name,
                     'description' => $position->description,
                     'created_at' => $this->formatDate($position->created_at),
                     'updated_at' => $this->formatDate($position->updated_at),
-                    'deleted_at' => $this->formatDate($position->deleted_at)
+                    'deleted_at' => $this->formatDate($position->deleted_at),
+                    'area' => $position->area->first(),
+                    'roles' => $position->roles,
+                    'permissions' => $position->permissions,
                 ];
             }),
             'meta' => [

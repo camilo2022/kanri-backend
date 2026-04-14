@@ -349,7 +349,7 @@ Route::prefix('/categorization')->group(function () {
 
         Route::prefix('/subcategories')->group(function () {
             Route::controller(SubcategoryController::class)->group(function () {
-                Route::get('/all/{module_id}', 'all')->middleware(['auth:sanctum', 'can:categorization,categorization.categories.subcategories.all']);
+                Route::get('/all/{category_id}', 'all')->middleware(['auth:sanctum', 'can:categorization,categorization.categories.subcategories.all']);
                 Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:categorization,categorization.categories.subcategories.find']);
                 Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:categorization,categorization.categories.subcategories.store']);
                 Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:categorization,categorization.categories.subcategories.update']);

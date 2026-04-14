@@ -13,12 +13,13 @@ class GroupCollection extends ResourceCollection
             'groups' => $this->collection->map(function ($group) {
                 return [
                     'id' => $group->id,
-                    'item' => $group->item,
+                    'item_id' => $group->item_id,
                     'name' => $group->name,
                     'description' => $group->description,
                     'created_at' => $this->formatDate($group->created_at),
                     'updated_at' => $this->formatDate($group->updated_at),
                     'deleted_at' => $this->formatDate($group->deleted_at),
+                    'item' => $group->item,
                 ];
             }),
             'meta' => [

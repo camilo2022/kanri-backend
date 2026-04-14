@@ -84,7 +84,7 @@ class ModuleController extends Controller
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
-     *         description="Registros por páagina.",
+     *         description="Registros por página.",
      *         required=false,
      *         @OA\Schema(type="integer", example=10)
      *     ),
@@ -105,10 +105,7 @@ class ModuleController extends Controller
      *                 @OA\Property(
      *                     property="modules",
      *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Items(ref="#/components/schemas/Module")
-     *                     )
+     *                     @OA\Items(ref="#/components/schemas/Module")
      *                 ),
      *                 @OA\Property(
      *                     property="meta",
@@ -271,7 +268,7 @@ class ModuleController extends Controller
      * @OA\Post(
      *     path="/navegation/modules/store",
      *     tags={"Navegation"},
-     *     summary="Obtener un módulo específico",
+     *     summary="Crear un módulo",
      *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
      *         required=true,

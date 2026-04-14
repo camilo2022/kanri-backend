@@ -13,12 +13,13 @@ class GarmentTypeCollection extends ResourceCollection
             'garment_types' => $this->collection->map(function ($garment_type) {
                 return [
                     'id' => $garment_type->id,
-                    'item' => $garment_type->item,
+                    'item_id' => $garment_type->item_id,
                     'name' => $garment_type->name,
                     'description' => $garment_type->description,
                     'created_at' => $this->formatDate($garment_type->created_at),
                     'updated_at' => $this->formatDate($garment_type->updated_at),
                     'deleted_at' => $this->formatDate($garment_type->deleted_at),
+                    'item' => $garment_type->item,
                 ];
             }),
             'meta' => [
