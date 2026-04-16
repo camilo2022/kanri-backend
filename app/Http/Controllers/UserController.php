@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Hash;
 
 /**
  * @OA\Tag(
- *     name="Administración - Users",
+ *     name="Users",
  *     description="Endpoints para gestionar usuarios"
  * )
  *
@@ -121,7 +121,7 @@ class UserController extends Controller
     /**
      * @OA\Get(
      *     path="/users/all",
-     *     tags={"Administración - Users"},
+     *     tags={"Users"},
      *     summary="Listar los usuarios",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(

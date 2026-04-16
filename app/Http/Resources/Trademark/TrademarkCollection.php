@@ -19,7 +19,8 @@ class TrademarkCollection extends ResourceCollection
                     'settings' => $trademark->settings,
                     'created_at' => $this->formatDate($trademark->created_at),
                     'updated_at' => $this->formatDate($trademark->updated_at),
-                    'deleted_at' => $this->formatDate($trademark->deleted_at)
+                    'deleted_at' => $this->formatDate($trademark->deleted_at),
+                    'category' => $trademark->category
                 ];
             }),
             'meta' => [

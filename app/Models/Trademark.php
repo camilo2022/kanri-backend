@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
@@ -55,6 +56,11 @@ class Trademark extends Model implements Auditable
     public function item(): BelongsTo
     {
         return $this->belongsTo(Item::class);
+    }
+
+    public function category(): MorphToMany
+    {
+        return $this->morphToMany(Category::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
     }
 
     public function scopeSearch(Builder $query, ?string $search = null): Builder

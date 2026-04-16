@@ -16,7 +16,7 @@ use App\Traits\ApiResponser;
 
 /**
  * @OA\Tag(
- *     name="Administración - People",
+ *     name="People",
  *     description="Endpoints para gestionar personas"
  * )
  *
@@ -124,7 +124,7 @@ class PersonController extends Controller
     /**
      * @OA\Get(
      *     path="/people/all",
-     *     tags={"Administración - People"},
+     *     tags={"People"},
      *     summary="Listar las personas",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(

@@ -59,7 +59,7 @@ class Subcategory extends Model implements Auditable
         return $this->belongsTo(Item::class);
     }
 
-    public function category(): MorphToMany
+    public function categories(): MorphToMany
     {
         return $this->morphToMany(Category::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
     }

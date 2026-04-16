@@ -7,9 +7,12 @@ use App\Http\Requests\Categorization\Category\CategoryDeleteRequest;
 use App\Http\Requests\Categorization\Category\CategoryFindRequest;
 use App\Http\Requests\Categorization\Category\CategoryRestoreRequest;
 use App\Http\Requests\Categorization\Category\CategoryStoreRequest;
+use App\Http\Requests\Categorization\Category\CategorySubcategoryAssignRequest;
+use App\Http\Requests\Categorization\Category\CategorySubcategoryRemoveRequest;
 use App\Http\Requests\Categorization\Category\CategoryUpdateRequest;
 use App\Http\Resources\Categorization\Category\CategoryCollection;
 use App\Models\Category;
+use App\Models\Subcategory;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 
@@ -670,6 +673,62 @@ class CategoryController extends Controller
         try {
             $category = Category::withTrashed()->findOrFail($id);
             $category->restore();
+
+            return $this->successResponse(
+                [
+                    'category' => $category
+                ],
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    public function subcategory_assign(CategorySubcategoryAssignRequest $request, $id)
+    {
+        try {
+            $subcategory = Subcategory::findOrFail($request->input('subcategory_id'));
+            $category = Category::findOrFail($id);
+
+            $category->subcategories()->attach([$subcategory->id]);
+
+            $category->load(['item', 'subcategories']);
+
+            return $this->successResponse(
+                [
+                    'category' => $category
+                ],
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    public function subcategory_remove(CategorySubcategoryRemoveRequest $request, $id)
+    {
+        try {
+            $subcategory = Subcategory::findOrFail($request->input('subcategory_id'));
+            $category = Category::findOrFail($id);
+
+            $category->subcategories()->detach([$subcategory->id]);
+
+            $category->load(['item', 'subcategories']);
 
             return $this->successResponse(
                 [

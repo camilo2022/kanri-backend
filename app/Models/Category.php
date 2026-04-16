@@ -59,6 +59,11 @@ class Category extends Model implements Auditable
         return $this->belongsTo(Item::class);
     }
 
+    public function trademarks(): MorphToMany
+    {
+        return $this->morphedByMany(Trademark::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
+    }
+
     public function subcategories(): MorphToMany
     {
         return $this->morphedByMany(Subcategory::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');

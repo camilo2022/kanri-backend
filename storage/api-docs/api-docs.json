@@ -14915,7 +14915,7 @@
         "/people/all": {
             "get": {
                 "tags": [
-                    "Administración - People"
+                    "People"
                 ],
                 "summary": "Listar las personas",
                 "operationId": "ce1604b8a957c6d0de8d8b02a89b6183",
@@ -24534,7 +24534,7 @@
         "/users/all": {
             "get": {
                 "tags": [
-                    "Administración - Users"
+                    "Users"
                 ],
                 "summary": "Listar los usuarios",
                 "operationId": "bb7cbdb4f7f7dc5b86fd4b3c29c15f77",
@@ -30262,7 +30262,7 @@
             "description": "Endpoints para gestionar fondos de pensión"
         },
         {
-            "name": "Administración - People",
+            "name": "People",
             "description": "Endpoints para gestionar personas"
         },
         {
@@ -30282,7 +30282,7 @@
             "description": "Endpoints para gestionar marcas"
         },
         {
-            "name": "Administración - Users",
+            "name": "Users",
             "description": "Endpoints para gestionar usuarios"
         },
         {
@@ -30308,14 +30308,6 @@
         {
             "name": "Classification",
             "description": "Endpoints para gestionar grupos y subgrupos del sistema"
-        },
-        {
-            "name": "People",
-            "description": "People"
-        },
-        {
-            "name": "Users",
-            "description": "Users"
         }
     ]
 }

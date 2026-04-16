@@ -134,7 +134,6 @@
 
 <body @if (config('l5-swagger.defaults.ui.display.dark_mode')) id="dark-mode" @endif>
     <div id="swagger-ui"></div>
-    <h1 style="color:red">PRUEBA SWAGGER</h1>
 
     <script src="{{ l5_swagger_asset($documentation, 'swagger-ui-bundle.js') }}"></script>
     <script src="{{ l5_swagger_asset($documentation, 'swagger-ui-standalone-preset.js') }}"></script>

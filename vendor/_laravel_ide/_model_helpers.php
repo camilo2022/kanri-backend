@@ -1300,6 +1300,8 @@ namespace App\Models {
      * @property int $item_id
      * @property int $id
      * @property-read \App\Models\Item $item
+     * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Trademark> $trademarks
+     * @property-read int|null $trademarks_count
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Subcategory> $subcategories
      * @property-read int|null $subcategories_count
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \OwenIt\Auditing\Models\Audit> $audits
@@ -8018,8 +8020,8 @@ namespace App\Models {
      * @property int $item_id
      * @property int $id
      * @property-read \App\Models\Item $item
-     * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Category> $category
-     * @property-read int|null $category_count
+     * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Category> $categories
+     * @property-read int|null $categories_count
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \OwenIt\Auditing\Models\Audit> $audits
      * @property-read int|null $audits_count
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Permission\Models\Role> $roles
@@ -9295,6 +9297,8 @@ namespace App\Models {
      * @property int $item_id
      * @property int $id
      * @property-read \App\Models\Item $item
+     * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Category> $category
+     * @property-read int|null $category_count
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \OwenIt\Auditing\Models\Audit> $audits
      * @property-read int|null $audits_count
      * @method static \Illuminate\Database\Eloquent\Builder<Trademark>|Trademark whereId($value)

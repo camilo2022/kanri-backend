@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Trademark;
 
+use App\Models\Category;
 use App\Models\Trademark;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -27,6 +28,7 @@ class TrademarkUpdateRequest extends FormRequest
     {
         return [
             'id' => ['required', 'exists:subitems,id,item_id,' . Trademark::ITEM_ID],
+            'category_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Category::ITEM_ID],
             'name' => ['required', 'string', 'min:5', 'max:50', 'uppercase', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Trademark::ITEM_ID],
             'description' => ['nullable', 'string', 'max:255', 'uppercase']
         ];
@@ -37,6 +39,7 @@ class TrademarkUpdateRequest extends FormRequest
         return [
             'required' => 'Es obligatorio.',
             'string' => 'Debe ser una cadena de texto.',
+            'numeric' => 'Debe ser un número.',
             'max' => 'Se permite máximo :max caracteres.',
             'min' => 'Se permite mínimo :min caracteres.',
             'unique' => 'Ya está registrado.',
@@ -49,6 +52,7 @@ class TrademarkUpdateRequest extends FormRequest
     {
         return [
             'id' => 'Identificador del area',
+            'category_id' => 'Identificador de Categoría',
             'name' => 'Nombre',
             'description' => 'Descripción'
         ];

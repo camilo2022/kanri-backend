@@ -43,7 +43,7 @@ class SubcategoryController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/categorization/categories/subcategories/all",
+     *     path="/categorization/subcategories/all",
      *     tags={"Categorization"},
      *     summary="Listar subcategorías",
      *     security={{"sanctum":{}}},
@@ -128,11 +128,10 @@ class SubcategoryController extends Controller
      *     )
      * )
      */
-    public function all(SubcategoryAllRequest $request, $category_id)
+    public function all(SubcategoryAllRequest $request)
     {
         try {
-            $subcategories = Subcategory::with(['category'])
-                ->whereHas('category', fn($r) => $r->where('id', $category_id))
+            $subcategories = Subcategory::with(['categories'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -163,7 +162,7 @@ class SubcategoryController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/categorization/categories/subcategories/find/{id}",
+     *     path="/categorization/subcategories/find/{id}",
      *     tags={"Categorization"},
      *     summary="Obtener una subcategoría especifica",
      *     security={{"sanctum":{}}},
@@ -253,7 +252,7 @@ class SubcategoryController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/categorization/categories/subcategories/store",
+     *     path="/categorization/subcategories/store",
      *     tags={"Categorization"},
      *     summary="Crear una subcategoría",
      *     security={{"sanctum":{}}},
@@ -371,7 +370,7 @@ class SubcategoryController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/categorization/categories/subcategories/update/{id}",
+     *     path="/categorization/subcategories/update/{id}",
      *     tags={"Categorization"},
      *     summary="Editar una subcategoría específica",
      *     security={{"sanctum":{}}},
@@ -498,7 +497,7 @@ class SubcategoryController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/categorization/categories/subcategories/delete/{id}",
+     *     path="/categorization/subcategories/delete/{id}",
      *     tags={"Categorization"},
      *     summary="Desactivar una subcategoría específica",
      *     security={{"sanctum":{}}},
@@ -596,7 +595,7 @@ class SubcategoryController extends Controller
 
     /**
      * @OA\Patch(
-     *     path="/categorization/categories/subcategories/restore/{id}",
+     *     path="/categorization/subcategories/restore/{id}",
      *     tags={"Categorization"},
      *     summary="Activar una subcategoría específica",
      *     security={{"sanctum":{}}},

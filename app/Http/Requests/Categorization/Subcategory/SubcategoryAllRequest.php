@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Categorization\Subcategory;
 
-use App\Models\Category;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -26,7 +25,6 @@ class SubcategoryAllRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'category_id' => ['nullable', 'numeric', 'exists:subitems,id,item_id,' . Category::ITEM_ID],
             'per_page' => ['nullable', 'numeric'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],

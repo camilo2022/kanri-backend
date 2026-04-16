@@ -10,6 +10,7 @@ use App\Http\Requests\Trademark\TrademarkRestoreRequest;
 use App\Http\Requests\Trademark\TrademarkStoreRequest;
 use App\Http\Requests\Trademark\TrademarkUpdateRequest;
 use App\Http\Resources\Trademark\TrademarkCollection;
+use App\Models\Category;
 use App\Models\Trademark;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -159,9 +160,10 @@ class TrademarkController extends Controller
     public function all(TrademarkAllRequest $request)
     {
         try {
-            $trademakers = Trademark::when($request->filled('search'), function ($query) use ($request) {
-                return $query->search($request->input('search'));
-            })
+            $trademakers = Trademark::with(['category'])
+                ->when($request->filled('search'), function ($query) use ($request) {
+                    return $query->search($request->input('search'));
+                })
                 ->when($request->boolean('with_trashed'), function ($query) {
                     return $query->withTrashed();
                 })
@@ -257,6 +259,7 @@ class TrademarkController extends Controller
     {
         try {
             $trademark = Trademark::findOrFail($id);
+            $trademark->load(['category']);
 
             return $this->successResponse(
                 [
@@ -364,9 +367,13 @@ class TrademarkController extends Controller
     {
         try {
             $trademark = new Trademark();
+            $category = Category::findOrFail($request->integer('category_id'));
+
             $trademark->name = $request->input('name');
             $trademark->description = $request->input('description');
             $trademark->save();
+            $trademark->category()->attach([$category->id]);
+            $trademark->load(['category']);
 
             return $this->successResponse(
                 [
@@ -483,9 +490,12 @@ class TrademarkController extends Controller
     {
         try {
             $trademark = Trademark::findOrFail($id);
+            $category = Category::findOrFail($request->integer('category_id'));
             $trademark->name = $request->input('name');
             $trademark->description = $request->input('description');
             $trademark->save();
+            $trademark->category()->sync([$category->id]);
+            $trademark->load(['category']);
 
             return $this->successResponse(
                 [
