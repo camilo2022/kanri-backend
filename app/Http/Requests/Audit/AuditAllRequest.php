@@ -29,7 +29,7 @@ class AuditAllRequest extends FormRequest
             'user_id' => ['nullable', 'numeric'],
             'column' => ['nullable', 'string', 'in:created_at'],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
-            'event' => ['nullable', 'string', 'in:created,updated,deleted,restored'],
+            'event' => ['nullable', 'string', 'in:created,updated,deleted,restored,attach,detach,sync'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date']
         ];

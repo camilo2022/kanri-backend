@@ -293,6 +293,9 @@ Route::prefix('/people')->group(function () {
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:people,people.update']);
         Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:people,people.delete']);
         Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:people,people.restore']);
+        Route::get('/pdf', 'pdf')->middleware(['auth:sanctum', 'can:people,people.all']);
+        Route::get('/excel', 'excel')->middleware(['auth:sanctum', 'can:people,people.all']);
+        Route::post('/import', 'import')->middleware(['auth:sanctum', 'can:people,people.all']);
     });
 });
 

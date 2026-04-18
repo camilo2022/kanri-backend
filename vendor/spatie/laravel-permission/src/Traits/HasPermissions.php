@@ -111,18 +111,25 @@ trait HasPermissions
         $roleKey = (new (is_a($this, Role::class) ? static::class : $this->getRoleClass())())->getKeyName();
 
         $rolesWithPermissions = is_a($this, Role::class) ? [] : array_unique(
-            array_reduce($permissions, fn ($result, $permission) => array_merge($result, $permission->roles->all()), [])
+            array_reduce($permissions, fn($result, $permission) => array_merge($result, $permission->roles->all()), [])
         );
 
-        return $query->where(fn (Builder $query) => $query
-            ->{! $without ? 'whereHas' : 'whereDoesntHave'}('permissions', fn (Builder $subQuery) => $subQuery
-            ->whereIn(config('permission.table_names.permissions').".$permissionKey", \array_column($permissions, $permissionKey))
-            )
-            ->when(count($rolesWithPermissions), fn ($whenQuery) => $whenQuery
-                ->{! $without ? 'orWhereHas' : 'whereDoesntHave'}('roles', fn (Builder $subQuery) => $subQuery
-                ->whereIn(config('permission.table_names.roles').".$roleKey", \array_column($rolesWithPermissions, $roleKey))
+        return $query->where(
+            fn(Builder $query) => $query
+                ->{! $without ? 'whereHas' : 'whereDoesntHave'}(
+                    'permissions',
+                    fn(Builder $subQuery) => $subQuery
+                        ->whereIn(config('permission.table_names.permissions') . ".$permissionKey", \array_column($permissions, $permissionKey))
                 )
-            )
+                ->when(
+                    count($rolesWithPermissions),
+                    fn($whenQuery) => $whenQuery
+                        ->{! $without ? 'orWhereHas' : 'whereDoesntHave'}(
+                            'roles',
+                            fn(Builder $subQuery) => $subQuery
+                                ->whereIn(config('permission.table_names.roles') . ".$roleKey", \array_column($rolesWithPermissions, $roleKey))
+                        )
+                )
         );
     }
 
@@ -339,7 +346,7 @@ trait HasPermissions
         }
 
         return $this->loadMissing('roles', 'roles.permissions')
-            ->roles->flatMap(fn ($role) => $role->permissions)
+            ->roles->flatMap(fn($role) => $role->permissions)
             ->sort()->values();
     }
 
@@ -396,12 +403,14 @@ trait HasPermissions
     {
         $permissions = $this->collectPermissions($permissions);
 
+        $permissionOld = $this->permissions()->get(['name', 'title', 'description'])->makeHidden('pivot');
+
         $model = $this->getModel();
         $teamPivot = app(PermissionRegistrar::class)->teams && ! is_a($this, Role::class) ?
             [app(PermissionRegistrar::class)->teamsKey => getPermissionsTeamId()] : [];
 
         if ($model->exists) {
-            $currentPermissions = $this->permissions->map(fn ($permission) => $permission->getKey())->toArray();
+            $currentPermissions = $this->permissions->map(fn($permission) => $permission->getKey())->toArray();
 
             $this->permissions()->attach(array_diff($permissions, $currentPermissions), $teamPivot);
             $model->unsetRelation('permissions');
@@ -426,7 +435,7 @@ trait HasPermissions
         }
 
         if (config('permission.events_enabled')) {
-            event(new PermissionAttached($this->getModel(), $permissions));
+            event(new PermissionAttached($this->getModel(), $permissionOld));
         }
 
         $this->forgetWildcardPermissionIndex();
@@ -468,6 +477,8 @@ trait HasPermissions
     {
         $storedPermission = $this->getStoredPermission($permission);
 
+        $permissionOld = $this->permissions()->get(['name', 'title', 'description'])->makeHidden('pivot');
+
         $this->permissions()->detach($storedPermission);
 
         if (is_a($this, Role::class)) {
@@ -475,7 +486,7 @@ trait HasPermissions
         }
 
         if (config('permission.events_enabled')) {
-            event(new PermissionDetached($this->getModel(), $storedPermission));
+            event(new PermissionDetached($this->getModel(), $permissionOld));
         }
 
         $this->forgetWildcardPermissionIndex();

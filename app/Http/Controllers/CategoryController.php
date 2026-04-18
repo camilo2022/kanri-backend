@@ -51,7 +51,7 @@ use App\Traits\ApiResponser;
  *             @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
  *             @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
  *         )
- *   )
+ *    )
  * )
  */
 class CategoryController extends Controller
@@ -698,7 +698,7 @@ class CategoryController extends Controller
             $subcategory = Subcategory::findOrFail($request->input('subcategory_id'));
             $category = Category::findOrFail($id);
 
-            $category->subcategories()->attach([$subcategory->id]);
+            $category->auditAttach('subcategories', $subcategory->id);
 
             $category->load(['item', 'subcategories']);
 
@@ -726,7 +726,7 @@ class CategoryController extends Controller
             $subcategory = Subcategory::findOrFail($request->input('subcategory_id'));
             $category = Category::findOrFail($id);
 
-            $category->subcategories()->detach([$subcategory->id]);
+            $category->auditDetach('subcategories', $subcategory->id);
 
             $category->load(['item', 'subcategories']);
 

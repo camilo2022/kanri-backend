@@ -27,7 +27,6 @@ class SubcategoryStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'category_id' => ['required', 'exists:subitems,id,item_id,' . Category::ITEM_ID],
             'name' => ['required', 'regex:/^[A-Z ]+$/', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Subcategory::ITEM_ID],
             'description' => ['required', 'regex:/^[A-Z ]+$/', 'string', 'max:255']
         ];

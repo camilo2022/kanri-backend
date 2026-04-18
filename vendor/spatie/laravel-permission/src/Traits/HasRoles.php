@@ -63,10 +63,10 @@ trait HasRoles
 
         $teamsKey = app(PermissionRegistrar::class)->teamsKey;
         $relation->withPivot($teamsKey);
-        $teamField = config('permission.table_names.roles').'.'.$teamsKey;
+        $teamField = config('permission.table_names.roles') . '.' . $teamsKey;
 
         return $relation->wherePivot($teamsKey, getPermissionsTeamId())
-            ->where(fn ($q) => $q->whereNull($teamField)->orWhere($teamField, getPermissionsTeamId()));
+            ->where(fn($q) => $q->whereNull($teamField)->orWhere($teamField, getPermissionsTeamId()));
     }
 
     /**
@@ -98,8 +98,10 @@ trait HasRoles
 
         $key = (new ($this->getRoleClass())())->getKeyName();
 
-        return $query->{! $without ? 'whereHas' : 'whereDoesntHave'}('roles', fn (Builder $subQuery) => $subQuery
-            ->whereIn(config('permission.table_names.roles').".$key", \array_column($roles, $key))
+        return $query->{! $without ? 'whereHas' : 'whereDoesntHave'}(
+            'roles',
+            fn(Builder $subQuery) => $subQuery
+                ->whereIn(config('permission.table_names.roles') . ".$key", \array_column($roles, $key))
         );
     }
 
@@ -149,6 +151,8 @@ trait HasRoles
     {
         $roles = $this->collectRoles($roles);
 
+        $rolesOld = $this->roles()->get(['name', 'title', 'description'])->makeHidden('pivot');
+
         $model = $this->getModel();
         $teamPivot = app(PermissionRegistrar::class)->teams && ! is_a($this, Permission::class) ?
             [app(PermissionRegistrar::class)->teamsKey => getPermissionsTeamId()] : [];
@@ -159,7 +163,7 @@ trait HasRoles
                 $this->load('roles');
             }
 
-            $currentRoles = $this->roles->map(fn ($role) => $role->getKey())->toArray();
+            $currentRoles = $this->roles->map(fn($role) => $role->getKey())->toArray();
 
             $this->roles()->attach(array_diff($roles, $currentRoles), $teamPivot);
             $model->unsetRelation('roles');
@@ -184,7 +188,7 @@ trait HasRoles
         }
 
         if (config('permission.events_enabled')) {
-            event(new RoleAttached($this->getModel(), $roles));
+            event(new RoleAttached($this->getModel(), $rolesOld));
         }
 
         return $this;
@@ -200,6 +204,8 @@ trait HasRoles
     {
         $roles = $this->collectRoles($role);
 
+        $rolesOld = $this->roles()->get(['name', 'title', 'description'])->makeHidden('pivot');
+
         $this->roles()->detach($roles);
 
         $this->unsetRelation('roles');
@@ -209,7 +215,7 @@ trait HasRoles
         }
 
         if (config('permission.events_enabled')) {
-            event(new RoleDetached($this->getModel(), $roles));
+            event(new RoleDetached($this->getModel(), $rolesOld));
         }
 
         return $this;
@@ -256,7 +262,7 @@ trait HasRoles
             $roles = $roles->value;
 
             return $this->roles
-                ->when($guard, fn ($q) => $q->where('guard_name', $guard))
+                ->when($guard, fn($q) => $q->where('guard_name', $guard))
                 ->pluck('name')
                 ->contains(function ($name) use ($roles) {
                     /** @var string|\BackedEnum $name */
@@ -384,7 +390,8 @@ trait HasRoles
             $roles = [$roles->name];
         }
 
-        $roles = collect()->make($roles)->map(fn ($role) => $role instanceof Role ? $role->name : $role
+        $roles = collect()->make($roles)->map(
+            fn($role) => $role instanceof Role ? $role->name : $role
         );
 
         return $this->roles->count() == $roles->count() && $this->hasAllRoles($roles, $guard);

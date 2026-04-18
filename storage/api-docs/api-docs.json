@@ -20551,13 +20551,13 @@
                 ]
             }
         },
-        "/categorization/categories/subcategories/all": {
+        "/categorization/subcategories/all": {
             "get": {
                 "tags": [
                     "Categorization"
                 ],
                 "summary": "Listar subcategorías",
-                "operationId": "10e70860b1569a10345d9562babab559",
+                "operationId": "643efaf3bc3435640375fbf1deebdaa1",
                 "parameters": [
                     {
                         "name": "search",
@@ -20711,13 +20711,13 @@
                 ]
             }
         },
-        "/categorization/categories/subcategories/find/{id}": {
+        "/categorization/subcategories/find/{id}": {
             "get": {
                 "tags": [
                     "Categorization"
                 ],
                 "summary": "Obtener una subcategoría especifica",
-                "operationId": "c83f20d4f871d1bae2ce66f9b884e7dd",
+                "operationId": "0acbb87982adbe04fa02841b1d1ccd18",
                 "parameters": [
                     {
                         "name": "id",
@@ -20824,35 +20824,26 @@
                 ]
             }
         },
-        "/categorization/categories/subcategories/store": {
+        "/categorization/subcategories/store": {
             "post": {
                 "tags": [
                     "Categorization"
                 ],
                 "summary": "Crear una subcategoría",
-                "operationId": "2e064f98d83347da878e470b8d903f67",
+                "operationId": "3dde9ffcbdd662a23a5679a46528cd6b",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "category_id",
-                                    "name"
-                                ],
                                 "properties": {
-                                    "category_id": {
-                                        "description": "Identificador de la Categoría",
-                                        "type": "integer",
-                                        "example": 1
-                                    },
                                     "name": {
-                                        "description": "Nombre de la Categoría",
+                                        "description": "Nombre de la subcategoría",
                                         "type": "string",
                                         "example": "ADMINISTRACION"
                                     },
                                     "description": {
-                                        "description": "Descripción de la Categoría",
+                                        "description": "Descripción de la subcategoría",
                                         "type": "string",
                                         "example": "LISTA"
                                     }
@@ -20988,13 +20979,13 @@
                 ]
             }
         },
-        "/categorization/categories/subcategories/update/{id}": {
+        "/categorization/subcategories/update/{id}": {
             "put": {
                 "tags": [
                     "Categorization"
                 ],
                 "summary": "Editar una subcategoría específica",
-                "operationId": "768c26e4fcc338f6cd3f473288429a1c",
+                "operationId": "b818fd6ffc212bca8366fdecd1acb7f0",
                 "parameters": [
                     {
                         "name": "id",
@@ -21174,13 +21165,13 @@
                 ]
             }
         },
-        "/categorization/categories/subcategories/delete/{id}": {
+        "/categorization/subcategories/delete/{id}": {
             "delete": {
                 "tags": [
                     "Categorization"
                 ],
                 "summary": "Desactivar una subcategoría específica",
-                "operationId": "8d5f1e5d4503c1d6e80d418e0a863e0f",
+                "operationId": "19bc3e72efa075465dc2b3b1d3ad4273",
                 "parameters": [
                     {
                         "name": "id",
@@ -21324,13 +21315,13 @@
                 ]
             }
         },
-        "/categorization/categories/subcategories/restore/{id}": {
+        "/categorization/subcategories/restore/{id}": {
             "patch": {
                 "tags": [
                     "Categorization"
                 ],
                 "summary": "Activar una subcategoría específica",
-                "operationId": "9db8140635aacddeba42f2b92b86991e",
+                "operationId": "86f64172dd815e838b50003b321570cf",
                 "parameters": [
                     {
                         "name": "id",
@@ -23657,7 +23648,8 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "name"
+                                    "name",
+                                    "category_id"
                                 ],
                                 "properties": {
                                     "name": {
@@ -23669,6 +23661,11 @@
                                         "description": "Descripción de la marca",
                                         "type": "string",
                                         "example": "LISTA"
+                                    },
+                                    "category_id": {
+                                        "description": "Identificador de la categoría a la que pertenece la marca",
+                                        "type": "integer",
+                                        "example": 1
                                     }
                                 },
                                 "type": "object"
@@ -23827,7 +23824,8 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "name"
+                                    "name",
+                                    "category_id"
                                 ],
                                 "properties": {
                                     "name": {
@@ -23839,6 +23837,11 @@
                                         "description": "Descripción de la marca",
                                         "type": "string",
                                         "example": "LISTA DE USUARIOS"
+                                    },
+                                    "category_id": {
+                                        "description": "Identificador de la categoría a la que pertenece la marca",
+                                        "type": "integer",
+                                        "example": 1
                                     }
                                 },
                                 "type": "object"
@@ -29339,6 +29342,63 @@
                             }
                         },
                         "type": "object"
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "item_id": {
+                                    "type": "integer",
+                                    "example": 10
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "No Aplica"
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "example": "No Aplica"
+                                },
+                                "created_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "example": "2026-03-30T13:17:29.000000Z"
+                                },
+                                "updated_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "example": "2026-04-06T15:21:16.000000Z"
+                                },
+                                "deleted_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "example": null,
+                                    "nullable": true
+                                },
+                                "pivot": {
+                                    "properties": {
+                                        "model_type": {
+                                            "type": "string",
+                                            "example": "App\\\\Models\\\\Subcategory"
+                                        },
+                                        "model_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "subitem_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "type": "object"
+                        }
                     }
                 },
                 "type": "object"
@@ -29632,6 +29692,63 @@
                             }
                         },
                         "type": "object"
+                    },
+                    "category": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "item_id": {
+                                    "type": "integer",
+                                    "example": 10
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "No Aplica"
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "example": "No Aplica"
+                                },
+                                "created_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "example": "2026-03-30T13:17:29.000000Z"
+                                },
+                                "updated_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "example": "2026-04-06T15:21:16.000000Z"
+                                },
+                                "deleted_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "example": null,
+                                    "nullable": true
+                                },
+                                "pivot": {
+                                    "properties": {
+                                        "model_type": {
+                                            "type": "string",
+                                            "example": "App\\\\Models\\\\Trademark"
+                                        },
+                                        "model_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "subitem_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "type": "object"
+                        }
                     }
                 },
                 "type": "object"

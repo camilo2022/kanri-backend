@@ -32,10 +32,10 @@ class Employee extends Model implements Auditable
         'person_id',
         'operation_center',
         'position_id',
-        'risk_manager',
-        'health_entity',
-        'pension_fund',
-        'compensation_fund',
+        'risk_manager_id',
+        'health_entity_id',
+        'pension_fund_id',
+        'compensation_fund_id',
         'start_date',
         'end_date'
     ];

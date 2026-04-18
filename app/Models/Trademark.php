@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
+use OwenIt\Auditing\Models\Audit;
 
 class Trademark extends Model implements Auditable
 {

@@ -64,6 +64,27 @@ use App\Traits\ApiResponser;
  *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
  *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
  *     ),
+ *     @OA\Property(
+ *         property="category",
+ *         type="array",
+ *         @OA\Items(
+ *             type="object",
+ *             @OA\Property(property="id", type="integer", example=1),
+ *             @OA\Property(property="item_id", type="integer", example=10),
+ *             @OA\Property(property="name", type="string", example="No Aplica"),
+ *             @OA\Property(property="description", type="string", example="No Aplica"),
+ *             @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
+ *             @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *             @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *             @OA\Property(
+ *                 property="pivot",
+ *                 type="object",
+ *                 @OA\Property(property="model_type", type="string", example="App\\Models\\Trademark"),
+ *                 @OA\Property(property="model_id", type="integer", example=1),
+ *                 @OA\Property(property="subitem_id", type="integer", example=1)
+ *             )
+ *         )
+ *     )
  * )
  */
 class TrademarkController extends Controller
@@ -288,7 +309,7 @@ class TrademarkController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name"},
+     *             required={"name","category_id"},
      *             @OA\Property(
      *                 property="name",
      *                 type="string",
@@ -300,7 +321,13 @@ class TrademarkController extends Controller
      *                 type="string",
      *                 example="LISTA",
      *                 description="Descripción de la marca"
-     *              )
+     *             ),
+     *             @OA\Property(
+     *                 property="category_id",
+     *                 type="integer",
+     *                 example=1,
+     *                 description="Identificador de la categoría a la que pertenece la marca"
+     *             )
      *         )
      *     ),
      *     @OA\Response(
@@ -372,7 +399,8 @@ class TrademarkController extends Controller
             $trademark->name = $request->input('name');
             $trademark->description = $request->input('description');
             $trademark->save();
-            $trademark->category()->attach([$category->id]);
+            $trademark->auditSync('category', [$category->id]);
+
             $trademark->load(['category']);
 
             return $this->successResponse(
@@ -409,7 +437,7 @@ class TrademarkController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name"},
+     *             required={"name","category_id"},
      *             @OA\Property(
      *                 property="name",
      *                 type="string",
@@ -421,7 +449,13 @@ class TrademarkController extends Controller
      *                 type="string",
      *                 example="LISTA DE USUARIOS",
      *                 description="Descripción de la marca"
-     *              )
+     *             ),
+     *             @OA\Property(
+     *               property="category_id",
+     *               type="integer",
+     *               example=1,
+     *               description="Identificador de la categoría a la que pertenece la marca"
+     *             )
      *         )
      *     ),
      *     @OA\Response(
@@ -494,7 +528,7 @@ class TrademarkController extends Controller
             $trademark->name = $request->input('name');
             $trademark->description = $request->input('description');
             $trademark->save();
-            $trademark->category()->sync([$category->id]);
+            $trademark->auditSync('category', [$category->id]);
             $trademark->load(['category']);
 
             return $this->successResponse(

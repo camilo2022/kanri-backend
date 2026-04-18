@@ -34,6 +34,27 @@ use App\Traits\ApiResponser;
  *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
  *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
  *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
+ *     ),
+ *     @OA\Property(
+ *         property="categories",
+ *         type="array",
+ *         @OA\Items(
+ *             type="object",
+ *             @OA\Property(property="id", type="integer", example=1),
+ *             @OA\Property(property="item_id", type="integer", example=10),
+ *             @OA\Property(property="name", type="string", example="No Aplica"),
+ *             @OA\Property(property="description", type="string", example="No Aplica"),
+ *             @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
+ *             @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *             @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *             @OA\Property(
+ *                 property="pivot",
+ *                 type="object",
+ *                 @OA\Property(property="model_type", type="string", example="App\\Models\\Subcategory"),
+ *                 @OA\Property(property="model_id", type="integer", example=1),
+ *                 @OA\Property(property="subitem_id", type="integer", example=1)
+ *             )
+ *         )
  *     )
  * )
  */
@@ -229,7 +250,7 @@ class SubcategoryController extends Controller
     public function find(SubcategoryFindRequest $request, $id)
     {
         try {
-            $subcategory = Subcategory::with(['category'])
+            $subcategory = Subcategory::with(['categories'])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -259,24 +280,17 @@ class SubcategoryController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"category_id","name"},
-     *             @OA\Property(
-     *                 property="category_id",
-     *                 type="integer",
-     *                 example=1,
-     *                 description="Identificador de la Categoría"
-     *             ),
      *             @OA\Property(
      *                 property="name",
      *                 type="string",
      *                 example="ADMINISTRACION",
-     *                 description="Nombre de la Categoría"
+     *                 description="Nombre de la subcategoría"
      *             ),
      *             @OA\Property(
      *                 property="description",
      *                 type="string",
      *                 example="LISTA",
-     *                 description="Descripción de la Categoría"
+     *                 description="Descripción de la subcategoría"
      *              )
      *         )
      *     ),
@@ -347,8 +361,6 @@ class SubcategoryController extends Controller
             $subcategory->name = $request->input('name');
             $subcategory->description = $request->input('description');
             $subcategory->save();
-
-            $subcategory->category()->sync([$request->integer('category_id')]);
 
             return $this->successResponse(
                 [
@@ -474,8 +486,6 @@ class SubcategoryController extends Controller
             $subcategory->name = $request->input('name');
             $subcategory->description = $request->input('description');
             $subcategory->save();
-
-            $subcategory->category()->sync([$request->integer('category_id')]);
 
             return $this->successResponse(
                 [
