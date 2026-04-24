@@ -15,7 +15,7 @@ class Category extends Model implements Auditable
 {
     use Auditing, HasRoles, SoftDeletes;
 
-    public const ITEM_ID = 13;
+    public const ITEM_ID = 12;
 
     protected $table = 'subitems';
 

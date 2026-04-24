@@ -20,40 +20,13 @@ class SpatieCheckRoleAndPermission
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next, $role, $permission)
+    public function handle(Request $request, Closure $next, $permissions)
     {
-        $roleModel = Role::where('name', $role)->first();
-        $permissionModel = Permission::where('name', $permission)->first();
+        $permissions = explode('|', $permissions);
+        $permissionsTitles = Permission::whereIn('name', $permissions)->get()->pluck('title')->join(', ');
 
-        $roleTitle = $roleModel?->title ?? $role;
-        $permissionTitle = $permissionModel?->title ?? $permission;
-
-        if (!Auth::user()->hasRole($role) && !Auth::user()->hasDirectPermission($permission)) {
-            $message = "No está autorizado para realizar esta acción. Falta el rol: {$roleTitle} y falta el permiso: {$permissionTitle}. Contacte al administrador para obtener asistencia o solicitar autorización.";
-            return $this->errorResponse(
-                [
-                    'message' => $message
-                ],
-                403
-            );
-
-            throw new AuthorizationException();
-        }
-
-        if (!Auth::user()->hasRole($role)) {
-            $message = "No está autorizado para realizar esta acción. Falta el rol: {$roleTitle}. Contacte al administrador para obtener asistencia o solicitar autorización.";
-            return $this->errorResponse(
-                [
-                    'message' => $message
-                ],
-                403
-            );
-
-            throw new AuthorizationException();
-        }
-
-        if (!Auth::user()->hasDirectPermission($permission)) {
-            $message = "No está autorizado para realizar esta acción. Falta el permiso: {$permissionTitle}. Contacte al administrador para obtener asistencia o solicitar autorización.";
+        if (!Auth::user()->hasAnyPermission($permissions)) {
+            $message = "No está autorizado para realizar esta acción. No cuentas con ninguno de los permisos: {$permissionsTitles}. Contacte al administrador para obtener asistencia o solicitar autorización.";
             return $this->errorResponse(
                 [
                     'message' => $message

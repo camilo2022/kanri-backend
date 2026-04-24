@@ -220,35 +220,25 @@ class RolesAndPermissionsSeeder extends Seeder
 
             [
                 'role' => [
-                    'name' => 'areas',
-                    'title' => 'Áreas',
-                    'description' => 'Gestión de áreas.',
+                    'name' => 'organizational_structure',
+                    'title' => 'Estructura organizacional',
+                    'description' => 'Gestión de áreas y cargos del sistema.',
                 ],
                 'permissions' => [
-                    ['name' => 'areas.all', 'title' => 'Listar áreas', 'description' => 'Permite listar áreas.'],
-                    ['name' => 'areas.find', 'title' => 'Consultar área', 'description' => 'Permite consultar un área.'],
-                    ['name' => 'areas.store', 'title' => 'Crear área', 'description' => 'Permite crear áreas.'],
-                    ['name' => 'areas.update', 'title' => 'Actualizar área', 'description' => 'Permite actualizar áreas.'],
-                    ['name' => 'areas.delete', 'title' => 'Eliminar área', 'description' => 'Permite eliminar áreas.'],
-                    ['name' => 'areas.restore', 'title' => 'Restaurar área', 'description' => 'Permite restaurar áreas.'],
-                ]
-            ],
-
-            [
-                'role' => [
-                    'name' => 'positions',
-                    'title' => 'Cargos',
-                    'description' => 'Gestión de cargos.',
-                ],
-                'permissions' => [
-                    ['name' => 'positions.all', 'title' => 'Listar cargos', 'description' => 'Permite listar cargos.'],
-                    ['name' => 'positions.find', 'title' => 'Consultar cargo', 'description' => 'Permite consultar un cargo.'],
-                    ['name' => 'positions.store', 'title' => 'Crear cargo', 'description' => 'Permite crear cargos.'],
-                    ['name' => 'positions.update', 'title' => 'Actualizar cargo', 'description' => 'Permite actualizar cargos.'],
-                    ['name' => 'positions.delete', 'title' => 'Eliminar cargo', 'description' => 'Permite eliminar cargos.'],
-                    ['name' => 'positions.restore', 'title' => 'Restaurar cargo', 'description' => 'Permite restaurar cargos.'],
-                    ['name' => 'positions.authorization.assign', 'title' => 'Asignar permisos', 'description' => 'Permite asignar permisos a cargos.'],
-                    ['name' => 'positions.authorization.remove', 'title' => 'Remover permisos', 'description' => 'Permite remover permisos de cargos.'],
+                    ['name' => 'organizational_structure.areas.all', 'title' => 'Listar áreas', 'description' => 'Permite listar áreas.'],
+                    ['name' => 'organizational_structure.areas.find', 'title' => 'Consultar área', 'description' => 'Permite consultar un área.'],
+                    ['name' => 'organizational_structure.areas.store', 'title' => 'Crear área', 'description' => 'Permite crear áreas.'],
+                    ['name' => 'organizational_structure.areas.update', 'title' => 'Actualizar área', 'description' => 'Permite actualizar áreas.'],
+                    ['name' => 'organizational_structure.areas.delete', 'title' => 'Eliminar área', 'description' => 'Permite eliminar áreas.'],
+                    ['name' => 'organizational_structure.areas.restore', 'title' => 'Restaurar área', 'description' => 'Permite restaurar áreas.'],
+                    ['name' => 'organizational_structure.areas.positions.all', 'title' => 'Listar cargos', 'description' => 'Permite listar cargos.'],
+                    ['name' => 'organizational_structure.areas.positions.find', 'title' => 'Consultar cargo', 'description' => 'Permite consultar un cargo.'],
+                    ['name' => 'organizational_structure.areas.positions.store', 'title' => 'Crear cargo', 'description' => 'Permite crear cargos.'],
+                    ['name' => 'organizational_structure.areas.positions.update', 'title' => 'Actualizar cargo', 'description' => 'Permite actualizar cargos.'],
+                    ['name' => 'organizational_structure.areas.positions.delete', 'title' => 'Eliminar cargo', 'description' => 'Permite eliminar cargos.'],
+                    ['name' => 'organizational_structure.areas.positions.restore', 'title' => 'Restaurar cargo', 'description' => 'Permite restaurar cargos.'],
+                    ['name' => 'organizational_structure.areas.positions.authorization.assign', 'title' => 'Asignar permisos', 'description' => 'Permite asignar permisos a cargos.'],
+                    ['name' => 'organizational_structure.areas.positions.authorization.remove', 'title' => 'Remover permisos', 'description' => 'Permite remover permisos de cargos.'],
                 ]
             ],
 
@@ -286,38 +276,6 @@ class RolesAndPermissionsSeeder extends Seeder
 
             [
                 'role' => [
-                    'name' => 'risk_manager',
-                    'title' => 'Admininistradoras de riesgos',
-                    'description' => 'Gestión de Administradoras de riesgos.',
-                ],
-                'permissions' => [
-                    ['name' => 'risk_manager.all', 'title' => 'Listar Administradoras de riesgos.', 'description' => 'Permite listar Administradoras de riesgos..'],
-                    ['name' => 'risk_manager.find', 'title' => 'Consultar Administradoras de riesgos.', 'description' => 'Permite consultar Administradoras de riesgos..'],
-                    ['name' => 'risk_manager.store', 'title' => 'Crear Administradoras de riesgos.', 'description' => 'Permite crear Administradoras de riesgos..'],
-                    ['name' => 'risk_manager.update', 'title' => 'Actualizar Administradoras de riesgos.', 'description' => 'Permite actualizar Administradoras de riesgos..'],
-                    ['name' => 'risk_manager.delete', 'title' => 'Eliminar Administradoras de riesgos.', 'description' => 'Permite eliminar Administradoras de riesgos..'],
-                    ['name' => 'risk_manager.restore', 'title' => 'Restaurar Administradoras de riesgos.', 'description' => 'Permite restaurar Administradoras de riesgos..'],
-                ]
-            ],
-
-            [
-                'role' => [
-                    'name' => 'health_entity',
-                    'title' => 'Entidades de Salud',
-                    'description' => 'Gestión de Entidades de Salud.',
-                ],
-                'permissions' => [
-                    ['name' => 'health_entity.all', 'title' => 'Listar Entidades de Salud', 'description' => 'Permite listar Entidades de Salud.'],
-                    ['name' => 'health_entity.find', 'title' => 'Consultar Entidades de Salud', 'description' => 'Permite consultar Entidades de Salud.'],
-                    ['name' => 'health_entity.store', 'title' => 'Crear Entidades de Salud', 'description' => 'Permite crear Entidades de Salud.'],
-                    ['name' => 'health_entity.update', 'title' => 'Actualizar Entidades de Salud', 'description' => 'Permite actualizar Entidades de Salud.'],
-                    ['name' => 'health_entity.delete', 'title' => 'Eliminar Entidades de Salud', 'description' => 'Permite eliminar Entidades de Salud.'],
-                    ['name' => 'health_entity.restore', 'title' => 'Restaurar Entidades de Salud', 'description' => 'Permite restaurar Entidades de Salud.'],
-                ]
-            ],
-
-            [
-                'role' => [
                     'name' => 'pension_funds',
                     'title' => 'Fondos de pensión',
                     'description' => 'Gestión de fondos de pensión.',
@@ -346,7 +304,324 @@ class RolesAndPermissionsSeeder extends Seeder
                     ['name' => 'compensation_funds.delete', 'title' => 'Eliminar caja', 'description' => 'Permite eliminar cajas.'],
                     ['name' => 'compensation_funds.restore', 'title' => 'Restaurar caja', 'description' => 'Permite restaurar cajas.'],
                 ]
-            ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'health_entities',
+                    'title' => 'Entidades de Salud',
+                    'description' => 'Gestión de Entidades de Salud.',
+                ],
+                'permissions' => [
+                    ['name' => 'health_entities.all', 'title' => 'Listar Entidades de Salud', 'description' => 'Permite listar Entidades de Salud.'],
+                    ['name' => 'health_entities.find', 'title' => 'Consultar Entidades de Salud', 'description' => 'Permite consultar Entidades de Salud.'],
+                    ['name' => 'health_entities.store', 'title' => 'Crear Entidades de Salud', 'description' => 'Permite crear Entidades de Salud.'],
+                    ['name' => 'health_entities.update', 'title' => 'Actualizar Entidades de Salud', 'description' => 'Permite actualizar Entidades de Salud.'],
+                    ['name' => 'health_entities.delete', 'title' => 'Eliminar Entidades de Salud', 'description' => 'Permite eliminar Entidades de Salud.'],
+                    ['name' => 'health_entities.restore', 'title' => 'Restaurar Entidades de Salud', 'description' => 'Permite restaurar Entidades de Salud.'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'risk_managers',
+                    'title' => 'Admininistradoras de riesgos',
+                    'description' => 'Gestión de Administradoras de riesgos.',
+                ],
+                'permissions' => [
+                    ['name' => 'risk_managers.all', 'title' => 'Listar Administradoras de riesgos.', 'description' => 'Permite listar Administradoras de riesgos..'],
+                    ['name' => 'risk_managers.find', 'title' => 'Consultar Administradoras de riesgos.', 'description' => 'Permite consultar Administradoras de riesgos..'],
+                    ['name' => 'risk_managers.store', 'title' => 'Crear Administradoras de riesgos.', 'description' => 'Permite crear Administradoras de riesgos..'],
+                    ['name' => 'risk_managers.update', 'title' => 'Actualizar Administradoras de riesgos.', 'description' => 'Permite actualizar Administradoras de riesgos..'],
+                    ['name' => 'risk_managers.delete', 'title' => 'Eliminar Administradoras de riesgos.', 'description' => 'Permite eliminar Administradoras de riesgos..'],
+                    ['name' => 'risk_managers.restore', 'title' => 'Restaurar Administradoras de riesgos.', 'description' => 'Permite restaurar Administradoras de riesgos..'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'trademarks',
+                    'title' => 'Marcas de la Empresa',
+                    'description' => 'Gestión de marcas de la empresa.',
+                ],
+                'permissions' => [
+                    ['name' => 'trademarks.all', 'title' => 'Listar marcas.', 'description' => 'Permite listar marcas.'],
+                    ['name' => 'trademarks.find', 'title' => 'Consultar marcas.', 'description' => 'Permite consultar marcas.'],
+                    ['name' => 'trademarks.store', 'title' => 'Crear marcas.', 'description' => 'Permite crear marcas.'],
+                    ['name' => 'trademarks.update', 'title' => 'Actualizar marcas.', 'description' => 'Permite actualizar marcas.'],
+                    ['name' => 'trademarks.delete', 'title' => 'Eliminar marcas.', 'description' => 'Permite eliminar marcas.'],
+                    ['name' => 'trademarks.restore', 'title' => 'Restaurar marcas.', 'description' => 'Permite restaurar marcas.'],
+                    ['name' => 'trademarks.settings', 'title' => 'Configurar marcas.', 'description' => 'Permite configurar marcas.'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'silhouettes',
+                    'title' => 'Siluetas',
+                    'description' => 'Gestión de siluetas de la empresa.',
+                ],
+                'permissions' => [
+                    ['name' => 'silhouettes.all', 'title' => 'Listar siluetas.', 'description' => 'Permite listar siluetas.'],
+                    ['name' => 'silhouettes.find', 'title' => 'Consultar siluetas.', 'description' => 'Permite consultar siluetas.'],
+                    ['name' => 'silhouettes.store', 'title' => 'Crear siluetas.', 'description' => 'Permite crear siluetas.'],
+                    ['name' => 'silhouettes.update', 'title' => 'Actualizar siluetas.', 'description' => 'Permite actualizar siluetas.'],
+                    ['name' => 'silhouettes.delete', 'title' => 'Eliminar siluetas.', 'description' => 'Permite eliminar siluetas.'],
+                    ['name' => 'silhouettes.restore', 'title' => 'Restaurar siluetas.', 'description' => 'Permite restaurar siluetas.'],
+                    ['name' => 'silhouettes.settings', 'title' => 'Configurar siluetas.', 'description' => 'Permite configurar siluetas.'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'sizes',
+                    'title' => 'Tallas',
+                    'description' => 'Gestión de tallas de la empresa.',
+                ],
+                'permissions' => [
+                    ['name' => 'sizes.all', 'title' => 'Listar tallas.', 'description' => 'Permite listar tallas.'],
+                    ['name' => 'sizes.find', 'title' => 'Consultar tallas.', 'description' => 'Permite consultar tallas.'],
+                    ['name' => 'sizes.store', 'title' => 'Crear tallas.', 'description' => 'Permite crear tallas.'],
+                    ['name' => 'sizes.update', 'title' => 'Actualizar tallas.', 'description' => 'Permite actualizar tallas.'],
+                    ['name' => 'sizes.delete', 'title' => 'Eliminar tallas.', 'description' => 'Permite eliminar tallas.'],
+                    ['name' => 'sizes.restore', 'title' => 'Restaurar tallas.', 'description' => 'Permite restaurar tallas.'],
+                    ['name' => 'sizes.settings', 'title' => 'Configurar tallas.', 'description' => 'Permite configurar tallas.'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'clothing_lines',
+                    'title' => 'Líneas',
+                    'description' => 'Gestión de líneas de productos.',
+                ],
+                'permissions' => [
+                    ['name' => 'clothing_lines.all', 'title' => 'Listar líneas.', 'description' => 'Permite listar líneas.'],
+                    ['name' => 'clothing_lines.find', 'title' => 'Consultar líneas.', 'description' => 'Permite consultar líneas.'],
+                    ['name' => 'clothing_lines.store', 'title' => 'Crear líneas.', 'description' => 'Permite crear líneas.'],
+                    ['name' => 'clothing_lines.update', 'title' => 'Actualizar líneas.', 'description' => 'Permite actualizar líneas.'],
+                    ['name' => 'clothing_lines.delete', 'title' => 'Eliminar líneas.', 'description' => 'Permite eliminar líneas.'],
+                    ['name' => 'clothing_lines.restore', 'title' => 'Restaurar líneas.', 'description' => 'Permite restaurar líneas.'],
+                    ['name' => 'clothing_lines.settings', 'title' => 'Configurar líneas.', 'description' => 'Permite configurar líneas.'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'garment_types',
+                    'title' => 'Tipos de Prenda',
+                    'description' => 'Gestión de tipos de prenda.',
+                ],
+                'permissions' => [
+                    ['name' => 'garment_types.all', 'title' => 'Listar tipos de prenda.', 'description' => 'Permite listar tipos de prenda.'],
+                    ['name' => 'garment_types.find', 'title' => 'Consultar tipos de prenda.', 'description' => 'Permite consultar tipos de prenda.'],
+                    ['name' => 'garment_types.store', 'title' => 'Crear tipos de prenda.', 'description' => 'Permite crear tipos de prenda.'],
+                    ['name' => 'garment_types.update', 'title' => 'Actualizar tipos de prenda.', 'description' => 'Permite actualizar tipos de prenda.'],
+                    ['name' => 'garment_types.delete', 'title' => 'Eliminar tipos de prenda.', 'description' => 'Permite eliminar tipos de prenda.'],
+                    ['name' => 'garment_types.restore', 'title' => 'Restaurar tipos de prenda.', 'description' => 'Permite restaurar tipos de prenda.'],
+                    ['name' => 'garment_types.settings', 'title' => 'Configurar tipos de prenda.', 'description' => 'Permite configurar tipos de prenda.'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'boot_types',
+                    'title' => 'Tipos de Bota',
+                    'description' => 'Gestión de tipos de bota.',
+                ],
+                'permissions' => [
+                    ['name' => 'boot_types.all', 'title' => 'Listar tipos de bota.', 'description' => 'Permite listar tipos de bota.'],
+                    ['name' => 'boot_types.find', 'title' => 'Consultar tipos de bota.', 'description' => 'Permite consultar tipos de bota.'],
+                    ['name' => 'boot_types.store', 'title' => 'Crear tipos de bota.', 'description' => 'Permite crear tipos de bota.'],
+                    ['name' => 'boot_types.update', 'title' => 'Actualizar tipos de bota.', 'description' => 'Permite actualizar tipos de bota.'],
+                    ['name' => 'boot_types.delete', 'title' => 'Eliminar tipos de bota.', 'description' => 'Permite eliminar tipos de bota.'],
+                    ['name' => 'boot_types.restore', 'title' => 'Restaurar tipos de bota.', 'description' => 'Permite restaurar tipos de bota.'],
+                    ['name' => 'boot_types.settings', 'title' => 'Configurar tipos de bota.', 'description' => 'Permite configurar tipos de bota.'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'back_types',
+                    'title' => 'Tipos de trasero',
+                    'description' => 'Gestión de tipos de trasero.',
+                ],
+                'permissions' => [
+                    ['name' => 'back_types.all', 'title' => 'Listar tipos de trasero.', 'description' => 'Permite listar tipos de trasero.'],
+                    ['name' => 'back_types.find', 'title' => 'Consultar tipos de trasero.', 'description' => 'Permite consultar tipos de trasero.'],
+                    ['name' => 'back_types.store', 'title' => 'Crear tipos de trasero.', 'description' => 'Permite crear tipos de trasero.'],
+                    ['name' => 'back_types.update', 'title' => 'Actualizar tipos de trasero.', 'description' => 'Permite actualizar tipos de trasero.'],
+                    ['name' => 'back_types.delete', 'title' => 'Eliminar tipos de trasero.', 'description' => 'Permite eliminar tipos de trasero.'],
+                    ['name' => 'back_types.restore', 'title' => 'Restaurar tipos de trasero.', 'description' => 'Permite restaurar tipos de trasero.'],
+                    ['name' => 'back_types.settings', 'title' => 'Configurar tipos de trasero.', 'description' => 'Permite configurar tipos de trasero.'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'waistband_types',
+                    'title' => 'Tipos de pretina',
+                    'description' => 'Gestión de tipos de pretina.',
+                ],
+                'permissions' => [
+                    ['name' => 'waistband_types.all', 'title' => 'Listar tipos de pretina.', 'description' => 'Permite listar tipos de pretina.'],
+                    ['name' => 'waistband_types.find', 'title' => 'Consultar tipos de pretina.', 'description' => 'Permite consultar tipos de pretina.'],
+                    ['name' => 'waistband_types.store', 'title' => 'Crear tipos de pretina.', 'description' => 'Permite crear tipos de pretina.'],
+                    ['name' => 'waistband_types.update', 'title' => 'Actualizar tipos de pretina.', 'description' => 'Permite actualizar tipos de pretina.'],
+                    ['name' => 'waistband_types.delete', 'title' => 'Eliminar tipos de pretina.', 'description' => 'Permite eliminar tipos de pretina.'],
+                    ['name' => 'waistband_types.restore', 'title' => 'Restaurar tipos de pretina.', 'description' => 'Permite restaurar tipos de pretina.'],
+                    ['name' => 'waistband_types.settings', 'title' => 'Configurar tipos de pretina.', 'description' => 'Permite configurar tipos de pretina.'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'categorization',
+                    'title' => 'Categorización',
+                    'description' => 'Gestión de categorías y subcategorías',
+                ],
+                'permissions' => [
+                    ['name' => 'categorization.categories.all', 'title' => 'Listar categorías.', 'description' => 'Permite listar categorías.'],
+                    ['name' => 'categorization.categories.find', 'title' => 'Consultar categorías.', 'description' => 'Permite consultar categorías.'],
+                    ['name' => 'categorization.categories.store', 'title' => 'Crear categorías.', 'description' => 'Permite crear categorías.'],
+                    ['name' => 'categorization.categories.update', 'title' => 'Actualizar categorías.', 'description' => 'Permite actualizar categorías.'],
+                    ['name' => 'categorization.categories.delete', 'title' => 'Eliminar categorías.', 'description' => 'Permite eliminar categorías.'],
+                    ['name' => 'categorization.categories.restore', 'title' => 'Restaurar categorías.', 'description' => 'Permite restaurar categorías.'],
+                    ['name' => 'categorization.categories.settings', 'title' => 'Configurar categorías.', 'description' => 'Permite configurar categorías.'],
+                    ['name' => 'categorization.subcategories.all', 'title' => 'Listar subcategorías.', 'description' => 'Permite listar subcategorías.'],
+                    ['name' => 'categorization.subcategories.find', 'title' => 'Consultar subcategorías.', 'description' => 'Permite consultar subcategorías.'],
+                    ['name' => 'categorization.subcategories.store', 'title' => 'Crear subcategorías.', 'description' => 'Permite crear subcategorías.'],
+                    ['name' => 'categorization.subcategories.update', 'title' => 'Actualizar subcategorías.', 'description' => 'Permite actualizar subcategorías.'],
+                    ['name' => 'categorization.subcategories.delete', 'title' => 'Eliminar subcategorías.', 'description' => 'Permite eliminar subcategorías.'],
+                    ['name' => 'categorization.subcategories.restore', 'title' => 'Restaurar subcategorías.', 'description' => 'Permite restaurar subcategorías.'],
+                    ['name' => 'categorization.subcategories.settings', 'title' => 'Configurar subcategorías.', 'description' => 'Permite configurar subcategorías.'],
+                    ['name' => 'categorization.categories.subcategory.assign', 'title' => 'Asignar subcategorías a categorías.', 'description' => 'Permite asignar subcategorías a categorías.'],
+                    ['name' => 'categorization.categories.subcategory.remove', 'title' => 'Remover subcategorías de categorías.', 'description' => 'Permite remover subcategorías de categorías.'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'classification',
+                    'title' => 'Clasificación',
+                    'description' => 'Gestión de grupos y subgrupos',
+                ],
+                'permissions' => [
+                    ['name' => 'classification.groups.all', 'title' => 'Listar grupos.', 'description' => 'Permite listar grupos.'],
+                    ['name' => 'classification.groups.find', 'title' => 'Consultar grupos.', 'description' => 'Permite consultar grupos.'],
+                    ['name' => 'classification.groups.store', 'title' => 'Crear grupos.', 'description' => 'Permite crear grupos.'],
+                    ['name' => 'classification.groups.update', 'title' => 'Actualizar grupos.', 'description' => 'Permite actualizar grupos.'],
+                    ['name' => 'classification.groups.delete', 'title' => 'Eliminar grupos.', 'description' => 'Permite eliminar grupos.'],
+                    ['name' => 'classification.groups.restore', 'title' => 'Restaurar grupos.', 'description' => 'Permite restaurar grupos.'],
+                    ['name' => 'classification.subgroups.all', 'title' => 'Listar subgrupos.', 'description' => 'Permite listar subgrupos.'],
+                    ['name' => 'classification.subgroups.find', 'title' => 'Consultar subgrupos.', 'description' => 'Permite consultar subgrupos.'],
+                    ['name' => 'classification.subgroups.store', 'title' => 'Crear subgrupos.', 'description' => 'Permite crear subgrupos.'],
+                    ['name' => 'classification.subgroups.update', 'title' => 'Actualizar subgrupos.', 'description' => 'Permite actualizar subgrupos.'],
+                    ['name' => 'classification.subgroups.delete', 'title' => 'Eliminar subgrupos.', 'description' => 'Permite eliminar subgrupos.'],
+                    ['name' => 'classification.subgroups.restore', 'title' => 'Restaurar subgrupos.', 'description' => 'Permite restaurar subgrupos.'],
+                    ['name' => 'classification.subgroups.settings', 'title' => 'Configurar subgrupos.', 'description' => 'Permite configurar subgrupos.'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'audits',
+                    'title' => 'Auditorías',
+                    'description' => 'Gestión de logs de auditorías',
+                ],
+                'permissions' => [
+                    ['name' => 'audits.all', 'title' => 'Listar auditorías.', 'description' => 'Permite listar auditorías.'],
+                    ['name' => 'audits.find', 'title' => 'Consultar auditorías.', 'description' => 'Permite consultar auditorías.'],
+                    ['name' => 'audits.search', 'title' => 'Buscar auditorías.', 'description' => 'Permite buscar auditorías.'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'workflow',
+                    'title' => 'Procesos y Subprocesos',
+                    'description' => 'Gestión de procesos y subprocesos',
+                ],
+                'permissions' => [
+                    ['name' => 'workflow.processes.all', 'title' => 'Listar procesos.', 'description' => 'Permite listar procesos..'],
+                    ['name' => 'workflow.processes.find', 'title' => 'Buscar un proceso.', 'description' => 'Permite obtener un proceso especifico.'],
+                    ['name' => 'workflow.processes.store', 'title' => 'Crear procesos.', 'description' => 'Permite crear procesos.'],
+                    ['name' => 'workflow.processes.update', 'title' => 'Actualizar procesos.', 'description' => 'Permite actualizar procesos.'],
+                    ['name' => 'workflow.processes.delete', 'title' => 'Eliminar procesos.', 'description' => 'Permite eliminar procesos.'],
+                    ['name' => 'workflow.processes.restore', 'title' => 'Resturar procesos.', 'description' => 'Permite restaurar procesos.'],
+                    ['name' => 'workflow.processes.subprocesses.all', 'title' => 'Listar subprocesos.', 'description' => 'Permite listar subprocesos..'],
+                    ['name' => 'workflow.processes.subprocesses.find', 'title' => 'Buscar un subproceso.', 'description' => 'Permite obtener un subproceso especifico.'],
+                    ['name' => 'workflow.processes.subprocesses.store', 'title' => 'Crear subprocesos.', 'description' => 'Permite crear subprocesos.'],
+                    ['name' => 'workflow.processes.subprocesses.update', 'title' => 'Actualizar subprocesos.', 'description' => 'Permite actualizar subprocesos.'],
+                    ['name' => 'workflow.processes.subprocesses.delete', 'title' => 'Eliminar subprocesos.', 'description' => 'Permite eliminar subprocesos.'],
+                    ['name' => 'workflow.processes.subprocesses.restore', 'title' => 'Resturar subprocesos.', 'description' => 'Permite restaurar subprocesos.'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'wash_tones',
+                    'title' => 'Tonos de lavado',
+                    'description' => 'Gestión de tonos de lavado.',
+                ],
+                'permissions' => [
+                    ['name' => 'wash_tones.all', 'title' => 'Listar tonos de lavado', 'description' => 'Permite listar tonos de lavado.'],
+                    ['name' => 'wash_tones.find', 'title' => 'Consultar tono de lavado', 'description' => 'Permite consultar tono de lavado.'],
+                    ['name' => 'wash_tones.store', 'title' => 'Crear tono de lavado', 'description' => 'Permite crear tonos de lavado.'],
+                    ['name' => 'wash_tones.update', 'title' => 'Actualizar tono de lavado', 'description' => 'Permite actualizar tonos de lavado.'],
+                    ['name' => 'wash_tones.delete', 'title' => 'Eliminar tono de lavado', 'description' => 'Permite eliminar tonos de lavado.'],
+                    ['name' => 'wash_tones.restore', 'title' => 'Restaurar tono de lavado', 'description' => 'Permite restaurar tonos de lavado.'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'colors',
+                    'title' => 'Colores',
+                    'description' => 'Gestión de colores.',
+                ],
+                'permissions' => [
+                    ['name' => 'colors.all', 'title' => 'Listar colores', 'description' => 'Permite listar colores.'],
+                    ['name' => 'colors.find', 'title' => 'Consultar color', 'description' => 'Permite consultar color.'],
+                    ['name' => 'colors.store', 'title' => 'Crear color', 'description' => 'Permite crear colores.'],
+                    ['name' => 'colors.update', 'title' => 'Actualizar color', 'description' => 'Permite actualizar colores.'],
+                    ['name' => 'colors.delete', 'title' => 'Eliminar color', 'description' => 'Permite eliminar colores.'],
+                    ['name' => 'colors.restore', 'title' => 'Restaurar color', 'description' => 'Permite restaurar colores.'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'collections',
+                    'title' => 'Colecciones',
+                    'description' => 'Gestión de colecciones.',
+                ],
+                'permissions' => [
+                    ['name' => 'collections.all', 'title' => 'Listar colecciones', 'description' => 'Permite listar colecciones.'],
+                    ['name' => 'collections.find', 'title' => 'Consultar colección', 'description' => 'Permite consultar colección.'],
+                    ['name' => 'collections.store', 'title' => 'Crear colección', 'description' => 'Permite crear colecciones.'],
+                    ['name' => 'collections.update', 'title' => 'Actualizar colección', 'description' => 'Permite actualizar colecciones.'],
+                    ['name' => 'collections.delete', 'title' => 'Eliminar colección', 'description' => 'Permite eliminar colecciones.'],
+                    ['name' => 'collections.restore', 'title' => 'Restaurar colección', 'description' => 'Permite restaurar colecciones.'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'yoke_types',
+                    'title' => 'Tipos de cotilla',
+                    'description' => 'Gestión de tipos de cotilla.',
+                ],
+                'permissions' => [
+                    ['name' => 'yoke_types.all', 'title' => 'Listar tipos de cotilla', 'description' => 'Permite listar tipos de cotilla.'],
+                    ['name' => 'yoke_types.find', 'title' => 'Consultar tipo de cotilla', 'description' => 'Permite consultar tipo de cotilla.'],
+                    ['name' => 'yoke_types.store', 'title' => 'Crear tipo de cotilla', 'description' => 'Permite crear tipos de cotilla.'],
+                    ['name' => 'yoke_types.update', 'title' => 'Actualizar tipo de cotilla', 'description' => 'Permite actualizar tipos de cotilla.'],
+                    ['name' => 'yoke_types.delete', 'title' => 'Eliminar tipo de cotilla', 'description' => 'Permite eliminar tipos de cotilla.'],
+                    ['name' => 'yoke_types.restore', 'title' => 'Restaurar tipo de cotilla', 'description' => 'Permite restaurar tipos de cotilla.'],
+                ]
+            ],
+
         ];
 
         foreach ($roles_and_permissions as $role_and_permission) {

@@ -26,7 +26,7 @@ class AreaFindRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:subitems,id,item_id,'.Area::ITEM_ID],
+            'id' => ['required', 'exists:subitems,id,item_id,' . Area::ITEM_ID],
         ];
     }
 
@@ -41,7 +41,7 @@ class AreaFindRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador del area'
+            'id' => 'Identificador del área'
         ];
     }
 

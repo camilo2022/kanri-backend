@@ -41,7 +41,7 @@ class AreaDeleteRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador del area'
+            'id' => 'Identificador del área'
         ];
     }
 

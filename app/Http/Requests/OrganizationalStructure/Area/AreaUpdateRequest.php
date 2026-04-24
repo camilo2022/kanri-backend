@@ -28,7 +28,7 @@ class AreaUpdateRequest extends FormRequest
         return [
             'id' => ['required', 'exists:subitems,id,item_id,' . Area::ITEM_ID],
             'name' => ['required', 'string', 'min:5', 'max:50', 'uppercase', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Area::ITEM_ID],
-            'description' => ['nullable', 'string', 'max:255', 'uppercase']
+            'description' => ['required', 'uppercase', 'string', 'max:255']
         ];
     }
 
@@ -48,7 +48,7 @@ class AreaUpdateRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador del area',
+            'id' => 'Identificador del área',
             'name' => 'Nombre',
             'description' => 'Descripción'
         ];

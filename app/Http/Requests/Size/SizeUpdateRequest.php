@@ -27,7 +27,7 @@ class SizeUpdateRequest extends FormRequest
     {
         return [
             'id' => ['required', 'exists:subitems,id,item_id,' . Size::ITEM_ID],
-            'name' => ['required', 'regex:/^(?:\d{2}|X{0,2}(?:S|M|L)|XXL)$/', 'min:2', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Size::ITEM_ID],
+            'name' => ['required', 'regex:/^(?:\d[02468]|XS|S|M|L|XL|XXL)$/', 'min:2', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Size::ITEM_ID],
             'description' => ['required', 'regex:/^T\d{2,}$/', 'max:255']
         ];
     }
@@ -41,7 +41,8 @@ class SizeUpdateRequest extends FormRequest
             'min' => 'Se permite mínimo :min caracteres.',
             'unique' => 'Ya está registrado.',
             'exists' => 'No está registrado.',
-            'regex' => 'Formato Inválido.',
+            'name.regex' => 'Debe ser una talla válida o un número par de 2 dígitos.',
+            'description.regex' => 'Debe iniciar con "T" seguido de al menos 2 números.',
         ];
     }
 

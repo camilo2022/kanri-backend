@@ -16,7 +16,7 @@ class AuditPermissionAssigned
         $permissions = $this->resolvePermissions($event->permissionsOld ?? $event->permissionsOrIds);
 
         Audit::create([
-            'user_type' => get_class($userAuth),
+            'user_type' => $userAuth ? get_class($userAuth) : null,
             'user_id' => $userAuth?->id,
             'auditable_type' => get_class($event->model),
             'auditable_id' => $event->model->id,

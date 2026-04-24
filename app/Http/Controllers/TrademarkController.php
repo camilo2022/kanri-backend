@@ -394,12 +394,11 @@ class TrademarkController extends Controller
     {
         try {
             $trademark = new Trademark();
-            $category = Category::findOrFail($request->integer('category_id'));
-
             $trademark->name = $request->input('name');
             $trademark->description = $request->input('description');
             $trademark->save();
-            $trademark->auditSync('category', [$category->id]);
+
+            $trademark->auditSync('category', [$request->integer('category_id')]);
 
             $trademark->load(['category']);
 
@@ -524,11 +523,11 @@ class TrademarkController extends Controller
     {
         try {
             $trademark = Trademark::findOrFail($id);
-            $category = Category::findOrFail($request->integer('category_id'));
             $trademark->name = $request->input('name');
             $trademark->description = $request->input('description');
             $trademark->save();
-            $trademark->auditSync('category', [$category->id]);
+            
+            $trademark->auditSync('category', [$request->integer('category_id')]);
             $trademark->load(['category']);
 
             return $this->successResponse(
@@ -888,7 +887,6 @@ class TrademarkController extends Controller
     public function setting(TrademarkSettingRequest $request, $id)
     {
         try {
-            logger($request);
             $trademark = Trademark::findOrFail($id);
             $trademark->settings = $request->input('settings');
 

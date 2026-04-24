@@ -28,7 +28,7 @@ class HealthEntityUpdateRequest extends FormRequest
         return [
             'id' => ['required', 'exists:subitems,id,item_id,' . HealthEntity::ITEM_ID],
             'name' => ['required', 'uppercase', 'string', 'min:5', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . HealthEntity::ITEM_ID],
-            'description' => ['nullable', 'uppercase', 'string', 'max:255']
+            'description' => ['required', 'uppercase', 'string', 'max:255']
         ];
     }
 

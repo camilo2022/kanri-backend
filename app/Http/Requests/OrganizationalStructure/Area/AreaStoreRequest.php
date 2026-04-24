@@ -27,7 +27,7 @@ class AreaStoreRequest extends FormRequest
     {
         return [
             'name' => ['required', 'uppercase', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Area::ITEM_ID],
-            'description' => ['nullable', 'string', 'max:255', 'uppercase']
+            'description' => ['required', 'uppercase', 'string', 'max:255']
         ];
     }
 

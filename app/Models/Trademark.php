@@ -15,7 +15,7 @@ class Trademark extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
 
-    public const ITEM_ID = 11;
+    public const ITEM_ID = 13;
 
     protected $table = 'subitems';
 

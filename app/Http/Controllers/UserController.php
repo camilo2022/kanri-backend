@@ -930,7 +930,7 @@ class UserController extends Controller
     public function assign(UserAuthorizationAssignRequest $request, $id)
     {
         try {
-            $permission = Permission::findOrFail($request->input('permission_id'));
+            $permission = Permission::findOrFail($request->integer('permission_id'));
             $user = User::findOrFail($id);
 
             $user->givePermissionTo($permission);
@@ -1122,7 +1122,7 @@ class UserController extends Controller
     public function remove(UserAuthorizationRemoveRequest $request, $id)
     {
         try {
-            $permission = Permission::findOrFail($request->input('permission_id'));
+            $permission = Permission::findOrFail($request->integer('permission_id'));
             $user = User::findOrFail($id);
 
             $user->revokePermissionTo($permission);

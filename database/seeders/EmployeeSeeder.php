@@ -42,6 +42,8 @@ class EmployeeSeeder extends Seeder
 
         $items = $response->json('detail');
 
+        logger($items);
+
         foreach ($items as $item) {
             $area = Area::firstOrCreate(
                 ['name' => $item['Area']],
@@ -66,13 +68,13 @@ class EmployeeSeeder extends Seeder
             );
 
             $risk_manager = RiskManager::firstOrCreate(
-                ['name' => $item['AdministradoraDeRiesgo']],
-                ['description' => $item['AdministradoraDeRiesgo']]
+                ['name' => $item['ARL']],
+                ['description' => $item['ARL']]
             );
 
             $health_entity = HealthEntity::firstOrCreate(
-                ['name' => $item['EntidadDeSalud']],
-                ['description' => $item['EntidadDeSalud']]
+                ['name' => $item['EPS']],
+                ['description' => $item['EPS']]
             );
 
             $pension_fund = PensionFund::firstOrCreate(

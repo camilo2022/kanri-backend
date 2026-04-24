@@ -695,10 +695,9 @@ class CategoryController extends Controller
     public function subcategory_assign(CategorySubcategoryAssignRequest $request, $id)
     {
         try {
-            $subcategory = Subcategory::findOrFail($request->input('subcategory_id'));
             $category = Category::findOrFail($id);
 
-            $category->auditAttach('subcategories', $subcategory->id);
+            $category->auditAttach('subcategories', $request->integer('subcategory_id'));
 
             $category->load(['item', 'subcategories']);
 
@@ -723,10 +722,9 @@ class CategoryController extends Controller
     public function subcategory_remove(CategorySubcategoryRemoveRequest $request, $id)
     {
         try {
-            $subcategory = Subcategory::findOrFail($request->input('subcategory_id'));
             $category = Category::findOrFail($id);
 
-            $category->auditDetach('subcategories', $subcategory->id);
+            $category->auditDetach('subcategories', $request->integer('subcategory_id'));
 
             $category->load(['item', 'subcategories']);
 

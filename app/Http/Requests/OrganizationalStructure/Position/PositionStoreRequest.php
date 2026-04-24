@@ -29,7 +29,7 @@ class PositionStoreRequest extends FormRequest
         return [
             'area_id' => ['required', 'exists:subitems,id,item_id,' . Area::ITEM_ID],
             'name' => ['required', 'uppercase', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Position::ITEM_ID],
-            'description' => ['nullable', 'uppercase', 'string', 'max:255']
+            'description' => ['required', 'uppercase', 'string', 'max:255']
         ];
     }
 
@@ -49,6 +49,7 @@ class PositionStoreRequest extends FormRequest
     public function attributes(): array
     {
         return [
+            'area_id' => 'Identificador del área',
             'name' => 'Nombre',
             'description' => 'Descripción'
         ];

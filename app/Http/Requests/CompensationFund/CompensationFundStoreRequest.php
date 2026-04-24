@@ -27,7 +27,7 @@ class CompensationFundStoreRequest extends FormRequest
     {
         return [
             'name' => ['required', 'uppercase', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . CompensationFund::ITEM_ID],
-            'description' => ['nullable', 'uppercase', 'string', 'max:255']
+            'description' => ['required', 'uppercase', 'string', 'max:255']
         ];
     }
 

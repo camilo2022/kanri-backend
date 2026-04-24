@@ -27,8 +27,8 @@ class CategoryUpdateRequest extends FormRequest
     {
         return [
             'id' => ['required', 'exists:subitems,id,item_id,' . Category::ITEM_ID],
-            'name' => ['required', 'regex:/^[A-Z ]+$/', 'string', 'min:5', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Category::ITEM_ID],
-            'description' => ['required', 'regex:/^[A-Z ]+$/', 'string', 'max:255']
+            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Category::ITEM_ID],
+            'description' => ['required', 'uppercase', 'string', 'max:255']
         ];
     }
 
@@ -41,7 +41,7 @@ class CategoryUpdateRequest extends FormRequest
             'min' => 'Se permite mínimo :min caracteres.',
             'unique' => 'Ya está registrado.',
             'exists' => 'No está registrado.',
-            'regex' => 'Formato Inválido. El campo debe estar en mayúsculas.',
+            'uppercase' => 'Debe de ingresar mayúsculas.'
         ];
     }
 

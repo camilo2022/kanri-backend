@@ -29,7 +29,7 @@ class TrademarkStoreRequest extends FormRequest
         return [
             'category_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Category::ITEM_ID],
             'name' => ['required', 'uppercase', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Trademark::ITEM_ID],
-            'description' => ['nullable', 'string', 'max:255', 'uppercase']
+            'description' => ['required', 'uppercase', 'string', 'max:255']
         ];
     }
 
@@ -39,7 +39,7 @@ class TrademarkStoreRequest extends FormRequest
             'required' => 'Es obligatorio.',
             'string' => 'Debe ser una cadena de texto.',
             'numeric' => 'Debe ser un número.',
-            'required' => 'No hay ningún registro.',
+            'exists' => 'No hay ningún registro.',
             'max' => 'Se permite máximo :max caracteres.',
             'min' => 'Se permite mínimo :min caracteres.',
             'unique' => 'Ya está registrado.',

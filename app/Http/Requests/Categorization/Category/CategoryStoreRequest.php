@@ -26,8 +26,8 @@ class CategoryStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'regex:/^[A-Z ]+$/', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Category::ITEM_ID],
-            'description' => ['required', 'regex:/^[A-Z ]+$/', 'string', 'max:255']
+            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Category::ITEM_ID],
+            'description' => ['required', 'uppercase', 'string', 'max:255']
         ];
     }
 
@@ -39,7 +39,7 @@ class CategoryStoreRequest extends FormRequest
             'max' => 'Se permite máximo :max caracteres.',
             'min' => 'Se permite mínimo :min caracteres.',
             'unique' => 'Ya está registrado.',
-            'regex' => 'Formato Inválido. El campo debe estar en mayúsculas.',
+            'uppercase' => 'Debe de ingresar mayúsculas.'
         ];
     }
 

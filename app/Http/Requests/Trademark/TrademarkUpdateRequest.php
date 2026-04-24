@@ -30,7 +30,7 @@ class TrademarkUpdateRequest extends FormRequest
             'id' => ['required', 'exists:subitems,id,item_id,' . Trademark::ITEM_ID],
             'category_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Category::ITEM_ID],
             'name' => ['required', 'string', 'min:5', 'max:50', 'uppercase', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Trademark::ITEM_ID],
-            'description' => ['nullable', 'string', 'max:255', 'uppercase']
+            'description' => ['required', 'uppercase', 'string', 'max:255']
         ];
     }
 

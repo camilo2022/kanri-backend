@@ -21,6 +21,7 @@ class AuditCollection extends ResourceCollection
                     'url' => $audit->url,
                     'ip_address' => $audit->ip_address,
                     'tags' => $audit->tags,
+                    'audit_tag' => $this->getTagName($audit->tags ?? null),
                     'old_values' => $audit->old_values,
                     'new_values' => $audit->new_values,
                     'created_at' => $this->formatDate($audit->created_at),
@@ -87,4 +88,40 @@ class AuditCollection extends ResourceCollection
         'User' => 'Usuario',
         'WaistbandType' => 'Tipo de Pretina',
     ];
+
+    protected function getTagName($tag)
+    {
+        $tag_types = [
+            'area' => 'Área',
+            'back_type' => 'Tipo de Trasero',
+            'blood_type' => 'Tipo de Sangre',
+            'boot_type' => 'Tipo de Bota',
+            'category' => 'Categoría',
+            'clothing_line' => 'Linea',
+            'compensation_fund' => 'Caja de Compensación',
+            'employee' => 'Empleado',
+            'file' => 'Archivo',
+            'garment_type' => 'Tipo de Prenda',
+            'gender' => 'Género',
+            'group' => 'Grupo',
+            'health_entity' => 'Entidad de Salud',
+            'module' => 'Módulo',
+            'pension_fund' => 'Fondo de Pensión',
+            'permission' => 'Permiso',
+            'person' => 'Persona',
+            'position' => 'Cargo',
+            'risk_manager' => 'Administradora de Riesgo',
+            'role' => 'Rol',
+            'silhouette' => 'Silueta',
+            'size' => 'Talla',
+            'subcategory' => 'Subcategoría',
+            'subgroup' => 'Subgrupo',
+            'submodule' => 'Submódulo',
+            'trademark' => 'Marca',
+            'user' => 'Usuario',
+            'waistband_type' => 'Tipo de Pretina',
+        ];
+
+        return $tag_types[$tag] ?? null;
+    }
 }
