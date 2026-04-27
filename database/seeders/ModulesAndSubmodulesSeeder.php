@@ -219,6 +219,12 @@ class ModulesAndSubmodulesSeeder extends Seeder
                         'icon' => 'FaDraftingCompass',
                         'permission_id' => 209
                     ],
+                    [
+                        'name' => 'Ubicaciones',
+                        'url' => '/locations',
+                        'icon' => 'FaShapes',
+                        'permission_id' => 215
+                    ],
                 ]
             ],
         ];

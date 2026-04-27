@@ -19,6 +19,7 @@ class SubprocessCollection extends ResourceCollection
                     'created_at' => $this->formatDate($subprocess->created_at),
                     'updated_at' => $this->formatDate($subprocess->updated_at),
                     'deleted_at' => $this->formatDate($subprocess->deleted_at),
+                    'settings' => $subprocess->settings,
                     'item' => $subprocess->item,
                     'process' => $subprocess->process,
                 ];

@@ -29,8 +29,10 @@ class SubprocessUpdateRequest extends FormRequest
         return [
             'id' => ['required', 'numeric', 'string', 'exists:subitems,id,item_id,' . Subprocess::ITEM_ID],
             'process_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Process::ITEM_ID],
-            'name' => ['required', 'uppercase', 'string', 'min:5', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Subprocess::ITEM_ID],
+            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Subprocess::ITEM_ID],
             'description' => ['required', 'string', 'max:255', 'uppercase'],
+            'settings' => ['required', 'array'],
+            'settings.operations' => ['required', 'boolean'],
         ];
     }
 
@@ -51,9 +53,11 @@ class SubprocessUpdateRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'process_id' => 'Identificador del proceso',
+            'process_id' => 'Identificador del subproceso',
             'name' => 'Nombre',
             'description' => 'Descripción',
+            'settings' => 'Configuraciones',
+            'settings.operations' => 'Operaciones'
         ];
     }
 

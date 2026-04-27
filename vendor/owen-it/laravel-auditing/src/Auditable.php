@@ -319,8 +319,6 @@ trait Auditable
         $this->resolveAuditExclusions();
 
         [$old, $new] = $this->$attributeGetter();
-        logger($old);
-        logger($new);
 
         if ($this->getAttributeModifiers() && ! $this->isCustomEvent) {
             foreach ($old as $attribute => $value) {

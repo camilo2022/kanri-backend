@@ -27,7 +27,7 @@ class RiskManagerUpdateRequest extends FormRequest
     {
         return [
             'id' => ['required', 'exists:subitems,id,item_id,' . RiskManager::ITEM_ID],
-            'name' => ['required', 'uppercase', 'string', 'min:5', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . RiskManager::ITEM_ID],
+            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . RiskManager::ITEM_ID],
             'description' => ['required', 'uppercase', 'string', 'max:255']
         ];
     }

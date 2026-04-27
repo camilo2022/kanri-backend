@@ -27,7 +27,7 @@ class YokeTypeUpdateRequest extends FormRequest
     {
         return [
             'id' => ['required', 'numeric', 'string', 'exists:subitems,id,item_id,' . YokeType::ITEM_ID],
-            'name' => ['required', 'uppercase', 'string', 'min:5', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . YokeType::ITEM_ID],
+            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . YokeType::ITEM_ID],
             'description' => ['required', 'string', 'max:255', 'uppercase'],
         ];
     }

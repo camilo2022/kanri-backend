@@ -28,7 +28,7 @@ class PositionStoreRequest extends FormRequest
     {
         return [
             'area_id' => ['required', 'exists:subitems,id,item_id,' . Area::ITEM_ID],
-            'name' => ['required', 'uppercase', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Position::ITEM_ID],
+            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Position::ITEM_ID],
             'description' => ['required', 'uppercase', 'string', 'max:255']
         ];
     }

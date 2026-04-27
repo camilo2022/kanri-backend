@@ -622,6 +622,23 @@ class RolesAndPermissionsSeeder extends Seeder
                 ]
             ],
 
+
+            [
+                'role' => [
+                    'name' => 'locations',
+                    'title' => 'Ubicaciones',
+                    'description' => 'Gestión de ubicaciones.',
+                ],
+                'permissions' => [
+                    ['name' => 'locations.all', 'title' => 'Listar ubicaciones', 'description' => 'Permite listar ubicaciones.'],
+                    ['name' => 'locations.find', 'title' => 'Consultar ubicaciones', 'description' => 'Permite consultar ubicaciones'],
+                    ['name' => 'locations.store', 'title' => 'Crear ubicaciones', 'description' => 'Permite crear ubicaciones.'],
+                    ['name' => 'locations.update', 'title' => 'Actualizar ubicaciones', 'description' => 'Permite actualizar ubicaciones.'],
+                    ['name' => 'locations.delete', 'title' => 'Eliminar ubicaciones', 'description' => 'Permite eliminar ubicaciones.'],
+                    ['name' => 'locations.restore', 'title' => 'Restaurar ubicaciones', 'description' => 'Permite restaurar ubicaciones.'],
+                ]
+            ],
+
         ];
 
         foreach ($roles_and_permissions as $role_and_permission) {

@@ -27,7 +27,7 @@ class WashToneUpdateRequest extends FormRequest
     {
         return [
             'id' => ['required', 'numeric', 'string', 'exists:subitems,id,item_id,' . WashTone::ITEM_ID],
-            'name' => ['required', 'uppercase', 'string', 'min:5', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . WashTone::ITEM_ID],
+            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . WashTone::ITEM_ID],
             'description' => ['required', 'string', 'max:255', 'uppercase'],
             'settings' => ['required', 'array'],
             'settings.code' => ['required', 'numeric', 'digits_between:2,5'],

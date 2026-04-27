@@ -26,7 +26,7 @@ class GroupStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'uppercase', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Group::ITEM_ID],
+            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Group::ITEM_ID],
             'description' => ['required', 'uppercase', 'string', 'max:255']
         ];
     }

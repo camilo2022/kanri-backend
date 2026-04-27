@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Size;
 
+use App\Models\Item;
 use App\Models\Size;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -25,9 +26,20 @@ class SizeStoreRequest extends FormRequest
 
     public function rules(): array
     {
+        $item = Item::find(Size::ITEM_ID);
+
         return [
-            'name' => ['required', 'regex:/^(?:\d[02468]|XS|S|M|L|XL|XXL)$/', 'string', 'min:2', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Size::ITEM_ID],
-            'description' => ['required', 'regex:/^T\d{2,}$/', 'max:50']
+            'name' => array_values([
+                'required',
+                $this->boolean('settings.finished_product') ? $item?->settings?->finished_product?->name : '',
+                'string',
+                'min:2',
+                'max:50',
+                'unique:subitems,name,NULL,id,item_id,' . Size::ITEM_ID
+            ]),
+            'description' => array_values(['required', $this->boolean('settings.finished_product') ? $item?->settings?->finished_product?->description : '', 'max:50']),
+            'settings' => ['required', 'array'],
+            'settings.finished_product' => ['required', 'boolean']
         ];
     }
 
@@ -48,7 +60,9 @@ class SizeStoreRequest extends FormRequest
     {
         return [
             'name' => 'Nombre',
-            'description' => 'Descripción'
+            'description' => 'Descripción',
+            'settings' => 'Configuraciones',
+            'settings.finished_product' => 'Es producto terminado'
         ];
     }
 }

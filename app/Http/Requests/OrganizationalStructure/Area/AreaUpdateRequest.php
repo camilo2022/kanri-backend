@@ -27,7 +27,7 @@ class AreaUpdateRequest extends FormRequest
     {
         return [
             'id' => ['required', 'exists:subitems,id,item_id,' . Area::ITEM_ID],
-            'name' => ['required', 'string', 'min:5', 'max:50', 'uppercase', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Area::ITEM_ID],
+            'name' => ['required', 'string', 'min:4', 'max:50', 'uppercase', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Area::ITEM_ID],
             'description' => ['required', 'uppercase', 'string', 'max:255']
         ];
     }

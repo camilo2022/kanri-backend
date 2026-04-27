@@ -27,7 +27,7 @@ class SilhouetteUpdateRequest extends FormRequest
     {
         return [
             'id' => ['required', 'exists:subitems,id,item_id,' . Silhouette::ITEM_ID],
-            'name' => ['required', 'uppercase', 'min:5', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Silhouette::ITEM_ID],
+            'name' => ['required', 'uppercase', 'min:4', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Silhouette::ITEM_ID],
             'description' => ['required', 'uppercase', 'string', 'max:255']
         ];
     }

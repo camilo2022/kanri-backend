@@ -23,6 +23,7 @@ class ProcessCollection extends ResourceCollection
                     'before_processes' => $process->before_processes,
                     'after_processes' => $process->after_processes,
                     'subprocesses' => $process->subprocesses,
+                    'in_technical_sheet' => $process->in_technical_sheet,
                     'item' => $process->item,
                 ];
             }),

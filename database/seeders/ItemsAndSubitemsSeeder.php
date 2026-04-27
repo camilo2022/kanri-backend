@@ -19,6 +19,7 @@ use App\Models\GarmentType;
 use App\Models\Gender;
 use App\Models\Group;
 use App\Models\Item;
+use App\Models\Location;
 use App\Models\PensionFund;
 use App\Models\Position;
 use App\Models\Process;
@@ -46,6 +47,7 @@ class ItemsAndSubitemsSeeder extends Seeder
         FileType::insert([
             ['item_id' => FileType::ITEM_ID, 'name' => 'Archivos personales', 'description' => 'Documentos relacionados con la información personal del empleado.'],
             ['item_id' => FileType::ITEM_ID, 'name' => 'Archivos multimedia', 'description' => 'Archivos en formato imagen, video, audio u otros formatos digitales.'],
+            ['item_id' => FileType::ITEM_ID, 'name' => 'Archivos de productos', 'description' => 'Archivos en formato imagen o video relacionados con productos.'],
         ]);
 
         $item = new Item();
@@ -510,6 +512,12 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item = new Item();
         $item->name = 'Tallas';
         $item->description = 'Listado de tallas.';
+        $item->settings = (object) [
+            'finished_product' => (object) [
+                'name' => 'regex:/^(?:\d[02468]|XS|S|M|L|XL|XXL)$/',
+                'description' => 'regex:/^T\d{2,}$/'
+            ]
+        ];
         $item->save();
 
         $size = new Size();
@@ -665,5 +673,15 @@ class ItemsAndSubitemsSeeder extends Seeder
         $wash_tone->name = 'No aplica';
         $wash_tone->description = 'No aplica';
         $wash_tone->save();
+
+        $item = new Item();
+        $item->name = 'Ubicaciones';
+        $item->description = 'Listado de ubicaciones.';
+        $item->save();
+
+        $location = new Location();
+        $location->name = 'No aplica';
+        $location->description = 'No aplica';
+        $location->save();
     }
 }

@@ -26,7 +26,7 @@ class WashToneStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'uppercase', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . WashTone::ITEM_ID],
+            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . WashTone::ITEM_ID],
             'description' => ['required', 'uppercase', 'string', 'max:255'],
             'settings' => ['required', 'array'],
             'settings.code' => ['required', 'numeric', 'digits_between:2,5'],

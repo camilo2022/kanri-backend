@@ -28,7 +28,7 @@ class PersonUpdateRequest extends FormRequest
     {
         return [
             'id' => ['required', 'exists:people,id'],
-            'document' => ['required', 'string', 'min:5', 'max:14', 'unique:people,document,' . $this->route('id') . ',id'],
+            'document' => ['required', 'string', 'min:4', 'max:14', 'unique:people,document,' . $this->route('id') . ',id'],
             'names' => ['required', 'string', 'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/'],
             'last_names' => ['required', 'string', 'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/'],
             'gender_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Gender::ITEM_ID . ',deleted_at,NULL'],

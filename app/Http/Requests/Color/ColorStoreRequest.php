@@ -26,10 +26,11 @@ class ColorStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'uppercase', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Color::ITEM_ID],
+            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Color::ITEM_ID],
             'description' => ['required', 'uppercase', 'string', 'max:255'],
             'settings' => ['required', 'array'],
             'settings.code' => ['required', 'numeric', 'digits_between:2,5'],
+            'settings.finished_product' => ['required', 'boolean'],
         ];
     }
 
@@ -53,7 +54,8 @@ class ColorStoreRequest extends FormRequest
             'name' => 'Nombre',
             'description' => 'Descripción',
             'settings' => 'Configuraciones',
-            'settings.code' => 'Código'
+            'settings.code' => 'Código',
+            'settings.finished_product' => 'Es producto terminado'
         ];
     }
 }

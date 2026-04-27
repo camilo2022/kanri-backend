@@ -42,8 +42,6 @@ class EmployeeSeeder extends Seeder
 
         $items = $response->json('detail');
 
-        logger($items);
-
         foreach ($items as $item) {
             $area = Area::firstOrCreate(
                 ['name' => $item['Area']],

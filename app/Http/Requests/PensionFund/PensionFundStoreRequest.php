@@ -26,7 +26,7 @@ class PensionFundStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . PensionFund::ITEM_ID],
+            'name' => ['required', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . PensionFund::ITEM_ID],
             'description' => ['required', 'uppercase', 'string', 'max:255']
         ];
     }

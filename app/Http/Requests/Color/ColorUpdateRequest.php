@@ -27,10 +27,11 @@ class ColorUpdateRequest extends FormRequest
     {
         return [
             'id' => ['required', 'numeric', 'string', 'exists:subitems,id,item_id,' . Color::ITEM_ID],
-            'name' => ['required', 'uppercase', 'string', 'min:5', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Color::ITEM_ID],
+            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Color::ITEM_ID],
             'description' => ['required', 'string', 'max:255', 'uppercase'],
             'settings' => ['required', 'array'],
             'settings.code' => ['required', 'numeric', 'digits_between:2,5'],
+            'settings.finished_product' => ['required', 'boolean'],
         ];
     }
 
@@ -56,7 +57,8 @@ class ColorUpdateRequest extends FormRequest
             'name' => 'Nombre',
             'description' => 'Descripción',
             'settings' => 'Configuraciones',
-            'settings.code' => 'Código'
+            'settings.code' => 'Código',
+            'settings.finished_product' => 'Es producto terminado'
         ];
     }
 

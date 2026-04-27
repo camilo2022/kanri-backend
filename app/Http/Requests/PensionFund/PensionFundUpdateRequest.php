@@ -27,7 +27,7 @@ class PensionFundUpdateRequest extends FormRequest
     {
         return [
             'id' => ['required', 'exists:subitems,id,item_id,' . PensionFund::ITEM_ID],
-            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . PensionFund::ITEM_ID],
+            'name' => ['required', 'string', 'min:4', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . PensionFund::ITEM_ID],
             'description' => ['required', 'uppercase', 'string', 'max:255']
         ];
     }

@@ -73,6 +73,11 @@ class Process extends Model implements Auditable
         return $this->morphedByMany(Subprocess::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
     }
 
+    public function locations(): MorphToMany
+    {
+        return $this->morphedByMany(Subprocess::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
+    }
+
     public function scopeSearch(Builder $query, ?string $search = null): Builder
     {
         $search = trim((string) $search);
