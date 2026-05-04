@@ -9,6 +9,7 @@ use App\Http\Requests\BootType\BootTypeRestoreRequest;
 use App\Http\Requests\BootType\BootTypeStoreRequest;
 use App\Http\Requests\BootType\BootTypeUpdateRequest;
 use App\Http\Resources\BootType\BootTypeCollection;
+use App\Http\Resources\BootType\BootTypeResource;
 use App\Models\BootType;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -242,9 +243,7 @@ class BootTypeController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'boot_type' => $boot_type
-                ],
+                new BootTypeResource($boot_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -352,9 +351,7 @@ class BootTypeController extends Controller
             $boot_type->save();
 
             return $this->successResponse(
-                [
-                    'boot_type' => $boot_type
-                ],
+                new BootTypeResource($boot_type),
                 $this->getMessage('Success'),
                 201
             );
@@ -471,9 +468,7 @@ class BootTypeController extends Controller
             $boot_type->save();
 
             return $this->successResponse(
-                [
-                    'boot_type' => $boot_type
-                ],
+                new BootTypeResource($boot_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -569,9 +564,7 @@ class BootTypeController extends Controller
             $boot_type->delete();
 
             return $this->successResponse(
-                [
-                    'boot_type' => $boot_type
-                ],
+                new BootTypeResource($boot_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -667,9 +660,7 @@ class BootTypeController extends Controller
             $boot_type->restore();
 
             return $this->successResponse(
-                [
-                    'boot_type' => $boot_type
-                ],
+                new BootTypeResource($boot_type),
                 $this->getMessage('Success'),
                 200
             );

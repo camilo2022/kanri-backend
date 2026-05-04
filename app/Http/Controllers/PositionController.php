@@ -11,6 +11,7 @@ use App\Http\Requests\OrganizationalStructure\Position\PositionRestoreRequest;
 use App\Http\Requests\OrganizationalStructure\Position\PositionStoreRequest;
 use App\Http\Requests\OrganizationalStructure\Position\PositionUpdateRequest;
 use App\Http\Resources\OrganizationalStructure\Position\PositionCollection;
+use App\Http\Resources\OrganizationalStructure\Position\PositionResource;
 use App\Models\Permission;
 use App\Models\Position;
 use App\Traits\ApiMessage;
@@ -220,9 +221,7 @@ class PositionController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'position' => $position
-                ],
+                new PositionResource($position),
                 $this->getMessage('Success'),
                 200
             );
@@ -332,9 +331,7 @@ class PositionController extends Controller
             $position->area()->sync([$request->integer('area_id')]);
 
             return $this->successResponse(
-                [
-                    'position' => $position
-                ],
+                new PositionResource($position),
                 $this->getMessage('Success'),
                 201
             );
@@ -453,9 +450,7 @@ class PositionController extends Controller
             $position->area()->sync([$request->integer('area_id')]);
 
             return $this->successResponse(
-                [
-                    'position' => $position
-                ],
+                new PositionResource($position),
                 $this->getMessage('Success'),
                 200
             );
@@ -551,9 +546,7 @@ class PositionController extends Controller
             $position->delete();
 
             return $this->successResponse(
-                [
-                    'position' => $position
-                ],
+                new PositionResource($position),
                 $this->getMessage('Success'),
                 200
             );
@@ -649,9 +642,7 @@ class PositionController extends Controller
             $position->restore();
 
             return $this->successResponse(
-                [
-                    'position' => $position
-                ],
+                new PositionResource($position),
                 $this->getMessage('Success'),
                 200
             );
@@ -765,9 +756,7 @@ class PositionController extends Controller
             $position->load(['area', 'roles', 'permissions']);
 
             return $this->successResponse(
-                [
-                    'position' => $position
-                ],
+                new PositionResource($position),
                 $this->getMessage('Success'),
                 200
             );
@@ -883,9 +872,7 @@ class PositionController extends Controller
             $position->load(['area', 'roles', 'permissions']);
 
             return $this->successResponse(
-                [
-                    'position' => $position
-                ],
+                new PositionResource($position),
                 $this->getMessage('Success'),
                 200
             );

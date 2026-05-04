@@ -9,6 +9,7 @@ use App\Http\Requests\Workflow\Operation\OperationRestoreRequest;
 use App\Http\Requests\Workflow\Operation\OperationStoreRequest;
 use App\Http\Requests\Workflow\Operation\OperationUpdateRequest;
 use App\Http\Resources\Workflow\Operation\OperationCollection;
+use App\Http\Resources\Workflow\Operation\OperationResource;
 use App\Models\Operation;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -243,12 +244,8 @@ class OperationController extends Controller
             $operation = Operation::with(['subprocess'])
                 ->findOrFail($id);
 
-            logger($operation);
-
             return $this->successResponse(
-                [
-                    'operation' => $operation
-                ],
+                new OperationResource($operation),
                 $this->getMessage('Success'),
                 200
             );
@@ -359,9 +356,7 @@ class OperationController extends Controller
             $operation->auditSync('subprocess', $request->integer('subprocess_id'));
 
             return $this->successResponse(
-                [
-                    'operation' => $operation
-                ],
+                new OperationResource($operation),
                 $this->getMessage('Success'),
                 201
             );
@@ -479,9 +474,7 @@ class OperationController extends Controller
             $operation->save();
 
             return $this->successResponse(
-                [
-                    'operation' => $operation
-                ],
+                new OperationResource($operation),
                 $this->getMessage('Success'),
                 201
             );
@@ -577,9 +570,7 @@ class OperationController extends Controller
             $operation->delete();
 
             return $this->successResponse(
-                [
-                    'operation' => $operation
-                ],
+                new OperationResource($operation),
                 $this->getMessage('Success'),
                 200
             );
@@ -675,9 +666,7 @@ class OperationController extends Controller
             $operation->restore();
 
             return $this->successResponse(
-                [
-                    'operation' => $operation
-                ],
+                new OperationResource($operation),
                 $this->getMessage('Success'),
                 200
             );

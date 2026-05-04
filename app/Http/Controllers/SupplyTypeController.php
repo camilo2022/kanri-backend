@@ -9,6 +9,7 @@ use App\Http\Requests\SupplyType\SupplyTypeRestoreRequest;
 use App\Http\Requests\SupplyType\SupplyTypeStoreRequest;
 use App\Http\Requests\SupplyType\SupplyTypeUpdateRequest;
 use App\Http\Resources\SupplyType\SupplyTypeCollection;
+use App\Http\Resources\SupplyType\SupplyTypeResource;
 use App\Models\SupplyType;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -243,9 +244,7 @@ class SupplyTypeController extends Controller
             $supply_type = SupplyType::findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'supply_type' => $supply_type
-                ],
+                new SupplyTypeResource($supply_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -353,9 +352,7 @@ class SupplyTypeController extends Controller
             $supply_type->save();
 
             return $this->successResponse(
-                [
-                    'supply_type' => $supply_type
-                ],
+                new SupplyTypeResource($supply_type),
                 $this->getMessage('Success'),
                 201
             );
@@ -472,9 +469,7 @@ class SupplyTypeController extends Controller
             $supply_type->save();
 
             return $this->successResponse(
-                [
-                    'supply_type' => $supply_type
-                ],
+                new SupplyTypeResource($supply_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -570,9 +565,7 @@ class SupplyTypeController extends Controller
             $supply_type->delete();
 
             return $this->successResponse(
-                [
-                    'supply_type' => $supply_type
-                ],
+                new SupplyTypeResource($supply_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -668,9 +661,7 @@ class SupplyTypeController extends Controller
             $supply_type->restore();
 
             return $this->successResponse(
-                [
-                    'supply_type' => $supply_type
-                ],
+                new SupplyTypeResource($supply_type),
                 $this->getMessage('Success'),
                 200
             );

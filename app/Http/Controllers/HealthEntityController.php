@@ -9,6 +9,7 @@ use App\Http\Requests\HealthEntity\HealthEntityRestoreRequest;
 use App\Http\Requests\HealthEntity\HealthEntityStoreRequest;
 use App\Http\Requests\HealthEntity\HealthEntityUpdateRequest;
 use App\Http\Resources\HealthEntity\HealthEntityCollection;
+use App\Http\Resources\HealthEntity\HealthEntityResource;
 use App\Models\HealthEntity;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -241,9 +242,7 @@ class HealthEntityController extends Controller
             $health_entity = HealthEntity::findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'health_entity' => $health_entity
-                ],
+                new HealthEntityResource($health_entity),
                 $this->getMessage('Success'),
                 200
             );
@@ -351,9 +350,7 @@ class HealthEntityController extends Controller
             $health_entity->save();
 
             return $this->successResponse(
-                [
-                    'health_entity' => $health_entity
-                ],
+                new HealthEntityResource($health_entity),
                 $this->getMessage('Success'),
                 201
             );
@@ -470,9 +467,7 @@ class HealthEntityController extends Controller
             $health_entity->save();
 
             return $this->successResponse(
-                [
-                    'health_entity' => $health_entity
-                ],
+                new HealthEntityResource($health_entity),
                 $this->getMessage('Success'),
                 200
             );
@@ -568,9 +563,7 @@ class HealthEntityController extends Controller
             $health_entity->delete();
 
             return $this->successResponse(
-                [
-                    'health_entity' => $health_entity
-                ],
+                new HealthEntityResource($health_entity),
                 $this->getMessage('Success'),
                 200
             );
@@ -666,9 +659,7 @@ class HealthEntityController extends Controller
             $health_entity->restore();
 
             return $this->successResponse(
-                [
-                    'health_entity' => $health_entity
-                ],
+                new HealthEntityResource($health_entity),
                 $this->getMessage('Success'),
                 200
             );

@@ -9,6 +9,7 @@ use App\Http\Requests\FabricType\FabricTypeRestoreRequest;
 use App\Http\Requests\FabricType\FabricTypeStoreRequest;
 use App\Http\Requests\FabricType\FabricTypeUpdateRequest;
 use App\Http\Resources\FabricType\FabricTypeCollection;
+use App\Http\Resources\FabricType\FabricTypeResource;
 use App\Models\FabricType;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -243,9 +244,7 @@ class FabricTypeController extends Controller
             $fabric_type = FabricType::findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'fabric_type' => $fabric_type
-                ],
+                new FabricTypeResource($fabric_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -353,9 +352,7 @@ class FabricTypeController extends Controller
             $fabric_type->save();
 
             return $this->successResponse(
-                [
-                    'fabric_type' => $fabric_type
-                ],
+                new FabricTypeResource($fabric_type),
                 $this->getMessage('Success'),
                 201
             );
@@ -472,9 +469,7 @@ class FabricTypeController extends Controller
             $fabric_type->save();
 
             return $this->successResponse(
-                [
-                    'fabric_type' => $fabric_type
-                ],
+                new FabricTypeResource($fabric_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -570,9 +565,7 @@ class FabricTypeController extends Controller
             $fabric_type->delete();
 
             return $this->successResponse(
-                [
-                    'fabric_type' => $fabric_type
-                ],
+                new FabricTypeResource($fabric_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -668,9 +661,7 @@ class FabricTypeController extends Controller
             $fabric_type->restore();
 
             return $this->successResponse(
-                [
-                    'fabric_type' => $fabric_type
-                ],
+                new FabricTypeResource($fabric_type),
                 $this->getMessage('Success'),
                 200
             );

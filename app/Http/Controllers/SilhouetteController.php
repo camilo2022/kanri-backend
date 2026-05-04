@@ -9,6 +9,7 @@ use App\Http\Requests\Silhouette\SilhouetteRestoreRequest;
 use App\Http\Requests\Silhouette\SilhouetteStoreRequest;
 use App\Http\Requests\Silhouette\SilhouetteUpdateRequest;
 use App\Http\Resources\Silhouette\SilhouetteCollection;
+use App\Http\Resources\Silhouette\SilhouetteResource;
 use App\Models\Silhouette;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -241,9 +242,7 @@ class SilhouetteController extends Controller
             $silhouette = Silhouette::findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'silhouette' => $silhouette
-                ],
+                new SilhouetteResource($silhouette),
                 $this->getMessage('Success'),
                 200
             );
@@ -351,9 +350,7 @@ class SilhouetteController extends Controller
             $silhouette->save();
 
             return $this->successResponse(
-                [
-                    'silhouette' => $silhouette
-                ],
+                new SilhouetteResource($silhouette),
                 $this->getMessage('Success'),
                 201
             );
@@ -470,9 +467,7 @@ class SilhouetteController extends Controller
             $silhouette->save();
 
             return $this->successResponse(
-                [
-                    'silhouette' => $silhouette
-                ],
+                new SilhouetteResource($silhouette),
                 $this->getMessage('Success'),
                 200
             );
@@ -568,9 +563,7 @@ class SilhouetteController extends Controller
             $silhouette->delete();
 
             return $this->successResponse(
-                [
-                    'silhouette' => $silhouette
-                ],
+                new SilhouetteResource($silhouette),
                 $this->getMessage('Success'),
                 200
             );
@@ -666,9 +659,7 @@ class SilhouetteController extends Controller
             $silhouette->restore();
 
             return $this->successResponse(
-                [
-                    'silhouette' => $silhouette
-                ],
+                new SilhouetteResource($silhouette),
                 $this->getMessage('Success'),
                 200
             );

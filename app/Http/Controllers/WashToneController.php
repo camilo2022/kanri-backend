@@ -9,6 +9,7 @@ use App\Http\Requests\WashTone\WashToneRestoreRequest;
 use App\Http\Requests\WashTone\WashToneStoreRequest;
 use App\Http\Requests\WashTone\WashToneUpdateRequest;
 use App\Http\Resources\WashTone\WashToneCollection;
+use App\Http\Resources\WashTone\WashToneResource;
 use App\Models\WashTone;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -243,9 +244,7 @@ class WashToneController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'wash_tone' => $wash_tone
-                ],
+                new WashToneResource($wash_tone),
                 $this->getMessage('Success'),
                 200
             );
@@ -362,9 +361,7 @@ class WashToneController extends Controller
             $wash_tone->save();
 
             return $this->successResponse(
-                [
-                    'wash_tone' => $wash_tone
-                ],
+                new WashToneResource($wash_tone),
                 $this->getMessage('Success'),
                 201
             );
@@ -490,9 +487,7 @@ class WashToneController extends Controller
             $wash_tone->save();
 
             return $this->successResponse(
-                [
-                    'wash_tone' => $wash_tone
-                ],
+                new WashToneResource($wash_tone),
                 $this->getMessage('Success'),
                 201
             );
@@ -588,9 +583,7 @@ class WashToneController extends Controller
             $wash_tone->delete();
 
             return $this->successResponse(
-                [
-                    'wash_tone' => $wash_tone
-                ],
+                new WashToneResource($wash_tone),
                 $this->getMessage('Success'),
                 200
             );
@@ -686,9 +679,7 @@ class WashToneController extends Controller
             $wash_tone->restore();
 
             return $this->successResponse(
-                [
-                    'wash_tone' => $wash_tone
-                ],
+                new WashToneResource($wash_tone),
                 $this->getMessage('Success'),
                 200
             );

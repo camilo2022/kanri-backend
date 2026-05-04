@@ -92,10 +92,10 @@ class TrademarkSettingRequest extends FormRequest
                 }
                 $regex = (string) $v['regex'];
                 if (isset($seen[$regex])) {
-                    $primera = $seen[$regex] + 1;
+                    $first = $seen[$regex] + 1;
                     $validator->errors()->add(
                         "settings.validations.$i.regex",
-                        "Ya ha sido tomado en la validación n° {$primera}."
+                        "Ya ha sido tomado en la validación n° {$first}."
                     );
                 } else {
                     $seen[$regex] = $i;

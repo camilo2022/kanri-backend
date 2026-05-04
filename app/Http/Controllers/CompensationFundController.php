@@ -9,6 +9,7 @@ use App\Http\Requests\CompensationFund\CompensationFundRestoreRequest;
 use App\Http\Requests\CompensationFund\CompensationFundStoreRequest;
 use App\Http\Requests\CompensationFund\CompensationFundUpdateRequest;
 use App\Http\Resources\CompensationFund\CompensationFundCollection;
+use App\Http\Resources\CompensationFund\CompensationFundResource;
 use App\Models\CompensationFund;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -242,9 +243,7 @@ class CompensationFundController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'compensation_fund' => $compensation_fund
-                ],
+                new CompensationFundResource($compensation_fund),
                 $this->getMessage('Success'),
                 200
             );
@@ -352,9 +351,7 @@ class CompensationFundController extends Controller
             $compensation_fund->save();
 
             return $this->successResponse(
-                [
-                    'compensation_fund' => $compensation_fund
-                ],
+                new CompensationFundResource($compensation_fund),
                 $this->getMessage('Success'),
                 201
             );
@@ -471,9 +468,7 @@ class CompensationFundController extends Controller
             $compensation_fund->save();
 
             return $this->successResponse(
-                [
-                    'compensation_fund' => $compensation_fund
-                ],
+                new CompensationFundResource($compensation_fund),
                 $this->getMessage('Success'),
                 200
             );
@@ -569,9 +564,7 @@ class CompensationFundController extends Controller
             $compensation_fund->delete();
 
             return $this->successResponse(
-                [
-                    'compensation_fund' => $compensation_fund
-                ],
+                new CompensationFundResource($compensation_fund),
                 $this->getMessage('Success'),
                 200
             );
@@ -667,9 +660,7 @@ class CompensationFundController extends Controller
             $compensation_fund->restore();
 
             return $this->successResponse(
-                [
-                    'compensation_fund' => $compensation_fund
-                ],
+                new CompensationFundResource($compensation_fund),
                 $this->getMessage('Success'),
                 200
             );

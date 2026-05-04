@@ -362,7 +362,7 @@ Route::prefix('/people')->group(function () {
     });
 });
 
-Route::prefix('/risk_manager')->group(function () {
+Route::prefix('/risk_managers')->group(function () {
     Route::controller(RiskManagerController::class)->group(function () {
         Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:risk_managers.all|employees.store|employees.update']);
         Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:risk_managers.find']);
@@ -493,6 +493,7 @@ Route::prefix('/workflow')->group(function () {
             Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:workflow.processes.update']);
             Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:workflow.processes.delete']);
             Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:workflow.processes.restore']);
+            Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:workflow.processes.settings']);
         });
 
         Route::prefix('/subprocesses')->group(function () {
@@ -507,7 +508,7 @@ Route::prefix('/workflow')->group(function () {
 
             Route::prefix('/operations')->group(function () {
                 Route::controller(OperationController::class)->group(function () {
-                    Route::get('/all/{process_id}', 'all')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.operations.all']);
+                    Route::get('/all/{subprocess_id}', 'all')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.operations.all']);
                     Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.operations.find']);
                     Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.operations.store']);
                     Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.operations.update']);

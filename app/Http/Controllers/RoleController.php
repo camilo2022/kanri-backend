@@ -7,6 +7,7 @@ use App\Http\Requests\Authorization\Role\RoleFindRequest;
 use App\Http\Requests\Authorization\Role\RoleStoreRequest;
 use App\Http\Requests\Authorization\Role\RoleUpdateRequest;
 use App\Http\Resources\Authorization\Role\RoleCollection;
+use App\Http\Resources\Authorization\Role\RoleResource;
 use App\Models\Role;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -244,9 +245,7 @@ class RoleController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'role' => $role
-                ],
+                new RoleResource($role),
                 $this->getMessage('Success'),
                 200
             );
@@ -372,9 +371,7 @@ class RoleController extends Controller
             $role->save();
 
             return $this->successResponse(
-                [
-                    'role' => $role
-                ],
+                new RoleResource($role),
                 $this->getMessage('Success'),
                 201
             );
@@ -508,9 +505,7 @@ class RoleController extends Controller
             $role->save();
 
             return $this->successResponse(
-                [
-                    'role' => $role
-                ],
+                new RoleResource($role),
                 $this->getMessage('Success'),
                 200
             );

@@ -10,6 +10,7 @@ use App\Http\Requests\Person\PersonRestoreRequest;
 use App\Http\Requests\Person\PersonStoreRequest;
 use App\Http\Requests\Person\PersonUpdateRequest;
 use App\Http\Resources\Person\PersonCollection;
+use App\Http\Resources\Person\PersonResource;
 use App\Imports\PeopleImport;
 use App\Models\Person;
 use App\Services\FileService;
@@ -305,9 +306,7 @@ class PersonController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'person' => $person
-                ],
+                new PersonResource($person),
                 $this->getMessage('Success'),
                 200
             );
@@ -491,9 +490,7 @@ class PersonController extends Controller
             }
 
             return $this->successResponse(
-                [
-                    'person' => $person
-                ],
+                new PersonResource($person),
                 $this->getMessage('Success'),
                 201
             );
@@ -668,9 +665,7 @@ class PersonController extends Controller
             }
 
             return $this->successResponse(
-                [
-                    'person' => $person
-                ],
+                new PersonResource($person),
                 $this->getMessage('Success'),
                 200
             );
@@ -768,9 +763,7 @@ class PersonController extends Controller
             $person->delete();
 
             return $this->successResponse(
-                [
-                    'person' => $person
-                ],
+                new PersonResource($person),
                 $this->getMessage('Success'),
                 200
             );
@@ -868,9 +861,7 @@ class PersonController extends Controller
             $person->restore();
 
             return $this->successResponse(
-                [
-                    'person' => $person
-                ],
+                new PersonResource($person),
                 $this->getMessage('Success'),
                 200
             );

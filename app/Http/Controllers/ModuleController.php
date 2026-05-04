@@ -9,6 +9,7 @@ use App\Http\Requests\Navegation\Module\ModuleRestoreRequest;
 use App\Http\Requests\Navegation\Module\ModuleStoreRequest;
 use App\Http\Requests\Navegation\Module\ModuleUpdateRequest;
 use App\Http\Resources\Navegation\Module\ModuleCollection;
+use App\Http\Resources\Navegation\Module\ModuleResource;
 use App\Models\Module;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -247,9 +248,7 @@ class ModuleController extends Controller
             $module->load(['submodules']);
 
             return $this->successResponse(
-                [
-                    'module' => $module
-                ],
+                new ModuleResource($module),
                 $this->getMessage('Success'),
                 200
             );
@@ -361,9 +360,7 @@ class ModuleController extends Controller
             $module->save();
 
             return $this->successResponse(
-                [
-                    'module' => $module
-                ],
+                new ModuleResource($module),
                 $this->getMessage('Success'),
                 200
             );
@@ -483,9 +480,7 @@ class ModuleController extends Controller
             $module->save();
 
             return $this->successResponse(
-                [
-                    'module' => $module
-                ],
+                new ModuleResource($module),
                 $this->getMessage('Success'),
                 200
             );
@@ -582,9 +577,7 @@ class ModuleController extends Controller
             $module->delete();
 
             return $this->successResponse(
-                [
-                    'module' => $module
-                ],
+                new ModuleResource($module),
                 $this->getMessage('Success'),
                 200
             );
@@ -681,9 +674,7 @@ class ModuleController extends Controller
             $module->restore();
 
             return $this->successResponse(
-                [
-                    'module' => $module
-                ],
+                new ModuleResource($module),
                 $this->getMessage('Success'),
                 200
             );

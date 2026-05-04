@@ -9,6 +9,7 @@ use App\Http\Requests\RiskManager\RiskManagerRestoreRequest;
 use App\Http\Requests\RiskManager\RiskManagerStoreRequest;
 use App\Http\Requests\RiskManager\RiskManagerUpdateRequest;
 use App\Http\Resources\RiskManager\RiskManagerCollection;
+use App\Http\Resources\RiskManager\RiskManagerResource;
 use App\Models\RiskManager;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -241,9 +242,7 @@ class RiskManagerController extends Controller
             $risk_manager = RiskManager::findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'risk_manager' => $risk_manager
-                ],
+                new RiskManagerResource($risk_manager),
                 $this->getMessage('Success'),
                 200
             );
@@ -351,9 +350,7 @@ class RiskManagerController extends Controller
             $risk_manager->save();
 
             return $this->successResponse(
-                [
-                    'risk_manager' => $risk_manager
-                ],
+                new RiskManagerResource($risk_manager),
                 $this->getMessage('Success'),
                 201
             );
@@ -470,9 +467,7 @@ class RiskManagerController extends Controller
             $risk_manager->save();
 
             return $this->successResponse(
-                [
-                    'risk_manager' => $risk_manager
-                ],
+                new RiskManagerResource($risk_manager),
                 $this->getMessage('Success'),
                 200
             );
@@ -568,9 +563,7 @@ class RiskManagerController extends Controller
             $risk_manager->delete();
 
             return $this->successResponse(
-                [
-                    'risk_manager' => $risk_manager
-                ],
+                new RiskManagerResource($risk_manager),
                 $this->getMessage('Success'),
                 200
             );
@@ -666,9 +659,7 @@ class RiskManagerController extends Controller
             $risk_manager->restore();
 
             return $this->successResponse(
-                [
-                    'risk_manager' => $risk_manager
-                ],
+                new RiskManagerResource($risk_manager),
                 $this->getMessage('Success'),
                 200
             );

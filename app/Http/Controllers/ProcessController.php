@@ -6,9 +6,11 @@ use App\Http\Requests\Workflow\Process\ProcessAllRequest;
 use App\Http\Requests\Workflow\Process\ProcessDeleteRequest;
 use App\Http\Requests\Workflow\Process\ProcessFindRequest;
 use App\Http\Requests\Workflow\Process\ProcessRestoreRequest;
+use App\Http\Requests\Workflow\Process\ProcessSettingRequest;
 use App\Http\Requests\Workflow\Process\ProcessStoreRequest;
 use App\Http\Requests\Workflow\Process\ProcessUpdateRequest;
 use App\Http\Resources\Workflow\Process\ProcessCollection;
+use App\Http\Resources\Workflow\Process\ProcessResource;
 use App\Models\Process;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -246,9 +248,7 @@ class ProcessController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'process' => $process
-                ],
+                new ProcessResource($process),
                 $this->getMessage('Success'),
                 200
             );
@@ -678,6 +678,34 @@ class ProcessController extends Controller
         try {
             $process = Process::withTrashed()->findOrFail($id);
             $process->restore();
+
+            return $this->successResponse(
+                [
+                    'process' => $process
+                ],
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    public function setting(ProcessSettingRequest $request, $id)
+    {
+        try {
+            $process = Process::findOrFail($id);
+            $process->settings = $request->input('settings');
+
+            $process->save();
+
+            $process->load(['before_processes', 'after_processes']);
 
             return $this->successResponse(
                 [

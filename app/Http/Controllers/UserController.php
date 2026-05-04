@@ -11,6 +11,7 @@ use App\Http\Requests\User\UserRestoreRequest;
 use App\Http\Requests\User\UserStoreRequest;
 use App\Http\Requests\User\UserUpdateRequest;
 use App\Http\Resources\User\UserCollection;
+use App\Http\Resources\User\UserResource;
 use App\Models\Permission;
 use App\Models\User;
 use App\Traits\ApiMessage;
@@ -311,9 +312,7 @@ class UserController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'user' => $user
-                ],
+                new UserResource($user),
                 $this->getMessage('Success'),
                 200
             );
@@ -463,9 +462,7 @@ class UserController extends Controller
             $user->syncPermissions($user->employee->position->permissions);
 
             return $this->successResponse(
-                [
-                    'user' => $user
-                ],
+                new UserResource($user),
                 $this->getMessage('Success'),
                 201
             );
@@ -601,9 +598,7 @@ class UserController extends Controller
             $user->save();
 
             return $this->successResponse(
-                [
-                    'user' => $user
-                ],
+                new UserResource($user),
                 $this->getMessage('Success'),
                 200
             );
@@ -705,9 +700,7 @@ class UserController extends Controller
             $user->delete();
 
             return $this->successResponse(
-                [
-                    'user' => $user
-                ],
+                new UserResource($user),
                 $this->getMessage('Success'),
                 200
             );
@@ -826,9 +819,7 @@ class UserController extends Controller
             $user->syncPermissions($user->employee->position->permissions);
 
             return $this->successResponse(
-                [
-                    'user' => $user
-                ],
+                new UserResource($user),
                 $this->getMessage('Success'),
                 200
             );
@@ -942,9 +933,7 @@ class UserController extends Controller
             $user->load(['employee' => ['person', 'position' => ['area']], 'roles', 'permissions']);
 
             return $this->successResponse(
-                [
-                    'user' => $user
-                ],
+                new UserResource($user),
                 $this->getMessage('Success'),
                 200
             );
@@ -1136,9 +1125,7 @@ class UserController extends Controller
             $user->load(['employee' => ['person', 'position' => ['area']], 'roles', 'permissions']);
 
             return $this->successResponse(
-                [
-                    'user' => $user
-                ],
+                new UserResource($user),
                 $this->getMessage('Success'),
                 200
             );

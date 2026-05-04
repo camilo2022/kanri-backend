@@ -11,8 +11,8 @@ use App\Http\Requests\Categorization\Category\CategorySubcategoryAssignRequest;
 use App\Http\Requests\Categorization\Category\CategorySubcategoryRemoveRequest;
 use App\Http\Requests\Categorization\Category\CategoryUpdateRequest;
 use App\Http\Resources\Categorization\Category\CategoryCollection;
+use App\Http\Resources\Categorization\Category\CategoryResource;
 use App\Models\Category;
-use App\Models\Subcategory;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 
@@ -249,10 +249,10 @@ class CategoryController extends Controller
             $category = Category::with(['item', 'subcategories'])
                 ->findOrFail($id);
 
+            $category->load(['item', 'subcategories']);
+
             return $this->successResponse(
-                [
-                    'category' => $category
-                ],
+                new CategoryResource($category),
                 $this->getMessage('Success'),
                 200
             );
@@ -359,10 +359,10 @@ class CategoryController extends Controller
             $category->description = $request->input('description');
             $category->save();
 
+            $category->load(['item', 'subcategories']);
+
             return $this->successResponse(
-                [
-                    'category' => $category
-                ],
+                new CategoryResource($category),
                 $this->getMessage('Success'),
                 201
             );
@@ -478,10 +478,10 @@ class CategoryController extends Controller
             $category->description = $request->input('description');
             $category->save();
 
+            $category->load(['item', 'subcategories']);
+
             return $this->successResponse(
-                [
-                    'category' => $category
-                ],
+                new CategoryResource($category),
                 $this->getMessage('Success'),
                 200
             );
@@ -576,10 +576,10 @@ class CategoryController extends Controller
             $category = Category::findOrFail($id);
             $category->delete();
 
+            $category->load(['item', 'subcategories']);
+
             return $this->successResponse(
-                [
-                    'category' => $category
-                ],
+                new CategoryResource($category),
                 $this->getMessage('Success'),
                 200
             );
@@ -674,10 +674,10 @@ class CategoryController extends Controller
             $category = Category::withTrashed()->findOrFail($id);
             $category->restore();
 
+            $category->load(['item', 'subcategories']);
+
             return $this->successResponse(
-                [
-                    'category' => $category
-                ],
+                new CategoryResource($category),
                 $this->getMessage('Success'),
                 200
             );
@@ -702,9 +702,7 @@ class CategoryController extends Controller
             $category->load(['item', 'subcategories']);
 
             return $this->successResponse(
-                [
-                    'category' => $category
-                ],
+                new CategoryResource($category),
                 $this->getMessage('Success'),
                 200
             );
@@ -729,9 +727,7 @@ class CategoryController extends Controller
             $category->load(['item', 'subcategories']);
 
             return $this->successResponse(
-                [
-                    'category' => $category
-                ],
+                new CategoryResource($category),
                 $this->getMessage('Success'),
                 200
             );

@@ -9,6 +9,7 @@ use App\Http\Requests\BloodType\BloodTypeRestoreRequest;
 use App\Http\Requests\BloodType\BloodTypeStoreRequest;
 use App\Http\Requests\BloodType\BloodTypeUpdateRequest;
 use App\Http\Resources\BloodType\BloodTypeCollection;
+use App\Http\Resources\BloodType\BloodTypeResource;
 use App\Models\BloodType;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -243,9 +244,7 @@ class BloodTypeController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'blood_type' => $blood_type
-                ],
+                new BloodTypeResource($blood_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -353,9 +352,7 @@ class BloodTypeController extends Controller
             $blood_type->save();
 
             return $this->successResponse(
-                [
-                    'blood_type' => $blood_type
-                ],
+                new BloodTypeResource($blood_type),
                 $this->getMessage('Success'),
                 201
             );
@@ -472,9 +469,7 @@ class BloodTypeController extends Controller
             $blood_type->save();
 
             return $this->successResponse(
-                [
-                    'blood_type' => $blood_type
-                ],
+                new BloodTypeResource($blood_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -570,9 +565,7 @@ class BloodTypeController extends Controller
             $blood_type->delete();
 
             return $this->successResponse(
-                [
-                    'blood_type' => $blood_type
-                ],
+                new BloodTypeResource($blood_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -668,9 +661,7 @@ class BloodTypeController extends Controller
             $blood_type->restore();
 
             return $this->successResponse(
-                [
-                    'blood_type' => $blood_type
-                ],
+                new BloodTypeResource($blood_type),
                 $this->getMessage('Success'),
                 200
             );

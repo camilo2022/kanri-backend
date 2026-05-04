@@ -9,6 +9,7 @@ use App\Http\Requests\Workflow\Subprocess\SubprocessRestoreRequest;
 use App\Http\Requests\Workflow\Subprocess\SubprocessStoreRequest;
 use App\Http\Requests\Workflow\Subprocess\SubprocessUpdateRequest;
 use App\Http\Resources\Workflow\Subprocess\SubprocessCollection;
+use App\Http\Resources\Workflow\Subprocess\SubprocessResource;
 use App\Models\Subprocess;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -247,9 +248,7 @@ class SubprocessController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'subprocess' => $subprocess
-                ],
+                new SubprocessResource($subprocess),
                 $this->getMessage('Success'),
                 200
             );
@@ -362,9 +361,7 @@ class SubprocessController extends Controller
             $subprocess->auditSync('process', $request->integer('process_id'));
 
             return $this->successResponse(
-                [
-                    'subprocess' => $subprocess
-                ],
+                new SubprocessResource($subprocess),
                 $this->getMessage('Success'),
                 201
             );
@@ -484,9 +481,7 @@ class SubprocessController extends Controller
             $subprocess->save();
 
             return $this->successResponse(
-                [
-                    'subprocess' => $subprocess
-                ],
+                new SubprocessResource($subprocess),
                 $this->getMessage('Success'),
                 201
             );
@@ -582,9 +577,7 @@ class SubprocessController extends Controller
             $subprocess->delete();
 
             return $this->successResponse(
-                [
-                    'subprocess' => $subprocess
-                ],
+                new SubprocessResource($subprocess),
                 $this->getMessage('Success'),
                 200
             );
@@ -680,9 +673,7 @@ class SubprocessController extends Controller
             $subprocess->restore();
 
             return $this->successResponse(
-                [
-                    'subprocess' => $subprocess
-                ],
+                new SubprocessResource($subprocess),
                 $this->getMessage('Success'),
                 200
             );

@@ -9,6 +9,7 @@ use App\Http\Requests\Navegation\Submodule\SubmoduleRestoreRequest;
 use App\Http\Requests\Navegation\Submodule\SubmoduleStoreRequest;
 use App\Http\Requests\Navegation\Submodule\SubmoduleUpdateRequest;
 use App\Http\Resources\Navegation\Submodule\SubmoduleCollection;
+use App\Http\Resources\Navegation\Submodule\SubmoduleResource;
 use App\Models\Submodule;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -282,14 +283,11 @@ class SubmoduleController extends Controller
     public function find(SubmoduleFindRequest $request)
     {
         try {
-            $submodule = Submodule::with(['permission'])
-                ->with(['module'])
+            $submodule = Submodule::with(['permission', 'module'])
                 ->findOrFail($request->id);
 
             return $this->successResponse(
-                [
-                    'submodule' => $submodule,
-                ],
+                new SubmoduleResource($submodule),
                 $this->getMessage('Success'),
                 200
             );

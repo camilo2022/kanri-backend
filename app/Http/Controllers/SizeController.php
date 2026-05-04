@@ -9,6 +9,7 @@ use App\Http\Requests\Size\SizeRestoreRequest;
 use App\Http\Requests\Size\SizeStoreRequest;
 use App\Http\Requests\Size\SizeUpdateRequest;
 use App\Http\Resources\Size\SizeCollection;
+use App\Http\Resources\Size\SizeResource;
 use App\Models\Size;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -241,9 +242,7 @@ class SizeController extends Controller
             $size = Size::findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'size' => $size
-                ],
+                new SizeResource($size),
                 $this->getMessage('Success'),
                 200
             );
@@ -351,9 +350,7 @@ class SizeController extends Controller
             $size->save();
 
             return $this->successResponse(
-                [
-                    'size' => $size
-                ],
+                new SizeResource($size),
                 $this->getMessage('Success'),
                 201
             );
@@ -470,9 +467,7 @@ class SizeController extends Controller
             $size->save();
 
             return $this->successResponse(
-                [
-                    'size' => $size
-                ],
+                new SizeResource($size),
                 $this->getMessage('Success'),
                 200
             );
@@ -568,9 +563,7 @@ class SizeController extends Controller
             $size->delete();
 
             return $this->successResponse(
-                [
-                    'size' => $size
-                ],
+                new SizeResource($size),
                 $this->getMessage('Success'),
                 200
             );
@@ -666,9 +659,7 @@ class SizeController extends Controller
             $size->restore();
 
             return $this->successResponse(
-                [
-                    'size' => $size
-                ],
+                new SizeResource($size),
                 $this->getMessage('Success'),
                 200
             );

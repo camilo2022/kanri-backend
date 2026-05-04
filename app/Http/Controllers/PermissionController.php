@@ -7,6 +7,7 @@ use App\Http\Requests\Authorization\Permission\PermissionFindRequest;
 use App\Http\Requests\Authorization\Permission\PermissionStoreRequest;
 use App\Http\Requests\Authorization\Permission\PermissionUpdateRequest;
 use App\Http\Resources\Authorization\Permission\PermissionCollection;
+use App\Http\Resources\Authorization\Permission\PermissionResource;
 use App\Models\Permission;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -245,9 +246,7 @@ class PermissionController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'permission' => $permission
-                ],
+                new PermissionResource($permission),
                 $this->getMessage('Success'),
                 200
             );
@@ -387,9 +386,7 @@ class PermissionController extends Controller
             $permission->syncRoles($request->integer('role_id'));
 
             return $this->successResponse(
-                [
-                    'permission' => $permission
-                ],
+                new PermissionResource($permission),
                 $this->getMessage('Success'),
                 201
             );
@@ -537,9 +534,7 @@ class PermissionController extends Controller
             $permission->syncRoles($request->integer('role_id'));
 
             return $this->successResponse(
-                [
-                    'permission' => $permission
-                ],
+                new PermissionResource($permission),
                 $this->getMessage('Success'),
                 200
             );

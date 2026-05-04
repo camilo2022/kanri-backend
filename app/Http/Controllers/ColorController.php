@@ -9,6 +9,7 @@ use App\Http\Requests\Color\ColorRestoreRequest;
 use App\Http\Requests\Color\ColorStoreRequest;
 use App\Http\Requests\Color\ColorUpdateRequest;
 use App\Http\Resources\Color\ColorCollection;
+use App\Http\Resources\Color\ColorResource;
 use App\Models\Color;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -243,9 +244,7 @@ class ColorController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'color' => $color
-                ],
+                new ColorResource($color),
                 $this->getMessage('Success'),
                 200
             );
@@ -362,9 +361,7 @@ class ColorController extends Controller
             $color->save();
 
             return $this->successResponse(
-                [
-                    'color' => $color
-                ],
+                new ColorResource($color),
                 $this->getMessage('Success'),
                 201
             );
@@ -490,9 +487,7 @@ class ColorController extends Controller
             $color->save();
 
             return $this->successResponse(
-                [
-                    'color' => $color
-                ],
+                new ColorResource($color),
                 $this->getMessage('Success'),
                 201
             );
@@ -588,9 +583,7 @@ class ColorController extends Controller
             $color->delete();
 
             return $this->successResponse(
-                [
-                    'color' => $color
-                ],
+                new ColorResource($color),
                 $this->getMessage('Success'),
                 200
             );
@@ -686,9 +679,7 @@ class ColorController extends Controller
             $color->restore();
 
             return $this->successResponse(
-                [
-                    'color' => $color
-                ],
+                new ColorResource($color),
                 $this->getMessage('Success'),
                 200
             );

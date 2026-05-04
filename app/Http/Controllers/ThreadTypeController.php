@@ -9,6 +9,7 @@ use App\Http\Requests\ThreadType\ThreadTypeRestoreRequest;
 use App\Http\Requests\ThreadType\ThreadTypeStoreRequest;
 use App\Http\Requests\ThreadType\ThreadTypeUpdateRequest;
 use App\Http\Resources\ThreadType\ThreadTypeCollection;
+use App\Http\Resources\ThreadType\ThreadTypeResource;
 use App\Models\ThreadType;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -242,9 +243,7 @@ class ThreadTypeController extends Controller
             $thread_type = ThreadType::findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'thread_type' => $thread_type
-                ],
+                new ThreadTypeResource($thread_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -352,9 +351,7 @@ class ThreadTypeController extends Controller
             $thread_type->save();
 
             return $this->successResponse(
-                [
-                    'thread_type' => $thread_type
-                ],
+                new ThreadTypeResource($thread_type),
                 $this->getMessage('Success'),
                 201
             );
@@ -471,9 +468,7 @@ class ThreadTypeController extends Controller
             $thread_type->save();
 
             return $this->successResponse(
-                [
-                    'thread_type' => $thread_type
-                ],
+                new ThreadTypeResource($thread_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -569,9 +564,7 @@ class ThreadTypeController extends Controller
             $thread_type->delete();
 
             return $this->successResponse(
-                [
-                    'thread_type' => $thread_type
-                ],
+                new ThreadTypeResource($thread_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -667,9 +660,7 @@ class ThreadTypeController extends Controller
             $thread_type->restore();
 
             return $this->successResponse(
-                [
-                    'thread_type' => $thread_type
-                ],
+                new ThreadTypeResource($thread_type),
                 $this->getMessage('Success'),
                 200
             );

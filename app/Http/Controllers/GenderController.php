@@ -9,6 +9,7 @@ use App\Http\Requests\Gender\GenderRestoreRequest;
 use App\Http\Requests\Gender\GenderStoreRequest;
 use App\Http\Requests\Gender\GenderUpdateRequest;
 use App\Http\Resources\Gender\GenderCollection;
+use App\Http\Resources\Gender\GenderResource;
 use App\Models\Gender;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -241,9 +242,7 @@ class GenderController extends Controller
             $gender = Gender::findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'gender' => $gender
-                ],
+                new GenderResource($gender),
                 $this->getMessage('Success'),
                 200
             );
@@ -351,9 +350,7 @@ class GenderController extends Controller
             $gender->save();
 
             return $this->successResponse(
-                [
-                    'gender' => $gender
-                ],
+                new GenderResource($gender),
                 $this->getMessage('Success'),
                 201
             );
@@ -470,9 +467,7 @@ class GenderController extends Controller
             $gender->save();
 
             return $this->successResponse(
-                [
-                    'gender' => $gender
-                ],
+                new GenderResource($gender),
                 $this->getMessage('Success'),
                 200
             );
@@ -568,9 +563,7 @@ class GenderController extends Controller
             $gender->delete();
 
             return $this->successResponse(
-                [
-                    'gender' => $gender
-                ],
+                new GenderResource($gender),
                 $this->getMessage('Success'),
                 200
             );
@@ -666,9 +659,7 @@ class GenderController extends Controller
             $gender->restore();
 
             return $this->successResponse(
-                [
-                    'gender' => $gender
-                ],
+                new GenderResource($gender),
                 $this->getMessage('Success'),
                 200
             );

@@ -9,6 +9,7 @@ use App\Http\Requests\BackType\BackTypeRestoreRequest;
 use App\Http\Requests\BackType\BackTypeStoreRequest;
 use App\Http\Requests\BackType\BackTypeUpdateRequest;
 use App\Http\Resources\BackType\BackTypeCollection;
+use App\Http\Resources\BackType\BackTypeResource;
 use App\Models\BackType;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -243,9 +244,7 @@ class BackTypeController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'back_type' => $back_type
-                ],
+                new BackTypeResource($back_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -353,9 +352,7 @@ class BackTypeController extends Controller
             $back_type->save();
 
             return $this->successResponse(
-                [
-                    'back_type' => $back_type
-                ],
+                new BackTypeResource($back_type),
                 $this->getMessage('Success'),
                 201
             );
@@ -472,9 +469,7 @@ class BackTypeController extends Controller
             $back_type->save();
 
             return $this->successResponse(
-                [
-                    'back_type' => $back_type
-                ],
+                new BackTypeResource($back_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -570,9 +565,7 @@ class BackTypeController extends Controller
             $back_type->delete();
 
             return $this->successResponse(
-                [
-                    'back_type' => $back_type
-                ],
+                new BackTypeResource($back_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -668,9 +661,7 @@ class BackTypeController extends Controller
             $back_type->restore();
 
             return $this->successResponse(
-                [
-                    'back_type' => $back_type
-                ],
+                new BackTypeResource($back_type),
                 $this->getMessage('Success'),
                 200
             );

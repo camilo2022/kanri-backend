@@ -10,6 +10,7 @@ use App\Http\Requests\Trademark\TrademarkRestoreRequest;
 use App\Http\Requests\Trademark\TrademarkStoreRequest;
 use App\Http\Requests\Trademark\TrademarkUpdateRequest;
 use App\Http\Resources\Trademark\TrademarkCollection;
+use App\Http\Resources\Trademark\TrademarkResource;
 use App\Models\Category;
 use App\Models\Trademark;
 use App\Traits\ApiMessage;
@@ -283,9 +284,7 @@ class TrademarkController extends Controller
             $trademark->load(['category']);
 
             return $this->successResponse(
-                [
-                    'trademark' => $trademark
-                ],
+                new TrademarkResource($trademark),
                 $this->getMessage('Success'),
                 200
             );
@@ -403,9 +402,7 @@ class TrademarkController extends Controller
             $trademark->load(['category']);
 
             return $this->successResponse(
-                [
-                    'trademark' => $trademark
-                ],
+                new TrademarkResource($trademark),
                 $this->getMessage('Success'),
                 201
             );
@@ -526,14 +523,12 @@ class TrademarkController extends Controller
             $trademark->name = $request->input('name');
             $trademark->description = $request->input('description');
             $trademark->save();
-            
+
             $trademark->auditSync('category', [$request->integer('category_id')]);
             $trademark->load(['category']);
 
             return $this->successResponse(
-                [
-                    'trademark' => $trademark
-                ],
+                new TrademarkResource($trademark),
                 $this->getMessage('Success'),
                 200
             );
@@ -629,9 +624,7 @@ class TrademarkController extends Controller
             $trademark->delete();
 
             return $this->successResponse(
-                [
-                    'trademark' => $trademark
-                ],
+                new TrademarkResource($trademark),
                 $this->getMessage('Success'),
                 200
             );
@@ -727,9 +720,7 @@ class TrademarkController extends Controller
             $trademark->restore();
 
             return $this->successResponse(
-                [
-                    'trademark' => $trademark
-                ],
+                new TrademarkResource($trademark),
                 $this->getMessage('Success'),
                 200
             );
@@ -893,9 +884,7 @@ class TrademarkController extends Controller
             $trademark->save();
 
             return $this->successResponse(
-                [
-                    'trademark' => $trademark
-                ],
+                new TrademarkResource($trademark),
                 $this->getMessage('Success'),
                 200
             );

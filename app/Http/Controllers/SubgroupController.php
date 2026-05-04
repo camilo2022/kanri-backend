@@ -9,6 +9,7 @@ use App\Http\Requests\Classification\Subgroup\SubgroupRestoreRequest;
 use App\Http\Requests\Classification\Subgroup\SubgroupStoreRequest;
 use App\Http\Requests\Classification\Subgroup\SubgroupUpdateRequest;
 use App\Http\Resources\Classification\Subgroup\SubgroupCollection;
+use App\Http\Resources\Classification\Subgroup\SubgroupResource;
 use App\Models\Subgroup;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -231,9 +232,7 @@ class SubgroupController extends Controller
             $subgroup = Subgroup::findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'subgroup' => $subgroup
-                ],
+                new SubgroupResource($subgroup),
                 $this->getMessage('Success'),
                 200
             );
@@ -341,9 +340,7 @@ class SubgroupController extends Controller
             $subgroup->save();
 
             return $this->successResponse(
-                [
-                    'subgroup' => $subgroup
-                ],
+                new SubgroupResource($subgroup),
                 $this->getMessage('Success'),
                 201
             );
@@ -460,9 +457,7 @@ class SubgroupController extends Controller
             $subgroup->save();
 
             return $this->successResponse(
-                [
-                    'subgroup' => $subgroup
-                ],
+                new SubgroupResource($subgroup),
                 $this->getMessage('Success'),
                 200
             );
@@ -558,9 +553,7 @@ class SubgroupController extends Controller
             $subgroup->delete();
 
             return $this->successResponse(
-                [
-                    'subgroup' => $subgroup
-                ],
+                new SubgroupResource($subgroup),
                 $this->getMessage('Success'),
                 200
             );
@@ -656,9 +649,7 @@ class SubgroupController extends Controller
             $subgroup->restore();
 
             return $this->successResponse(
-                [
-                    'subgroup' => $subgroup
-                ],
+                new SubgroupResource($subgroup),
                 $this->getMessage('Success'),
                 200
             );

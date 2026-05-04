@@ -9,6 +9,7 @@ use App\Http\Requests\GarmentType\GarmentTypeRestoreRequest;
 use App\Http\Requests\GarmentType\GarmentTypeStoreRequest;
 use App\Http\Requests\GarmentType\GarmentTypeUpdateRequest;
 use App\Http\Resources\GarmentType\GarmentTypeCollection;
+use App\Http\Resources\GarmentType\GarmentTypeResource;
 use App\Models\GarmentType;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -241,9 +242,7 @@ class GarmentTypeController extends Controller
             $garment_type = GarmentType::findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'garment_type' => $garment_type
-                ],
+                new GarmentTypeResource($garment_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -351,9 +350,7 @@ class GarmentTypeController extends Controller
             $garment_type->save();
 
             return $this->successResponse(
-                [
-                    'garment_type' => $garment_type
-                ],
+                new GarmentTypeResource($garment_type),
                 $this->getMessage('Success'),
                 201
             );
@@ -470,9 +467,7 @@ class GarmentTypeController extends Controller
             $garment_type->save();
 
             return $this->successResponse(
-                [
-                    'garment_type' => $garment_type
-                ],
+                new GarmentTypeResource($garment_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -568,9 +563,7 @@ class GarmentTypeController extends Controller
             $garment_type->delete();
 
             return $this->successResponse(
-                [
-                    'garment_type' => $garment_type
-                ],
+                new GarmentTypeResource($garment_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -666,9 +659,7 @@ class GarmentTypeController extends Controller
             $garment_type->restore();
 
             return $this->successResponse(
-                [
-                    'garment_type' => $garment_type
-                ],
+                new GarmentTypeResource($garment_type),
                 $this->getMessage('Success'),
                 200
             );

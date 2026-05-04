@@ -9,6 +9,7 @@ use App\Http\Requests\OrganizationalStructure\Area\AreaRestoreRequest;
 use App\Http\Requests\OrganizationalStructure\Area\AreaStoreRequest;
 use App\Http\Requests\OrganizationalStructure\Area\AreaUpdateRequest;
 use App\Http\Resources\OrganizationalStructure\Area\AreaCollection;
+use App\Http\Resources\OrganizationalStructure\Area\AreaResource;
 use App\Models\Area;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -255,9 +256,7 @@ class AreaController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'area' => $area
-                ],
+                new AreaResource($area),
                 $this->getMessage('Success'),
                 200
             );
@@ -365,9 +364,7 @@ class AreaController extends Controller
             $area->save();
 
             return $this->successResponse(
-                [
-                    'area' => $area
-                ],
+                new AreaResource($area),
                 $this->getMessage('Success'),
                 201
             );
@@ -484,9 +481,7 @@ class AreaController extends Controller
             $area->save();
 
             return $this->successResponse(
-                [
-                    'area' => $area
-                ],
+                new AreaResource($area),
                 $this->getMessage('Success'),
                 200
             );
@@ -582,9 +577,7 @@ class AreaController extends Controller
             $area->delete();
 
             return $this->successResponse(
-                [
-                    'area' => $area
-                ],
+                new AreaResource($area),
                 $this->getMessage('Success'),
                 200
             );
@@ -680,9 +673,7 @@ class AreaController extends Controller
             $area->restore();
 
             return $this->successResponse(
-                [
-                    'area' => $area
-                ],
+                new AreaResource($area),
                 $this->getMessage('Success'),
                 200
             );

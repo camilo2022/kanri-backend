@@ -9,6 +9,7 @@ use App\Http\Requests\YokeType\YokeTypeRestoreRequest;
 use App\Http\Requests\YokeType\YokeTypeStoreRequest;
 use App\Http\Requests\YokeType\YokeTypeUpdateRequest;
 use App\Http\Resources\YokeType\YokeTypeCollection;
+use App\Http\Resources\YokeType\YokeTypeResource;
 use App\Models\YokeType;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -243,9 +244,7 @@ class YokeTypeController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'yoke_type' => $yoke_type
-                ],
+                new YokeTypeResource($yoke_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -354,9 +353,7 @@ class YokeTypeController extends Controller
             $yoke_type->save();
 
             return $this->successResponse(
-                [
-                    'yoke_type' => $yoke_type
-                ],
+                new YokeTypeResource($yoke_type),
                 $this->getMessage('Success'),
                 201
             );
@@ -474,9 +471,7 @@ class YokeTypeController extends Controller
             $yoke_type->save();
 
             return $this->successResponse(
-                [
-                    'yoke_type' => $yoke_type
-                ],
+                new YokeTypeResource($yoke_type),
                 $this->getMessage('Success'),
                 201
             );
@@ -572,9 +567,7 @@ class YokeTypeController extends Controller
             $yoke_type->delete();
 
             return $this->successResponse(
-                [
-                    'yoke_type' => $yoke_type
-                ],
+                new YokeTypeResource($yoke_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -670,9 +663,7 @@ class YokeTypeController extends Controller
             $yoke_type->restore();
 
             return $this->successResponse(
-                [
-                    'yoke_type' => $yoke_type
-                ],
+                new YokeTypeResource($yoke_type),
                 $this->getMessage('Success'),
                 200
             );

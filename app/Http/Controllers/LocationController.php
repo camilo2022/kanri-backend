@@ -9,6 +9,7 @@ use App\Http\Requests\Location\LocationRestoreRequest;
 use App\Http\Requests\Location\LocationStoreRequest;
 use App\Http\Requests\Location\LocationUpdateRequest;
 use App\Http\Resources\Location\LocationCollection;
+use App\Http\Resources\Location\LocationResource;
 use App\Models\Location;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -265,9 +266,7 @@ class LocationController extends Controller
             $location->load(['process']);
 
             return $this->successResponse(
-                [
-                    'location' => $location
-                ],
+                new LocationResource($location),
                 $this->getMessage('Success'),
                 200
             );
@@ -385,9 +384,7 @@ class LocationController extends Controller
             $location->load(['process']);
 
             return $this->successResponse(
-                [
-                    'location' => $location
-                ],
+                new LocationResource($location),
                 $this->getMessage('Success'),
                 201
             );
@@ -514,9 +511,7 @@ class LocationController extends Controller
             $location->load(['process']);
 
             return $this->successResponse(
-                [
-                    'location' => $location
-                ],
+                new LocationResource($location),
                 $this->getMessage('Success'),
                 200
             );
@@ -612,9 +607,7 @@ class LocationController extends Controller
             $location->delete();
 
             return $this->successResponse(
-                [
-                    'location' => $location
-                ],
+                new LocationResource($location),
                 $this->getMessage('Success'),
                 200
             );
@@ -710,9 +703,7 @@ class LocationController extends Controller
             $location->restore();
 
             return $this->successResponse(
-                [
-                    'location' => $location
-                ],
+                new LocationResource($location),
                 $this->getMessage('Success'),
                 200
             );

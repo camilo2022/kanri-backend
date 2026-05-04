@@ -241,9 +241,7 @@ class WaistbandTypeController extends Controller
             $waistband_type = WaistbandType::findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'waistband_type' => $waistband_type
-                ],
+                new WaistbandTypeResource($waistband_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -351,9 +349,7 @@ class WaistbandTypeController extends Controller
             $waistband_type->save();
 
             return $this->successResponse(
-                [
-                    'waistband_type' => $waistband_type
-                ],
+                new WaistbandTypeResource($waistband_type),
                 $this->getMessage('Success'),
                 201
             );
@@ -470,9 +466,7 @@ class WaistbandTypeController extends Controller
             $waistband_type->save();
 
             return $this->successResponse(
-                [
-                    'waistband_type' => $waistband_type
-                ],
+                new WaistbandTypeResource($waistband_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -568,9 +562,7 @@ class WaistbandTypeController extends Controller
             $waistband_type->delete();
 
             return $this->successResponse(
-                [
-                    'waistband_type' => $waistband_type
-                ],
+                new WaistbandTypeResource($waistband_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -666,9 +658,7 @@ class WaistbandTypeController extends Controller
             $waistband_type->restore();
 
             return $this->successResponse(
-                [
-                    'waistband_type' => $waistband_type
-                ],
+                new WaistbandTypeResource($waistband_type),
                 $this->getMessage('Success'),
                 200
             );

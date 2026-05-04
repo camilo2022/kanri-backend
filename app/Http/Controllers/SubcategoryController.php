@@ -9,6 +9,7 @@ use App\Http\Requests\Categorization\Subcategory\SubcategoryRestoreRequest;
 use App\Http\Requests\Categorization\Subcategory\SubcategoryStoreRequest;
 use App\Http\Requests\Categorization\Subcategory\SubcategoryUpdateRequest;
 use App\Http\Resources\Categorization\Subcategory\SubcategoryCollection;
+use App\Http\Resources\Categorization\Subcategory\SubcategoryResource;
 use App\Models\Subcategory;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -254,9 +255,7 @@ class SubcategoryController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'subcategory' => $subcategory
-                ],
+                new SubcategoryResource($subcategory),
                 $this->getMessage('Success'),
                 200
             );
@@ -362,10 +361,10 @@ class SubcategoryController extends Controller
             $subcategory->description = $request->input('description');
             $subcategory->save();
 
+            $subcategory->load(['item', 'categories']);
+
             return $this->successResponse(
-                [
-                    'subcategory' => $subcategory
-                ],
+                new SubcategoryResource($subcategory),
                 $this->getMessage('Success'),
                 201
             );
@@ -487,10 +486,10 @@ class SubcategoryController extends Controller
             $subcategory->description = $request->input('description');
             $subcategory->save();
 
+            $subcategory->load(['item', 'categories']);
+
             return $this->successResponse(
-                [
-                    'subcategory' => $subcategory
-                ],
+                new SubcategoryResource($subcategory),
                 $this->getMessage('Success'),
                 200
             );
@@ -585,10 +584,10 @@ class SubcategoryController extends Controller
             $subcategory = Subcategory::findOrFail($id);
             $subcategory->delete();
 
+            $subcategory->load(['item', 'categories']);
+
             return $this->successResponse(
-                [
-                    'subcategory' => $subcategory
-                ],
+                new SubcategoryResource($subcategory),
                 $this->getMessage('Success'),
                 200
             );
@@ -683,10 +682,10 @@ class SubcategoryController extends Controller
             $subcategory = Subcategory::withTrashed()->findOrFail($id);
             $subcategory->restore();
 
+            $subcategory->load(['item', 'categories']);
+
             return $this->successResponse(
-                [
-                    'subcategory' => $subcategory
-                ],
+                new SubcategoryResource($subcategory),
                 $this->getMessage('Success'),
                 200
             );

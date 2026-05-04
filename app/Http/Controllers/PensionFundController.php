@@ -9,6 +9,7 @@ use App\Http\Requests\PensionFund\PensionFundRestoreRequest;
 use App\Http\Requests\PensionFund\PensionFundStoreRequest;
 use App\Http\Requests\PensionFund\PensionFundUpdateRequest;
 use App\Http\Resources\PensionFund\PensionFundCollection;
+use App\Http\Resources\PensionFund\PensionFundResource;
 use App\Models\PensionFund;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -241,9 +242,7 @@ class PensionFundController extends Controller
             $pension_fund = PensionFund::findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'pension_fund' => $pension_fund
-                ],
+                new PensionFundResource($pension_fund),
                 $this->getMessage('Success'),
                 200
             );
@@ -351,9 +350,7 @@ class PensionFundController extends Controller
             $pension_fund->save();
 
             return $this->successResponse(
-                [
-                    'pension_fund' => $pension_fund
-                ],
+                new PensionFundResource($pension_fund),
                 $this->getMessage('Success'),
                 201
             );
@@ -470,9 +467,7 @@ class PensionFundController extends Controller
             $pension_fund->save();
 
             return $this->successResponse(
-                [
-                    'pension_fund' => $pension_fund
-                ],
+                new PensionFundResource($pension_fund),
                 $this->getMessage('Success'),
                 200
             );
@@ -568,9 +563,7 @@ class PensionFundController extends Controller
             $pension_fund->delete();
 
             return $this->successResponse(
-                [
-                    'pension_fund' => $pension_fund
-                ],
+                new PensionFundResource($pension_fund),
                 $this->getMessage('Success'),
                 200
             );
@@ -666,9 +659,7 @@ class PensionFundController extends Controller
             $pension_fund->restore();
 
             return $this->successResponse(
-                [
-                    'pension_fund' => $pension_fund
-                ],
+                new PensionFundResource($pension_fund),
                 $this->getMessage('Success'),
                 200
             );

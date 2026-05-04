@@ -9,6 +9,7 @@ use App\Http\Requests\ClothingLine\ClothingLineRestoreRequest;
 use App\Http\Requests\ClothingLine\ClothingLineStoreRequest;
 use App\Http\Requests\ClothingLine\ClothingLineUpdateRequest;
 use App\Http\Resources\ClothingLine\ClothingLineCollection;
+use App\Http\Resources\ClothingLine\ClothingLineResource;
 use App\Models\ClothingLine;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -242,9 +243,7 @@ class ClothingLineController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'clothing_line' => $clothing_line
-                ],
+                new ClothingLineResource($clothing_line),
                 $this->getMessage('Success'),
                 200
             );
@@ -352,9 +351,7 @@ class ClothingLineController extends Controller
             $clothing_line->save();
 
             return $this->successResponse(
-                [
-                    'clothing_line' => $clothing_line
-                ],
+                new ClothingLineResource($clothing_line),
                 $this->getMessage('Success'),
                 201
             );
@@ -471,9 +468,7 @@ class ClothingLineController extends Controller
             $clothing_line->save();
 
             return $this->successResponse(
-                [
-                    'clothing_line' => $clothing_line
-                ],
+                new ClothingLineResource($clothing_line),
                 $this->getMessage('Success'),
                 200
             );
@@ -569,9 +564,7 @@ class ClothingLineController extends Controller
             $clothing_line->delete();
 
             return $this->successResponse(
-                [
-                    'clothing_line' => $clothing_line
-                ],
+                new ClothingLineResource($clothing_line),
                 $this->getMessage('Success'),
                 200
             );
@@ -667,9 +660,7 @@ class ClothingLineController extends Controller
             $clothing_line->restore();
 
             return $this->successResponse(
-                [
-                    'clothing_line' => $clothing_line
-                ],
+                new ClothingLineResource($clothing_line),
                 $this->getMessage('Success'),
                 200
             );

@@ -9,6 +9,7 @@ use App\Http\Requests\Classification\Group\GroupRestoreRequest;
 use App\Http\Requests\Classification\Group\GroupStoreRequest;
 use App\Http\Requests\Classification\Group\GroupUpdateRequest;
 use App\Http\Resources\Classification\Group\GroupCollection;
+use App\Http\Resources\Classification\Group\GroupResource;
 use App\Models\Group;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -231,9 +232,7 @@ class GroupController extends Controller
             $group = Group::findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'group' => $group
-                ],
+                new GroupResource($group),
                 $this->getMessage('Success'),
                 200
             );
@@ -341,9 +340,7 @@ class GroupController extends Controller
             $group->save();
 
             return $this->successResponse(
-                [
-                    'group' => $group
-                ],
+                new GroupResource($group),
                 $this->getMessage('Success'),
                 201
             );
@@ -460,9 +457,7 @@ class GroupController extends Controller
             $group->save();
 
             return $this->successResponse(
-                [
-                    'group' => $group
-                ],
+                new GroupResource($group),
                 $this->getMessage('Success'),
                 200
             );
@@ -558,9 +553,7 @@ class GroupController extends Controller
             $group->delete();
 
             return $this->successResponse(
-                [
-                    'group' => $group
-                ],
+                new GroupResource($group),
                 $this->getMessage('Success'),
                 200
             );
@@ -656,9 +649,7 @@ class GroupController extends Controller
             $group->restore();
 
             return $this->successResponse(
-                [
-                    'group' => $group
-                ],
+                new GroupResource($group),
                 $this->getMessage('Success'),
                 200
             );

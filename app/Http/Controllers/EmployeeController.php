@@ -9,6 +9,7 @@ use App\Http\Requests\Employee\EmployeeRestoreRequest;
 use App\Http\Requests\Employee\EmployeeStoreRequest;
 use App\Http\Requests\Employee\EmployeeUpdateRequest;
 use App\Http\Resources\Employee\EmployeeCollection;
+use App\Http\Resources\Employee\EmployeeResource;
 use App\Models\Employee;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -382,9 +383,7 @@ class EmployeeController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'employee' => $employee
-                ],
+                new EmployeeResource($employee),
                 $this->getMessage('Success'),
                 200
             );
@@ -556,9 +555,7 @@ class EmployeeController extends Controller
             $employee->save();
 
             return $this->successResponse(
-                [
-                    'employee' => $employee
-                ],
+                new EmployeeResource($employee),
                 $this->getMessage('Success'),
                 201
             );
@@ -733,9 +730,7 @@ class EmployeeController extends Controller
             $employee->save();
 
             return $this->successResponse(
-                [
-                    'employee' => $employee
-                ],
+                new EmployeeResource($employee),
                 $this->getMessage('Success'),
                 200
             );
@@ -836,9 +831,7 @@ class EmployeeController extends Controller
             $employee->delete();
 
             return $this->successResponse(
-                [
-                    'employee' => $employee
-                ],
+                new EmployeeResource($employee),
                 $this->getMessage('Success'),
                 200
             );
@@ -939,9 +932,7 @@ class EmployeeController extends Controller
             $employee->restore();
 
             return $this->successResponse(
-                [
-                    'employee' => $employee
-                ],
+                new EmployeeResource($employee),
                 $this->getMessage('Success'),
                 200
             );

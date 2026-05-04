@@ -16,10 +16,10 @@ class YokeTypeCollection extends ResourceCollection
                     'item_id' => $yoke_type->item_id,
                     'name' => $yoke_type->name,
                     'description' => $yoke_type->description,
+                    'settings' => $yoke_type->settings,
                     'created_at' => $this->formatDate($yoke_type->created_at),
                     'updated_at' => $this->formatDate($yoke_type->updated_at),
                     'deleted_at' => $this->formatDate($yoke_type->deleted_at),
-                    'settings' => $yoke_type->settings,
                     'item' => $yoke_type->item,
                 ];
             }),
