@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
@@ -13,7 +14,7 @@ class Collection extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
 
-    public const ITEM_ID = 26;
+    public const ITEM_ID = 30;
 
     protected $table = 'subitems';
 
@@ -55,6 +56,11 @@ class Collection extends Model implements Auditable
     public function item(): BelongsTo
     {
         return $this->belongsTo(Item::class);
+    }
+
+    public function technical_sheets(): HasMany
+    {
+        return $this->hasMany(TechnicalSheet::class);
     }
 
     public function scopeSearch(Builder $query, ?string $search = null): Builder

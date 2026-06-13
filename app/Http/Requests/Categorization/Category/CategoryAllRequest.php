@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Categorization\Category;
 
+use App\Models\Subcategory;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -30,7 +31,8 @@ class CategoryAllRequest extends FormRequest
             'search' => ['nullable', 'string'],
             'column' => ['nullable', 'string', 'in:id,name,description,created_at,updated_at,deleted_at'],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
-            'with_trashed' => ['required', 'boolean']
+            'with_trashed' => ['required', 'boolean'],
+            'subcategory_id' => ['nullable', 'numeric', 'exists:subitems,id,item_id,' . Subcategory::ITEM_ID],
         ];
     }
 
@@ -53,7 +55,8 @@ class CategoryAllRequest extends FormRequest
             'search' => 'Filtro de Busqueda.',
             'column' => 'Columna a ordenar.',
             'dir' => 'Sentido del orden.',
-            'with_trashed' => 'Registros inactivos'
+            'with_trashed' => 'Registros inactivos',
+            'subcategory_id' => 'Identificador de la Subcategoria'
         ];
     }
 

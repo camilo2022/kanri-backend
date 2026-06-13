@@ -14,7 +14,7 @@ class Process extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
 
-    public const ITEM_ID = 23;
+    public const ITEM_ID = 24;
 
     protected $table = 'subitems';
 
@@ -69,11 +69,6 @@ class Process extends Model implements Auditable
     }
 
     public function subprocesses(): MorphToMany
-    {
-        return $this->morphedByMany(Subprocess::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
-    }
-
-    public function locations(): MorphToMany
     {
         return $this->morphedByMany(Subprocess::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
     }

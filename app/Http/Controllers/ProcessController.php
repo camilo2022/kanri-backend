@@ -150,6 +150,9 @@ class ProcessController extends Controller
                 ->when($request->boolean('with_trashed'), function ($query) {
                     return $query->withTrashed();
                 })
+                ->when($request->boolean('in_technical_sheet'), function ($query) {
+                    return $query->where('settings->in_technical_sheet', true);
+                })
                 ->when($request->filled('Process_id'), function ($query) use ($request) {
                     return $query->where('id', '<>', $request->integer('Process_id'));
                 })

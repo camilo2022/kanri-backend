@@ -13,7 +13,7 @@ class WashTone extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
 
-    public const ITEM_ID = 28;
+    public const ITEM_ID = 23;
 
     protected $table = 'subitems';
 

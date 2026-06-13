@@ -16,7 +16,7 @@ class ModulesAndSubmodulesSeeder extends Seeder
             [
                 'module' => [
                     'name' => 'Configuración',
-                    'icon' => 'FaUsersCog',
+                    'icon' => 'FaCogs',
                 ],
 
                 'submodules' => [
@@ -61,7 +61,7 @@ class ModulesAndSubmodulesSeeder extends Seeder
             [
                 'module' => [
                     'name' => 'Administración',
-                    'icon' => 'FaUserShield',
+                    'icon' => 'FaToolbox',
                 ],
 
                 'submodules' => [
@@ -113,7 +113,7 @@ class ModulesAndSubmodulesSeeder extends Seeder
             [
                 'module' => [
                     'name' => 'Caracterizacion',
-                    'icon' => 'FaUserTag',
+                    'icon' => 'FaTag',
                 ],
 
                 'submodules' => [
@@ -122,12 +122,6 @@ class ModulesAndSubmodulesSeeder extends Seeder
                         'url' => '/trademarks',
                         'icon' => 'FaTags',
                         'permission_id' => 91
-                    ],
-                    [
-                        'name' => 'Siluetas',
-                        'url' => '/silhouettes',
-                        'icon' => 'FaTshirt',
-                        'permission_id' => 98
                     ],
                     [
                         'name' => 'Tallas',
@@ -148,8 +142,8 @@ class ModulesAndSubmodulesSeeder extends Seeder
                         'permission_id' => 163
                     ],
                     [
-                        'name' => 'Líneas',
-                        'url' => '/clothing_lines',
+                        'name' => 'Piezas',
+                        'url' => '/pieces',
                         'icon' => 'FaStream',
                         'permission_id' => 112
                     ],
@@ -184,12 +178,6 @@ class ModulesAndSubmodulesSeeder extends Seeder
                         'permission_id' => 147
                     ],
                     [
-                        'name' => 'Subcategorías',
-                        'url' => '/subcategories',
-                        'icon' => 'FaAlignLeft',
-                        'permission_id' => 154
-                    ],
-                    [
                         'name' => 'Procesos',
                         'url' => '/processes',
                         'icon' => 'FaAlignLeft',
@@ -220,10 +208,31 @@ class ModulesAndSubmodulesSeeder extends Seeder
                         'permission_id' => 209
                     ],
                     [
-                        'name' => 'Ubicaciones',
-                        'url' => '/locations',
-                        'icon' => 'FaShapes',
+                        'name' => 'Proveedores',
+                        'url' => '/suppliers',
+                        'icon' => 'FaCampground',
                         'permission_id' => 215
+                    ],
+                    [
+                        'name' => 'Tipos de Insumo',
+                        'url' => '/supply_types',
+                        'icon' => 'FaToolbox',
+                        'permission_id' => 219
+                    ],
+                ]
+            ],
+            [
+                'module' => [
+                    'name' => 'Gestión',
+                    'icon' => 'FaCogs',
+                ],
+
+                'submodules' => [
+                    [
+                        'name' => 'G. de Colecciones',
+                        'url' => '/management/collections',
+                        'icon' => 'FaFolder',
+                        'permission_id' => 19
                     ],
                 ]
             ],

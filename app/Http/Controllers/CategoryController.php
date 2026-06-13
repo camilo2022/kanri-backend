@@ -149,6 +149,9 @@ class CategoryController extends Controller
     {
         try {
             $categories = Category::with(['item', 'subcategories'])
+                ->when($request->filled('subcategory_id'), function ($query) use ($request) {
+                    return $query->whereHas('subcategories', fn($r) => $r->where('id', $request->subcategory_id));
+                })
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })

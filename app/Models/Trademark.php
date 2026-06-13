@@ -6,16 +6,16 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
-use OwenIt\Auditing\Models\Audit;
 
 class Trademark extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
 
-    public const ITEM_ID = 13;
+    public const ITEM_ID = 15;
 
     protected $table = 'subitems';
 
@@ -59,9 +59,28 @@ class Trademark extends Model implements Auditable
         return $this->belongsTo(Item::class);
     }
 
-    public function category(): MorphToMany
+    public function group(): MorphToMany
     {
-        return $this->morphToMany(Category::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
+        return $this->morphToMany(Group::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
+    }
+
+    public function sizes(): MorphToMany
+    {
+        return $this->morphedByMany(Size::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
+    }
+
+    public function logo()
+    {
+        return $this->morphOne(File::class, 'model')
+            ->where('file_type_id', 2)
+            ->where('file_subtype_id', 9);
+    }
+
+    public function cover(): MorphOne
+    {
+        return $this->morphOne(File::class, 'model')
+            ->where('file_type_id', 2)
+            ->where('file_subtype_id', 10);
     }
 
     public function scopeSearch(Builder $query, ?string $search = null): Builder

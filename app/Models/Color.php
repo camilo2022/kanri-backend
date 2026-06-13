@@ -13,7 +13,7 @@ class Color extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
 
-    public const ITEM_ID = 27;
+    public const ITEM_ID = 22;
 
     protected $table = 'subitems';
 

@@ -32,6 +32,7 @@ class ProcessStoreRequest extends FormRequest
             'after_processes.*' => ['nullable', 'numeric', 'exists:subitems,id,item_id,' . Process::ITEM_ID],
             'settings' => ['required', 'array'],
             'settings.subprocesses' => ['required', 'boolean'],
+            'settings.in_technical_sheet' => ['required', 'boolean'],
         ];
     }
 
@@ -57,7 +58,8 @@ class ProcessStoreRequest extends FormRequest
             'description' => 'Descripción',
             'after_processes' => 'Procesos Posteriores',
             'settings' => 'Configuraciones',
-            'settings.subprocesses' => 'Subprocesos'
+            'settings.subprocesses' => 'Subprocesos',
+            'settings.in_technical_sheet' => 'Aplica a Ficha Técnica'
         ];
     }
 }

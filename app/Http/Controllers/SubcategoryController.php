@@ -150,10 +150,11 @@ class SubcategoryController extends Controller
      *     )
      * )
      */
-    public function all(SubcategoryAllRequest $request)
+    public function all(SubcategoryAllRequest $request, $category_id)
     {
         try {
-            $subcategories = Subcategory::with(['categories'])
+            $subcategories = Subcategory::with(['category'])
+                ->whereHas('category', fn($r) => $r->where('id', $category_id))
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -251,7 +252,7 @@ class SubcategoryController extends Controller
     public function find(SubcategoryFindRequest $request, $id)
     {
         try {
-            $subcategory = Subcategory::with(['categories'])
+            $subcategory = Subcategory::with(['category'])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -361,7 +362,7 @@ class SubcategoryController extends Controller
             $subcategory->description = $request->input('description');
             $subcategory->save();
 
-            $subcategory->load(['item', 'categories']);
+            $subcategory->category()->sync([$request->integer('category_id')]);
 
             return $this->successResponse(
                 new SubcategoryResource($subcategory),
@@ -486,7 +487,7 @@ class SubcategoryController extends Controller
             $subcategory->description = $request->input('description');
             $subcategory->save();
 
-            $subcategory->load(['item', 'categories']);
+            $subcategory->load(['item', 'category']);
 
             return $this->successResponse(
                 new SubcategoryResource($subcategory),
@@ -584,7 +585,7 @@ class SubcategoryController extends Controller
             $subcategory = Subcategory::findOrFail($id);
             $subcategory->delete();
 
-            $subcategory->load(['item', 'categories']);
+            $subcategory->load(['item', 'category']);
 
             return $this->successResponse(
                 new SubcategoryResource($subcategory),
@@ -682,7 +683,7 @@ class SubcategoryController extends Controller
             $subcategory = Subcategory::withTrashed()->findOrFail($id);
             $subcategory->restore();
 
-            $subcategory->load(['item', 'categories']);
+            $subcategory->load(['item', 'category']);
 
             return $this->successResponse(
                 new SubcategoryResource($subcategory),

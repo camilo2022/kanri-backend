@@ -15,7 +15,7 @@ class Category extends Model implements Auditable
 {
     use Auditing, HasRoles, SoftDeletes;
 
-    public const ITEM_ID = 12;
+    public const ITEM_ID = 11;
 
     protected $table = 'subitems';
 
@@ -57,11 +57,6 @@ class Category extends Model implements Auditable
     public function item(): BelongsTo
     {
         return $this->belongsTo(Item::class);
-    }
-
-    public function trademarks(): MorphToMany
-    {
-        return $this->morphedByMany(Trademark::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
     }
 
     public function subcategories(): MorphToMany

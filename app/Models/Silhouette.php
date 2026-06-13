@@ -14,7 +14,7 @@ class Silhouette extends Model implements Auditable
 {
     use Auditing, HasRoles, SoftDeletes;
 
-    public const ITEM_ID = 11;
+    public const ITEM_ID = 32;
 
     protected $table = 'subitems';
 

@@ -15,12 +15,15 @@ class TrademarkResource extends JsonResource
                 'item_id' => $this->item_id,
                 'name' => $this->name,
                 'description' => $this->description,
+                'logo' => $this->logo,
+                'cover' => $this->cover,
                 'settings' => $this->settings,
                 'created_at' => $this->formatDate($this->created_at),
                 'updated_at' => $this->formatDate($this->updated_at),
                 'deleted_at' => $this->formatDate($this->deleted_at),
                 'item' => $this->item,
-                'category' => $this->category,
+                'group' => $this->group,
+                'sizes' => $this->sizes,
             ]
         ];
     }

@@ -30,7 +30,8 @@ class SizeAllRequest extends FormRequest
             'search' => ['nullable', 'string'],
             'column' => ['nullable', 'string', 'in:id,name,description,created_at,updated_at,deleted_at'],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
-            'with_trashed' => ['required', 'boolean']
+            'with_trashed' => ['required', 'boolean'],
+            'is_finished_product' => ['nullable', 'boolean']
         ];
     }
 
@@ -53,12 +54,16 @@ class SizeAllRequest extends FormRequest
             'search' => 'Filtro de Busqueda.',
             'column' => 'Columna a ordenar.',
             'dir' => 'Sentido del orden.',
-            'with_trashed' => 'Registros inactivos'
+            'with_trashed' => 'Registros inactivos',
+            'is_finished_product' => 'Aplica a Producto Terminado'
         ];
     }
 
     protected function prepareForValidation()
     {
         $this->merge(['with_trashed' => $this->boolean('with_trashed')]);
+        if ($this->has('is_finished_product')) {
+            $this->merge(['is_finished_product' => $this->boolean('is_finished_product')]);
+        }
     }
 }

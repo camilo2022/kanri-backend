@@ -14,7 +14,7 @@ class WaistbandType extends Model implements Auditable
 {
     use Auditing, HasRoles, SoftDeletes;
 
-    public const ITEM_ID = 22;
+    public const ITEM_ID = 21;
 
     protected $table = 'subitems';
 

@@ -350,6 +350,7 @@ class CollectionController extends Controller
             $collection = new Collection();
             $collection->name = $request->input('name');
             $collection->description = $request->input('description');
+            $collection->settings = $request->input('settings');
 
             $collection->save();
 

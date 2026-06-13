@@ -19,7 +19,7 @@ class SubcategoryCollection extends ResourceCollection
                     'created_at' => $this->formatDate($subcategory->created_at),
                     'updated_at' => $this->formatDate($subcategory->updated_at),
                     'deleted_at' => $this->formatDate($subcategory->deleted_at),
-                    'categories' => $subcategory->categories,
+                    'category' => $subcategory->category,
                 ];
             }),
             'meta' => [

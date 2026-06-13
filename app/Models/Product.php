@@ -5,33 +5,28 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
 
 class Product extends Model implements Auditable
 {
-    use Auditing;
+    use Auditing, SoftDeletes;
 
     protected $table = 'products';
 
     protected $fillable = [
-        'referencia',
-        'category_id',
+        'code',
         'subcategory_id',
         'trademark_id',
     ];
 
     protected $auditInclude = [
-        'referencia',
-        'category_id',
+        'code',
         'subcategory_id',
         'trademark_id',
     ];
-
-    public function category(): BelongsTo
-    {
-        return $this->belongsTo(Category::class);
-    }
 
     public function subcategory(): BelongsTo
     {
@@ -43,14 +38,9 @@ class Product extends Model implements Auditable
         return $this->belongsTo(Trademark::class);
     }
 
-    public function front_photo()
+    public function technical_sheet(): HasOne
     {
-        return $this->morphOne(File::class, 'model');
-    }
-
-    public function back_photo()
-    {
-        return $this->morphOne(File::class, 'model');
+        return $this->hasOne(TechnicalSheet::class);
     }
 
     public function scopeSearch(Builder $query, ?string $search = null): Builder
@@ -63,9 +53,12 @@ class Product extends Model implements Auditable
         return $query->where(function (Builder $q) use ($terms) {
             foreach ($terms as $term) {
                 $q->orWhere(function (Builder $sq) use ($term) {
-                    $sq->orWhere('name', 'LIKE', '%' . $term . '%')
-                        ->orWhere('title', 'LIKE', '%' . $term . '%')
-                        ->orWhere('description', 'LIKE', '%' . $term . '%');
+                    $sq->where('code', 'LIKE', "%{$term}%")
+                        ->orWhereHas('trademark', function (Builder $trademarkQuery) use ($term) {
+                            $trademarkQuery->where('name', 'LIKE', "%{$term}%");
+                        })->orWhereHas('subcategory', function (Builder $subcategoryQuery) use ($term) {
+                            $subcategoryQuery->where('name', 'LIKE', "%{$term}%");
+                        });
                 });
             }
         });

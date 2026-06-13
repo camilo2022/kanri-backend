@@ -148,6 +148,9 @@ class SizeController extends Controller
                 ->when($request->boolean('with_trashed'), function ($query) {
                     return $query->withTrashed();
                 })
+                ->when($request->boolean('is_finished_product'), function ($query) {
+                    return $query->where('settings->finished_product', true);
+                })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
                     return $query->orderBy($request->input('column'), $request->input('dir'));
                 });
@@ -347,6 +350,7 @@ class SizeController extends Controller
             $size = new Size();
             $size->name = $request->input('name');
             $size->description = $request->input('description');
+            $size->settings = $request->input('settings');
             $size->save();
 
             return $this->successResponse(
@@ -464,6 +468,7 @@ class SizeController extends Controller
             $size = Size::findOrFail($id);
             $size->name = $request->input('name');
             $size->description = $request->input('description');
+            $size->settings = $request->input('settings');
             $size->save();
 
             return $this->successResponse(

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Trademark;
 
 use App\Models\Category;
+use App\Models\Group;
 use App\Models\Trademark;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -27,9 +28,13 @@ class TrademarkStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'category_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Category::ITEM_ID],
+            'group_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Group::ITEM_ID],
             'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Trademark::ITEM_ID],
-            'description' => ['required', 'uppercase', 'string', 'max:255']
+            'description' => ['required', 'uppercase', 'string', 'max:255'],
+            'logo' => ['required', 'array'],
+            'logo.file' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'cover' => ['nullable', 'array'],
+            'cover.file' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048']
         ];
     }
 
@@ -43,16 +48,21 @@ class TrademarkStoreRequest extends FormRequest
             'max' => 'Se permite máximo :max caracteres.',
             'min' => 'Se permite mínimo :min caracteres.',
             'unique' => 'Ya está registrado.',
-            'uppercase' => 'El campo debe estar en mayúsculas.'
+            'uppercase' => 'El campo debe estar en mayúsculas.',
+            'image' => 'Debe ser una imagen.',
+            'mimes' => 'Extensión inválida. Permitidas :values.',
+            'photo.max' => 'Se permite máximo :max KB.'
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'category_id' => 'Identificador de Categoría',
+            'group_id' => 'Identificador de Categoría',
             'name' => 'Nombre',
-            'description' => 'Descripción'
+            'description' => 'Descripción',
+            'logo' => 'Logo de la Marca',
+            'cover' => 'Imagen de portada para el catálogo'
         ];
     }
 }

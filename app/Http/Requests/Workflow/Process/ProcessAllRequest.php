@@ -33,6 +33,7 @@ class ProcessAllRequest extends FormRequest
             'dir' => ['nullable', 'string', 'in:asc,desc'],
             'with_trashed' => ['required', 'boolean'],
             'process_id' => ['nullable', 'numeric', 'exists:subitems,id,item_id,' . Process::ITEM_ID],
+            'in_technical_sheet' => ['nullable', 'boolean']
         ];
     }
 
@@ -43,7 +44,8 @@ class ProcessAllRequest extends FormRequest
             'string' => 'Debe ser una cadena de texto.',
             'numeric' => 'Debe ser un valor numérico.',
             'in' => 'Valor inválido. Permitidos: :values.',
-            'boolean' => 'Deber ser verdadero o falso.'
+            'boolean' => 'Deber ser verdadero o falso.',
+            'in_technical_sheet' => 'Aplica a Ficha Técnica'
         ];
     }
 
@@ -57,11 +59,15 @@ class ProcessAllRequest extends FormRequest
             'dir' => 'Sentido del orden.',
             'with_trashed' => 'Registros inactivos',
             'process_id' => 'Identificador del proceso.',
+            'in_technical_sheet' => 'Aplica a Ficha Técnica'
         ];
     }
 
     protected function prepareForValidation()
     {
         $this->merge(['with_trashed' => $this->boolean('with_trashed')]);
+        if ($this->has('in_technical_sheet')) {
+            $this->merge(['in_technical_sheet' => $this->boolean('in_technical_sheet')]);
+        }
     }
 }

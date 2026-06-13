@@ -28,7 +28,7 @@ class CategorySubcategoryAssignRequest extends FormRequest
     {
         return [
             'id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Category::ITEM_ID],
-            'subcategory_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Subcategory::ITEM_ID, 'unique:model_has_subitems,subitem_id,NULL,NULL,model_type,' . Category::class . ',model_id,' . $this->route('id')]
+            'subcategory_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Subcategory::ITEM_ID, 'unique:model_has_subitems,subitem_id,NULL,NULL,model_type,' . Subcategory::class . ',subitem_id,' . $this->route('id')]
         ];
     }
 

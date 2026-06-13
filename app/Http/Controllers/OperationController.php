@@ -6,6 +6,7 @@ use App\Http\Requests\Workflow\Operation\OperationAllRequest;
 use App\Http\Requests\Workflow\Operation\OperationDeleteRequest;
 use App\Http\Requests\Workflow\Operation\OperationFindRequest;
 use App\Http\Requests\Workflow\Operation\OperationRestoreRequest;
+use App\Http\Requests\Workflow\Operation\OperationSettingRequest;
 use App\Http\Requests\Workflow\Operation\OperationStoreRequest;
 use App\Http\Requests\Workflow\Operation\OperationUpdateRequest;
 use App\Http\Resources\Workflow\Operation\OperationCollection;
@@ -664,6 +665,30 @@ class OperationController extends Controller
         try {
             $operation = Operation::withTrashed()->findOrFail($id);
             $operation->restore();
+
+            return $this->successResponse(
+                new OperationResource($operation),
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    public function setting(OperationSettingRequest $request, $id)
+    {
+        try {
+            $operation = Operation::findOrFail($id);
+            $operation->settings = $request->input('settings');
+
+            $operation->save();
 
             return $this->successResponse(
                 new OperationResource($operation),

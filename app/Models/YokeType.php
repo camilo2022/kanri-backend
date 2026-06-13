@@ -13,7 +13,7 @@ class YokeType extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
 
-    public const ITEM_ID = 32;
+    public const ITEM_ID = 19;
 
     protected $table = 'subitems';
 

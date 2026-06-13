@@ -27,13 +27,21 @@ class ProcessSettingRequest extends FormRequest
     {
         return [
             'settings' => ['required', 'array'],
-            'settings.structure' => ['required'],
-            'settings.structure.entity' => ['required', 'string', 'uppercase', 'distinct'],
-            'settings.structure.schema.*' => ['required', 'array'],
-            'settings.structure.schema.*.field' => ['required', 'string', 'regex:/^[a-z]+(_[a-z]+)*$/'],
-            'settings.structure.schema.*.label' => ['required', 'string', 'uppercase'],
-            'settings.structure.schema.*.type' => ['required', 'string', 'max:255'],
-            'settings.structure.schema.*.rules' => ['required', 'array'],
+            'settings.schema' => ['required'],
+            'settings.schema.dinamic' => ['sometimes', 'array'],
+            'settings.schema.dinamic.header' => ['required_with:settings.schema.dinamic', 'string', 'uppercase'],
+            'settings.schema.dinamic.body' => ['required_with:settings.schema.dinamic', 'array'],
+            'settings.schema.dinamic.body.*.field' => ['required', 'string', 'regex:/^[a-z]+(_[a-z]+)*$/'],
+            'settings.schema.dinamic.body.*.label' => ['required', 'string', 'uppercase'],
+            'settings.schema.dinamic.body.*.type' => ['required', 'string'],
+            'settings.schema.dinamic.body.*.rules' => ['array'],
+            'settings.schema.static' => ['sometimes', 'array'],
+            'settings.schema.static.header' => ['required_with:settings.schema.static'],
+            'settings.schema.static.header.label' => ['required_with:settings.schema.static', 'string', 'uppercase'],
+            'settings.schema.static.header.colspan' => ['required_with:settings.schema.static', 'numeric'],
+            'settings.schema.static.header.rowspan' => ['required_with:settings.schema.static', 'numeric'],
+            'settings.schema.static.body' => ['present_with:settings.schema.static', 'array'],
+            'settings.schema.static.body.*.*.cell' => ['sometimes', 'required', 'in:th,td'],
         ];
     }
 
@@ -41,6 +49,7 @@ class ProcessSettingRequest extends FormRequest
     {
         return [
             'required' => 'Es requerido.',
+            'required_with' => 'Es requerido.',
             'string' => 'Debe ser una cadena de caracteres.',
             'distinct'  => 'Ya ha sido tomado en otra validación.',
             'unique' => 'Ya ha sido tomado.',
@@ -50,7 +59,7 @@ class ProcessSettingRequest extends FormRequest
             'min' => 'Debe tener minimo :min elementos.',
             'uppercase' => 'El campo debe estar en mayúsculas.',
             'lowercase' => 'El campo debe estar en mayúsculas.',
-            'settings.structure.schema.*.field.regex' => 'Formato inválido. Solo letras minúsculas y guiones bajos (_).',
+            'regex' => 'Formato inválido. Solo letras minúsculas y guiones bajos (_).',
         ];
     }
 
@@ -58,29 +67,78 @@ class ProcessSettingRequest extends FormRequest
     {
         $attributes = [];
 
-        foreach ($this->input('settings.structure.schema', []) as $i => $v) {
-            $n = $i + 1;
-            $base = "settings.structure.schema.$i";
+        $schema = $this->input('settings.schema', []);
 
-            $attributes["$base.id"] = "Id (validación n° $n)";
-            $attributes["$base.field"] = "Nombre del campo (validación n° $n)";
-            $attributes["$base.label"] = "Nombre visible del campo (validación n° $n)";
-            $attributes["$base.type"] = "Tipo de campo (validación n° $n)";
-            $attributes["$base.required"] = "El campo es requerido (validación n° $n)";
+        if (!empty($schema['dinamic']['body'])) {
 
-            $attributes["$base.rules"] = "Reglas del campo (validación n° $n)";
+            foreach ($schema['dinamic']['body'] as $i => $field) {
 
-            if (!empty($v['rules'])) {
-                foreach ($v['rules'] as $rIndex => $rule) {
-                    $attributes["$base.rules.$rIndex"] = "Regla #" . ($rIndex + 1) . " (validación n° $n)";
+                $n = $i + 1;
+
+                $base = "settings.schema.dinamic.body.$i";
+
+                $attributes["$base.id"] = "Id (dinamic n° $n)";
+                $attributes["$base.field"] = "Nombre del campo (dinamic n° $n)";
+                $attributes["$base.label"] = "Nombre visible del campo (dinamic n° $n)";
+                $attributes["$base.type"] = "Tipo de campo (dinamic n° $n)";
+                $attributes["$base.rules"] = "Reglas del campo (dinamic n° $n)";
+
+                if (!empty($field['rules'])) {
+
+                    foreach ($field['rules'] as $rIndex => $rule) {
+
+                        $attributes["$base.rules.$rIndex"] =
+                            "Regla #" . ($rIndex + 1) . " (dinamic n° $n)";
+                    }
+                }
+            }
+        }
+
+        if (!empty($schema['static']['body'])) {
+
+            foreach ($schema['static']['body'] as $rowIndex => $row) {
+
+                foreach ($row as $colIndex => $cell) {
+
+                    // Ignorar null
+                    if (is_null($cell)) {
+                        continue;
+                    }
+
+                    $rowNumber = $rowIndex + 1;
+                    $colNumber = $colIndex + 1;
+
+                    $base = "settings.schema.static.body.$rowIndex.$colIndex";
+
+                    $position = "fila $rowNumber columna $colNumber";
+
+                    $attributes["$base.id"] = "Id ($position)";
+                    $attributes["$base.cell"] = "Tipo de celda ($position)";
+                    $attributes["$base.field"] = "Nombre del campo ($position)";
+                    $attributes["$base.label"] = "Nombre visible ($position)";
+                    $attributes["$base.type"] = "Tipo de campo ($position)";
+                    $attributes["$base.rules"] = "Reglas ($position)";
+                    $attributes["$base.colspan"] = "Columnas ocupadas ($position)";
+                    $attributes["$base.rowspan"] = "Filas ocupadas ($position)";
+
+                    if (!empty($cell['rules'])) {
+
+                        foreach ($cell['rules'] as $rIndex => $rule) {
+
+                            $attributes["$base.rules.$rIndex"] =
+                                "Regla #" . ($rIndex + 1) . " ($position)";
+                        }
+                    }
                 }
             }
         }
 
         return [
             'settings' => 'Configuración',
-            'settings.structure' => 'Estructura de la tabla',
-            'settings.structure.entity' => 'Nombre de la tabla',
+            'settings.schema' => 'Esquema',
+            'settings.schema.dinamic' => 'Estructura dinámica',
+            'settings.schema.static' => 'Estructura estática',
+
             ...$attributes,
         ];
     }
@@ -88,229 +146,596 @@ class ProcessSettingRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            $seenFields = [];
-            $seenLabels = [];
 
-            foreach ($this->input('settings.structure.schema', []) as $i => $s) {
+            $schema = $this->input('settings.schema', []);
 
-                if (isset($s['field'])) {
-                    $field = (string) $s['field'];
+            foreach ($schema as $type => $config) {
 
-                    if (isset($seenFields[$field])) {
-                        $first = $seenFields[$field] + 1;
-                        $validator->errors()->add(
-                            "settings.structure.schema.$i.field",
-                            "El nombre del campo ya ha sido tomado en la validación n° {$first}."
-                        );
-                    } else {
-                        $seenFields[$field] = $i;
-                    }
-                }
+                if ($type === 'dinamic') {
 
-                if (isset($s['label'])) {
-                    $label = (string) $s['label'];
+                    $seenFields = [];
+                    $seenLabels = [];
 
-                    if (isset($seenLabels[$label])) {
-                        $first = $seenLabels[$label] + 1;
-                        $validator->errors()->add(
-                            "settings.structure.schema.$i.label",
-                            "El nombre visible del campo ya ha sido tomado en la validación n° {$first}."
-                        );
-                    } else {
-                        $seenLabels[$label] = $i;
-                    }
-                }
+                    foreach ($config['body'] ?? [] as $i => $s) {
 
-                $rules = $s['rules'] ?? [];
-                $type = $s['type'] ?? null;
+                        $basePath = "settings.schema.dinamic.body.$i";
 
-                if ($type === 'text' || $type === 'textarea' || $type === 'number') {
+                        if (isset($s['field'])) {
+                            $field = (string) $s['field'];
 
-                    $array = [];
-
-                    foreach ($rules as $rule) {
-                        if (str_starts_with($rule, 'required')) {
-                            $array['required'] = true;
-                        }
-
-                        if (str_starts_with($rule, 'min:')) {
-                            $array['min'] = str_replace('min:', '', $rule);
-                        }
-
-                        if (str_starts_with($rule, 'max:')) {
-                            $array['max'] = str_replace('max:', '', $rule);
-                        }
-
-                        if (str_starts_with($rule, 'regex:')) {
-                            $array['regex'] = str_replace('regex:', '', $rule);
-                        }
-                    }
-
-                    if (array_key_exists('min', $array)) {
-                        if (!is_numeric($array['min'])) {
-                            $validator->errors()->add(
-                                "settings.structure.schema.$i.rules.min",
-                                "Debe de ser un valor numerico."
-                            );
-                        }
-
-                        if (is_numeric($array['min']) && $array['min'] <= 0) {
-                            $validator->errors()->add(
-                                "settings.structure.schema.$i.rules.min",
-                                "El valor no puede ser negativo o igual a 0"
-                            );
-                        }
-                    } else {
-                        $validator->errors()->add(
-                            "settings.structure.schema.$i.rules.min",
-                            'Valor requerido.'
-                        );
-                    }
-
-                    if (array_key_exists('max', $array)) {
-                        if (!is_numeric($array['max'])) {
-                            $validator->errors()->add(
-                                "settings.structure.schema.$i.rules.max",
-                                "Debe de ser un valor numerico."
-                            );
-                        }
-
-                        if (is_numeric($array['max']) && $array['max'] < 0) {
-                            $validator->errors()->add(
-                                "settings.structure.schema.$i.rules.max",
-                                "El valor no puede ser negativo."
-                            );
-                        }
-                    } else {
-                        $validator->errors()->add(
-                            "settings.structure.schema.$i.rules.max",
-                            'Valor requerido.'
-                        );
-                    }
-
-                    if (array_key_exists('min', $array) && array_key_exists('max', $array)) {
-                        if (is_numeric($array['max']) && is_numeric($array['min'])) {
-                            if ($array['min'] >= $array['max']) {
+                            if (isset($seenFields[$field])) {
+                                $first = $seenFields[$field] + 1;
                                 $validator->errors()->add(
-                                    "settings.structure.schema.$i.rules.min",
-                                    "El mínimo no puede ser mayor o igual al maximo."
+                                    "$basePath.field",
+                                    "El nombre del campo ya ha sido tomado."
+                                );
+                            } else {
+                                $seenFields[$field] = $i;
+                            }
+                        }
+
+                        if (isset($s['label'])) {
+                            $label = (string) $s['label'];
+
+                            if (isset($seenLabels[$label])) {
+                                $first = $seenLabels[$label] + 1;
+                                $validator->errors()->add(
+                                    "$basePath.label",
+                                    "El nombre visible del campo ya ha sido tomado."
+                                );
+                            } else {
+                                $seenLabels[$label] = $i;
+                            }
+                        }
+
+                        $rules = $s['rules'] ?? [];
+                        $type = $s['type'] ?? null;
+
+                        if (in_array($type, ['text', 'textarea', 'number'])) {
+
+                            $array = [];
+
+                            foreach ($rules as $rule) {
+                                if (str_starts_with($rule, 'required')) {
+                                    $array['required'] = true;
+                                }
+
+                                if (str_starts_with($rule, 'min:')) {
+                                    $array['min'] = str_replace('min:', '', $rule);
+                                }
+
+                                if (str_starts_with($rule, 'max:')) {
+                                    $array['max'] = str_replace('max:', '', $rule);
+                                }
+
+                                if (str_starts_with($rule, 'regex:')) {
+                                    $array['regex'] = str_replace('regex:', '', $rule);
+                                }
+                            }
+
+                            if (array_key_exists('min', $array)) {
+                                if (!is_numeric($array['min'])) {
+                                    $validator->errors()->add(
+                                        "$basePath.rules.min",
+                                        "Debe de ser un valor numerico."
+                                    );
+                                }
+
+                                if (is_numeric($array['min']) && $array['min'] <= 0) {
+                                    $validator->errors()->add(
+                                        "$basePath.rules.min",
+                                        "El valor no puede ser negativo o igual a 0"
+                                    );
+                                }
+                            } else {
+                                $validator->errors()->add(
+                                    "$basePath.rules.min",
+                                    'Valor requerido.'
                                 );
                             }
-                        }
-                    }
 
-                    if (array_key_exists('regex', $array)) {
-                        if (!is_string($array['regex']) || @preg_match($array['regex'], '') === false) {
-                            $validator->errors()->add(
-                                "settings.structure.schema.$i.rules.regex",
-                                'Debe ser una expresión regular válida.'
-                            );
+                            if (array_key_exists('max', $array)) {
+                                if (!is_numeric($array['max'])) {
+                                    $validator->errors()->add(
+                                        "$basePath.rules.max",
+                                        "Debe de ser un valor numerico."
+                                    );
+                                }
+
+                                if (is_numeric($array['max']) && $array['max'] < 0) {
+                                    $validator->errors()->add(
+                                        "$basePath.rules.max",
+                                        "El valor no puede ser negativo."
+                                    );
+                                }
+                            } else {
+                                $validator->errors()->add(
+                                    "$basePath.rules.max",
+                                    'Valor requerido.'
+                                );
+                            }
+
+                            if (array_key_exists('min', $array) && array_key_exists('max', $array)) {
+                                if (is_numeric($array['max']) && is_numeric($array['min'])) {
+                                    if ($array['min'] >= $array['max']) {
+                                        $validator->errors()->add(
+                                            "$basePath.rules.min",
+                                            "El mínimo no puede ser mayor o igual al maximo."
+                                        );
+                                    }
+                                }
+                            }
+
+                            if (array_key_exists('regex', $array)) {
+                                if (!is_string($array['regex']) || @preg_match($array['regex'], '') === false) {
+                                    $validator->errors()->add(
+                                        "$basePath.rules.regex",
+                                        'Debe ser una expresión regular válida.'
+                                    );
+                                }
+                            }
+                        }
+
+                        if (in_array($type, ['date', 'datetime'])) {
+
+                            $array = [];
+
+                            foreach ($rules as $rule) {
+                                if (str_starts_with($rule, 'required')) {
+                                    $array['required'] = true;
+                                }
+
+                                if (str_starts_with($rule, 'after:')) {
+                                    $array['after'] = str_replace('after:', '', $rule);
+                                }
+
+                                if (str_starts_with($rule, 'before:')) {
+                                    $array['before'] = str_replace('before:', '', $rule);
+                                }
+                            }
+
+                            if (array_key_exists('after', $array)) {
+                                if ($type === 'date') {
+                                    $fecha = Carbon::createFromFormat('Y-m-d', $array['after']);
+
+                                    if (!empty($array['after'])) {
+                                        if (!$fecha || $fecha->format('Y-m-d') !== $array['after']) {
+                                            $validator->errors()->add(
+                                                "$basePath.rules.after",
+                                                "Debe de ser una fecha válida."
+                                            );
+                                        }
+                                    }
+                                }
+
+                                if ($type === 'datetime') {
+                                    $fecha = Carbon::createFromFormat('Y-m-d H:i', $array['after']);
+
+                                    if (!empty($array['after'])) {
+                                        if (!$fecha || $fecha->format('Y-m-d H:i') !== $array['after']) {
+                                            $validator->errors()->add(
+                                                "$basePath.rules.after",
+                                                "Debe de ser una fecha válida."
+                                            );
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (array_key_exists('before', $array)) {
+                                if ($type === 'date') {
+                                    $fecha = Carbon::createFromFormat('Y-m-d', $array['before']);
+
+                                    if (!empty($array['before'])) {
+                                        if (!$fecha || $fecha->format('Y-m-d') !== $array['before']) {
+                                            $validator->errors()->add(
+                                                "$basePath.rules.before",
+                                                "Debe de ser una fecha válida."
+                                            );
+                                        }
+                                    }
+                                }
+
+                                if ($type === 'datetime') {
+                                    $fecha = Carbon::createFromFormat('Y-m-d H:i', $array['before']);
+
+                                    if (!empty($array['before'])) {
+                                        if (!$fecha || $fecha->format('Y-m-d H:i') !== $array['before']) {
+                                            $validator->errors()->add(
+                                                "$basePath.rules.before",
+                                                "Debe de ser una fecha válida."
+                                            );
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (array_key_exists('after', $array) && array_key_exists('before', $array)) {
+                                if (!empty($array['before']) && !empty($array['after'])) {
+                                    if ($type === 'date') {
+                                        if (Carbon::createFromFormat('Y-m-d', $array['after'])->gte(Carbon::createFromFormat('Y-m-d', $array['before']))) {
+                                            $validator->errors()->add(
+                                                "$basePath.rules.after",
+                                                "La fecha de inicio no puede ser mayor o igual que la fecha de fin."
+                                            );
+                                        }
+                                    }
+                                    if ($type === 'datetime') {
+                                        if (Carbon::createFromFormat('Y-m-d H:i', $array['after'])->gte(Carbon::createFromFormat('Y-m-d H:i', $array['before']))) {
+                                            $validator->errors()->add(
+                                                "$basePath.rules.after",
+                                                "La fecha de inicio no puede ser mayor o igual que la fecha de fin."
+                                            );
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
 
+                if ($type === 'static') {
 
+                    $seenFields = [];
+                    $seenLabels = [];
 
-                if ($type === 'date' || $type === 'datetime') {
+                    foreach ($config['body'] ?? [] as $rowIndex => $row) {
 
-                    $array = [];
+                        foreach ($row as $colIndex => $s) {
 
-                    foreach ($rules as $rule) {
-                        if (str_starts_with($rule, 'required')) {
-                            $array['required'] = true;
-                        }
+                            if (is_null($s)) {
+                                continue;
+                            }
 
-                        if (str_starts_with($rule, 'after:')) {
-                            $array['after'] = str_replace('after:', '', $rule);
-                        }
+                            $basePath = "settings.schema.static.body";
 
-                        if (str_starts_with($rule, 'before:')) {
-                            $array['before'] = str_replace('before:', '', $rule);
-                        }
-                    }
+                            $cell = $s['cell'] ?? null;
 
-                    if (array_key_exists('after', $array)) {
-                        if ($type === 'date') {
-                            $fecha = Carbon::createFromFormat('Y-m-d', $array['after']);
+                            if (!in_array($cell, ['th', 'td'])) {
 
-                            if (!empty($array['after'])) {
-                                if (!$fecha || $fecha->format('Y-m-d') !== $array['after']) {
+                                $validator->errors()->add(
+                                    "$basePath.cell",
+                                    'Debe ser th o td.'
+                                );
+
+                                continue;
+                            }
+
+                            if ($cell === 'th') {
+
+                                foreach (['colspan', 'rowspan'] as $span) {
+
+                                    if (!isset($s[$span])) {
+
+                                        $validator->errors()->add(
+                                            "$basePath.th.$span",
+                                            'Valor requerido.'
+                                        );
+
+                                        continue;
+                                    }
+
+                                    if (!is_numeric($s[$span])) {
+
+                                        $validator->errors()->add(
+                                            "$basePath.th.$span",
+                                            'Debe ser numérico.'
+                                        );
+
+                                        continue;
+                                    }
+
+                                    if ((int) $s[$span] <= 0) {
+
+                                        $validator->errors()->add(
+                                            "$basePath.th.$span",
+                                            'Debe ser mayor a 0.'
+                                        );
+                                    }
+                                }
+
+                                if (empty($s['label'])) {
+
                                     $validator->errors()->add(
-                                        "settings.structure.schema.$i.rules.after",
-                                        "Debe de ser una fecha válida."
+                                        "$basePath.label",
+                                        'Valor requerido.'
                                     );
+                                } elseif (!is_string($s['label'])) {
+
+                                    $validator->errors()->add(
+                                        "$basePath.label",
+                                        'Debe ser texto.'
+                                    );
+                                } else {
+
+                                    $label = trim($s['label']);
+
+                                    if (isset($seenLabels[$label])) {
+
+                                        $validator->errors()->add(
+                                            "$basePath.label",
+                                            'Ya esta registrado.'
+                                        );
+                                    } else {
+
+                                        $seenLabels[$label] = true;
+                                    }
                                 }
                             }
-                        }
 
-                        if ($type === 'datetime') {
-                            $fecha = Carbon::createFromFormat('Y-m-d H:i', $array['after']);
+                            if ($cell === 'td') {
 
-                            if (!empty($array['after'])) {
-                                if (!$fecha || $fecha->format('Y-m-d H:i') !== $array['after']) {
+                                foreach (['colspan', 'rowspan'] as $span) {
+
+                                    if (!isset($s[$span])) {
+
+                                        $validator->errors()->add(
+                                            "$basePath.td.$span",
+                                            'Valor requerido.'
+                                        );
+
+                                        continue;
+                                    }
+
+                                    if (!is_numeric($s[$span])) {
+
+                                        $validator->errors()->add(
+                                            "$basePath.td.$span",
+                                            'Debe ser numérico.'
+                                        );
+
+                                        continue;
+                                    }
+
+                                    if ((int) $s[$span] <= 0) {
+
+                                        $validator->errors()->add(
+                                            "$basePath.td.$span",
+                                            'Debe ser mayor a 0.'
+                                        );
+                                    }
+                                }
+
+                                if (empty($s['field'])) {
                                     $validator->errors()->add(
-                                        "settings.structure.schema.$i.rules.after",
-                                        "Debe de ser una fecha válida."
+                                        "$basePath.field",
+                                        'Valor requerido.'
+                                    );
+                                } elseif (
+                                    !is_string($s['field']) ||
+                                    !preg_match('/^[a-z]+(_[a-z0-9]+)*$/', $s['field'])
+                                ) {
+
+                                    $validator->errors()->add(
+                                        "$basePath.field",
+                                        'Formato inválido.'
+                                    );
+                                } else {
+
+                                    $field = trim($s['field']);
+
+                                    if (isset($seenFields[$field])) {
+
+                                        $validator->errors()->add(
+                                            "$basePath.field",
+                                            'El nombre del campo ya existe.'
+                                        );
+                                    } else {
+
+                                        $seenFields[$field] = true;
+                                    }
+                                }
+
+                                if (empty($s['type'])) {
+
+                                    $validator->errors()->add(
+                                        "$basePath.type",
+                                        'Valor requerido.'
+                                    );
+                                } elseif (!is_string($s['type'])) {
+
+                                    $validator->errors()->add(
+                                        "$basePath.type",
+                                        'Debe ser texto.'
                                     );
                                 }
-                            }
-                        }
-                    } else {
-                        $validator->errors()->add(
-                            "settings.structure.schema.$i.rules.after",
-                            'Valor requerido.'
-                        );
-                    }
 
-                    if (array_key_exists('before', $array)) {
-                        if ($type === 'date') {
-                            $fecha = Carbon::createFromFormat('Y-m-d', $array['before']);
-
-                            if (!empty($array['before'])) {
-                                if (!$fecha || $fecha->format('Y-m-d') !== $array['before']) {
+                                if (!isset($s['rules'])) {
                                     $validator->errors()->add(
-                                        "settings.structure.schema.$i.rules.before",
-                                        "Debe de ser una fecha válida."
+                                        "$basePath.rules",
+                                        'Valor requerido.'
+                                    );
+                                } elseif (!is_array($s['rules'])) {
+
+                                    $validator->errors()->add(
+                                        "$basePath.rules",
+                                        'Debe ser un array.'
                                     );
                                 }
-                            }
-                        }
 
-                        if ($type === 'datetime') {
-                            $fecha = Carbon::createFromFormat('Y-m-d H:i', $array['before']);
+                                $rules = $s['rules'] ?? [];
+                                $typeField = $s['type'] ?? null;
 
-                            if (!empty($array['before'])) {
-                                if (!$fecha || $fecha->format('Y-m-d H:i') !== $array['before']) {
-                                    $validator->errors()->add(
-                                        "settings.structure.schema.$i.rules.before",
-                                        "Debe de ser una fecha válida."
-                                    );
+                                if (in_array($typeField, ['text', 'textarea', 'number'])) {
+
+                                    $array = [];
+
+                                    foreach ($rules as $rule) {
+                                        if (str_starts_with($rule, 'required')) {
+                                            $array['required'] = true;
+                                        }
+
+                                        if (str_starts_with($rule, 'min:')) {
+                                            $array['min'] = str_replace('min:', '', $rule);
+                                        }
+
+                                        if (str_starts_with($rule, 'max:')) {
+                                            $array['max'] = str_replace('max:', '', $rule);
+                                        }
+
+                                        if (str_starts_with($rule, 'regex:')) {
+                                            $array['regex'] = str_replace('regex:', '', $rule);
+                                        }
+                                    }
+
+
+                                    if (array_key_exists('min', $array)) {
+                                        if (!is_numeric($array['min'])) {
+                                            $validator->errors()->add(
+                                                "$basePath.rules.min",
+                                                "Debe de ser un valor numerico."
+                                            );
+                                        }
+
+                                        if (is_numeric($array['min']) && $array['min'] <= 0) {
+                                            $validator->errors()->add(
+                                                "$basePath.rules.min",
+                                                "El valor no puede ser negativo o igual a 0"
+                                            );
+                                        }
+                                    } else {
+                                        $validator->errors()->add(
+                                            "$basePath.rules.min",
+                                            'Valor requerido.'
+                                        );
+                                    }
+
+                                    if (array_key_exists('max', $array)) {
+                                        if (!is_numeric($array['max'])) {
+                                            $validator->errors()->add(
+                                                "$basePath.rules.max",
+                                                "Debe de ser un valor numerico."
+                                            );
+                                        }
+
+                                        if (is_numeric($array['max']) && $array['max'] < 0) {
+                                            $validator->errors()->add(
+                                                "$basePath.rules.max",
+                                                "El valor no puede ser negativo."
+                                            );
+                                        }
+                                    } else {
+                                        $validator->errors()->add(
+                                            "$basePath.rules.max",
+                                            'Valor requerido.'
+                                        );
+                                    }
+
+                                    if (array_key_exists('min', $array) && array_key_exists('max', $array)) {
+                                        if (is_numeric($array['max']) && is_numeric($array['min'])) {
+                                            if ($array['min'] >= $array['max']) {
+                                                $validator->errors()->add(
+                                                    "$basePath.rules.min",
+                                                    "El mínimo no puede ser mayor o igual al maximo."
+                                                );
+                                            }
+                                        }
+                                    }
+
+                                    if (array_key_exists('regex', $array)) {
+                                        if (!is_string($array['regex']) || @preg_match($array['regex'], '') === false) {
+                                            $validator->errors()->add(
+                                                "$basePath.rules.regex",
+                                                'Debe ser una expresión regular válida.'
+                                            );
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                    } else {
-                        $validator->errors()->add(
-                            "settings.structure.schema.$i.rules.before",
-                            'Valor requerido.'
-                        );
-                    }
 
-                    if (array_key_exists('after', $array) && array_key_exists('before', $array)) {
-                        if (!empty($array['before']) && !empty($array['after'])) {
-                            if ($type === 'date') {
-                                if (Carbon::createFromFormat('Y-m-d', $array['after'])->gte(Carbon::createFromFormat('Y-m-d', $array['before']))) {
-                                    $validator->errors()->add(
-                                        "settings.structure.schema.$i.rules.after",
-                                        "La fecha de inicio no puede ser mayor o igual que la fecha de fin."
-                                    );
-                                }
-                            }
-                            if ($type === 'datetime') {
-                                if (Carbon::createFromFormat('Y-m-d H:i', $array['after'])->gte(Carbon::createFromFormat('Y-m-d H:i', $array['before']))) {
-                                    $validator->errors()->add(
-                                        "settings.structure.schema.$i.rules.after",
-                                        "La fecha de inicio no puede ser mayor o igual que la fecha de fin."
-                                    );
+                                if (in_array($typeField, ['date', 'datetime'])) {
+
+                                    $array = [];
+
+                                    foreach ($rules as $rule) {
+                                        if (str_starts_with($rule, 'required')) {
+                                            $array['required'] = true;
+                                        }
+
+                                        if (str_starts_with($rule, 'after:')) {
+                                            $array['after'] = str_replace('after:', '', $rule);
+                                        }
+
+                                        if (str_starts_with($rule, 'before:')) {
+                                            $array['before'] = str_replace('before:', '', $rule);
+                                        }
+                                    }
+
+                                    if (array_key_exists('after', $array)) {
+                                        if ($typeField === 'date') {
+                                            $fecha = Carbon::createFromFormat('Y-m-d', $array['after']);
+
+                                            if (!empty($array['after'])) {
+                                                if (!$fecha || $fecha->format('Y-m-d') !== $array['after']) {
+                                                    $validator->errors()->add(
+                                                        "$basePath.rules.after",
+                                                        "Debe de ser una fecha válida."
+                                                    );
+                                                }
+                                            }
+                                        }
+
+                                        if ($typeField === 'datetime') {
+                                            $fecha = Carbon::createFromFormat('Y-m-d H:i', $array['after']);
+
+                                            if (!empty($array['after'])) {
+                                                if (!$fecha || $fecha->format('Y-m-d H:i') !== $array['after']) {
+                                                    $validator->errors()->add(
+                                                        "$basePath.rules.after",
+                                                        "Debe de ser una fecha válida."
+                                                    );
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if (array_key_exists('before', $array)) {
+                                        if ($typeField === 'date') {
+                                            $fecha = Carbon::createFromFormat('Y-m-d', $array['before']);
+
+                                            if (!empty($array['before'])) {
+                                                if (!$fecha || $fecha->format('Y-m-d') !== $array['before']) {
+                                                    $validator->errors()->add(
+                                                        "$basePath.rules.before",
+                                                        "Debe de ser una fecha válida."
+                                                    );
+                                                }
+                                            }
+                                        }
+
+                                        if ($typeField === 'datetime') {
+                                            $fecha = Carbon::createFromFormat('Y-m-d H:i', $array['before']);
+
+                                            if (!empty($array['before'])) {
+                                                if (!$fecha || $fecha->format('Y-m-d H:i') !== $array['before']) {
+                                                    $validator->errors()->add(
+                                                        "$basePath.rules.before",
+                                                        "Debe de ser una fecha válida."
+                                                    );
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if (array_key_exists('after', $array) && array_key_exists('before', $array)) {
+                                        if (!empty($array['before']) && !empty($array['after'])) {
+                                            if ($typeField === 'date') {
+                                                if (Carbon::createFromFormat('Y-m-d', $array['after'])->gte(Carbon::createFromFormat('Y-m-d', $array['before']))) {
+                                                    $validator->errors()->add(
+                                                        "$basePath.rules.after",
+                                                        "La fecha de inicio no puede ser mayor o igual que la fecha de fin."
+                                                    );
+                                                }
+                                            }
+                                            if ($typeField === 'datetime') {
+                                                if (Carbon::createFromFormat('Y-m-d H:i', $array['after'])->gte(Carbon::createFromFormat('Y-m-d H:i', $array['before']))) {
+                                                    $validator->errors()->add(
+                                                        "$basePath.rules.after",
+                                                        "La fecha de inicio no puede ser mayor o igual que la fecha de fin."
+                                                    );
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }

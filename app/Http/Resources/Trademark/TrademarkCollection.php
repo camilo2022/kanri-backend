@@ -17,10 +17,13 @@ class TrademarkCollection extends ResourceCollection
                     'name' => $trademark->name,
                     'description' => $trademark->description,
                     'settings' => $trademark->settings,
+                    'logo' => $trademark->logo,
+                    'cover' => $trademark->cover,
                     'created_at' => $this->formatDate($trademark->created_at),
                     'updated_at' => $this->formatDate($trademark->updated_at),
                     'deleted_at' => $this->formatDate($trademark->deleted_at),
-                    'category' => $trademark->category
+                    'group' => $trademark->group,
+                    'sizes' => $trademark->sizes,
                 ];
             }),
             'meta' => [

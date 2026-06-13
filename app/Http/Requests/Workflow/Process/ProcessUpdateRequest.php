@@ -27,13 +27,13 @@ class ProcessUpdateRequest extends FormRequest
     {
         return [
             'id' => ['required', 'numeric', 'string', 'exists:subitems,id,item_id,' . Process::ITEM_ID],
-            'description' => ['required', 'string', 'max:255', 'uppercase'],
             'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Process::ITEM_ID],
             'description' => ['required', 'string', 'max:255', 'uppercase'],
             'after_processes' => ['nullable', 'array'],
             'after_processes.*' => ['nullable', 'numeric', 'exists:subitems,id,item_id,' . Process::ITEM_ID],
             'settings' => ['required', 'array'],
             'settings.subprocesses' => ['required', 'boolean'],
+            'settings.in_technical_sheet' => ['required', 'boolean'],
         ];
     }
 
@@ -58,7 +58,8 @@ class ProcessUpdateRequest extends FormRequest
             'description' => 'Descripción',
             'after_processes' => 'Procesos Posteriores',
             'settings' => 'Configuraciones',
-            'settings.subprocesses' => 'Subprocesos'
+            'settings.subprocesses' => 'Subprocesos',
+            'settings.in_technical_sheet' => 'Aplica a Ficha Técnica'
         ];
     }
 

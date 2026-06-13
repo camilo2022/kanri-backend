@@ -18,7 +18,6 @@ return new class extends Migration
             $table->id();
             $table->string('code')->unique();
             $table->foreignIdFor(Trademark::class)->constrained()->onUpdate('cascade')->comment('Marca');
-            $table->foreignIdFor(Category::class)->constrained()->onUpdate('cascade')->comment('Item');
             $table->foreignIdFor(Subcategory::class)->constrained()->onUpdate('cascade')->comment('Item');
             $table->timestamps();
             $table->softDeletes();

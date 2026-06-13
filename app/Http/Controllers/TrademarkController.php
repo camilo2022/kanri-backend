@@ -7,12 +7,15 @@ use App\Http\Requests\Trademark\TrademarkAllRequest;
 use App\Http\Requests\Trademark\TrademarkDeleteRequest;
 use App\Http\Requests\Trademark\TrademarkFindRequest;
 use App\Http\Requests\Trademark\TrademarkRestoreRequest;
+use App\Http\Requests\Trademark\TrademarkSizeAssignRequest;
+use App\Http\Requests\Trademark\TrademarkSizeRemoveRequest;
 use App\Http\Requests\Trademark\TrademarkStoreRequest;
 use App\Http\Requests\Trademark\TrademarkUpdateRequest;
 use App\Http\Resources\Trademark\TrademarkCollection;
 use App\Http\Resources\Trademark\TrademarkResource;
 use App\Models\Category;
 use App\Models\Trademark;
+use App\Services\FileService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 
@@ -66,7 +69,7 @@ use App\Traits\ApiResponser;
  *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
  *     ),
  *     @OA\Property(
- *         property="category",
+ *         property="group",
  *         type="array",
  *         @OA\Items(
  *             type="object",
@@ -182,7 +185,7 @@ class TrademarkController extends Controller
     public function all(TrademarkAllRequest $request)
     {
         try {
-            $trademakers = Trademark::with(['category'])
+            $trademakers = Trademark::with(['group', 'logo', 'cover'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -281,7 +284,7 @@ class TrademarkController extends Controller
     {
         try {
             $trademark = Trademark::findOrFail($id);
-            $trademark->load(['category']);
+            $trademark->load(['group', 'logo', 'cover']);
 
             return $this->successResponse(
                 new TrademarkResource($trademark),
@@ -308,7 +311,7 @@ class TrademarkController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name","category_id"},
+     *             required={"name","group_id"},
      *             @OA\Property(
      *                 property="name",
      *                 type="string",
@@ -322,7 +325,7 @@ class TrademarkController extends Controller
      *                 description="Descripción de la marca"
      *             ),
      *             @OA\Property(
-     *                 property="category_id",
+     *                 property="group_id",
      *                 type="integer",
      *                 example=1,
      *                 description="Identificador de la categoría a la que pertenece la marca"
@@ -397,9 +400,31 @@ class TrademarkController extends Controller
             $trademark->description = $request->input('description');
             $trademark->save();
 
-            $trademark->auditSync('category', [$request->integer('category_id')]);
+            $trademark->auditSync('group', [$request->integer('group_id')]);
 
-            $trademark->load(['category']);
+            if ($request->hasFile('logo')) {
+                app(FileService::class)->save(
+                    $trademark,
+                    $request->file('logo.file'),
+                    $request->integer('logo.photo_type_id'),
+                    $request->integer('logo.photo_subtype_id'),
+                    'public',
+                    'trademark'
+                );
+            }
+
+            if ($request->hasFile('cover')) {
+                app(FileService::class)->save(
+                    $trademark,
+                    $request->file('cover.file'),
+                    $request->integer('cover.photo_type_id'),
+                    $request->integer('cover.photo_subtype_id'),
+                    'public',
+                    'trademark'
+                );
+            }
+
+            $trademark->load(['group', 'logo', 'cover']);
 
             return $this->successResponse(
                 new TrademarkResource($trademark),
@@ -433,7 +458,7 @@ class TrademarkController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name","category_id"},
+     *             required={"name","group_id"},
      *             @OA\Property(
      *                 property="name",
      *                 type="string",
@@ -447,7 +472,7 @@ class TrademarkController extends Controller
      *                 description="Descripción de la marca"
      *             ),
      *             @OA\Property(
-     *               property="category_id",
+     *               property="group_id",
      *               type="integer",
      *               example=1,
      *               description="Identificador de la categoría a la que pertenece la marca"
@@ -524,8 +549,31 @@ class TrademarkController extends Controller
             $trademark->description = $request->input('description');
             $trademark->save();
 
-            $trademark->auditSync('category', [$request->integer('category_id')]);
-            $trademark->load(['category']);
+            $trademark->auditSync('group', [$request->integer('group_id')]);
+
+            if ($request->hasFile('logo.file')) {
+                app(FileService::class)->save(
+                    $trademark,
+                    $request->file('logo.file'),
+                    $request->integer('logo.photo_type_id'),
+                    $request->integer('logo.photo_subtype_id'),
+                    'public',
+                    'trademark'
+                );
+            }
+
+            if ($request->hasFile('cover.file')) {
+                app(FileService::class)->save(
+                    $trademark,
+                    $request->file('cover.file'),
+                    $request->integer('cover.photo_type_id'),
+                    $request->integer('cover.photo_subtype_id'),
+                    'public',
+                    'trademark'
+                );
+            }
+
+            $trademark->load(['group', 'logo', 'cover']);
 
             return $this->successResponse(
                 new TrademarkResource($trademark),
@@ -882,6 +930,56 @@ class TrademarkController extends Controller
             $trademark->settings = $request->input('settings');
 
             $trademark->save();
+
+            return $this->successResponse(
+                new TrademarkResource($trademark),
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    public function size_assign(TrademarkSizeAssignRequest $request, $id)
+    {
+        try {
+            $trademark = Trademark::findOrFail($id);
+
+            $trademark->auditAttach('sizes', $request->integer('size_id'));
+
+            $trademark->load(['item', 'sizes']);
+
+            return $this->successResponse(
+                new TrademarkResource($trademark),
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    public function size_remove(TrademarkSizeRemoveRequest $request, $id)
+    {
+        try {
+            $trademark = Trademark::findOrFail($id);
+
+            $trademark->auditDetach('sizes', $request->integer('size_id'));
+
+            $trademark->load(['item', 'sizes']);
 
             return $this->successResponse(
                 new TrademarkResource($trademark),

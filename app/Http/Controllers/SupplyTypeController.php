@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\SupplyType\SupplyTypeAllRequest;
-use App\Http\Requests\SupplyType\SupplyTypeDeleteRequest;
-use App\Http\Requests\SupplyType\SupplyTypeFindRequest;
-use App\Http\Requests\SupplyType\SupplyTypeRestoreRequest;
-use App\Http\Requests\SupplyType\SupplyTypeStoreRequest;
-use App\Http\Requests\SupplyType\SupplyTypeUpdateRequest;
-use App\Http\Resources\SupplyType\SupplyTypeCollection;
-use App\Http\Resources\SupplyType\SupplyTypeResource;
+use App\Http\Requests\Typification\SupplyType\SupplyTypeAllRequest;
+use App\Http\Requests\Typification\SupplyType\SupplyTypeDeleteRequest;
+use App\Http\Requests\Typification\SupplyType\SupplyTypeFindRequest;
+use App\Http\Requests\Typification\SupplyType\SupplyTypeRestoreRequest;
+use App\Http\Requests\Typification\SupplyType\SupplyTypeSettingRequest;
+use App\Http\Requests\Typification\SupplyType\SupplyTypeStoreRequest;
+use App\Http\Requests\Typification\SupplyType\SupplyTypeUpdateRequest;
+use App\Http\Resources\Typification\SupplyType\SupplyTypeCollection;
+use App\Http\Resources\Typification\SupplyType\SupplyTypeResource;
 use App\Models\SupplyType;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -143,12 +144,15 @@ class SupplyTypeController extends Controller
     public function all(SupplyTypeAllRequest $request)
     {
         try {
-            logger('Ingreso');
-            $supply_types = SupplyType::when($request->filled('search'), function ($query) use ($request) {
-                return $query->search($request->input('search'));
-            })
+            $supply_types = SupplyType::with(['variants'])
+                ->when($request->filled('search'), function ($query) use ($request) {
+                    return $query->search($request->input('search'));
+                })
                 ->when($request->boolean('with_trashed'), function ($query) {
                     return $query->withTrashed();
+                })
+                ->when($request->filled('in_technical_sheet'), function ($query) use ($request) {
+                    return $query->where('settings->in_technical_sheet', $request->boolean('in_technical_sheet'));
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
                     return $query->orderBy($request->input('column'), $request->input('dir'));
@@ -241,7 +245,8 @@ class SupplyTypeController extends Controller
     public function find(SupplyTypeFindRequest $request, $id)
     {
         try {
-            $supply_type = SupplyType::findOrFail($id);
+            $supply_type = SupplyType::with(['variants'])
+                ->findOrFail($id);
 
             return $this->successResponse(
                 new SupplyTypeResource($supply_type),
@@ -349,6 +354,8 @@ class SupplyTypeController extends Controller
             $supply_type = new SupplyType();
             $supply_type->name = $request->input('name');
             $supply_type->description = $request->input('description');
+            $supply_type->settings = $request->input('settings');
+
             $supply_type->save();
 
             return $this->successResponse(
@@ -466,6 +473,7 @@ class SupplyTypeController extends Controller
             $supply_type = SupplyType::findOrFail($id);
             $supply_type->name = $request->input('name');
             $supply_type->description = $request->input('description');
+            $supply_type->settings = $request->input('settings');
             $supply_type->save();
 
             return $this->successResponse(
@@ -659,6 +667,30 @@ class SupplyTypeController extends Controller
         try {
             $supply_type = SupplyType::withTrashed()->findOrFail($id);
             $supply_type->restore();
+
+            return $this->successResponse(
+                new SupplyTypeResource($supply_type),
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    public function setting(SupplyTypeSettingRequest $request, $id)
+    {
+        try {
+            $supply_type = SupplyType::findOrFail($id);
+            $supply_type->settings = $request->input('settings');
+
+            $supply_type->save();
 
             return $this->successResponse(
                 new SupplyTypeResource($supply_type),

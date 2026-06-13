@@ -6,6 +6,7 @@ use App\Http\Requests\Workflow\Subprocess\SubprocessAllRequest;
 use App\Http\Requests\Workflow\Subprocess\SubprocessDeleteRequest;
 use App\Http\Requests\Workflow\Subprocess\SubprocessFindRequest;
 use App\Http\Requests\Workflow\Subprocess\SubprocessRestoreRequest;
+use App\Http\Requests\Workflow\Subprocess\SubprocessSettingRequest;
 use App\Http\Requests\Workflow\Subprocess\SubprocessStoreRequest;
 use App\Http\Requests\Workflow\Subprocess\SubprocessUpdateRequest;
 use App\Http\Resources\Workflow\Subprocess\SubprocessCollection;
@@ -671,6 +672,30 @@ class SubprocessController extends Controller
         try {
             $subprocess = Subprocess::withTrashed()->findOrFail($id);
             $subprocess->restore();
+
+            return $this->successResponse(
+                new SubprocessResource($subprocess),
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    public function setting(SubprocessSettingRequest $request, $id)
+    {
+        try {
+            $subprocess = Subprocess::findOrFail($id);
+            $subprocess->settings = $request->input('settings');
+
+            $subprocess->save();
 
             return $this->successResponse(
                 new SubprocessResource($subprocess),

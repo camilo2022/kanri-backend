@@ -8,7 +8,6 @@ use App\Http\Controllers\BackTypeController;
 use App\Http\Controllers\BloodTypeController;
 use App\Http\Controllers\BootTypeController;
 use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\ClothingLineController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\ColorController;
 use App\Http\Controllers\CompensationFundController;
@@ -18,14 +17,17 @@ use App\Http\Controllers\GarmentTypeController;
 use App\Http\Controllers\GenderController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\HealthEntityController;
-use App\Http\Controllers\LocationController;
+use App\Http\Controllers\ManagementCollectionController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\OperationController;
 use App\Http\Controllers\PensionFundController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PersonController;
+use App\Http\Controllers\PieceController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\ProcessController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SilhouetteController;
 use App\Http\Controllers\SizeController;
@@ -34,9 +36,12 @@ use App\Http\Controllers\SubgroupController;
 use App\Http\Controllers\SubmoduleController;
 use App\Http\Controllers\SubprocessController;
 use App\Http\Controllers\SupplyTypeController;
+use App\Http\Controllers\TechnicalSheetController;
+use App\Http\Controllers\TechnicalSheetDetailController;
 use App\Http\Controllers\ThreadTypeController;
 use App\Http\Controllers\TrademarkController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VariantController;
 use App\Http\Controllers\WaistbandTypeController;
 use App\Http\Controllers\WashToneController;
 use App\Http\Controllers\YokeTypeController;
@@ -80,7 +85,7 @@ Route::prefix('/authorization')->group(function () {
 
 Route::prefix('/back_types')->group(function () {
     Route::controller(BackTypeController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:back_types.all']);
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:back_types.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
         Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:back_types.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:back_types.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:back_types.update']);
@@ -103,7 +108,7 @@ Route::prefix('/blood_types')->group(function () {
 
 Route::prefix('/boot_types')->group(function () {
     Route::controller(BootTypeController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:boot_types.all']);
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:boot_types.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
         Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:boot_types.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:boot_types.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:boot_types.update']);
@@ -116,27 +121,23 @@ Route::prefix('/boot_types')->group(function () {
 Route::prefix('/categorization')->group(function () {
     Route::prefix('/categories')->group(function () {
         Route::controller(CategoryController::class)->group(function () {
-            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:categorization.categories.all|trademarks.store|trademarks.update']);
+            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:categorization.categories.all|trademarks.store|trademarks.update|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
             Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:categorization.categories.find']);
             Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:categorization.categories.store']);
             Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:categorization.categories.update']);
             Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:categorization.categories.delete']);
             Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:categorization.categories.restore']);
-            Route::prefix('/subcategory')->group(function () {
-                Route::post('/assign/{id}', 'subcategory_assign')->middleware(['auth:sanctum', 'can:categorization.categories.subcategory.assign']);
-                Route::post('/remove/{id}', 'subcategory_remove')->middleware(['auth:sanctum', 'can:categorization.categories.subcategory.remove']);
-            });
         });
-    });
 
-    Route::prefix('/subcategories')->group(function () {
-        Route::controller(SubcategoryController::class)->group(function () {
-            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:categorization.subcategories.all|categorization.categories.all']);
-            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:categorization.subcategories.find']);
-            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:categorization.subcategories.store']);
-            Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:categorization.subcategories.update']);
-            Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:categorization.subcategories.delete']);
-            Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:categorization.subcategories.restore']);
+        Route::prefix('/subcategories')->group(function () {
+            Route::controller(SubcategoryController::class)->group(function () {
+                Route::get('/all/{category_id}', 'all')->middleware(['auth:sanctum', 'can:categorization.categories.subcategories.all|categorization.categories.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
+                Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:categorization.categories.subcategories.find']);
+                Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:categorization.categories.subcategories.store']);
+                Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:categorization.categories.subcategories.update']);
+                Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:categorization.categories.subcategories.delete']);
+                Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:categorization.categories.subcategories.restore']);
+            });
         });
     });
 });
@@ -144,7 +145,7 @@ Route::prefix('/categorization')->group(function () {
 Route::prefix('/classification')->group(function () {
     Route::prefix('/groups')->group(function () {
         Route::controller(GroupController::class)->group(function () {
-            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:classification.groups.all']);
+            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:classification.groups.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
             Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:classification.groups.find']);
             Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:classification.groups.store']);
             Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:classification.groups.update']);
@@ -156,7 +157,7 @@ Route::prefix('/classification')->group(function () {
 
     Route::prefix('/subgroups')->group(function () {
         Route::controller(SubgroupController::class)->group(function () {
-            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:classification.subgroups.all']);
+            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:classification.subgroups.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
             Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:classification.subgroups.find']);
             Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:classification.subgroups.store']);
             Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:classification.subgroups.update']);
@@ -167,33 +168,33 @@ Route::prefix('/classification')->group(function () {
     });
 });
 
-Route::prefix('/clothing_lines')->group(function () {
-    Route::controller(ClothingLineController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:clothing_lines.all']);
-        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:clothing_lines.find']);
-        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:clothing_lines.store']);
-        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:clothing_lines.update']);
-        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:clothing_lines.setting']);
-        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:clothing_lines.delete']);
-        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:clothing_lines.restore']);
+Route::prefix('/pieces')->group(function () {
+    Route::controller(PieceController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:pieces.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:pieces.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:pieces.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:pieces.update']);
+        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:pieces.setting']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:pieces.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:pieces.restore']);
     });
 });
 
-Route::prefix('/locations')->group(function () {
-    Route::controller(LocationController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:locations.all']);
-        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:locations.find']);
-        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:locations.store']);
-        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:locations.update']);
-        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:locations.setting']);
-        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:locations.delete']);
-        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:locations.restore']);
+Route::prefix('/suppliers')->group(function () {
+    Route::controller(SupplierController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:suppliers.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:suppliers.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:suppliers.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:suppliers.update']);
+        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:suppliers.setting']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:suppliers.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:suppliers.restore']);
     });
 });
 
 Route::prefix('/collections')->group(function () {
     Route::controller(CollectionController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:collections.all']);
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:collections.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
         Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:collections.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:collections.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:collections.update']);
@@ -205,7 +206,7 @@ Route::prefix('/collections')->group(function () {
 
 Route::prefix('/yoke_types')->group(function () {
     Route::controller(YokeTypeController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:yoke_types.all']);
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:yoke_types.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
         Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:yoke_types.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:yoke_types.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:yoke_types.update']);
@@ -217,7 +218,7 @@ Route::prefix('/yoke_types')->group(function () {
 
 Route::prefix('/colors')->group(function () {
     Route::controller(ColorController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:colors.all']);
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:colors.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
         Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:colors.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:colors.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:colors.update']);
@@ -226,8 +227,6 @@ Route::prefix('/colors')->group(function () {
         Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:colors.restore']);
     });
 });
-
-
 
 Route::prefix('/compensation_funds')->group(function () {
     Route::controller(CompensationFundController::class)->group(function () {
@@ -242,7 +241,7 @@ Route::prefix('/compensation_funds')->group(function () {
 
 Route::prefix('/employees')->group(function () {
     Route::controller(EmployeeController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:employees.all|users.store']);
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:employees.all|users.store|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
         Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:employees.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:employees.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:employees.update']);
@@ -253,7 +252,7 @@ Route::prefix('/employees')->group(function () {
 
 Route::prefix('/garment_types')->group(function () {
     Route::controller(GarmentTypeController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:garment_types.all']);
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:garment_types.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
         Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:garment_types.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:garment_types.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:garment_types.update']);
@@ -375,7 +374,7 @@ Route::prefix('/risk_managers')->group(function () {
 
 Route::prefix('/silhouettes')->group(function () {
     Route::controller(SilhouetteController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:silhouettes.all']);
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:silhouettes.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
         Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:silhouettes.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:silhouettes.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:silhouettes.update']);
@@ -387,7 +386,7 @@ Route::prefix('/silhouettes')->group(function () {
 
 Route::prefix('/sizes')->group(function () {
     Route::controller(SizeController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:sizes.all']);
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:sizes.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings|trademarks.find']);
         Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:sizes.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:sizes.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:sizes.update']);
@@ -399,13 +398,17 @@ Route::prefix('/sizes')->group(function () {
 
 Route::prefix('/trademarks')->group(function () {
     Route::controller(TrademarkController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:trademarks.all']);
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:trademarks.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
         Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:trademarks.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:trademarks.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:trademarks.update']);
         Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:trademarks.settings']);
         Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:trademarks.delete']);
         Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:trademarks.restore']);
+        Route::prefix('/size')->group(function () {
+            Route::post('/assign/{id}', 'size_assign')->middleware(['auth:sanctum', 'can:trademarks.size.assign']);
+            Route::post('/remove/{id}', 'size_remove')->middleware(['auth:sanctum', 'can:trademarks.size.remove']);
+        });
     });
 });
 
@@ -426,7 +429,7 @@ Route::prefix('/users')->group(function () {
 
 Route::prefix('/waistband_types')->group(function () {
     Route::controller(WaistbandTypeController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:waistband_types.all']);
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:waistband_types.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
         Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:waistband_types.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:waistband_types.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:waistband_types.update']);
@@ -438,7 +441,7 @@ Route::prefix('/waistband_types')->group(function () {
 
 Route::prefix('/fabric_types')->group(function () {
     Route::controller(FabricTypeController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:fabric_types.all']);
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:fabric_types.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
         Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:fabric_types.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:fabric_types.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:fabric_types.update']);
@@ -450,7 +453,7 @@ Route::prefix('/fabric_types')->group(function () {
 
 Route::prefix('/thread_types')->group(function () {
     Route::controller(ThreadTypeController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:thread_types.all']);
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:thread_types.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
         Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:thread_types.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:thread_types.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:thread_types.update']);
@@ -460,21 +463,36 @@ Route::prefix('/thread_types')->group(function () {
     });
 });
 
-Route::prefix('/supply_types')->group(function () {
-    Route::controller(SupplyTypeController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:supply_types.all']);
-        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:supply_types.find']);
-        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:supply_types.store']);
-        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:supply_types.update']);
-        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:supply_types.setting']);
-        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:supply_types.delete']);
-        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:supply_types.restore']);
+Route::prefix('/typification')->group(function () {
+    Route::prefix('/supply_types')->group(function () {
+        Route::controller(SupplyTypeController::class)->group(function () {
+            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:typification.supply_types.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
+            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:typification.supply_types.find']);
+            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:typification.supply_types.store']);
+            Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:typification.supply_types.update']);
+            Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:typification.supply_types.settings']);
+            Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:typification.supply_types.delete']);
+            Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:typification.supply_types.restore']);
+        });
+
+        Route::prefix('/variants')->group(function () {
+            Route::controller(VariantController::class)->group(function () {
+                Route::get('/all/{supply_type_id}', 'all')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
+                Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.find']);
+                Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.store']);
+                Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.update']);
+                Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.setting']);
+                Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.delete']);
+                Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.restore']);
+            });
+        });
     });
 });
 
+
 Route::prefix('/wash_tones')->group(function () {
     Route::controller(WashToneController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:wash_tones.all']);
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:wash_tones.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
         Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:wash_tones.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:wash_tones.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:wash_tones.update']);
@@ -504,6 +522,7 @@ Route::prefix('/workflow')->group(function () {
                 Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.update']);
                 Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.delete']);
                 Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.restore']);
+                Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.settings']);
             });
 
             Route::prefix('/operations')->group(function () {
@@ -514,8 +533,41 @@ Route::prefix('/workflow')->group(function () {
                     Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.operations.update']);
                     Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.operations.delete']);
                     Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.operations.restore']);
+                    Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.operations.settings']);
                 });
             });
         });
+    });
+});
+
+Route::prefix('/management')->group(function () {
+    Route::prefix('/collections')->group(function () {
+        Route::controller(ManagementCollectionController::class)->group(function () {
+            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:management.collections.find']);
+            Route::post('/save', 'save')->middleware(['auth:sanctum', 'can:management.collections.find']);
+        });
+    });
+});
+
+Route::prefix('/products')->group(function () {
+    Route::controller(ProductController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:products.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:products.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:products.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:products.update']);
+    });
+});
+
+Route::prefix('/technical_sheets')->group(function () {
+    Route::controller(TechnicalSheetController::class)->group(function () {
+        Route::get('/find', 'find')->middleware(['auth:sanctum', 'can:technical_sheets.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:technical_sheets.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:technical_sheets.update']);
+    });
+});
+
+Route::prefix('/technical_sheets_details')->group(function () {
+    Route::controller(TechnicalSheetDetailController::class)->group(function () {
+        Route::post('/save', 'save')->middleware(['auth:sanctum', 'can:technical_sheets.store']);
     });
 });

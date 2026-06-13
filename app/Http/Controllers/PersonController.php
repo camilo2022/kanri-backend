@@ -879,7 +879,6 @@ class PersonController extends Controller
     public function pdf()
     {
         try {
-            logger(Person::all());
             $people = Person::all();
             $pdf = Pdf::loadView('person', compact('people'))->setPaper('letter');
             return $pdf->download('people.pdf');

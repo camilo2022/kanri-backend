@@ -91,7 +91,6 @@ class RolesAndPermissionsSeeder extends Seeder
                         'title' => 'Actualizar rol',
                         'description' => 'Permite actualizar la información de un rol.',
                     ],
-
                     [
                         'name' => 'authorization.permissions.all',
                         'title' => 'Listar permisos',
@@ -185,7 +184,6 @@ class RolesAndPermissionsSeeder extends Seeder
                     ],
                 ]
             ],
-
             [
                 'role' => [
                     'name' => 'people',
@@ -201,7 +199,6 @@ class RolesAndPermissionsSeeder extends Seeder
                     ['name' => 'people.restore', 'title' => 'Restaurar persona', 'description' => 'Permite restaurar personas.'],
                 ]
             ],
-
             [
                 'role' => [
                     'name' => 'employees',
@@ -352,6 +349,8 @@ class RolesAndPermissionsSeeder extends Seeder
                     ['name' => 'trademarks.delete', 'title' => 'Eliminar marcas.', 'description' => 'Permite eliminar marcas.'],
                     ['name' => 'trademarks.restore', 'title' => 'Restaurar marcas.', 'description' => 'Permite restaurar marcas.'],
                     ['name' => 'trademarks.settings', 'title' => 'Configurar marcas.', 'description' => 'Permite configurar marcas.'],
+                    ['name' => 'trademarks.size.assign', 'title' => 'Asignar una talla a una marca.', 'description' => 'Permite asignar tallas a marcas.'],
+                    ['name' => 'trademarks.size.remove', 'title' => 'Remover una talla a una marca.', 'description' => 'Permite remover tallas a marcas.'],
                 ]
             ],
 
@@ -391,18 +390,18 @@ class RolesAndPermissionsSeeder extends Seeder
 
             [
                 'role' => [
-                    'name' => 'clothing_lines',
-                    'title' => 'Líneas',
-                    'description' => 'Gestión de líneas de productos.',
+                    'name' => 'piece',
+                    'title' => 'Piezas',
+                    'description' => 'Gestión de piezas.',
                 ],
                 'permissions' => [
-                    ['name' => 'clothing_lines.all', 'title' => 'Listar líneas.', 'description' => 'Permite listar líneas.'],
-                    ['name' => 'clothing_lines.find', 'title' => 'Consultar líneas.', 'description' => 'Permite consultar líneas.'],
-                    ['name' => 'clothing_lines.store', 'title' => 'Crear líneas.', 'description' => 'Permite crear líneas.'],
-                    ['name' => 'clothing_lines.update', 'title' => 'Actualizar líneas.', 'description' => 'Permite actualizar líneas.'],
-                    ['name' => 'clothing_lines.delete', 'title' => 'Eliminar líneas.', 'description' => 'Permite eliminar líneas.'],
-                    ['name' => 'clothing_lines.restore', 'title' => 'Restaurar líneas.', 'description' => 'Permite restaurar líneas.'],
-                    ['name' => 'clothing_lines.settings', 'title' => 'Configurar líneas.', 'description' => 'Permite configurar líneas.'],
+                    ['name' => 'pieces.all', 'title' => 'Listar piezas.', 'description' => 'Permite listar piezas.'],
+                    ['name' => 'pieces.find', 'title' => 'Consultar piezas.', 'description' => 'Permite consultar piezas.'],
+                    ['name' => 'pieces.store', 'title' => 'Crear piezas.', 'description' => 'Permite crear piezas.'],
+                    ['name' => 'pieces.update', 'title' => 'Actualizar piezas.', 'description' => 'Permite actualizar piezas.'],
+                    ['name' => 'pieces.delete', 'title' => 'Eliminar piezas.', 'description' => 'Permite eliminar piezas.'],
+                    ['name' => 'pieces.restore', 'title' => 'Restaurar piezas.', 'description' => 'Permite restaurar piezas.'],
+                    ['name' => 'pieces.settings', 'title' => 'Configurar piezas.', 'description' => 'Permite configurar piezas.'],
                 ]
             ],
 
@@ -488,15 +487,13 @@ class RolesAndPermissionsSeeder extends Seeder
                     ['name' => 'categorization.categories.delete', 'title' => 'Eliminar categorías.', 'description' => 'Permite eliminar categorías.'],
                     ['name' => 'categorization.categories.restore', 'title' => 'Restaurar categorías.', 'description' => 'Permite restaurar categorías.'],
                     ['name' => 'categorization.categories.settings', 'title' => 'Configurar categorías.', 'description' => 'Permite configurar categorías.'],
-                    ['name' => 'categorization.subcategories.all', 'title' => 'Listar subcategorías.', 'description' => 'Permite listar subcategorías.'],
-                    ['name' => 'categorization.subcategories.find', 'title' => 'Consultar subcategorías.', 'description' => 'Permite consultar subcategorías.'],
-                    ['name' => 'categorization.subcategories.store', 'title' => 'Crear subcategorías.', 'description' => 'Permite crear subcategorías.'],
-                    ['name' => 'categorization.subcategories.update', 'title' => 'Actualizar subcategorías.', 'description' => 'Permite actualizar subcategorías.'],
-                    ['name' => 'categorization.subcategories.delete', 'title' => 'Eliminar subcategorías.', 'description' => 'Permite eliminar subcategorías.'],
-                    ['name' => 'categorization.subcategories.restore', 'title' => 'Restaurar subcategorías.', 'description' => 'Permite restaurar subcategorías.'],
-                    ['name' => 'categorization.subcategories.settings', 'title' => 'Configurar subcategorías.', 'description' => 'Permite configurar subcategorías.'],
-                    ['name' => 'categorization.categories.subcategory.assign', 'title' => 'Asignar subcategorías a categorías.', 'description' => 'Permite asignar subcategorías a categorías.'],
-                    ['name' => 'categorization.categories.subcategory.remove', 'title' => 'Remover subcategorías de categorías.', 'description' => 'Permite remover subcategorías de categorías.'],
+                    ['name' => 'categorization.categories.subcategories.all', 'title' => 'Listar subcategorías.', 'description' => 'Permite listar subcategorías.'],
+                    ['name' => 'categorization.categories.subcategories.find', 'title' => 'Consultar subcategorías.', 'description' => 'Permite consultar subcategorías.'],
+                    ['name' => 'categorization.categories.subcategories.store', 'title' => 'Crear subcategorías.', 'description' => 'Permite crear subcategorías.'],
+                    ['name' => 'categorization.categories.subcategories.update', 'title' => 'Actualizar subcategorías.', 'description' => 'Permite actualizar subcategorías.'],
+                    ['name' => 'categorization.categories.subcategories.delete', 'title' => 'Eliminar subcategorías.', 'description' => 'Permite eliminar subcategorías.'],
+                    ['name' => 'categorization.categories.subcategories.restore', 'title' => 'Restaurar subcategorías.', 'description' => 'Permite restaurar subcategorías.'],
+                    ['name' => 'categorization.categories.subcategories.settings', 'title' => 'Configurar subcategorías.', 'description' => 'Permite configurar subcategorías.'],
                 ]
             ],
 
@@ -549,12 +546,21 @@ class RolesAndPermissionsSeeder extends Seeder
                     ['name' => 'workflow.processes.update', 'title' => 'Actualizar procesos.', 'description' => 'Permite actualizar procesos.'],
                     ['name' => 'workflow.processes.delete', 'title' => 'Eliminar procesos.', 'description' => 'Permite eliminar procesos.'],
                     ['name' => 'workflow.processes.restore', 'title' => 'Resturar procesos.', 'description' => 'Permite restaurar procesos.'],
+                    ['name' => 'workflow.processes.settings', 'title' => 'Configurar procesos.', 'description' => 'Permite configurar procesos.'],
                     ['name' => 'workflow.processes.subprocesses.all', 'title' => 'Listar subprocesos.', 'description' => 'Permite listar subprocesos..'],
                     ['name' => 'workflow.processes.subprocesses.find', 'title' => 'Buscar un subproceso.', 'description' => 'Permite obtener un subproceso especifico.'],
                     ['name' => 'workflow.processes.subprocesses.store', 'title' => 'Crear subprocesos.', 'description' => 'Permite crear subprocesos.'],
                     ['name' => 'workflow.processes.subprocesses.update', 'title' => 'Actualizar subprocesos.', 'description' => 'Permite actualizar subprocesos.'],
                     ['name' => 'workflow.processes.subprocesses.delete', 'title' => 'Eliminar subprocesos.', 'description' => 'Permite eliminar subprocesos.'],
                     ['name' => 'workflow.processes.subprocesses.restore', 'title' => 'Resturar subprocesos.', 'description' => 'Permite restaurar subprocesos.'],
+                    ['name' => 'workflow.processes.subprocesses.settings', 'title' => 'Configurar subprocesos.', 'description' => 'Permite configurar subprocesos.'],
+                    ['name' => 'workflow.processes.subprocesses.operations.all', 'title' => 'Listar operaciones.', 'description' => 'Permite listar operaciones.'],
+                    ['name' => 'workflow.processes.subprocesses.operations.find', 'title' => 'Buscar una operacion.', 'description' => 'Permite obtener una operación especifico.'],
+                    ['name' => 'workflow.processes.subprocesses.operations.store', 'title' => 'Crear operaciones.', 'description' => 'Permite crear operaciones.'],
+                    ['name' => 'workflow.processes.subprocesses.operations.update', 'title' => 'Actualizar operaciones.', 'description' => 'Permite actualizar operaciones.'],
+                    ['name' => 'workflow.processes.subprocesses.operations.delete', 'title' => 'Eliminar operaciones.', 'description' => 'Permite eliminar operaciones.'],
+                    ['name' => 'workflow.processes.subprocesses.operations.restore', 'title' => 'Resturar operaciones.', 'description' => 'Permite restaurar operaciones.'],
+                    ['name' => 'workflow.processes.subprocesses.operations.settings', 'title' => 'Configurar operaciones.', 'description' => 'Permite configurar operaciones.'],
                 ]
             ],
 
@@ -622,20 +628,88 @@ class RolesAndPermissionsSeeder extends Seeder
                 ]
             ],
 
+            [
+                'role' => [
+                    'name' => 'suppliers',
+                    'title' => 'Proveedores',
+                    'description' => 'Gestión de proveedores.',
+                ],
+                'permissions' => [
+                    ['name' => 'suppliers.all', 'title' => 'Listar proveedores', 'description' => 'Permite listar proveedores.'],
+                    ['name' => 'suppliers.find', 'title' => 'Consultar proveedores', 'description' => 'Permite consultar proveedores'],
+                    ['name' => 'suppliers.store', 'title' => 'Crear proveedores', 'description' => 'Permite crear proveedores.'],
+                    ['name' => 'suppliers.update', 'title' => 'Actualizar proveedores', 'description' => 'Permite actualizar proveedores.'],
+                    ['name' => 'suppliers.delete', 'title' => 'Eliminar proveedores', 'description' => 'Permite eliminar proveedores.'],
+                    ['name' => 'suppliers.restore', 'title' => 'Restaurar proveedores', 'description' => 'Permite restaurar proveedores.'],
+                ]
+            ],
 
             [
                 'role' => [
-                    'name' => 'locations',
-                    'title' => 'Ubicaciones',
-                    'description' => 'Gestión de ubicaciones.',
+                    'name' => 'fabric_types',
+                    'title' => 'Tipos de Tela',
+                    'description' => 'Gestión de tipos de tela.',
                 ],
                 'permissions' => [
-                    ['name' => 'locations.all', 'title' => 'Listar ubicaciones', 'description' => 'Permite listar ubicaciones.'],
-                    ['name' => 'locations.find', 'title' => 'Consultar ubicaciones', 'description' => 'Permite consultar ubicaciones'],
-                    ['name' => 'locations.store', 'title' => 'Crear ubicaciones', 'description' => 'Permite crear ubicaciones.'],
-                    ['name' => 'locations.update', 'title' => 'Actualizar ubicaciones', 'description' => 'Permite actualizar ubicaciones.'],
-                    ['name' => 'locations.delete', 'title' => 'Eliminar ubicaciones', 'description' => 'Permite eliminar ubicaciones.'],
-                    ['name' => 'locations.restore', 'title' => 'Restaurar ubicaciones', 'description' => 'Permite restaurar ubicaciones.'],
+                    ['name' => 'fabric_types.all', 'title' => 'Listar tipos de tela', 'description' => 'Permite listar tipos de tela.'],
+                    ['name' => 'fabric_types.find', 'title' => 'Consultar tipos de tela', 'description' => 'Permite consultar tipos de tela'],
+                    ['name' => 'fabric_types.store', 'title' => 'Crear tipos de tela', 'description' => 'Permite crear tipos de tela.'],
+                    ['name' => 'fabric_types.update', 'title' => 'Actualizar tipos de tela', 'description' => 'Permite actualizar tipos de tela.'],
+                    ['name' => 'fabric_types.delete', 'title' => 'Eliminar tipos de tela', 'description' => 'Permite eliminar tipos de tela.'],
+                    ['name' => 'fabric_types.restore', 'title' => 'Restaurar tipos de tela', 'description' => 'Permite restaurar tipos de tela.'],
+                    ['name' => 'fabric_types.settings', 'title' => 'Configurar tipos de tela', 'description' => 'Permite configurar tipos de tela.'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'thread_types',
+                    'title' => 'Tipos de Hilo',
+                    'description' => 'Gestión de tipos de hilo.',
+                ],
+                'permissions' => [
+                    ['name' => 'thread_types.all', 'title' => 'Listar tipos de hilo', 'description' => 'Permite listar tipos de hilo.'],
+                    ['name' => 'thread_types.find', 'title' => 'Consultar tipos de hilo', 'description' => 'Permite consultar tipos de hilo'],
+                    ['name' => 'thread_types.store', 'title' => 'Crear tipos de hilo', 'description' => 'Permite crear tipos de hilo.'],
+                    ['name' => 'thread_types.update', 'title' => 'Actualizar tipos de hilo', 'description' => 'Permite actualizar tipos de hilo.'],
+                    ['name' => 'thread_types.delete', 'title' => 'Eliminar tipos de hilo', 'description' => 'Permite eliminar tipos de hilo.'],
+                    ['name' => 'thread_types.restore', 'title' => 'Restaurar tipos de hilo', 'description' => 'Permite restaurar tipos de hilo.'],
+                    ['name' => 'thread_types.settings', 'title' => 'Configurar tipos de hilo', 'description' => 'Permite configurar tipos de hilo.'],
+                ]
+            ],
+
+            [
+                'role' => [
+                    'name' => 'typification',
+                    'title' => 'Tipificaciones',
+                    'description' => 'Gestión de tipos de insumo y variantes.',
+                ],
+                'permissions' => [
+                    ['name' => 'typification.supply_types.all', 'title' => 'Listar tipos de insumo', 'description' => 'Permite listar tipos de insumo.'],
+                    ['name' => 'typification.supply_types.find', 'title' => 'Consultar tipos de insumo', 'description' => 'Permite consultar tipos de insumo'],
+                    ['name' => 'typification.supply_types.store', 'title' => 'Crear tipos de insumo', 'description' => 'Permite crear tipos de insumo.'],
+                    ['name' => 'typification.supply_types.update', 'title' => 'Actualizar tipos de insumo', 'description' => 'Permite actualizar tipos de insumo.'],
+                    ['name' => 'typification.supply_types.delete', 'title' => 'Eliminar tipos de insumo', 'description' => 'Permite eliminar tipos de insumo.'],
+                    ['name' => 'typification.supply_types.restore', 'title' => 'Restaurar tipos de insumo', 'description' => 'Permite restaurar tipos de insumo.'],
+                    ['name' => 'typification.supply_types.settings', 'title' => 'Configurar tipos de insumo', 'description' => 'Permite configurar tipos de insumo.'],
+                    ['name' => 'typification.supply_types.variants.all', 'title' => 'Listar variantes', 'description' => 'Permite listar variantes.'],
+                    ['name' => 'typification.supply_types.variants.find', 'title' => 'Consultar variantes', 'description' => 'Permite consultar variantes'],
+                    ['name' => 'typification.supply_types.variants.store', 'title' => 'Crear variantes', 'description' => 'Permite crear variantes.'],
+                    ['name' => 'typification.supply_types.variants.update', 'title' => 'Actualizar variantes', 'description' => 'Permite actualizar variantes.'],
+                    ['name' => 'typification.supply_types.variants.delete', 'title' => 'Eliminar variantes', 'description' => 'Permite eliminar variantes.'],
+                    ['name' => 'typification.supply_types.variants.restore', 'title' => 'Restaurar variantes', 'description' => 'Permite restaurar variantes.'],
+                    ['name' => 'typification.supply_types.variants.settings', 'title' => 'Configurar variantes', 'description' => 'Permite configurar variantes.'],
+
+                ]
+            ],
+            [
+                'role' => [
+                    'name' => 'management',
+                    'title' => 'Gestión',
+                    'description' => 'Gestión.',
+                ],
+                'permissions' => [
+                    ['name' => 'management.collections.find', 'title' => 'Consultar colecciones', 'description' => 'Permite consultar colecciones.'],
                 ]
             ],
 

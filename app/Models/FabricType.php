@@ -14,7 +14,7 @@ class FabricType extends Model implements Auditable
 {
     use Auditing, HasRoles, SoftDeletes;
 
-    public const ITEM_ID = 30;
+    public const ITEM_ID = 33;
 
     protected $table = 'subitems';
 
