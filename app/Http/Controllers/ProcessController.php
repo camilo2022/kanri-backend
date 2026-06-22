@@ -143,7 +143,7 @@ class ProcessController extends Controller
     public function all(ProcessAllRequest $request)
     {
         try {
-            $processes = Process::with(['before_processes', 'after_processes', 'subprocesses'])
+            $processes = Process::with(['before_processes', 'after_processes', 'subprocesses' => ['operations']])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })

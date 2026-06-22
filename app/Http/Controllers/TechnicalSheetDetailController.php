@@ -17,7 +17,7 @@ class TechnicalSheetDetailController extends Controller
         foreach ($request->input('technical_sheet_details', []) as $technical_sheet_detail) {
             TechnicalSheetDetail::updateOrCreate(
                 [
-                    'technical_sheet_id' => $technical_sheet_detail->technical_sheet_id,
+                    'technical_sheet_id' => $request->integer('id'),
                     'model_type' => $technical_sheet_detail['model_type'],
                     'model_id' => $technical_sheet_detail['model_id'],
                 ],
@@ -27,7 +27,6 @@ class TechnicalSheetDetailController extends Controller
                 ]
             );
         }
-
         return $this->successResponse(
             $this->getMessage('Success'),
             200

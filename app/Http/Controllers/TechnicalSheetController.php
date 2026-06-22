@@ -14,6 +14,7 @@ use App\Http\Resources\Product\ProductResource;
 use App\Http\Resources\TechnicalSheet\TechnicalSheetResource;
 use App\Models\Product;
 use App\Models\TechnicalSheet;
+use App\Models\TechnicalSheetDetail;
 use App\Services\FileService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -147,6 +148,8 @@ class TechnicalSheetController extends Controller
                 );
             }
 
+            $this->save($request->input('technical_sheet_details', []), $technical_sheet->id);
+
             return $this->successResponse(
                 new TechnicalSheetResource($technical_sheet),
                 $this->getMessage('Success'),
@@ -166,6 +169,7 @@ class TechnicalSheetController extends Controller
     public function update(TechnicalSheetUpdateRequest $request, $id)
     {
         try {
+            logger('Ingreso al controller');
             $technical_sheet = TechnicalSheet::findOrFail($id);
 
             $technical_sheet->date = $request->input('date');
@@ -210,11 +214,40 @@ class TechnicalSheetController extends Controller
                 );
             }
 
+            $this->save($request->input('technical_sheet_details', []), $technical_sheet->id);
+
             return $this->successResponse(
                 new TechnicalSheetResource($technical_sheet),
                 $this->getMessage('Success'),
                 201
             );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    private function save(array $technical_sheet_details, int $technical_sheet_id)
+    {
+        try {
+            foreach ($technical_sheet_details as $technical_sheet_detail) {
+                TechnicalSheetDetail::updateOrCreate(
+                    [
+                        'technical_sheet_id' => $technical_sheet_id,
+                        'model_type' => $technical_sheet_detail['model_type'],
+                        'model_id' => $technical_sheet_detail['model_id'],
+                    ],
+                    [
+                        'status' => $technical_sheet_detail['status'],
+                        'settings' => $technical_sheet_detail['settings'] ?? (object) [],
+                    ]
+                );
+            }
         } catch (\Throwable $e) {
             return $this->errorResponse(
                 [
