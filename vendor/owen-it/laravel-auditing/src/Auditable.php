@@ -70,8 +70,6 @@ trait Auditable
      */
     public $preloadedResolverData = [];
 
-    public $tags;
-
     /**
      * Auditable boot logic.
      *
@@ -79,7 +77,7 @@ trait Auditable
      */
     public static function bootAuditable()
     {
-        if (App::getFacadeRoot() && static::isAuditingEnabled()) {
+        if (App::getFacadeRoot() && Config::get('audit.enabled', true)) {
             $registerObserver = fn() => static::observe(AuditableObserver::class);
 
             if (method_exists(static::class, 'whenBooted')) {
@@ -330,7 +328,9 @@ trait Auditable
             }
         }
 
-        $morphPrefix = Config::get('audit.user.morph_prefix', 'user');;
+        $morphPrefix = Config::get('audit.user.morph_prefix', 'user');
+
+        $tags = implode(',', $this->generateTags());
 
         $user = $this->resolveUser();
 
@@ -340,9 +340,9 @@ trait Auditable
             'event' => $this->auditEvent,
             'auditable_id' => $this->getKey(),
             'auditable_type' => $this->getMorphClass(),
-            $morphPrefix . '_id' => $user ? $user->getAuthIdentifier() : null,
-            $morphPrefix . '_type' => $user ? $user->getMorphClass() : null,
-            'tags' => $this->tags,
+            $morphPrefix.'_id' => $user ? $user->getAuthIdentifier() : null,
+            $morphPrefix.'_type' => $user ? $user->getMorphClass() : null,
+            'tags' => empty($tags) ? null : $tags,
         ], $this->runResolvers()));
     }
 
@@ -392,7 +392,7 @@ trait Auditable
             }
 
             if (! is_subclass_of($implementation, Resolver::class)) {
-                throw new AuditingException('Invalid Resolver implementation for: ' . $name);
+                throw new AuditingException('Invalid Resolver implementation for: '.$name);
             }
             $resolved[$name] = call_user_func([$implementation, 'resolve'], $this);
         }
@@ -825,19 +825,17 @@ trait Auditable
      */
     private function dispatchRelationAuditEvent($relationName, $event, $old, $new)
     {
-        $old = collect($old)->values()->toArray();
+        $this->auditCustomOld[$relationName] = $old->diff($new)->toArray();
+        $this->auditCustomNew[$relationName] = $new->diff($old)->toArray();
 
-        $new = collect($new)->values()->toArray();
-
-        $this->auditCustomOld[$relationName] = $old;
-        $this->auditCustomNew[$relationName] = $new;
-
-        if (empty($old) && empty($new)) {
+        if (
+            empty($this->auditCustomOld[$relationName]) &&
+            empty($this->auditCustomNew[$relationName])
+        ) {
             $this->auditCustomOld = $this->auditCustomNew = [];
         }
 
         $this->auditEvent = $event;
-        $this->tags = $relationName;
         $this->isCustomEvent = true;
         Event::dispatch(new AuditCustom($this));
         $this->auditCustomOld = $this->auditCustomNew = [];
