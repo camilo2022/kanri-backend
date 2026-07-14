@@ -21,7 +21,6 @@ class SupplierCollection extends ResourceCollection
                     'deleted_at' => $this->formatDate($supplier->deleted_at),
                     'settings' => $supplier->settings,
                     'item' => $supplier->item,
-                    'process' => $supplier->process
                 ];
             }),
             'meta' => [

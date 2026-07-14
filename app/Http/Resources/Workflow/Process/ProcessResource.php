@@ -20,6 +20,7 @@ use App\Models\Supplier;
 use App\Models\SupplyType;
 use App\Models\ThreadType;
 use App\Models\Trademark;
+use App\Models\Variant;
 use App\Models\WaistbandType;
 use App\Models\WashTone;
 use App\Models\YokeType;
@@ -84,12 +85,6 @@ class ProcessResource extends JsonResource
             'label' => 'Grupos',
             'model' => Group::class,
             'url' => '/classification/groups/all',
-            'option' => 'name'
-        ],
-        'clothing_lines' => [
-            'label' => 'Líneas',
-            'model' => ClothingLine::class,
-            'url' => '/clothing_lines/all',
             'option' => 'name'
         ],
         'garment_types' => [
@@ -172,15 +167,36 @@ class ProcessResource extends JsonResource
         'supply_types' => [
             'label' => 'Tipos de Insumo',
             'model' => SupplyType::class,
-            'url' => '/supply_types/all',
-            'option' => 'name'
+            'url' => '/typification/supply_types/all',
+            'option' => 'name',
+            'field' => 'supply_type_id',
+            'columns' => [
+                'description' => 'Descripcion'
+            ]
         ],
         'employees' => [
             'label' => 'Empleados',
             'model' => Employee::class,
             'url' => '/employees/all',
             'value' => 'id',
-            'option' => ['person.names', 'person.last_names']
+            'option' => ['person.names', 'person.last_names'],
+            'field' => 'employee_id'
         ],
+        'variants' => [
+            'label' => 'Variantes',
+            'model' => Variant::class,
+            'url' => '/typification/variants/all/{supply_type_id}',
+            'option' => 'name',
+            'field' => 'variant_id',
+            'param' => SupplyType::class,
+            'params' => [
+                Color::class
+            ],
+            'columns' => [
+                'description' => 'Descripcion',
+                'color_id' => 'Color',
+                'supplier_id' => 'Proveedor'
+            ]
+        ]
     ];
 }

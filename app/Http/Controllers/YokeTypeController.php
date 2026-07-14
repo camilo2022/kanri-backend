@@ -349,6 +349,7 @@ class YokeTypeController extends Controller
             $yoke_type = new YokeType();
             $yoke_type->name = $request->input('name');
             $yoke_type->description = $request->input('description');
+            $yoke_type->settings = $request->input('settings');
 
             $yoke_type->save();
 
@@ -467,6 +468,7 @@ class YokeTypeController extends Controller
             $yoke_type = YokeType::findOrFail($id);
             $yoke_type->name = $request->input('name');
             $yoke_type->description = $request->input('description');
+            $yoke_type->settings = $request->input('settings');
 
             $yoke_type->save();
 

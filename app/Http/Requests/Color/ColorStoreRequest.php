@@ -58,4 +58,25 @@ class ColorStoreRequest extends FormRequest
             'settings.finished_product' => 'Es producto terminado'
         ];
     }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+
+            if (!$this->filled('settings.code')) {
+                return;
+            }
+
+            $exists = Color::query()
+                ->where('settings->code', $this->input('settings.code'))
+                ->exists();
+
+            if ($exists) {
+                $validator->errors()->add(
+                    'settings.code',
+                    'El código ya se encuentra registrado.'
+                );
+            }
+        });
+    }
 }

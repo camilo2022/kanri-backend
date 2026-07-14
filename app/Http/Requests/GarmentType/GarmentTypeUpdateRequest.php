@@ -28,7 +28,9 @@ class GarmentTypeUpdateRequest extends FormRequest
         return [
             'id' => ['required', 'exists:subitems,id,item_id,' . GarmentType::ITEM_ID],
             'name' => ['required', 'regex:/^[A-Z ]+$/', 'string', 'min:4', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . GarmentType::ITEM_ID],
-            'description' => ['required', 'regex:/^[A-Z ]+$/', 'max:255']
+            'description' => ['required', 'regex:/^[A-Z ]+$/', 'max:255'],
+            'settings' => ['required', 'array'],
+            'settings.code' => ['required', 'numeric', 'digits_between:2,5'],
         ];
     }
 
@@ -42,6 +44,7 @@ class GarmentTypeUpdateRequest extends FormRequest
             'unique' => 'Ya está registrado.',
             'exists' => 'No está registrado.',
             'regex' => 'Formato Inválido. El campo debe estar en mayúsculas.',
+            'digits_between' => 'Debe tener entre 2 y 5 dígitos.',
         ];
     }
 
@@ -50,8 +53,28 @@ class GarmentTypeUpdateRequest extends FormRequest
         return [
             'id' => 'Identificador del tipo de prenda',
             'name' => 'Nombre',
-            'description' => 'Descripción'
+            'description' => 'Descripción',
+            'settings' => 'Configuraciones',
+            'settings.code' => 'Código',
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+
+            $exists = GarmentType::query()
+                ->where('settings->code', $this->input('settings.code'))
+                ->whereKeyNot($this->route('id'))
+                ->exists();
+
+            if ($exists) {
+                $validator->errors()->add(
+                    'settings.code',
+                    'El código ya se encuentra registrado.'
+                );
+            }
+        });
     }
 
     protected function prepareForValidation()

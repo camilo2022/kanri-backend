@@ -20,6 +20,7 @@ use App\Models\Supplier;
 use App\Models\SupplyType;
 use App\Models\ThreadType;
 use App\Models\Trademark;
+use App\Models\Variant;
 use App\Models\WaistbandType;
 use App\Models\WashTone;
 use App\Models\YokeType;
@@ -84,12 +85,6 @@ class SupplyTypeResource extends JsonResource
             'url' => '/classification/groups/all',
             'option' => 'name'
         ],
-        'clothing_lines' => [
-            'label' => 'Líneas',
-            'model' => ClothingLine::class,
-            'url' => '/clothing_lines/all',
-            'option' => 'name'
-        ],
         'garment_types' => [
             'label' => 'Tipos de Prenda',
             'model' => GarmentType::class,
@@ -136,7 +131,9 @@ class SupplyTypeResource extends JsonResource
             'label' => 'Colores',
             'model' => Color::class,
             'url' => '/colors/all',
-            'option' => 'name'
+            'path' => 'settings.code',
+            'option' => 'name',
+            'field' => 'color_id'
         ],
         'collections' => [
             'label' => 'Colecciones',
@@ -150,11 +147,13 @@ class SupplyTypeResource extends JsonResource
             'url' => '/yoke_types/all',
             'option' => 'name'
         ],
-
         'suppliers' => [
             'label' => 'Proveedores',
             'model' => Supplier::class,
             'url' => '/suppliers/all',
+            'path' => 'settings.code',
+            'option' => 'name',
+            'field' => 'supplier_id'
         ],
         'fabric_types' => [
             'label' => 'Tipos de Tela',
@@ -172,14 +171,24 @@ class SupplyTypeResource extends JsonResource
             'label' => 'Tipos de Insumo',
             'model' => SupplyType::class,
             'url' => '/supply_types/all',
-            'option' => 'name'
+            'option' => 'name',
+        ],
+        'variants' => [
+            'label' => 'Variantes',
+            'model' => Variant::class,
+            'url' => '/typification/supply_types/variants/all/{supply_type_id}',
+            'option' => 'name',
+            'field' => 'variant_id',
+            'path' => 'name',
         ],
         'employees' => [
             'label' => 'Empleados',
             'model' => Employee::class,
             'url' => '/employees/all',
             'value' => 'id',
-            'option' => ['person.names', 'person.last_names']
-        ],
+            'path' => 'person.document',
+            'option' => ['person.names', 'person.last_names'],
+            'field' => 'employee_id'
+        ]
     ];
 }

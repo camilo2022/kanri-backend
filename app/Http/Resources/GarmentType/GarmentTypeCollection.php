@@ -19,6 +19,7 @@ class GarmentTypeCollection extends ResourceCollection
                     'created_at' => $this->formatDate($garment_type->created_at),
                     'updated_at' => $this->formatDate($garment_type->updated_at),
                     'deleted_at' => $this->formatDate($garment_type->deleted_at),
+                    'settings' => $garment_type->settings,
                     'item' => $garment_type->item,
                 ];
             }),

@@ -24,9 +24,10 @@ class TechnicalSheetFindRequest extends FormRequest
 
     public function rules(): array
     {
+        logger($this);
         return [
             'id' => ['nullable', 'numeric', 'exists:technical_sheets,id', 'required_without_all:product_id,uuid', 'prohibits:product_id,uuid'],
-            'product_id' => ['nullable', 'numeric', 'exists:technical_sheets,product_id', 'required_without_all:id,uuid', 'prohibits:id,uuid'],
+            'product_id' => ['nullable', 'numeric', 'exists:products,id', 'required_without_all:id,uuid', 'prohibits:id,uuid'],
             'uuid' => ['nullable', 'uuid', 'exists:technical_sheets,uuid', 'required_without_all:id,product_id', 'prohibits:id,product_id'],
         ];
     }

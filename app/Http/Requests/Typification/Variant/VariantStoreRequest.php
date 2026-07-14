@@ -7,6 +7,7 @@ use App\Models\Variant;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\Validator as Valid;
 
 class VariantStoreRequest extends FormRequest
 {
@@ -52,5 +53,84 @@ class VariantStoreRequest extends FormRequest
             'name' => 'Nombre',
             'description' => 'Descripción',
         ];
+    }
+
+    protected function resolveRule(string $rule): string
+    {
+        if (!is_string($rule)) {
+            return $rule;
+        }
+
+        preg_match_all(
+            '/([A-Za-z\\\\]+)::([A-Z_]+)/',
+            $rule,
+            $matches,
+            PREG_SET_ORDER
+        );
+
+        foreach ($matches as $match) {
+
+            $fullConstant = "{$match[1]}::{$match[2]}";
+
+            if (defined($fullConstant)) {
+
+                $rule = str_replace(
+                    $fullConstant,
+                    constant($fullConstant),
+                    $rule
+                );
+            }
+        }
+
+        return $rule;
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $supply_type = SupplyType::find($this->input('supply_type_id'));
+            $rules = [];
+
+            foreach ($supply_type?->settings?->form ?? [] as $column) {
+
+                $field = $column->field ?? null;
+
+                if (!$field) {
+                    continue;
+                }
+
+                $group = isset($column->model) ? 'class' : 'values';
+
+                $fieldRules = [];
+
+                foreach ($column->rules ?? [] as $rule) {
+                    $fieldRules[] = $this->resolveRule($rule);
+                }
+
+                if (($column->cardinality ?? 'single') === 'multiple') {
+                    $rules["$group.$field"] = ['array'];
+
+                    foreach ($fieldRules as $rule) {
+                        $rules["$group.$field.*"][] = $rule;
+                    }
+                } else {
+                    $rules["$group.$field"] = $fieldRules;
+                }
+            }
+
+            $rowValidator = Valid::make(
+                $this->all(),
+                $rules,
+                $this->messages()
+            );
+
+            if ($rowValidator->fails()) {
+                foreach ($rowValidator->errors()->messages() as $field => $messages) {
+                    foreach ($messages as $message) {
+                        $validator->errors()->add($field, $message);
+                    }
+                }
+            }
+        });
     }
 }

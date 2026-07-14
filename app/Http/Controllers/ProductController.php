@@ -20,7 +20,7 @@ class ProductController extends Controller
     public function all(ProductAllRequest $request)
     {
         try {
-            $products = Product::with(['subcategory' => ['category'], 'trademark' => ['group'], 'technical_sheet' => ['collection', 'subgroup', 'color', 'waistband_type', 'garment_type', 'wash_tone', 'boot_type', 'yoke_type', 'back_type', 'technical_sheet_details', 'photo_d', 'photo_t']])
+            $products = Product::with(['subcategory' => ['category'], 'trademark' => ['group'], 'technical_sheet' => ['collection', 'subgroup', 'color', 'waistband_type', 'garment_type', 'wash_tone', 'boot_type', 'yoke_type', 'back_type', 'technical_sheet_details', 'photo_d', 'photo_t', 'variants']])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -52,11 +52,11 @@ class ProductController extends Controller
     public function find(ProductFindRequest $request, $id)
     {
         try {
-            $piece = Product::with(['trademark' => ['group'], 'subcategory' => ['category']])
+            $product = Product::with(['trademark' => ['group', 'sizes'], 'subcategory' => ['category']])
                 ->findOrFail($id);
 
             return $this->successResponse(
-                new ProductResource($piece),
+                new ProductResource($product),
                 $this->getMessage('Success'),
                 200
             );

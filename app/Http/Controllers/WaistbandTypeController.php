@@ -9,6 +9,7 @@ use App\Http\Requests\WaistbandType\WaistbandTypeRestoreRequest;
 use App\Http\Requests\WaistbandType\WaistbandTypeStoreRequest;
 use App\Http\Requests\WaistbandType\WaistbandTypeUpdateRequest;
 use App\Http\Resources\WaistbandType\WaistbandTypeCollection;
+use App\Http\Resources\WaistbandType\WaistbandTypeResource;
 use App\Models\WaistbandType;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -346,6 +347,8 @@ class WaistbandTypeController extends Controller
             $waistband_type = new WaistbandType();
             $waistband_type->name = $request->input('name');
             $waistband_type->description = $request->input('description');
+            $waistband_type->settings = $request->input('settings');
+
             $waistband_type->save();
 
             return $this->successResponse(
@@ -463,6 +466,8 @@ class WaistbandTypeController extends Controller
             $waistband_type = WaistbandType::findOrFail($id);
             $waistband_type->name = $request->input('name');
             $waistband_type->description = $request->input('description');
+            $waistband_type->settings = $request->input('settings');
+
             $waistband_type->save();
 
             return $this->successResponse(

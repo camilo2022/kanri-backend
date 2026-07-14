@@ -27,7 +27,9 @@ class GarmentTypeStoreRequest extends FormRequest
     {
         return [
             'name' => ['required', 'regex:/^[A-Z ]+$/', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . GarmentType::ITEM_ID],
-            'description' => ['required', 'regex:/^[A-Z ]+$/', 'max:255']
+            'description' => ['required', 'regex:/^[A-Z ]+$/', 'max:255'],
+            'settings' => ['required', 'array'],
+            'settings.code' => ['required', 'numeric', 'digits_between:2,5'],
         ];
     }
 
@@ -40,6 +42,7 @@ class GarmentTypeStoreRequest extends FormRequest
             'min' => 'Se permite mínimo :min caracteres.',
             'unique' => 'Ya está registrado.',
             'regex' => 'Formato Inválido. El campo debe estar en mayúsculas.',
+            'digits_between' => 'Debe tener entre 2 y 5 dígitos.',
         ];
     }
 
@@ -47,7 +50,26 @@ class GarmentTypeStoreRequest extends FormRequest
     {
         return [
             'name' => 'Nombre',
-            'description' => 'Descripción'
+            'description' => 'Descripción',
+            'settings' => 'Configuraciones',
+            'settings.code' => 'Código',
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+
+            $exists = GarmentType::query()
+                ->where('settings->code', $this->input('settings.code'))
+                ->exists();
+
+            if ($exists) {
+                $validator->errors()->add(
+                    'settings.code',
+                    'El código ya se encuentra registrado.'
+                );
+            }
+        });
     }
 }

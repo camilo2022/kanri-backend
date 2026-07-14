@@ -347,6 +347,8 @@ class GarmentTypeController extends Controller
             $garment_type = new GarmentType();
             $garment_type->name = $request->input('name');
             $garment_type->description = $request->input('description');
+            $garment_type->settings = $request->input('settings');
+
             $garment_type->save();
 
             return $this->successResponse(
@@ -464,6 +466,8 @@ class GarmentTypeController extends Controller
             $garment_type = GarmentType::findOrFail($id);
             $garment_type->name = $request->input('name');
             $garment_type->description = $request->input('description');
+            $garment_type->settings = $request->input('settings');
+
             $garment_type->save();
 
             return $this->successResponse(

@@ -374,6 +374,8 @@ class SupplierController extends Controller
             $supplier = new Supplier();
             $supplier->name = $request->input('name');
             $supplier->description = $request->input('description');
+            $supplier->settings = $request->input('settings');
+
             $supplier->save();
 
             return $this->successResponse(
@@ -497,6 +499,8 @@ class SupplierController extends Controller
             $supplier = Supplier::findOrFail($id);
             $supplier->name = $request->input('name');
             $supplier->description = $request->input('description');
+            $supplier->settings = $request->input('settings');
+
             $supplier->save();
 
             return $this->successResponse(

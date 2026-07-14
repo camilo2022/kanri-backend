@@ -28,6 +28,7 @@ use App\Http\Controllers\PieceController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\ProcessController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductionOrderController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SilhouetteController;
 use App\Http\Controllers\SizeController;
@@ -45,6 +46,7 @@ use App\Http\Controllers\VariantController;
 use App\Http\Controllers\WaistbandTypeController;
 use App\Http\Controllers\WashToneController;
 use App\Http\Controllers\YokeTypeController;
+use App\Models\ProductionOrder;
 use Illuminate\Support\Facades\Route;
 
 
@@ -484,6 +486,8 @@ Route::prefix('/typification')->group(function () {
                 Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.setting']);
                 Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.delete']);
                 Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.restore']);
+                Route::get('/excel/{supply_type_id}', 'excel')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.restore']);
+                Route::post('/import/{supply_type_id}', 'import')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.restore']);
             });
         });
     });
@@ -563,6 +567,12 @@ Route::prefix('/technical_sheets')->group(function () {
         Route::get('/find', 'find')->middleware(['auth:sanctum', 'can:technical_sheets.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:technical_sheets.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:technical_sheets.update']);
+    });
+    Route::prefix('/production_orders')->group(function () {
+        Route::controller(ProductionOrderController::class)->group(function () {
+            Route::get('/all/{technical_sheet_id}', 'all')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.all']);
+            Route::get('/find', 'find')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.find']);
+        });
     });
 });
 

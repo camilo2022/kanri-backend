@@ -349,6 +349,8 @@ class BackTypeController extends Controller
             $back_type = new BackType();
             $back_type->name = $request->input('name');
             $back_type->description = $request->input('description');
+            $back_type->settings = $request->input('settings');
+
             $back_type->save();
 
             return $this->successResponse(
@@ -466,6 +468,8 @@ class BackTypeController extends Controller
             $back_type = BackType::findOrFail($id);
             $back_type->name = $request->input('name');
             $back_type->description = $request->input('description');
+            $back_type->settings = $request->input('settings');
+
             $back_type->save();
 
             return $this->successResponse(

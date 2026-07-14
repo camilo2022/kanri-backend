@@ -169,6 +169,7 @@ class BootTypeController extends Controller
             );
         }
     }
+
     /**
      * @OA\Get(
      *     path="/boot_types/find/{id}",
@@ -348,6 +349,8 @@ class BootTypeController extends Controller
             $boot_type = new BootType();
             $boot_type->name = $request->input('name');
             $boot_type->description = $request->input('description');
+            $boot_type->settings = $request->input('settings');
+
             $boot_type->save();
 
             return $this->successResponse(
@@ -465,6 +468,8 @@ class BootTypeController extends Controller
             $boot_type = BootType::findOrFail($id);
             $boot_type->name = $request->input('name');
             $boot_type->description = $request->input('description');
+            $boot_type->settings = $request->input('settings');
+
             $boot_type->save();
 
             return $this->successResponse(

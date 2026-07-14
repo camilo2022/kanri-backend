@@ -295,9 +295,14 @@ class EmployeeController extends Controller
     {
         try {
             $employees = Employee::with(['person' => ['photo'], 'position' => ['area'], 'risk_manager', 'health_entity', 'pension_fund', 'compensation_fund', 'user' => function ($q) {
-                $q->withTrashed()
-                    ->with(['roles', 'permissions']);
-            }])
+                    $q->withTrashed()
+                        ->with(['roles', 'permissions']);
+                }])
+                ->when($request->filled('position_id'), function ($query) use ($request) {
+                    return $query->whereHas('position', function ($query) use ($request) {
+                        return $query->where('id', $request->integer('position_id'));
+                    });
+                })
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })

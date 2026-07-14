@@ -11,6 +11,7 @@ use App\Models\Employee;
 use App\Models\FabricType;
 use App\Models\GarmentType;
 use App\Models\Group;
+use App\Models\ProductionOrder;
 use App\Models\Silhouette;
 use App\Models\Size;
 use App\Models\Subcategory;
@@ -21,6 +22,7 @@ use App\Models\TechnicalSheet;
 use App\Models\TechnicalSheetDetail;
 use App\Models\ThreadType;
 use App\Models\Trademark;
+use App\Models\Variant;
 use App\Models\WaistbandType;
 use App\Models\WashTone;
 use App\Models\YokeType;
@@ -59,6 +61,7 @@ class TechnicalSheetResource extends JsonResource
                 'updated_at' => $this->formatDate($this->updated_at),
                 'deleted_at' => $this->formatDate($this->deleted_at),
                 'technical_sheet_details' => $this->technical_sheet_details,
+                'variants' => $this->variants,
                 'pattern_maker' => $this->pattern_maker,
                 'product' => $this->product,
                 'collection' => $this->collection,
@@ -75,6 +78,7 @@ class TechnicalSheetResource extends JsonResource
             ],
             'status_technical_sheet' => TechnicalSheet::statuses(),
             'status_technical_sheet_detail' => TechnicalSheetDetail::statuses(),
+            'status_production_order' => ProductionOrder::statuses(),
             'model_types' => $this->model_types,
         ];
     }
@@ -196,8 +200,9 @@ class TechnicalSheetResource extends JsonResource
         'supply_types' => [
             'label' => 'Tipos de Insumo',
             'model' => SupplyType::class,
-            'url' => '/supply_types/all',
-            'option' => 'name'
+            'url' => '/typification/supply_types/all',
+            'option' => 'name',
+            'field' => 'supply_type_id'
         ],
         'employees' => [
             'label' => 'Empleados',
@@ -206,5 +211,21 @@ class TechnicalSheetResource extends JsonResource
             'value' => 'id',
             'option' => ['person.names', 'person.last_names']
         ],
+        'variants' => [
+            'label' => 'Variantes',
+            'model' => Variant::class,
+            'url' => '/typification/supply_types/variants/all/{supply_type_id}',
+            'option' => 'name',
+            'field' => 'variant_id',
+            'param' => SupplyType::class,
+            'params' => [
+                Color::class
+            ],
+            'columns' => [
+                'description' => 'Descripcion',
+                'color' => 'Color',
+                'supplier' => 'Proveedor'
+            ]
+        ]
     ];
 }

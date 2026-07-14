@@ -19,6 +19,7 @@ class BackTypeCollection extends ResourceCollection
                     'created_at' => $this->formatDate($back_type->created_at),
                     'updated_at' => $this->formatDate($back_type->updated_at),
                     'deleted_at' => $this->formatDate($back_type->deleted_at),
+                    'settings' => $back_type->settings,
                     'item' => $back_type->item,
                 ];
             }),

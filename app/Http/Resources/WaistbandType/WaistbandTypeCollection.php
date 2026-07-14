@@ -13,12 +13,14 @@ class WaistbandTypeCollection extends ResourceCollection
             'waistband_types' => $this->collection->map(function ($waistband_type) {
                 return [
                     'id' => $waistband_type->id,
-                    'item' => $waistband_type->item,
+                    'item_id' => $waistband_type->item_id,
                     'name' => $waistband_type->name,
                     'description' => $waistband_type->description,
                     'created_at' => $this->formatDate($waistband_type->created_at),
                     'updated_at' => $this->formatDate($waistband_type->updated_at),
                     'deleted_at' => $this->formatDate($waistband_type->deleted_at),
+                    'settings' => $waistband_type->settings,
+                    'item' => $waistband_type->item,
                 ];
             }),
             'meta' => [

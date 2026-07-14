@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Product;
 
+use App\Models\TechnicalSheet;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
@@ -27,6 +28,7 @@ class ProductCollection extends ResourceCollection
             'meta' => [
                 'pagination' => $this->paginationMeta(),
             ],
+            'status_technical_sheet' => TechnicalSheet::statuses(),
         ];
     }
 

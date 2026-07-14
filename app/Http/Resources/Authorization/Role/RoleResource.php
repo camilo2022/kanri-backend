@@ -21,6 +21,7 @@ class RoleResource extends JsonResource
                 'updated_at' => $this->formatDate($this->updated_at),
                 'deleted_at' => $this->formatDate($this->deleted_at),
                 'item' => $this->item,
+                'permissions' => $this->permissions
             ]
         ];
     }

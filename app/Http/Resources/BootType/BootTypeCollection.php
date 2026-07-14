@@ -19,6 +19,7 @@ class BootTypeCollection extends ResourceCollection
                     'created_at' => $this->formatDate($boot_type->created_at),
                     'updated_at' => $this->formatDate($boot_type->updated_at),
                     'deleted_at' => $this->formatDate($boot_type->deleted_at),
+                    'settings' => $boot_type->settings,
                     'item' => $boot_type->item,
                 ];
             }),

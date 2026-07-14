@@ -1,0 +1,279 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\TechnicalSheet\ProductionOrder\ProductionOrderFindRequest;
+use App\Http\Requests\TechnicalSheet\ProductionOrder\ProductionOrderAllRequest;
+use App\Http\Requests\TechnicalSheet\TechnicalSheetFindRequest;
+use App\Http\Requests\TechnicalSheet\TechnicalSheetStoreRequest;
+use App\Http\Requests\TechnicalSheet\TechnicalSheetUpdateRequest;
+use App\Http\Resources\TechnicalSheet\ProductionOrder\ProductionOrderCollection;
+use App\Http\Resources\TechnicalSheet\ProductionOrderResource;
+use App\Http\Resources\TechnicalSheet\TechnicalSheetResource;
+use App\Models\ProductionOrder;
+use App\Models\TechnicalSheet;
+use App\Models\TechnicalSheetDetail;
+use App\Services\FileService;
+use App\Traits\ApiMessage;
+use App\Traits\ApiResponser;
+use Illuminate\Support\Str;
+
+class ProductionOrderController extends Controller
+{
+    use ApiMessage, ApiResponser;
+
+    public function all(ProductionOrderAllRequest $request, $technical_sheet_id)
+    {
+        try {
+            $production_orders = ProductionOrder::with(['technical_sheet'])
+                ->whereHas('technical_sheet', fn($r) => $r->where('id', $technical_sheet_id))
+                ->when($request->filled('search'), function ($query) use ($request) {
+                    return $query->search($request->input('search'));
+                })
+                ->when($request->boolean('with_trashed'), function ($query) {
+                    return $query->withTrashed();
+                })
+                ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
+                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                });
+
+            $production_orders = $production_orders->paginate($request->integer('per_page', $production_orders->count()));
+
+            return $this->successResponse(
+                new ProductionOrderCollection($production_orders),
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    /*
+    public function all(ProductAllRequest $request)
+    {
+        try {
+            $products = Product::with(['subcategory' => ['category'], 'trademark' => ['group'], 'technical_sheet' => ['collection', 'subgroup', 'color', 'waistband_type', 'garment_type', 'wash_tone', 'boot_type', 'yoke_type', 'back_type', 'technical_sheet_details']])
+                ->when($request->filled('search'), function ($query) use ($request) {
+                    return $query->search($request->input('search'));
+                })
+                ->when($request->boolean('with_trashed'), function ($query) {
+                    return $query->withTrashed();
+                })
+                ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
+                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                });
+
+            $products = $products->paginate($request->integer('per_page', $products->count()));
+
+            return $this->successResponse(
+                new ProductCollection($products),
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+*/
+    public function find(ProductionOrderFindRequest $request)
+    {
+        try {
+            $production_order = ProductionOrder::with(['technical_sheet' => ['product']])
+                ->when($request->filled('id'), function ($query) use ($request) {
+                    return $query->findOrFail($request->integer('id'));
+                })
+                ->when($request->filled('technical_sheet_id'), function ($query) use ($request) {
+                    return $query->where('technical_sheet_id', $request->integer('technical_sheet_id'));
+                })->firstOrFail();
+
+            return $this->successResponse(
+                new ProductionOrderResource($production_order),
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    public function store(TechnicalSheetStoreRequest $request)
+    {
+        try {
+            $technical_sheet = new TechnicalSheet();
+
+            $technical_sheet->uuid = Str::uuid();
+            $technical_sheet->date = $request->input('date');
+            $technical_sheet->product_id = $request->integer('product_id');
+            $technical_sheet->collection_id = $request->integer('collection_id');
+            $technical_sheet->garment_type_id = $request->integer('garment_type_id');
+            $technical_sheet->subgroup_id = $request->integer('subgroup_id');
+            $technical_sheet->wash_tone_id = $request->integer('wash_tone_id');
+            $technical_sheet->color_id = $request->integer('color_id');
+            $technical_sheet->waistband_type_id = $request->integer('waistband_type_id');
+            $technical_sheet->measure_of_waistband = $request->integer('measure_of_waistband');
+            $technical_sheet->boot_type_id = $request->integer('boot_type_id');
+            $technical_sheet->yoke_type_id = $request->integer('yoke_type_id');
+            $technical_sheet->back_type_id = $request->integer('back_type_id');
+            $technical_sheet->physical_sample = $request->integer('physical_sample');
+            $technical_sheet->number_of_buttons = $request->integer('number_of_buttons');
+            $technical_sheet->pattern_maker_id = $request->integer('pattern_maker_id');
+            $technical_sheet->description = $request->input('description');
+            $technical_sheet->observation = $request->input('observation');
+
+            $technical_sheet->save();
+
+            if ($request->hasFile('photo_d')) {
+                app(FileService::class)->save(
+                    $technical_sheet,
+                    $request->file('photo_d.file'),
+                    $request->integer('photo_d.photo_type_id'),
+                    $request->integer('photo_d.photo_subtype_id'),
+                    'public',
+                    'technical_sheet'
+                );
+            }
+
+            if ($request->hasFile('photo_t')) {
+                app(FileService::class)->save(
+                    $technical_sheet,
+                    $request->file('photo_t.file'),
+                    $request->integer('photo_t.photo_type_id'),
+                    $request->integer('photo_t.photo_subtype_id'),
+                    'public',
+                    'technical_sheet'
+                );
+            }
+
+            $this->save($request->input('technical_sheet_details', []), $technical_sheet->id);
+
+            return $this->successResponse(
+                new TechnicalSheetResource($technical_sheet),
+                $this->getMessage('Success'),
+                201
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    public function update(TechnicalSheetUpdateRequest $request, $id)
+    {
+        try {
+            $technical_sheet = TechnicalSheet::findOrFail($id);
+
+            $technical_sheet->date = $request->input('date');
+            $technical_sheet->code = $request->input('code');
+            $technical_sheet->product_id = $request->integer('product_id');
+            $technical_sheet->collection_id = $request->integer('collection_id');
+            $technical_sheet->garment_type_id = $request->integer('garment_type_id');
+            $technical_sheet->subgroup_id = $request->integer('subgroup_id');
+            $technical_sheet->wash_tone_id = $request->integer('wash_tone_id');
+            $technical_sheet->color_id = $request->integer('color_id');
+            $technical_sheet->waistband_type_id = $request->integer('waistband_type_id');
+            $technical_sheet->measure_of_waistband = $request->integer('measure_of_waistband');
+            $technical_sheet->boot_type_id = $request->integer('boot_type_id');
+            $technical_sheet->yoke_type_id = $request->integer('yoke_type_id');
+            $technical_sheet->back_type_id = $request->integer('back_type_id');
+            $technical_sheet->physical_sample = $request->integer('physical_sample');
+            $technical_sheet->number_of_buttons = $request->integer('number_of_buttons');
+            $technical_sheet->description = $request->input('description');
+            $technical_sheet->observation = $request->input('observation');
+            $technical_sheet->pattern_maker_id = $request->integer('pattern_maker_id');
+            $technical_sheet->status = $request->input('status');
+
+            $technical_sheet->save();
+            $technical_sheet->auditSync('variants', $request->input('variants', []));
+
+            if ($request->hasFile('photo_d')) {
+                app(FileService::class)->save(
+                    $technical_sheet,
+                    $request->file('photo_d.file'),
+                    $request->integer('photo_d.photo_type_id'),
+                    $request->integer('photo_d.photo_subtype_id'),
+                    'public',
+                    'technical_sheet'
+                );
+            }
+
+            if ($request->hasFile('photo_t')) {
+                app(FileService::class)->save(
+                    $technical_sheet,
+                    $request->file('photo_t.file'),
+                    $request->integer('photo_t.photo_type_id'),
+                    $request->integer('photo_t.photo_subtype_id'),
+                    'public',
+                    'technical_sheet'
+                );
+            }
+
+            $this->save($request->input('technical_sheet_details', []), $technical_sheet->id);
+
+
+            return $this->successResponse(
+                new TechnicalSheetResource($technical_sheet),
+                $this->getMessage('Success'),
+                201
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    private function save(array $technical_sheet_details, int $technical_sheet_id)
+    {
+        try {
+            foreach ($technical_sheet_details as $technical_sheet_detail) {
+                TechnicalSheetDetail::updateOrCreate(
+                    [
+                        'technical_sheet_id' => $technical_sheet_id,
+                        'model_type' => $technical_sheet_detail['model_type'],
+                        'model_id' => $technical_sheet_detail['model_id'],
+                    ],
+                    [
+                        'status' => $technical_sheet_detail['status'],
+                        'settings' => $technical_sheet_detail['settings'] ?? (object) [],
+                    ]
+                );
+            }
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+}

@@ -4,6 +4,7 @@ namespace App\Http\Resources\Typification\Variant;
 
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Support\Str;
 
 class VariantCollection extends ResourceCollection
 {
@@ -11,6 +12,26 @@ class VariantCollection extends ResourceCollection
     {
         return [
             'variants' => $this->collection->map(function ($variant) {
+                $relationships = collect($variant->supply_type->first()?->settings?->form ?? [])
+                    ->where('type', 'selectdinamic')
+                    ->mapWithKeys(function ($field) use ($variant) {
+                        $key = Str::lower(Str::camel(
+                            class_basename($field->model)
+                        ));
+
+                        $query = $variant->related($field->model);
+
+                        return [
+                            $key => $field->cardinality === 'single'
+                                ? $query->first()
+                                : $query->get(),
+
+                            $field->field => $field->cardinality === 'single'
+                                ? $query->first()
+                                : $query->get()->modelKeys(),
+                        ];
+                    })
+                    ->all();
                 return [
                     'id' => $variant->id,
                     'item' => $variant->item,
@@ -20,6 +41,7 @@ class VariantCollection extends ResourceCollection
                     'updated_at' => $this->formatDate($variant->updated_at),
                     'deleted_at' => $this->formatDate($variant->deleted_at),
                     'settings' => $variant->settings,
+                    ...$relationships
                 ];
             }),
             'meta' => [

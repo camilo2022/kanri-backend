@@ -19,6 +19,7 @@ class SizeCollection extends ResourceCollection
                     'created_at' => $this->formatDate($size->created_at),
                     'updated_at' => $this->formatDate($size->updated_at),
                     'deleted_at' => $this->formatDate($size->deleted_at),
+                    'settings' => $size->settings,
                 ];
             }),
             'meta' => [

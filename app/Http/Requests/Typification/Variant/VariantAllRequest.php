@@ -43,7 +43,8 @@ class VariantAllRequest extends FormRequest
             'string' => 'Debe ser una cadena de texto.',
             'numeric' => 'Debe ser un valor numérico.',
             'in' => 'Valor inválido. Permitidos: :values.',
-            'boolean' => 'Deber ser verdadero o falso.'
+            'boolean' => 'Deber ser verdadero o falso.',
+            'exists' => 'No hay ningún registro.'
         ];
     }
 

@@ -226,11 +226,6 @@ class SubprocessSettingRequest extends FormRequest
                                         "El valor no puede ser negativo o igual a 0"
                                     );
                                 }
-                            } else {
-                                $validator->errors()->add(
-                                    "$basePath.rules.min",
-                                    'Valor requerido.'
-                                );
                             }
 
                             if (array_key_exists('max', $array)) {
@@ -247,11 +242,6 @@ class SubprocessSettingRequest extends FormRequest
                                         "El valor no puede ser negativo."
                                     );
                                 }
-                            } else {
-                                $validator->errors()->add(
-                                    "$basePath.rules.max",
-                                    'Valor requerido.'
-                                );
                             }
 
                             if (array_key_exists('min', $array) && array_key_exists('max', $array)) {
@@ -592,11 +582,6 @@ class SubprocessSettingRequest extends FormRequest
                                                 "El valor no puede ser negativo o igual a 0"
                                             );
                                         }
-                                    } else {
-                                        $validator->errors()->add(
-                                            "$basePath.rules.min",
-                                            'Valor requerido.'
-                                        );
                                     }
 
                                     if (array_key_exists('max', $array)) {
@@ -613,11 +598,6 @@ class SubprocessSettingRequest extends FormRequest
                                                 "El valor no puede ser negativo."
                                             );
                                         }
-                                    } else {
-                                        $validator->errors()->add(
-                                            "$basePath.rules.max",
-                                            'Valor requerido.'
-                                        );
                                     }
 
                                     if (array_key_exists('min', $array) && array_key_exists('max', $array)) {

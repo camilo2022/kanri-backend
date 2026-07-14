@@ -27,7 +27,6 @@ class SizeStoreRequest extends FormRequest
     public function rules(): array
     {
         $item = Item::find(Size::ITEM_ID);
-
         return [
             'name' => array_values([
                 'required',
@@ -39,6 +38,7 @@ class SizeStoreRequest extends FormRequest
             ]),
             'description' => array_values(['required', $this->boolean('settings.finished_product') ? $item?->settings?->finished_product?->description : '', 'max:50']),
             'settings' => ['required', 'array'],
+            'settings.code' => ['required', 'numeric', 'digits_between:2,5'],
             'settings.finished_product' => ['required', 'boolean']
         ];
     }
@@ -53,6 +53,7 @@ class SizeStoreRequest extends FormRequest
             'unique' => 'Ya está registrado.',
             'name.regex' => 'Debe ser una talla válida o un número par de 2 dígitos.',
             'description.regex' => 'Debe iniciar con "T" seguido de al menos 2 números.',
+            'digits_between' => 'Debe tener entre 2 y 5 dígitos.',
         ];
     }
 
@@ -62,6 +63,7 @@ class SizeStoreRequest extends FormRequest
             'name' => 'Nombre',
             'description' => 'Descripción',
             'settings' => 'Configuraciones',
+            'settings.code' => 'Código',
             'settings.finished_product' => 'Es producto terminado'
         ];
     }

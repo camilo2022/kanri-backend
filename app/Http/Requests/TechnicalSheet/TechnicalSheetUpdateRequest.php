@@ -9,6 +9,10 @@ use App\Models\Color;
 use App\Models\GarmentType;
 use App\Models\Product;
 use App\Models\Subgroup;
+use App\Models\SupplyType;
+use App\Models\TechnicalSheet;
+use App\Models\Trademark;
+use App\Models\Variant;
 use App\Models\WaistbandType;
 use App\Models\WashTone;
 use App\Models\YokeType;
@@ -38,6 +42,8 @@ class TechnicalSheetUpdateRequest extends FormRequest
         return [
             'id' => ['required', 'exists:technical_sheets,id'],
             'date' => ['required', 'date_format:Y-m-d', 'before_or_equal:now'],
+            'status' =>  ['required', 'in:' . implode(',', [TechnicalSheet::PENDING, TechnicalSheet::REVIEW, TechnicalSheet::APPROVED, TechnicalSheet::CANCELLED])],
+            'code' => ['required', 'unique:technical_sheets,code,' . $this->input('id') . ',id'],
             'product_id' => ['required', 'exists:products,id', 'unique:technical_sheets,product_id,' . $this->route('id') . ',id'],
             'collection_id' => ['required', 'exists:subitems,id,item_id,' . Collection::ITEM_ID . ',deleted_at,NULL'],
             'garment_type_id' => ['required', 'exists:subitems,id,item_id,' . GarmentType::ITEM_ID . ',deleted_at,NULL'],
@@ -67,6 +73,7 @@ class TechnicalSheetUpdateRequest extends FormRequest
             'technical_sheet_details.*.settings.static' => ['sometimes', 'array'],
             'technical_sheet_details.*.settings.static.values' => ['sometimes', 'array'],
             'technical_sheet_details.*.settings.static.insert_values' => ['required_with:technical_sheet_details.*.settings.static', 'boolean'],
+            'variants' => ['required', 'array'],
         ];
     }
 
@@ -131,8 +138,6 @@ class TechnicalSheetUpdateRequest extends FormRequest
         ];
     }
 
-
-
     protected function resolveRule(string $rule): string
     {
         if (!is_string($rule)) {
@@ -167,6 +172,50 @@ class TechnicalSheetUpdateRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $product = Product::find($this->integer('product_id'));
+            $trademark = Trademark::find($product->trademark_id);
+            $code = $this->input('code');
+            $isValid = false;
+            $messages = [];
+
+            foreach ($trademark?->settings?->validations ?? [] as $item) {
+                if (preg_match($item->regex, $code)) {
+                    $isValid = true;
+                    break;
+                }
+                $messages[] = $item->message;
+            }
+
+            if (!$isValid) {
+                $validator->errors()->add(
+                    'code',
+                    "El código no cumple las siguientes validaciones:\n• " .
+                        implode("\n• ", $messages)
+                );
+            }
+
+            $supply_types = SupplyType::with('variants')
+                ->where('settings->in_technical_sheet', true)->get();
+
+            foreach ($supply_types as $supply_type) {
+                $has_variants = $supply_type->variants
+                    ->pluck('id')
+                    ->intersect($this->input('variants', []))
+                    ->isNotEmpty();
+
+                if (!$has_variants) {
+                    $validator->errors()->add("variant.$supply_type->id", 'Debe seleccionar una variante');
+                }
+            }
+
+            $supply_type_ids = [];
+
+            foreach ($this->input('variants', []) as $key => $variant_id) {
+                $variant = Variant::with('supply_type')->find($variant_id);
+
+                if (in_array($variant?->supply_type->first()?->id, $supply_type_ids)) {
+                    $validator->errors()->add("variants.$key", 'La variante pertenece a un tipo de insumo ya registrado.');
+                }
+            }
 
             $aux = [
                 'D' => 'photo_d.file',
@@ -228,6 +277,7 @@ class TechnicalSheetUpdateRequest extends FormRequest
 
                         $fieldRules = [];
 
+
                         foreach ($column['rules'] ?? [] as $rule) {
 
                             $rule = $this->resolveRule($rule);
@@ -247,12 +297,15 @@ class TechnicalSheetUpdateRequest extends FormRequest
                     $rules = collect($rules)
                         ->map(function ($fieldRules) {
                             return collect($fieldRules)
-                                ->map(
-                                    fn($rule) =>
-                                    is_string($rule)
-                                        ? $this->resolveRule($rule)
-                                        : $rule
-                                )
+                                ->filter()
+                                ->values()
+                                ->map(function ($rule) {
+                                    $rule = is_string($rule) ? $this->resolveRule($rule) : $rule;
+
+                                    return $rule;
+                                })
+                                ->filter()
+                                ->values()
                                 ->toArray();
                         })
                         ->toArray();
@@ -286,28 +339,39 @@ class TechnicalSheetUpdateRequest extends FormRequest
 
                     foreach ($uniqueFields as $field) {
 
-                        if (!array_key_exists($field, $row)) {
-                            continue;
-                        }
+                        $seen = [];
 
-                        $duplicates = collect($values)
-                            ->pluck($field)
-                            ->filter(fn($value) => $value !== null)
-                            ->duplicates();
+                        foreach ($values as $in => $row) {
 
-                        if ($duplicates->contains($row[$field])) {
-                            if (isset($row['id'])) {
-                                $id_row = $row['id'];
-                                $validator->errors()->add(
-                                    "technical_sheet_details.$id.settings.dinamic.values.$id_row.$field",
-                                    "El valor ya existe dentro de esta tabla."
-                                );
-                            } else {
-                                $validator->errors()->add(
-                                    "technical_sheet_details.$id.settings.dinamic.values.$in.$field",
-                                    "El valor ya existe dentro de esta tabla."
-                                );
+                            if (!array_key_exists($field, $row)) {
+                                continue;
                             }
+
+                            $value = $row[$field];
+
+                            if ($value === null) {
+                                continue;
+                            }
+
+                            if (isset($seen[$value])) {
+
+                                if (isset($row['id'])) {
+                                    $id_row = $row['id'];
+                                    $validator->errors()->add(
+                                        "technical_sheet_details.$id.settings.dinamic.values.$id_row.$field",
+                                        "El valor ya existe dentro de esta tabla."
+                                    );
+                                } else {
+                                    $validator->errors()->add(
+                                        "technical_sheet_details.$id.settings.dinamic.values.$in.$field",
+                                        "El valor ya existe dentro de esta tabla."
+                                    );
+                                }
+
+                                continue;
+                            }
+
+                            $seen[$value] = true;
                         }
                     }
                 }

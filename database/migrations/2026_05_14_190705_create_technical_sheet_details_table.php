@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamps();
             $table->unique(
                 ['technical_sheet_id', 'model_type', 'model_id'],
-                'tsd_unique_model_idx'
+                'tsd_tsi_mt_mi_unique'
             );
         });
     }

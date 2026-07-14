@@ -125,7 +125,7 @@ trait ValidatesAttributes
 
         if ($url = parse_url($value, PHP_URL_HOST)) {
             try {
-                $records = $this->getDnsRecords($url.'.', DNS_A | DNS_AAAA);
+                $records = $this->getDnsRecords($url . '.', DNS_A | DNS_AAAA);
 
                 if (is_array($records) && count($records) > 0) {
                     return true;
@@ -321,7 +321,7 @@ trait ValidatesAttributes
      */
     protected function getDateTimeWithOptionalFormat($format, $value)
     {
-        if ($date = DateTime::createFromFormat('!'.$format, $value)) {
+        if ($date = DateTime::createFromFormat('!' . $format, $value)) {
             return $date;
         }
 
@@ -512,7 +512,7 @@ trait ValidatesAttributes
      */
     public function validateConfirmed($attribute, $value, $parameters)
     {
-        return $this->validateSame($attribute, $value, [$parameters[0] ?? $attribute.'_confirmation']);
+        return $this->validateSame($attribute, $value, [$parameters[0] ?? $attribute . '_confirmation']);
     }
 
     /**
@@ -627,7 +627,7 @@ trait ValidatesAttributes
 
         foreach ($parameters as $format) {
             try {
-                $date = DateTime::createFromFormat('!'.$format, $value, new DateTimeZone('UTC'));
+                $date = DateTime::createFromFormat('!' . $format, $value, new DateTimeZone('UTC'));
 
                 if ($date && $date->format($format) == $value) {
                     return true;
@@ -684,7 +684,7 @@ trait ValidatesAttributes
         }
 
         return $decimals >= $parameters[0] &&
-               $decimals <= $parameters[1];
+            $decimals <= $parameters[1];
     }
 
     /**
@@ -744,7 +744,7 @@ trait ValidatesAttributes
         $length = strlen((string) $value);
 
         return ! preg_match('/[^0-9]/', $value)
-                    && $length >= $parameters[0] && $length <= $parameters[1];
+            && $length >= $parameters[0] && $length <= $parameters[1];
     }
 
     /**
@@ -798,11 +798,11 @@ trait ValidatesAttributes
     protected function failsBasicDimensionChecks($parameters, $width, $height)
     {
         return (isset($parameters['width']) && $parameters['width'] != $width) ||
-               (isset($parameters['min_width']) && $parameters['min_width'] > $width) ||
-               (isset($parameters['max_width']) && $parameters['max_width'] < $width) ||
-               (isset($parameters['height']) && $parameters['height'] != $height) ||
-               (isset($parameters['min_height']) && $parameters['min_height'] > $height) ||
-               (isset($parameters['max_height']) && $parameters['max_height'] < $height);
+            (isset($parameters['min_width']) && $parameters['min_width'] > $width) ||
+            (isset($parameters['max_width']) && $parameters['max_width'] < $width) ||
+            (isset($parameters['height']) && $parameters['height'] != $height) ||
+            (isset($parameters['min_height']) && $parameters['min_height'] > $height) ||
+            (isset($parameters['max_height']) && $parameters['max_height'] < $height);
     }
 
     /**
@@ -820,7 +820,8 @@ trait ValidatesAttributes
         }
 
         [$numerator, $denominator] = array_replace(
-            [1, 1], array_filter(sscanf($parameters['ratio'], '%f/%d'))
+            [1, 1],
+            array_filter(sscanf($parameters['ratio'], '%f/%d'))
         );
 
         $precision = 1 / (max(($width + $height) / 2, $height) + 1);
@@ -843,7 +844,8 @@ trait ValidatesAttributes
         }
 
         [$minNumerator, $minDenominator] = array_replace(
-            [1, 1], array_filter(sscanf($parameters['min_ratio'], '%f/%d'))
+            [1, 1],
+            array_filter(sscanf($parameters['min_ratio'], '%f/%d'))
         );
 
         return ($width / $height) > ($minNumerator / $minDenominator);
@@ -864,7 +866,8 @@ trait ValidatesAttributes
         }
 
         [$maxNumerator, $maxDenominator] = array_replace(
-            [1, 1], array_filter(sscanf($parameters['max_ratio'], '%f/%d'))
+            [1, 1],
+            array_filter(sscanf($parameters['max_ratio'], '%f/%d'))
         );
 
         return ($width / $height) < ($maxNumerator / $maxDenominator);
@@ -883,7 +886,7 @@ trait ValidatesAttributes
         $data = Arr::except($this->getDistinctValues($attribute), $attribute);
 
         if (in_array('ignore_case', $parameters)) {
-            return empty(preg_grep('/^'.preg_quote($value, '/').'$/iu', $data));
+            return empty(preg_grep('/^' . preg_quote($value, '/') . '$/iu', $data));
         }
 
         return ! in_array($value, array_values($data), in_array('strict', $parameters));
@@ -919,13 +922,14 @@ trait ValidatesAttributes
     protected function extractDistinctValues($attribute)
     {
         $attributeData = ValidationData::extractDataFromPath(
-            ValidationData::getLeadingExplicitAttributePath($attribute), $this->data
+            ValidationData::getLeadingExplicitAttributePath($attribute),
+            $this->data
         );
 
         $pattern = str_replace('\*', '[^.]+', preg_quote($attribute, '#'));
 
         return Arr::where(Arr::dot($attributeData), function ($value, $key) use ($pattern) {
-            return (bool) preg_match('#^'.$pattern.'\z#u', $key);
+            return (bool) preg_match('#^' . $pattern . '\z#u', $key);
         });
     }
 
@@ -949,7 +953,7 @@ trait ValidatesAttributes
 
         $validations = (new Collection($parameters))
             ->unique()
-            ->map(fn ($validation) => match (true) {
+            ->map(fn($validation) => match (true) {
                 $validation === 'strict' => new NoRFCWarningsValidation(),
                 $validation === 'dns' => new DNSCheckValidation(),
                 $validation === 'spoof' => new SpoofCheckValidation(),
@@ -1011,7 +1015,11 @@ trait ValidatesAttributes
         }
 
         return $this->getExistCount(
-            $connection, $table, $column, $value, $parameters
+            $connection,
+            $table,
+            $column,
+            $value,
+            $parameters
         ) >= $expected;
     }
 
@@ -1085,7 +1093,12 @@ trait ValidatesAttributes
         }
 
         return $verifier->getCount(
-            $table, $column, $value, $id, $idColumn, $extra
+            $table,
+            $column,
+            $value,
+            $id,
+            $idColumn,
+            $extra
         ) == 0;
     }
 
@@ -1189,8 +1202,10 @@ trait ValidatesAttributes
      */
     public function guessColumnForQuery($attribute)
     {
-        if (in_array($attribute, Arr::collapse($this->implicitAttributes))
-                && ! is_numeric($last = last(explode('.', $attribute)))) {
+        if (
+            in_array($attribute, Arr::collapse($this->implicitAttributes))
+            && ! is_numeric($last = last(explode('.', $attribute)))
+        ) {
             return $last;
         }
 
@@ -1744,8 +1759,8 @@ trait ValidatesAttributes
         }
 
         return $value->getPath() !== '' &&
-                (in_array($value->getMimeType(), $parameters) ||
-                 in_array(explode('/', $value->getMimeType())[0].'/*', $parameters));
+            (in_array($value->getMimeType(), $parameters) ||
+                in_array(explode('/', $value->getMimeType())[0] . '/*', $parameters));
     }
 
     /**
@@ -1762,7 +1777,14 @@ trait ValidatesAttributes
         }
 
         $phpExtensions = [
-            'php', 'php3', 'php4', 'php5', 'php7', 'php8', 'phtml', 'phar',
+            'php',
+            'php3',
+            'php4',
+            'php5',
+            'php7',
+            'php8',
+            'phtml',
+            'phar',
         ];
 
         return ($value instanceof UploadedFile)
@@ -2456,7 +2478,7 @@ trait ValidatesAttributes
      */
     protected function convertValuesToBoolean($values)
     {
-        return array_map(fn ($value) => match ($value) {
+        return array_map(fn($value) => match ($value) {
             'true' => true,
             'false' => false,
             default => $value,
@@ -2701,7 +2723,7 @@ trait ValidatesAttributes
     public function validateTimezone($attribute, $value, $parameters = [])
     {
         return in_array($value, timezone_identifiers_list(
-            constant(DateTimeZone::class.'::'.Str::upper($parameters[0] ?? 'ALL')),
+            constant(DateTimeZone::class . '::' . Str::upper($parameters[0] ?? 'ALL')),
             isset($parameters[1]) ? Str::upper($parameters[1]) : null,
         ), true);
     }
@@ -2910,7 +2932,7 @@ trait ValidatesAttributes
             : Str::after($stringValue, 'E'));
 
         $withinRange = (
-            $this->ensureExponentWithinAllowedRangeUsing ?? fn ($scale) => $scale <= 1000 && $scale >= -1000
+            $this->ensureExponentWithinAllowedRangeUsing ?? fn($scale) => $scale <= 1000 && $scale >= -1000
         )($scale, $attribute, $value);
 
         if (! $withinRange) {

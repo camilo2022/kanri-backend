@@ -2,17 +2,30 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\VariantExport;
+use App\Exports\VariantSheet;
 use App\Http\Requests\Typification\Variant\VariantAllRequest;
 use App\Http\Requests\Typification\Variant\VariantDeleteRequest;
+use App\Http\Requests\Typification\Variant\VariantExcelRequest;
 use App\Http\Requests\Typification\Variant\VariantFindRequest;
 use App\Http\Requests\Typification\Variant\VariantRestoreRequest;
+use App\Http\Requests\Typification\Variant\VariantSaveRequest;
 use App\Http\Requests\Typification\Variant\VariantStoreRequest;
 use App\Http\Requests\Typification\Variant\VariantUpdateRequest;
 use App\Http\Resources\Typification\Variant\VariantCollection;
 use App\Http\Resources\Typification\Variant\VariantResource;
+use App\Imports\ImportErrorReport;
+use App\Imports\VariantImport;
+use App\Models\SupplyType;
 use App\Models\Variant;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Arr;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 /**
  * @OA\Tag(
@@ -242,7 +255,7 @@ class VariantController extends Controller
     public function find(VariantFindRequest $request, $id)
     {
         try {
-            $variant = Variant::findOrFail($id);
+            $variant = Variant::with(['supply_type'])->findOrFail($id);
 
             return $this->successResponse(
                 new VariantResource($variant),
@@ -350,10 +363,22 @@ class VariantController extends Controller
             $variant = new Variant();
             $variant->name = $request->input('name');
             $variant->description = $request->input('description');
-
+            $variant->settings = $request->input('settings');
             $variant->save();
 
             $variant->auditSync('supply_type', $request->integer('supply_type_id'));
+
+            $variant->load(['supply_type']);
+
+            collect($variant->supply_type->first()?->settings?->form ?? [])
+                ->where('type', 'selectdinamic')
+                ->each(function ($relationship) use ($variant, $request) {
+
+                    if ($request->has("class.$relationship->field")) {
+                        $variant->related($relationship->model)
+                            ->sync(Arr::wrap($request->input("class.$relationship->field")));
+                    }
+                });
 
             return $this->successResponse(
                 new VariantResource($variant),
@@ -470,7 +495,20 @@ class VariantController extends Controller
             $variant = Variant::findOrFail($id);
             $variant->name = $request->input('name');
             $variant->description = $request->input('description');
+            $variant->settings = $request->input('settings');
             $variant->save();
+
+            $variant->load(['supply_type']);
+
+            collect($variant->supply_type->first()?->settings?->form ?? [])
+                ->where('type', 'selectdinamic')
+                ->each(function ($relationship) use ($variant, $request) {
+
+                    if ($request->has("class.$relationship->field")) {
+                        $variant->related($relationship->model)
+                            ->sync(Arr::wrap($request->input("class.$relationship->field")));
+                    }
+                });
 
             return $this->successResponse(
                 new VariantResource($variant),
@@ -670,6 +708,102 @@ class VariantController extends Controller
                 200
             );
         } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    public function excel(VariantExcelRequest $request, $supply_type_id)
+    {
+        return Excel::download(new VariantExport($supply_type_id), 'variants.xlsx');
+    }
+
+    public function import(Request $request, $supply_type_id)
+    {
+        try {
+            $supply_type = SupplyType::findOrFail($supply_type_id);
+
+            $import = new VariantImport($supply_type);
+
+            Excel::import($import, $request->file('file'));
+
+            $formRequest = new VariantSaveRequest();
+
+            $variants = $import->builder()->build();
+
+            $duplicates = $import->builder()->duplicateVariants();
+
+            $validator = Validator::make(
+                [
+                    'supply_type_id' => $supply_type_id,
+                    'variants' => $variants,
+                ],
+                $formRequest->rules(),
+                $formRequest->messages(),
+                $formRequest->attributes()
+            );
+
+            $formRequest->duplicates = $duplicates;
+
+            $formRequest->setContainer(app());
+
+            $formRequest->withValidator($validator);
+
+            if ($validator->fails()) {
+                $path = app(ImportErrorReport::class)->generate(
+                    $validator->errors()->toArray(),
+                    $variants,
+                    $supply_type
+                );
+
+                return response()->json([
+                    'message' => 'La importación contiene errores.',
+                    'errors' => $validator->errors(),
+                    'file' => $path,
+                ], 422);
+            }
+
+            DB::transaction(function () use ($variants, $supply_type_id) {
+                foreach ($variants as $item) {
+                    $variant = Variant::updateOrCreate(
+                        ['name' => $item['name']],
+                        [
+                            'description' => $item['description'],
+                            'settings' => $item['settings'] ?? null,
+                        ]
+                    );
+
+                    $variant->auditSync('supply_type', $supply_type_id);
+
+                    $variant->load(['supply_type']);
+
+                    collect($variant->supply_type->first()?->settings?->form ?? [])
+                        ->where('type', 'selectdinamic')
+                        ->each(function ($relationship) use ($variant, $item) {
+                            if (Arr::has($item, "class.$relationship->field")) {
+                                $variant->related($relationship->model)
+                                    ->sync(
+                                        Arr::wrap(
+                                            Arr::get($item, "class.$relationship->field")
+                                        )
+                                    );
+                            }
+                        });
+                }
+            });
+
+            return $this->successResponse(
+                $variants,
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),

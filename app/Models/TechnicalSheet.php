@@ -68,6 +68,11 @@ class TechnicalSheet extends Model implements Auditable
         'status'
     ];
 
+
+    protected $casts = [
+        'physical_sample' => 'boolean'
+    ];
+
     protected static function booted()
     {
         static::creating(function ($technical_sheet) {
@@ -176,7 +181,7 @@ class TechnicalSheet extends Model implements Auditable
         });
     }
 
-    public static function statuses ()
+    public static function statuses()
     {
         return [
             self::PENDING,

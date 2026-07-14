@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\SupplyTypeExport;
 use App\Http\Requests\Typification\SupplyType\SupplyTypeAllRequest;
 use App\Http\Requests\Typification\SupplyType\SupplyTypeDeleteRequest;
 use App\Http\Requests\Typification\SupplyType\SupplyTypeFindRequest;

@@ -27,7 +27,9 @@ class BootTypeStoreRequest extends FormRequest
     {
         return [
             'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . BootType::ITEM_ID],
-            'description' => ['required', 'uppercase', 'string', 'max:255']
+            'description' => ['required', 'uppercase', 'string', 'max:255'],
+            'settings' => ['required', 'array'],
+            'settings.code' => ['required', 'numeric', 'digits_between:2,5'],
         ];
     }
 
@@ -39,7 +41,8 @@ class BootTypeStoreRequest extends FormRequest
             'max' => 'Se permite máximo :max caracteres.',
             'min' => 'Se permite mínimo :min caracteres.',
             'unique' => 'Ya está registrado.',
-            'uppercase' => 'Debe de ingresar mayúsculas.'
+            'uppercase' => 'Debe de ingresar mayúsculas.',
+            'digits_between' => 'Debe tener entre 2 y 5 dígitos.',
         ];
     }
 
@@ -47,7 +50,30 @@ class BootTypeStoreRequest extends FormRequest
     {
         return [
             'name' => 'Nombre',
-            'description' => 'Descripción'
+            'description' => 'Descripción',
+            'settings' => 'Configuraciones',
+            'settings.code' => 'Código',
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+
+            if (!$this->filled('settings.code')) {
+                return;
+            }
+
+            $exists = BootType::query()
+                ->where('settings->code', $this->input('settings.code'))
+                ->exists();
+
+            if ($exists) {
+                $validator->errors()->add(
+                    'settings.code',
+                    'El código ya se encuentra registrado.'
+                );
+            }
+        });
     }
 }

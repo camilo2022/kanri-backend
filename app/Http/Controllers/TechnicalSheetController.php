@@ -2,23 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Product\ProductAllRequest;
-use App\Http\Requests\Product\ProductFindRequest;
-use App\Http\Requests\Product\ProductStoreRequest;
-use App\Http\Requests\Product\ProductUpdateRequest;
 use App\Http\Requests\TechnicalSheet\TechnicalSheetFindRequest;
 use App\Http\Requests\TechnicalSheet\TechnicalSheetStoreRequest;
 use App\Http\Requests\TechnicalSheet\TechnicalSheetUpdateRequest;
-use App\Http\Resources\Product\ProductCollection;
-use App\Http\Resources\Product\ProductResource;
 use App\Http\Resources\TechnicalSheet\TechnicalSheetResource;
-use App\Models\Product;
 use App\Models\TechnicalSheet;
 use App\Models\TechnicalSheetDetail;
 use App\Services\FileService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class TechnicalSheetController extends Controller
@@ -72,10 +64,12 @@ class TechnicalSheetController extends Controller
                 'yoke_type',
                 'back_type',
                 'technical_sheet_details',
-                'pattern_maker' => ['person', 'position']
+                'pattern_maker' => ['person', 'position'],
+                'variants' => ['supply_type'],
+                'product' => ['trademark' => ['group'], 'subcategory' => ['category']]
             ])
                 ->when($request->filled('id'), function ($query) use ($request) {
-                    return $query->findOrFail($request->integer('id'));
+                    $query->where('id', $request->integer('id'));
                 })
                 ->when($request->filled('product_id'), function ($query) use ($request) {
                     return $query->where('product_id', $request->integer('product_id'));
@@ -83,6 +77,8 @@ class TechnicalSheetController extends Controller
                 ->when($request->filled('uuid'), function ($query) use ($request) {
                     return $query->where('uuid', $request->integer('uuid'));
                 })->firstOrFail();
+
+            logger($technical_sheet);
 
             return $this->successResponse(
                 new TechnicalSheetResource($technical_sheet),
@@ -169,10 +165,10 @@ class TechnicalSheetController extends Controller
     public function update(TechnicalSheetUpdateRequest $request, $id)
     {
         try {
-            logger('Ingreso al controller');
             $technical_sheet = TechnicalSheet::findOrFail($id);
 
             $technical_sheet->date = $request->input('date');
+            $technical_sheet->code = $request->input('code');
             $technical_sheet->product_id = $request->integer('product_id');
             $technical_sheet->collection_id = $request->integer('collection_id');
             $technical_sheet->garment_type_id = $request->integer('garment_type_id');
@@ -189,8 +185,10 @@ class TechnicalSheetController extends Controller
             $technical_sheet->description = $request->input('description');
             $technical_sheet->observation = $request->input('observation');
             $technical_sheet->pattern_maker_id = $request->integer('pattern_maker_id');
+            $technical_sheet->status = $request->input('status');
 
             $technical_sheet->save();
+            $technical_sheet->auditSync('variants', $request->input('variants', []));
 
             if ($request->hasFile('photo_d')) {
                 app(FileService::class)->save(
@@ -215,6 +213,7 @@ class TechnicalSheetController extends Controller
             }
 
             $this->save($request->input('technical_sheet_details', []), $technical_sheet->id);
+
 
             return $this->successResponse(
                 new TechnicalSheetResource($technical_sheet),
