@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
@@ -41,6 +42,11 @@ class Product extends Model implements Auditable
     public function technical_sheet(): HasOne
     {
         return $this->hasOne(TechnicalSheet::class);
+    }
+
+    public function technical_sheets(): MorphToMany
+    {
+        return $this->morphedByMany(TechnicalSheet::class, 'model', 'model_has_product', 'product_id', 'model_id');
     }
 
     public function scopeSearch(Builder $query, ?string $search = null): Builder

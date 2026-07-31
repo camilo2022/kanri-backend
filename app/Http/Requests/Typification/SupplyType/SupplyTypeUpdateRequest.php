@@ -25,6 +25,7 @@ class SupplyTypeUpdateRequest extends FormRequest
 
     public function rules(): array
     {
+        logger($this);
         return [
             'id' => ['required', 'exists:subitems,id,item_id,' . SupplyType::ITEM_ID],
             'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . SupplyType::ITEM_ID],
@@ -32,6 +33,8 @@ class SupplyTypeUpdateRequest extends FormRequest
             'settings' => ['required', 'array'],
             'settings.has_variants' => ['required', 'boolean'],
             'settings.in_technical_sheet' => ['required', 'boolean'],
+            'settings.in_production_order' => ['required', 'boolean'],
+            'settings.paragraph' => ['nullable', 'required_if:settings.in_production_order,true', 'in:fabric,roll'],
         ];
     }
 
@@ -58,6 +61,32 @@ class SupplyTypeUpdateRequest extends FormRequest
             'settings.has_variants' => 'Tiene variantes',
             'settings.in_technical_sheet' => 'Aplica a Ficha Técnica'
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+
+            if (empty($this->settings['in_production_order'])) {
+                return;
+            }
+
+            $exist = SupplyType::where('id', '!=', $this->route('id'))
+                ->get()
+                ->first(function ($supply_type) {
+                    $settings = $supply_type->settings;
+
+                    return !empty($settings->in_production_order)
+                        && $settings->paragraph === $this->settings['paragraph'];
+                });
+
+            if ($exist) {
+                $validator->errors()->add(
+                    'paragraph',
+                    "Ya existe un tipo de insumo configurado con este apartado. Solo puede existir uno por apartado."
+                );
+            }
+        });
     }
 
     protected function prepareForValidation()

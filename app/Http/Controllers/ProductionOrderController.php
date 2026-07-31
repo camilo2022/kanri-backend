@@ -4,19 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\TechnicalSheet\ProductionOrder\ProductionOrderFindRequest;
 use App\Http\Requests\TechnicalSheet\ProductionOrder\ProductionOrderAllRequest;
-use App\Http\Requests\TechnicalSheet\TechnicalSheetFindRequest;
-use App\Http\Requests\TechnicalSheet\TechnicalSheetStoreRequest;
-use App\Http\Requests\TechnicalSheet\TechnicalSheetUpdateRequest;
+use App\Http\Requests\TechnicalSheet\ProductionOrder\ProductionOrderExportPDFRequest;
+use App\Http\Requests\TechnicalSheet\ProductionOrder\ProductionOrderStoreRequest;
+use App\Http\Requests\TechnicalSheet\ProductionOrder\ProductionOrderUpdateRequest;
 use App\Http\Resources\TechnicalSheet\ProductionOrder\ProductionOrderCollection;
-use App\Http\Resources\TechnicalSheet\ProductionOrderResource;
-use App\Http\Resources\TechnicalSheet\TechnicalSheetResource;
+use App\Http\Resources\TechnicalSheet\ProductionOrder\ProductionOrderResource;
+use App\Models\File;
+use App\Models\Product;
 use App\Models\ProductionOrder;
-use App\Models\TechnicalSheet;
-use App\Models\TechnicalSheetDetail;
+use App\Models\ProductionOrderDetail;
+use App\Models\ProductionOrderDetailQuantities;
+use App\Models\Variant;
 use App\Services\FileService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
+use setasign\Fpdi\Fpdi;
 
 class ProductionOrderController extends Controller
 {
@@ -25,7 +29,7 @@ class ProductionOrderController extends Controller
     public function all(ProductionOrderAllRequest $request, $technical_sheet_id)
     {
         try {
-            $production_orders = ProductionOrder::with(['technical_sheet'])
+            $production_orders = ProductionOrder::with(['strokes', 'fabric', 'pieces', 'technical_sheet' => ['product', 'products'], 'production_order_details' => ['production_order_detail_quantities']])
                 ->whereHas('technical_sheet', fn($r) => $r->where('id', $technical_sheet_id))
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
@@ -55,49 +59,11 @@ class ProductionOrderController extends Controller
         }
     }
 
-    /*
-    public function all(ProductAllRequest $request)
+    public function find(ProductionOrderFindRequest $request, $id)
     {
         try {
-            $products = Product::with(['subcategory' => ['category'], 'trademark' => ['group'], 'technical_sheet' => ['collection', 'subgroup', 'color', 'waistband_type', 'garment_type', 'wash_tone', 'boot_type', 'yoke_type', 'back_type', 'technical_sheet_details']])
-                ->when($request->filled('search'), function ($query) use ($request) {
-                    return $query->search($request->input('search'));
-                })
-                ->when($request->boolean('with_trashed'), function ($query) {
-                    return $query->withTrashed();
-                })
-                ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
-                });
-
-            $products = $products->paginate($request->integer('per_page', $products->count()));
-
-            return $this->successResponse(
-                new ProductCollection($products),
-                $this->getMessage('Success'),
-                200
-            );
-        } catch (\Throwable $e) {
-            return $this->errorResponse(
-                [
-                    'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
-                ],
-                $this->getCode(class_basename($e))
-            );
-        }
-    }
-*/
-    public function find(ProductionOrderFindRequest $request)
-    {
-        try {
-            $production_order = ProductionOrder::with(['technical_sheet' => ['product']])
-                ->when($request->filled('id'), function ($query) use ($request) {
-                    return $query->findOrFail($request->integer('id'));
-                })
-                ->when($request->filled('technical_sheet_id'), function ($query) use ($request) {
-                    return $query->where('technical_sheet_id', $request->integer('technical_sheet_id'));
-                })->firstOrFail();
+            $production_order = ProductionOrder::with(['technical_sheet' => ['product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']], 'products', 'garment_type', 'subgroup', 'collection', 'photo_d', 'photo_t',], 'production_order_details' => ['production_order_detail_quantities', 'model'], 'fabric' => ['model'], 'pieces', 'rolls' => ['production_orders']])
+                ->findOrFail($id);
 
             return $this->successResponse(
                 new ProductionOrderResource($production_order),
@@ -115,58 +81,74 @@ class ProductionOrderController extends Controller
         }
     }
 
-    public function store(TechnicalSheetStoreRequest $request)
+    public function store(ProductionOrderStoreRequest $request)
     {
         try {
-            $technical_sheet = new TechnicalSheet();
 
-            $technical_sheet->uuid = Str::uuid();
-            $technical_sheet->date = $request->input('date');
-            $technical_sheet->product_id = $request->integer('product_id');
-            $technical_sheet->collection_id = $request->integer('collection_id');
-            $technical_sheet->garment_type_id = $request->integer('garment_type_id');
-            $technical_sheet->subgroup_id = $request->integer('subgroup_id');
-            $technical_sheet->wash_tone_id = $request->integer('wash_tone_id');
-            $technical_sheet->color_id = $request->integer('color_id');
-            $technical_sheet->waistband_type_id = $request->integer('waistband_type_id');
-            $technical_sheet->measure_of_waistband = $request->integer('measure_of_waistband');
-            $technical_sheet->boot_type_id = $request->integer('boot_type_id');
-            $technical_sheet->yoke_type_id = $request->integer('yoke_type_id');
-            $technical_sheet->back_type_id = $request->integer('back_type_id');
-            $technical_sheet->physical_sample = $request->integer('physical_sample');
-            $technical_sheet->number_of_buttons = $request->integer('number_of_buttons');
-            $technical_sheet->pattern_maker_id = $request->integer('pattern_maker_id');
-            $technical_sheet->description = $request->input('description');
-            $technical_sheet->observation = $request->input('observation');
+            $result = DB::select("CALL generate_production_order_code()");
+            $production_order = new ProductionOrder();
+            $consecutive = $result[0]->consecutive;
 
-            $technical_sheet->save();
+            $production_order->consecutive = $consecutive;
+            if ($request->boolean('reasigned_curve')) {
+                logger(['Ingreso a reasignar']);
+                $production_order->model_id = $request->input('production_order_id');
+                $production_order->model_type = ProductionOrder::class;
+            }
+            $production_order->date = $request->input('date');
+            $production_order->technical_sheet_id = $request->integer('technical_sheet_id');
+            $production_order->efficiency = $request->input('efficiency');
+            $production_order->cut = $request->input('cut');
+            $production_order->width = $request->input('width');
+            $production_order->pocket_fabric = $request->boolean('pocket_fabric');
+            $production_order->observation = $request->input('observation');
+            $production_order->status = $request->input('status');
+            $production_order->settings = $request->input('settings');
 
-            if ($request->hasFile('photo_d')) {
+            $production_order->save();
+
+            if ($request->filled('strokes_file.strokes_file_id')) {
+
+                $file = File::findOrFail($request->input('strokes_file.strokes_file_id'));
+
+                logger(['Archivo', $file]);
+
+                File::create([
+                    'model_id' => $production_order->id,
+                    'model_type' => ProductionOrder::class,
+                    'file_type_id' => $file->file_type_id,
+                    'file_subtype_id' => $file->file_subtype_id,
+                    'name' => $file->name,
+                    'path' => $file->path,
+                    'mime' => $file->mime,
+                    'extension' => $file->extension,
+                    'size' => $file->size,
+                    'metadata' => $file->metadata,
+                ]);
+            }
+
+            if ($request->hasFile('strokes_file')) {
                 app(FileService::class)->save(
-                    $technical_sheet,
-                    $request->file('photo_d.file'),
-                    $request->integer('photo_d.photo_type_id'),
-                    $request->integer('photo_d.photo_subtype_id'),
+                    $production_order,
+                    $request->file('strokes_file.file'),
+                    $request->integer('strokes_file.photo_type_id'),
+                    $request->integer('strokes_file.photo_subtype_id'),
                     'public',
-                    'technical_sheet'
+                    'production_order'
                 );
             }
 
-            if ($request->hasFile('photo_t')) {
-                app(FileService::class)->save(
-                    $technical_sheet,
-                    $request->file('photo_t.file'),
-                    $request->integer('photo_t.photo_type_id'),
-                    $request->integer('photo_t.photo_subtype_id'),
-                    'public',
-                    'technical_sheet'
-                );
-            }
 
-            $this->save($request->input('technical_sheet_details', []), $technical_sheet->id);
+
+            $production_order->color()->sync([$request->input('color_id')]);
+
+            $this->save_details($request->input('production_order_details', []), $production_order->id);
+
+            $production_order->auditAttach('pieces', $request->array('pieces'));
+            $production_order->auditAttach('rolls', $request->array('rolls'));
 
             return $this->successResponse(
-                new TechnicalSheetResource($technical_sheet),
+                new ProductionOrderResource($production_order),
                 $this->getMessage('Success'),
                 201
             );
@@ -181,61 +163,43 @@ class ProductionOrderController extends Controller
         }
     }
 
-    public function update(TechnicalSheetUpdateRequest $request, $id)
+    public function update(ProductionOrderUpdateRequest $request, $id)
     {
         try {
-            $technical_sheet = TechnicalSheet::findOrFail($id);
+            $production_order = ProductionOrder::findOrFail($id);
 
-            $technical_sheet->date = $request->input('date');
-            $technical_sheet->code = $request->input('code');
-            $technical_sheet->product_id = $request->integer('product_id');
-            $technical_sheet->collection_id = $request->integer('collection_id');
-            $technical_sheet->garment_type_id = $request->integer('garment_type_id');
-            $technical_sheet->subgroup_id = $request->integer('subgroup_id');
-            $technical_sheet->wash_tone_id = $request->integer('wash_tone_id');
-            $technical_sheet->color_id = $request->integer('color_id');
-            $technical_sheet->waistband_type_id = $request->integer('waistband_type_id');
-            $technical_sheet->measure_of_waistband = $request->integer('measure_of_waistband');
-            $technical_sheet->boot_type_id = $request->integer('boot_type_id');
-            $technical_sheet->yoke_type_id = $request->integer('yoke_type_id');
-            $technical_sheet->back_type_id = $request->integer('back_type_id');
-            $technical_sheet->physical_sample = $request->integer('physical_sample');
-            $technical_sheet->number_of_buttons = $request->integer('number_of_buttons');
-            $technical_sheet->description = $request->input('description');
-            $technical_sheet->observation = $request->input('observation');
-            $technical_sheet->pattern_maker_id = $request->integer('pattern_maker_id');
-            $technical_sheet->status = $request->input('status');
+            $production_order->date = $request->input('date');
+            $production_order->technical_sheet_id = $request->integer('technical_sheet_id');
+            $production_order->efficiency = $request->input('efficiency');
+            $production_order->cut = $request->input('cut');
+            $production_order->width = $request->input('width');
+            $production_order->pocket_fabric = $request->boolean('pocket_fabric');
+            $production_order->observation = $request->input('observation');
+            $production_order->status = $request->input('status');
+            $production_order->settings = $request->input('settings');
 
-            $technical_sheet->save();
-            $technical_sheet->auditSync('variants', $request->input('variants', []));
+            $production_order->save();
 
-            if ($request->hasFile('photo_d')) {
-                app(FileService::class)->save(
-                    $technical_sheet,
-                    $request->file('photo_d.file'),
-                    $request->integer('photo_d.photo_type_id'),
-                    $request->integer('photo_d.photo_subtype_id'),
+            if ($request->hasFile('strokes_file')) {
+                app(FileService::class)->save_document(
+                    $production_order,
+                    $request->file('strokes_file.file'),
+                    $request->integer('strokes_file.photo_type_id'),
+                    $request->integer('strokes_file.photo_subtype_id'),
                     'public',
-                    'technical_sheet'
+                    'production_order'
                 );
             }
 
-            if ($request->hasFile('photo_t')) {
-                app(FileService::class)->save(
-                    $technical_sheet,
-                    $request->file('photo_t.file'),
-                    $request->integer('photo_t.photo_type_id'),
-                    $request->integer('photo_t.photo_subtype_id'),
-                    'public',
-                    'technical_sheet'
-                );
-            }
+            $production_order->color()->sync([$request->input('color_id')]);
 
-            $this->save($request->input('technical_sheet_details', []), $technical_sheet->id);
+            $this->save_details($request->input('production_order_details', []), $production_order->id);
 
+            $production_order->pieces()->sync($request->array('pieces'));
+            $production_order->rolls()->sync($request->array('rolls'));
 
             return $this->successResponse(
-                new TechnicalSheetResource($technical_sheet),
+                new ProductionOrderResource($production_order),
                 $this->getMessage('Success'),
                 201
             );
@@ -250,23 +214,179 @@ class ProductionOrderController extends Controller
         }
     }
 
-    private function save(array $technical_sheet_details, int $technical_sheet_id)
+    public function save_details(array $production_order_details, int $production_order_id)
     {
         try {
-            foreach ($technical_sheet_details as $technical_sheet_detail) {
-                TechnicalSheetDetail::updateOrCreate(
-                    [
-                        'technical_sheet_id' => $technical_sheet_id,
-                        'model_type' => $technical_sheet_detail['model_type'],
-                        'model_id' => $technical_sheet_detail['model_id'],
-                    ],
-                    [
-                        'status' => $technical_sheet_detail['status'],
-                        'settings' => $technical_sheet_detail['settings'] ?? (object) [],
-                    ]
-                );
+            foreach ($production_order_details as $production_order_detail_item) {
+                $quantities = [];
+
+                if ($production_order_detail_item['model_type'] === Product::class) {
+                    $quantities = $production_order_detail_item['sizes'];
+                }
+
+                if ($production_order_detail_item['model_type'] === Variant::class) {
+                    foreach ($production_order_detail_item['rows'] as $row) {
+                        $quantities = array_merge($quantities, $row['sizes']);
+                    }
+                }
+
+                if (array_sum(array_column($quantities, 'quantity')) === 0) {
+                    continue;
+                }
+
+                $production_order_detail = new ProductionOrderDetail();
+
+                $production_order_detail = ProductionOrderDetail::firstOrCreate([
+                    'production_order_id' => $production_order_id,
+                    'model_type' => $production_order_detail_item['model_type'],
+                    'model_id' => $production_order_detail_item['model_id'],
+                    'destination' => $production_order_detail_item['destination'],
+                ]);
+
+                if ($production_order_detail['model_type'] === Variant::class) {
+                    foreach ($production_order_detail_item['rows'] as $row) {
+                        foreach ($row['sizes'] as $size) {
+                            ProductionOrderDetailQuantities::updateOrCreate([
+                                'id' => $size['id'],
+                            ], [
+                                'production_order_detail_id' => $production_order_detail->id,
+                                'size_id' => $size['size_id'],
+                                'quantity' => $size['quantity'],
+                            ]);
+                        }
+                    }
+                }
+
+                if ($production_order_detail['model_type'] === Product::class) {
+                    foreach ($production_order_detail_item['sizes'] as $size) {
+                        ProductionOrderDetailQuantities::updateOrCreate(
+                            [
+                                'production_order_detail_id' => $production_order_detail->id,
+                                'size_id' => $size['size_id'],
+                            ],
+                            [
+                                'quantity' => $size['quantity'],
+                            ]
+                        );
+                    }
+                }
             }
         } catch (\Throwable $e) {
+            throw $e;
+        }
+    }
+
+    public function pdf(ProductionOrderExportPDFRequest $request, $id)
+    {
+        try {
+            $production_order = ProductionOrder::with([
+                'technical_sheet' => ['product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']], 'products', 'photo_d', 'photo_t', 'garment_type', 'collection'],
+                'production_order_details' => ['production_order_detail_quantities', 'model'],
+                'fabric.model',
+                'pieces',
+                'rolls'
+            ])->findOrFail($id);
+
+            $pdf = Pdf::loadView(
+                'pdf.production-order',
+                compact('production_order')
+            )->setPaper('a4', 'portrait');
+
+            $dompdf = $pdf->getDomPDF();
+
+            $canvas = $dompdf->getCanvas();
+
+            $canvas->page_text(
+                500,
+                815,
+                "Página {PAGE_NUM} de {PAGE_COUNT}",
+                null,
+                9,
+                [0, 0, 0]
+            );
+
+            $dompdf->render();
+
+            $tempDir = storage_path('app/temp');
+
+            if (!is_dir($tempDir)) {
+                mkdir($tempDir, 0777, true);
+            }
+
+            $mainPdf = $tempDir . '/orden_' . $production_order->id . '.pdf';
+
+            file_put_contents(
+                $mainPdf,
+                $dompdf->output()
+            );
+
+            $fpdi = new Fpdi();
+
+            $pageCount = $fpdi->setSourceFile($mainPdf);
+
+            for ($page = 1; $page <= $pageCount; $page++) {
+
+                $tpl = $fpdi->importPage($page);
+
+                $size = $fpdi->getTemplateSize($tpl);
+
+                $fpdi->AddPage(
+                    $size['orientation'],
+                    [$size['width'], $size['height']]
+                );
+
+                $fpdi->useTemplate($tpl);
+            }
+
+            if ($production_order->strokes) {
+
+                $stroke = $production_order->strokes;
+
+                $strokePath = public_path(
+                    str_replace(
+                        url('/'),
+                        '',
+                        parse_url($stroke->path, PHP_URL_PATH)
+                    )
+                );
+
+                logger([
+                    'strokePath' => $strokePath,
+                    'exists' => file_exists($strokePath)
+                ]);
+
+                if (file_exists($strokePath)) {
+
+                    $pageCount = $fpdi->setSourceFile($strokePath);
+
+                    for ($page = 1; $page <= $pageCount; $page++) {
+
+                        $tpl = $fpdi->importPage($page);
+
+                        $size = $fpdi->getTemplateSize($tpl);
+
+                        $fpdi->AddPage(
+                            $size['orientation'],
+                            [$size['width'], $size['height']]
+                        );
+
+                        $fpdi->useTemplate($tpl);
+                    }
+                }
+            }
+
+            @unlink($mainPdf);
+
+            return response(
+                $fpdi->Output('S'),
+                200,
+                [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'inline; filename="Orden-Produccion-' . $production_order->consecutive . '.pdf"'
+                ]
+            );
+        } catch (\Throwable $e) {
+
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),

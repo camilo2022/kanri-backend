@@ -2,9 +2,9 @@
 
 namespace App\Http\Resources\TechnicalSheet\ProductionOrder;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class ProductionOrderCollection extends ResourceCollection
 {
@@ -18,7 +18,6 @@ class ProductionOrderCollection extends ResourceCollection
                     'consecutive'  => $production_order->consecutive,
                     'efficiency'  => $production_order->efficiency,
                     'cut' => $production_order->cut,
-                    'fabric_id'  => $production_order->fabric_id,
                     'width'  => $production_order->width,
                     'has_pocket_fabric'  => $production_order->has_pocket_fabric,
                     'observation'  => $production_order->observation,
@@ -26,7 +25,12 @@ class ProductionOrderCollection extends ResourceCollection
                     'status' => $production_order->status,
                     'created_at' => $this->formatDate($production_order->created_at),
                     'updated_at' => $this->formatDate($production_order->updated_at),
-                    'deleted_at' => $this->formatDate($production_order->deleted_at)
+                    'deleted_at' => $this->formatDate($production_order->deleted_at),
+                    'strokes' => $production_order->strokes,
+                    'technical_sheet' => $production_order->technical_sheet,
+                    'production_order_details' => $production_order->production_order_details,
+                    'fabric' => $production_order->fabric,
+                    'pieces' => $production_order->pieces,
                 ];
             }),
             'meta' => [

@@ -156,7 +156,7 @@ class VariantController extends Controller
     public function all(VariantAllRequest $request, $supply_type_id)
     {
         try {
-            $variants = Variant::with(['supply_type'])
+            $variants = Variant::with(['supply_type', 'production_orders'])
                 ->whereHas('supply_type', fn($r) => $r->where('id', $supply_type_id))
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));

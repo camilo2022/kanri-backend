@@ -571,7 +571,10 @@ Route::prefix('/technical_sheets')->group(function () {
     Route::prefix('/production_orders')->group(function () {
         Route::controller(ProductionOrderController::class)->group(function () {
             Route::get('/all/{technical_sheet_id}', 'all')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.all']);
-            Route::get('/find', 'find')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.find']);
+            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.find']);
+            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.store']);
+            Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.store']);
+            Route::get('/pdf/{id}', 'pdf')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.store']);
         });
     });
 });

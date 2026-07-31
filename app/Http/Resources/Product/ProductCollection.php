@@ -22,7 +22,8 @@ class ProductCollection extends ResourceCollection
                     'deleted_at' => $this->formatDate($product->deleted_at),
                     'trademark' => $product->trademark,
                     'subcategory' => $product->subcategory,
-                    'technical_sheet' => $product->technical_sheet,
+                    'technical_sheet' => $product->technical_sheet ?? $product->technical_sheets->first(),
+                    'original' => $product->technical_sheets->isEmpty(),
                 ];
             }),
             'meta' => [

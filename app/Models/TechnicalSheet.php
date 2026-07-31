@@ -87,6 +87,11 @@ class TechnicalSheet extends Model implements Auditable
         return $this->belongsTo(Product::class);
     }
 
+    public function products(): MorphToMany
+    {
+        return $this->morphToMany(Product::class, 'model', 'model_has_product', 'model_id', 'product_id');
+    }
+
     public function waistband_type(): BelongsTo
     {
         return $this->belongsTo(WaistbandType::class)->withTrashed();
@@ -161,6 +166,11 @@ class TechnicalSheet extends Model implements Auditable
     public function technical_sheet_details(): HasMany
     {
         return $this->hasMany(TechnicalSheetDetail::class);
+    }
+
+    public function production_orders(): HasMany
+    {
+        return $this->hasMany(ProductionOrder::class);
     }
 
     public function scopeSearch(Builder $query, ?string $search = null): Builder

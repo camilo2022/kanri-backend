@@ -43,7 +43,6 @@ class VariantSheet implements FromCollection, WithHeadings, WithMapping, WithTit
             }
 
             if (isset($relationships[$field->field])) {
-                logger($variant->related($field->model)->first());
                 $row[] = data_get($variant->related($field->model)->first(), $field->path, '-') ?? '-';
                 continue;
             }

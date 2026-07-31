@@ -24,7 +24,6 @@ class ProductionOrderAllRequest extends FormRequest
 
     public function rules(): array
     {
-        logger($this);
         return [
             'per_page' => ['nullable', 'numeric'],
             'page' => ['nullable', 'numeric'],

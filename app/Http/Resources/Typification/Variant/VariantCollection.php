@@ -41,6 +41,7 @@ class VariantCollection extends ResourceCollection
                     'updated_at' => $this->formatDate($variant->updated_at),
                     'deleted_at' => $this->formatDate($variant->deleted_at),
                     'settings' => $variant->settings,
+                    'production_orders' => $variant->production_orders,
                     ...$relationships
                 ];
             }),

@@ -9,7 +9,6 @@ class FileService
 {
     public function save($model, $file, $file_type_id, $file_subtype_id, $disk = 'public', $folder = 'files')
     {
-
         if (str_starts_with($file->getMimeType(), 'image/')) {
             $file = $this->process_image($file);
         }
@@ -44,6 +43,52 @@ class FileService
                 'name' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
             ],
             [
+                'path' => $path,
+                'mime' => $file->getMimeType(),
+                'extension' => $file->getClientOriginalExtension(),
+                'size' => $file->getSize(),
+                'metadata' => $metadata,
+            ]
+        );
+    }
+
+    public function save_document($model, $file, $file_type_id, $file_subtype_id, $disk = 'public', $folder = 'files')
+    {
+        if (str_starts_with($file->getMimeType(), 'image/')) {
+            $file = $this->process_image($file);
+        }
+
+        $path = Storage::disk($disk)->putFile($folder, $file);
+        $storage_path = storage_path($disk . '/storage/' . $path);
+        $this->corregirOrientacion($storage_path);
+
+        $metadata = [
+            'original_name' => $file->getClientOriginalName(),
+            'original_extension' => $file->getClientOriginalExtension(),
+            'client_mime' => $file->getClientMimeType(),
+            'mime' => $file->getMimeType(),
+            'extension' => $file->getClientOriginalExtension(),
+            'size' => $file->getSize(),
+            'hash_md5' => md5_file($file->getPathname()),
+            'hash_sha256' => hash_file('sha256', $file->getPathname()),
+            'uploaded_at' => now()->toDateTimeString(),
+        ];
+
+        if (str_starts_with($file->getMimeType(), 'image/')) {
+            [$width, $height] = getimagesize($file->getPathname());
+            $metadata['image'] = compact('width', 'height');
+        }
+
+        return File::updateOrCreate(
+            [
+                'model_id' => $model->id,
+                'model_type' => get_class($model),
+                'file_type_id' => $file_type_id,
+                'file_subtype_id' => $file_subtype_id,
+            ],
+            [
+
+                'name' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
                 'path' => $path,
                 'mime' => $file->getMimeType(),
                 'extension' => $file->getClientOriginalExtension(),

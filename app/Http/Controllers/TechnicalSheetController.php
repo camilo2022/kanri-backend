@@ -50,7 +50,7 @@ class TechnicalSheetController extends Controller
         }
     }
 */
-    public function find(TechnicalSheetFindRequest $request)
+    public function find(TechnicalSheetFindRequest $request, $id = null)
     {
         try {
             $technical_sheet = TechnicalSheet::with([
@@ -77,8 +77,6 @@ class TechnicalSheetController extends Controller
                 ->when($request->filled('uuid'), function ($query) use ($request) {
                     return $query->where('uuid', $request->integer('uuid'));
                 })->firstOrFail();
-
-            logger($technical_sheet);
 
             return $this->successResponse(
                 new TechnicalSheetResource($technical_sheet),

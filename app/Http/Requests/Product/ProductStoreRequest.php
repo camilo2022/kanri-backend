@@ -30,7 +30,9 @@ class ProductStoreRequest extends FormRequest
         return [
             'code' => ['required', 'unique:products,code'],
             'trademark_id' => ['required', 'exists:subitems,id,item_id,' . Trademark::ITEM_ID],
-            'subcategory_id' => ['required', 'exists:subitems,id,item_id,' . Subcategory::ITEM_ID]
+            'subcategory_id' => ['required', 'exists:subitems,id,item_id,' . Subcategory::ITEM_ID],
+            'reference_relation' => ['nullable', 'boolean'],
+            'technical_sheet_id' =>  ['nullable', 'exists:technical_sheets,id']
         ];
     }
 
@@ -78,5 +80,10 @@ class ProductStoreRequest extends FormRequest
                 }
             }
         });
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->merge(['reference_relation' => $this->boolean('reference_relation')]);
     }
 }

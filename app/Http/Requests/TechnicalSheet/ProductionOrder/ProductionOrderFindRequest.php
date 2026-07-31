@@ -25,17 +25,16 @@ class ProductionOrderFindRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['nullable', 'numeric', 'exists:production_orders,id', 'required_without_all:technical_sheet_id', 'prohibits:technical_sheet_id'],
-            'technical_sheet_id' => ['nullable', 'numeric', 'exists:technical_sheets,id', 'required_without_all:id', 'prohibits:id'],
+            'id' => ['required', 'numeric', 'exists:production_orders,id'],
         ];
     }
 
     public function messages(): array
     {
         return [
+            'required' => 'Es obligatorio.',
             'numeric' => 'Debe ser un valor numérico.',
             'exists' => 'No hay ningún registro.',
-            'required_without_all' => 'Es requerido cuando :values no estan presentes.',
         ];
     }
 
@@ -43,7 +42,11 @@ class ProductionOrderFindRequest extends FormRequest
     {
         return [
             'id' => 'Identificador de la orden de producción',
-            'technical_sheet_id' => 'Identificador de la ficha tecnica en la orden de producción'
         ];
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->merge(['id' => $this->route('id')]);
     }
 }

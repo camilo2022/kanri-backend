@@ -20,7 +20,12 @@ class ProductController extends Controller
     public function all(ProductAllRequest $request)
     {
         try {
-            $products = Product::with(['subcategory' => ['category'], 'trademark' => ['group'], 'technical_sheet' => ['collection', 'subgroup', 'color', 'waistband_type', 'garment_type', 'wash_tone', 'boot_type', 'yoke_type', 'back_type', 'technical_sheet_details', 'photo_d', 'photo_t', 'variants']])
+            $products = Product::with([
+                'subcategory' => ['category'],
+                'trademark' => ['group', 'sizes'],
+                'technical_sheet' => ['collection', 'subgroup', 'color', 'waistband_type', 'garment_type', 'wash_tone', 'boot_type', 'yoke_type', 'back_type', 'technical_sheet_details', 'photo_d', 'photo_t', 'variants', 'production_orders' => ['fabric', 'color', 'production_order_details' => ['model', 'production_order_detail_quantities']]],
+                'technical_sheets' => ['collection', 'subgroup', 'color', 'waistband_type', 'garment_type', 'wash_tone', 'boot_type', 'yoke_type', 'back_type', 'technical_sheet_details', 'photo_d', 'photo_t', 'variants', 'production_orders' => ['fabric', 'color', 'production_order_details' => ['model', 'production_order_detail_quantities']]]
+            ])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -75,10 +80,16 @@ class ProductController extends Controller
     {
         try {
             $product = new Product();
+
             $product->code = $request->input('code');
             $product->trademark_id = $request->input('trademark_id');
             $product->subcategory_id = $request->input('subcategory_id');
+
             $product->save();
+
+            if (!empty($request->boolean('reference_relation'))) {
+                $product->auditAttach('technical_sheets', $request->input('technical_sheet_id'));
+            }
 
             return $this->successResponse(
                 new ProductResource($product),

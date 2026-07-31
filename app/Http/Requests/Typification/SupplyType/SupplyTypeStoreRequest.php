@@ -31,6 +31,8 @@ class SupplyTypeStoreRequest extends FormRequest
             'settings' => ['required', 'array'],
             'settings.has_variants' => ['required', 'boolean'],
             'settings.in_technical_sheet' => ['required', 'boolean'],
+            'settings.in_production_order' => ['required', 'boolean'],
+            'settings.paragraph' => ['required_if:settings.in_production_order,true', 'in:fabric,roll'],
         ];
     }
 
@@ -55,5 +57,29 @@ class SupplyTypeStoreRequest extends FormRequest
             'settings.has_variants' => 'Tiene variantes',
             'settings.in_technical_sheet' => 'Aplica a Ficha Técnica'
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+
+            if (empty($this->settings['in_production_order'])) {
+                return;
+            }
+
+            $exist = SupplyType::all()->first(function ($supplyType) {
+                $settings = $supplyType->settings;
+
+                return !empty($settings->in_production_order)
+                    && $settings->paragraph === $this->settings['paragraph'];
+            });
+
+            if ($exist) {
+                $validator->errors()->add(
+                    'paragraph',
+                    "Ya existe un tipo de insumo configurado con este apartado. Solo puede existir uno por apartado."
+                );
+            }
+        });
     }
 }

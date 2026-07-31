@@ -64,6 +64,7 @@ class TechnicalSheetResource extends JsonResource
                 'variants' => $this->variants,
                 'pattern_maker' => $this->pattern_maker,
                 'product' => $this->product,
+                'products' => $this->products->first(),
                 'collection' => $this->collection,
                 'garment_type' => $this->garment_type,
                 'subgroup' => $this->subgroup,
@@ -75,6 +76,7 @@ class TechnicalSheetResource extends JsonResource
                 'back_type' => $this->back_type,
                 'photo_d' => $this->photo_d,
                 'photo_t' => $this->photo_t
+
             ],
             'status_technical_sheet' => TechnicalSheet::statuses(),
             'status_technical_sheet_detail' => TechnicalSheetDetail::statuses(),

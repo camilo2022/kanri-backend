@@ -49,6 +49,11 @@ class File extends Model implements Auditable
         return $value ? url('storage/' . $value) : null;
     }
 
+    public function getPdfPathAttribute()
+    {
+        return public_path('storage/' . $this->attributes['path']);
+    }
+
     public function model(): MorphTo
     {
         return $this->morphTo();

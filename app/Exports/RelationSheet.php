@@ -53,7 +53,6 @@ class RelationSheet implements FromCollection, WithHeadings, WithMapping, withTi
 
     public function map($row): array
     {
-        logger($row);
         return [
             $row['variant']->name,
             $this->optionValue($row['relation']) ?: '-',

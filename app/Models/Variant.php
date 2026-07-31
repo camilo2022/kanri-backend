@@ -69,9 +69,15 @@ class Variant extends Model implements Auditable
         return $this->morphToMany(TechnicalSheet::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
     }
 
+
     public function related(string $model): MorphToMany
     {
         return $this->morphedByMany($model, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
+    }
+
+    public function production_orders(): MorphToMany
+    {
+        return $this->morphToMany(ProductionOrder::class, 'model', 'model_has_production_order', 'model_id', 'production_order_id')->withPivot('quantity');
     }
 
     public function scopeSearch(Builder $query, ?string $search = null): Builder

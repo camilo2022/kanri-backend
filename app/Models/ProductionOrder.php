@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 class ProductionOrder extends Model implements Auditable
 {
@@ -53,7 +56,8 @@ class ProductionOrder extends Model implements Auditable
 
     protected $casts = [
         'pocket_fabric' => 'boolean',
-        'settings' => 'object'
+        'settings' => 'object',
+        'date' => 'datetime',
     ];
 
     public function technical_sheet(): BelongsTo
@@ -64,6 +68,38 @@ class ProductionOrder extends Model implements Auditable
     public function model(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function pieces(): MorphToMany
+    {
+        return $this->morphedByMany(Piece::class, 'model', 'model_has_production_order', 'production_order_id', 'model_id')->withPivot('quantity');
+    }
+
+    public function rolls(): MorphToMany
+    {
+        return $this->morphedByMany(Variant::class, 'model', 'model_has_production_order', 'production_order_id', 'model_id')->withPivot('quantity');
+    }
+
+    public function color(): MorphToMany
+    {
+        return $this->morphedByMany(Color::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
+    }
+
+    public function fabric(): HasOne
+    {
+        return $this->hasOne(ProductionOrderDetail::class)->where('model_type', Variant::class);
+    }
+
+    public function production_order_details(): HasMany
+    {
+        return $this->hasMany(ProductionOrderDetail::class);
+    }
+
+    public function strokes()
+    {
+        return $this->morphOne(File::class, 'model')
+            ->where('file_type_id', 3)
+            ->where('file_subtype_id', 13);
     }
 
     public function scopeSearch(Builder $query, ?string $search = null): Builder
