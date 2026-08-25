@@ -14,6 +14,7 @@ class ProductionOrderCollection extends ResourceCollection
             'production_orders' => $this->collection->map(function ($production_order) {
                 return [
                     'id' => $production_order->id,
+                    'uuid' => $production_order->uuid ?? null,
                     'technical_sheet_id' => $production_order->technical_sheet_id,
                     'consecutive'  => $production_order->consecutive,
                     'efficiency'  => $production_order->efficiency,

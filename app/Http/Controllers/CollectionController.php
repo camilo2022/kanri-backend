@@ -13,7 +13,6 @@ use App\Http\Resources\Collection\CollectionResource;
 use App\Models\Collection;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
-use Illuminate\Http\Request;
 
 /**
  * @OA\Tag(
@@ -104,7 +103,7 @@ class CollectionController extends Controller
      *                 @OA\Property(
      *                     property="collections",
      *                     type="array",
-     *                     @OA\Items(ref="#/components/schemas/ClothingLine")
+     *                     @OA\Items(ref="#/components/schemas/Collection")
      *                 ),
      *                 @OA\Property(
      *                     property="meta",
@@ -194,7 +193,7 @@ class CollectionController extends Controller
      *                 type="object",
      *                 @OA\Property(
      *                     property="clothing",
-     *                     ref="#/components/schemas/ClothingLine"
+     *                     ref="#/components/schemas/Collection"
      *                 ),
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
@@ -241,7 +240,7 @@ class CollectionController extends Controller
     public function find(CollectionFindRequest $request, $id)
     {
         try {
-            $collection = Collection::with(['item'])
+            $collection = Collection::with(['item', 'technical_sheets' => ['product' => ['trademark' => ['sizes'], 'subcategory' => ['category']], 'garment_type', 'wash_tone', 'boot_type',  'photo_d', 'photo_t', 'products', 'production_orders' => ['production_order_details' => ['production_order_detail_quantities', 'model'], 'fabric' => ['model'], 'color', 'model']]])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -292,7 +291,7 @@ class CollectionController extends Controller
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
-     *                     property="clothing_line",
+     *                     property="collection",
      *                     type="object",
      *                     @OA\Property(property="name", type="string", example="NAME_COLLECTION"),
      *                     @OA\Property(property="description", type="string", example="DESCRIPTION_COLLECTION"),
@@ -411,7 +410,7 @@ class CollectionController extends Controller
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
-     *                     property="clothing_line",
+     *                     property="collection",
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="item_id", type="integer", example=1),
@@ -511,7 +510,7 @@ class CollectionController extends Controller
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
-     *                     property="clothing_line",
+     *                     property="collection",
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="item_id", type="integer", example=1),
@@ -607,7 +606,7 @@ class CollectionController extends Controller
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
-     *                     property="clothing",
+     *                     property="collection",
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="item_id", type="integer", example=1),

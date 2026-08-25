@@ -25,7 +25,7 @@ class ProductionOrderExportPDFRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'numeric', 'exists:production_orders,id'],
+            'uuid' => ['required', 'string', 'exists:production_orders,uuid'],
         ];
     }
 
@@ -47,6 +47,6 @@ class ProductionOrderExportPDFRequest extends FormRequest
 
     protected function prepareForValidation()
     {
-        $this->merge(['id' => $this->route('id')]);
+        $this->merge(['uuid' => $this->route('uuid')]);
     }
 }

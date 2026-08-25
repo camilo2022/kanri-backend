@@ -21,6 +21,9 @@ use App\Traits\ApiResponser;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use setasign\Fpdi\Fpdi;
+use Illuminate\Support\Facades\URL;
+use App\Services\QrCodeService;
+use Illuminate\Support\Str;
 
 class ProductionOrderController extends Controller
 {
@@ -62,7 +65,7 @@ class ProductionOrderController extends Controller
     public function find(ProductionOrderFindRequest $request, $id)
     {
         try {
-            $production_order = ProductionOrder::with(['technical_sheet' => ['product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']], 'products', 'garment_type', 'subgroup', 'collection', 'photo_d', 'photo_t',], 'production_order_details' => ['production_order_detail_quantities', 'model'], 'fabric' => ['model'], 'pieces', 'rolls' => ['production_orders']])
+            $production_order = ProductionOrder::with(['model' => ['production_order_details' => ['production_order_detail_quantities', 'model'], 'technical_sheet' => ['product' => ['trademark' => ['sizes']]]], 'technical_sheet' => ['product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']], 'products', 'garment_type', 'subgroup', 'collection', 'photo_d', 'photo_t',], 'production_order_details' => ['production_order_detail_quantities', 'model'], 'fabric' => ['model'], 'pieces', 'rolls' => ['production_orders']])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -84,14 +87,13 @@ class ProductionOrderController extends Controller
     public function store(ProductionOrderStoreRequest $request)
     {
         try {
-
             $result = DB::select("CALL generate_production_order_code()");
             $production_order = new ProductionOrder();
             $consecutive = $result[0]->consecutive;
 
             $production_order->consecutive = $consecutive;
+            $production_order->uuid = Str::uuid();
             if ($request->boolean('reasigned_curve')) {
-                logger(['Ingreso a reasignar']);
                 $production_order->model_id = $request->input('production_order_id');
                 $production_order->model_type = ProductionOrder::class;
             }
@@ -110,8 +112,6 @@ class ProductionOrderController extends Controller
             if ($request->filled('strokes_file.strokes_file_id')) {
 
                 $file = File::findOrFail($request->input('strokes_file.strokes_file_id'));
-
-                logger(['Archivo', $file]);
 
                 File::create([
                     'model_id' => $production_order->id,
@@ -137,8 +137,6 @@ class ProductionOrderController extends Controller
                     'production_order'
                 );
             }
-
-
 
             $production_order->color()->sync([$request->input('color_id')]);
 
@@ -217,6 +215,7 @@ class ProductionOrderController extends Controller
     public function save_details(array $production_order_details, int $production_order_id)
     {
         try {
+            logger($production_order_details);
             foreach ($production_order_details as $production_order_detail_item) {
                 $quantities = [];
 
@@ -276,36 +275,59 @@ class ProductionOrderController extends Controller
         }
     }
 
-    public function pdf(ProductionOrderExportPDFRequest $request, $id)
+    public function pdf(ProductionOrderExportPDFRequest $request, string $uuid)
     {
         try {
             $production_order = ProductionOrder::with([
-                'technical_sheet' => ['product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']], 'products', 'photo_d', 'photo_t', 'garment_type', 'collection'],
+                'technical_sheet' => [
+                    'product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']],
+                    'products',
+                    'photo_d',
+                    'photo_t',
+                    'garment_type',
+                    'collection',
+                    'model' => ['product'],
+                    'derivatives' => ['product'],
+                ],
                 'production_order_details' => ['production_order_detail_quantities', 'model'],
                 'fabric.model',
                 'pieces',
-                'rolls'
-            ])->findOrFail($id);
+                'rolls',
+                'model' => ['technical_sheet' => ['product']],
+                'derivatives' => ['technical_sheet' => ['product']],
+            ])->where('uuid', $uuid)->firstOrFail();
+
+            $pdfUrl = URL::signedRoute(
+                'production_orders.technical_sheets.pdf',
+                [
+                    'uuid' => $production_order->uuid,
+                ]
+            );
+
+            $qr = app(QrCodeService::class)->generate($pdfUrl);
 
             $pdf = Pdf::loadView(
-                'pdf.production-order',
-                compact('production_order')
-            )->setPaper('a4', 'portrait');
+                'pdf.ProductionOrder.pdf',
+                [
+                    'production_order' => $production_order,
+                    'qr' => $qr,
+                ]
+            )->setPaper('a4', 'landscape');
 
             $dompdf = $pdf->getDomPDF();
+
+            $dompdf->render();
 
             $canvas = $dompdf->getCanvas();
 
             $canvas->page_text(
-                500,
-                815,
+                730,
+                565,
                 "Página {PAGE_NUM} de {PAGE_COUNT}",
                 null,
                 9,
                 [0, 0, 0]
             );
-
-            $dompdf->render();
 
             $tempDir = storage_path('app/temp');
 
@@ -350,11 +372,6 @@ class ProductionOrderController extends Controller
                     )
                 );
 
-                logger([
-                    'strokePath' => $strokePath,
-                    'exists' => file_exists($strokePath)
-                ]);
-
                 if (file_exists($strokePath)) {
 
                     $pageCount = $fpdi->setSourceFile($strokePath);
@@ -377,12 +394,31 @@ class ProductionOrderController extends Controller
 
             @unlink($mainPdf);
 
+            $has_stara = $production_order->production_order_details->contains(
+                fn($item) => $item->destination === 'STARA'
+            );
+
+            $fileName = 'PO-' .
+                ($production_order->technical_sheet->product->code ?? 'SIN-CODIGO') .
+                '-' .
+                ($production_order->cut ?? 'SIN-LOTE');
+
+            if ($has_stara) {
+                $staraReference = optional($production_order->technical_sheet->products->first())->code;
+
+                if ($staraReference) {
+                    $fileName .= ', ' . $staraReference . '-' . ($production_order->cut ?? 'SIN-LOTE');
+                }
+            }
+
+            $fileName .= '.pdf';
+
             return response(
                 $fpdi->Output('S'),
                 200,
                 [
                     'Content-Type' => 'application/pdf',
-                    'Content-Disposition' => 'inline; filename="Orden-Produccion-' . $production_order->consecutive . '.pdf"'
+                    'Content-Disposition' => 'inline; filename="' . $fileName . '"',
                 ]
             );
         } catch (\Throwable $e) {

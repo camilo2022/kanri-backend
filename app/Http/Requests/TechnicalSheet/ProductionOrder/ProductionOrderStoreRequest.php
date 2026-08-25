@@ -31,8 +31,6 @@ class ProductionOrderStoreRequest extends FormRequest
 
     public function rules(): array
     {
-        logger(['Ingreso aqui']);
-        logger($this->all());
         return [
             'date' => ['required', 'date_format:Y-m-d', 'before_or_equal:now'],
             'technical_sheet_id' => ['required', 'exists:technical_sheets,id'],
@@ -66,7 +64,7 @@ class ProductionOrderStoreRequest extends FormRequest
         return [
             'required' => 'Es obligatorio.',
             'date_format' => 'Formato inválido. Permitido :format.',
-            'date.before_or_equal' => 'No puede ser posterior a ' . now()->format('Y-d-m') . '.',
+            'date.before_or_equal' => 'No puede ser posterior a :date.',
             'exists' => 'No registrado en el sistema.',
             'boolean' => 'Debe ser un dato tipo si/no',
             'numeric' => 'Debe ser un dato númerico',

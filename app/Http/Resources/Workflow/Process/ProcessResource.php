@@ -12,6 +12,7 @@ use App\Models\Employee;
 use App\Models\FabricType;
 use App\Models\GarmentType;
 use App\Models\Group;
+use App\Models\Piece;
 use App\Models\Silhouette;
 use App\Models\Size;
 use App\Models\Subcategory;
@@ -133,7 +134,8 @@ class ProcessResource extends JsonResource
             'label' => 'Colores',
             'model' => Color::class,
             'url' => '/colors/all',
-            'option' => 'name'
+            'option' => 'name',
+            'field' => 'color_id',
         ],
         'collections' => [
             'label' => 'Colecciones',
@@ -146,6 +148,13 @@ class ProcessResource extends JsonResource
             'model' => YokeType::class,
             'url' => '/yoke_types/all',
             'option' => 'name'
+        ],
+        'pieces' => [
+            'label' => 'Piezas',
+            'model' => Piece::class,
+            'url' => '/pieces/all',
+            'option' => 'name',
+            'field' => 'piece_id',
         ],
         'suppliers' => [
             'label' => 'Proveedores',

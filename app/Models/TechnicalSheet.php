@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class TechnicalSheet extends Model implements Auditable
 {
@@ -80,6 +81,16 @@ class TechnicalSheet extends Model implements Auditable
                 $technical_sheet->uuid = Str::uuid();
             }
         });
+    }
+
+    public function model(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    public function derivatives()
+    {
+        return $this->morphMany(TechnicalSheet::class, 'model');
     }
 
     public function product(): BelongsTo

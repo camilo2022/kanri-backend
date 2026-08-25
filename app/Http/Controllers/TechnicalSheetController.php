@@ -2,54 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\TechnicalSheet\TechnicalSheetExportPDFRequest;
 use App\Http\Requests\TechnicalSheet\TechnicalSheetFindRequest;
 use App\Http\Requests\TechnicalSheet\TechnicalSheetStoreRequest;
 use App\Http\Requests\TechnicalSheet\TechnicalSheetUpdateRequest;
 use App\Http\Resources\TechnicalSheet\TechnicalSheetResource;
+use App\Models\Process;
+use App\Models\ProductionOrder;
 use App\Models\TechnicalSheet;
 use App\Models\TechnicalSheetDetail;
 use App\Services\FileService;
+use App\Services\QrCodeService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
+use App\Traits\ModelTypes;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
 class TechnicalSheetController extends Controller
 {
-    use ApiMessage, ApiResponser;
+    use ApiMessage, ApiResponser, ModelTypes;
 
-    /*
-    public function all(ProductAllRequest $request)
-    {
-        try {
-            $products = Product::with(['subcategory' => ['category'], 'trademark' => ['group'], 'technical_sheet' => ['collection', 'subgroup', 'color', 'waistband_type', 'garment_type', 'wash_tone', 'boot_type', 'yoke_type', 'back_type', 'technical_sheet_details']])
-                ->when($request->filled('search'), function ($query) use ($request) {
-                    return $query->search($request->input('search'));
-                })
-                ->when($request->boolean('with_trashed'), function ($query) {
-                    return $query->withTrashed();
-                })
-                ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
-                });
-
-            $products = $products->paginate($request->integer('per_page', $products->count()));
-
-            return $this->successResponse(
-                new ProductCollection($products),
-                $this->getMessage('Success'),
-                200
-            );
-        } catch (\Throwable $e) {
-            return $this->errorResponse(
-                [
-                    'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
-                ],
-                $this->getCode(class_basename($e))
-            );
-        }
-    }
-*/
     public function find(TechnicalSheetFindRequest $request, $id = null)
     {
         try {
@@ -66,7 +41,8 @@ class TechnicalSheetController extends Controller
                 'technical_sheet_details',
                 'pattern_maker' => ['person', 'position'],
                 'variants' => ['supply_type'],
-                'product' => ['trademark' => ['group'], 'subcategory' => ['category']]
+                'product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']],
+                'products' => ['trademark'],
             ])
                 ->when($request->filled('id'), function ($query) use ($request) {
                     $query->where('id', $request->integer('id'));
@@ -87,7 +63,7 @@ class TechnicalSheetController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -97,9 +73,12 @@ class TechnicalSheetController extends Controller
     public function store(TechnicalSheetStoreRequest $request)
     {
         try {
-            $technical_sheet = new TechnicalSheet();
+            $result = DB::select('CALL generate_technical_sheet_consecutive()');
+            $technical_sheet = new TechnicalSheet;
 
             $technical_sheet->uuid = Str::uuid();
+            $technical_sheet->code = $request->input('code');
+            $technical_sheet->consecutive = $result[0]->consecutive;
             $technical_sheet->date = $request->input('date');
             $technical_sheet->product_id = $request->integer('product_id');
             $technical_sheet->collection_id = $request->integer('collection_id');
@@ -119,6 +98,8 @@ class TechnicalSheetController extends Controller
             $technical_sheet->observation = $request->input('observation');
 
             $technical_sheet->save();
+
+            $technical_sheet->auditSync('variants', $request->input('variants', []));
 
             if ($request->hasFile('photo_d')) {
                 app(FileService::class)->save(
@@ -153,7 +134,7 @@ class TechnicalSheetController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -212,7 +193,6 @@ class TechnicalSheetController extends Controller
 
             $this->save($request->input('technical_sheet_details', []), $technical_sheet->id);
 
-
             return $this->successResponse(
                 new TechnicalSheetResource($technical_sheet),
                 $this->getMessage('Success'),
@@ -222,7 +202,7 @@ class TechnicalSheetController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -249,7 +229,240 @@ class TechnicalSheetController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    private function resolveDynamicField($field, $value)
+    {
+
+        if (empty($field->model) || empty($value) || ! class_exists($field->model)) {
+            return $value;
+        }
+
+        $model = $field->model;
+
+        $record = $model::find($value);
+
+        if (! $record) {
+            return $value;
+        }
+
+        $config = collect($this->getModelTypes())
+            ->firstWhere('model', $model);
+
+        if (! $config) {
+            return $record->id;
+        }
+
+        $option = $config['option'] ?? 'name';
+
+        if (is_array($option)) {
+            return collect($option)
+                ->map(fn ($path) => data_get($record, $path))
+                ->filter()
+                ->implode(' ');
+        }
+
+        return data_get($record, $option);
+    }
+
+    private function formatTechnicalSheetDetails($details)
+    {
+        return $details->map(function ($detail) {
+            $settings = $detail->settings;
+
+            if (
+                isset($settings->dinamic) &&
+                ! empty($settings->dinamic->values) &&
+                ! empty($settings->dinamic->body)
+            ) {
+
+                $body = collect($settings->dinamic->body);
+
+                $settings->dinamic->values = collect($settings->dinamic->values)
+                    ->map(function ($row) use ($body) {
+                        foreach (get_object_vars($row) as $field => $value) {
+                            $definition = $body->firstWhere('field', $field);
+
+                            if (! $definition) {
+                                continue;
+                            }
+
+                            if (($definition->type ?? null) === 'boolean') {
+                                $row->{$field} = $value ? 'Sí' : 'No';
+
+                                continue;
+                            }
+
+                            $row->{$field} = $this->resolveDynamicField(
+                                $definition,
+                                $value
+                            );
+                        }
+
+                        return $row;
+                    })
+                    ->values()
+                    ->toArray();
+            }
+
+            if (
+                isset($settings->static) &&
+                ! empty($settings->static->values) &&
+                ! empty($settings->static->body)
+            ) {
+
+                $body = collect($settings->static->body)
+                    ->flatten(1);
+
+                foreach (get_object_vars($settings->static->values) as $field => $value) {
+
+                    $definition = $body->firstWhere('field', $field);
+
+                    if (! $definition) {
+                        continue;
+                    }
+
+                    if (($definition->type ?? null) === 'boolean') {
+                        $settings->static->values->{$field} = $value ? 'Sí' : 'No';
+
+                        continue;
+                    }
+
+                    $settings->static->values->{$field} = $this->resolveDynamicField(
+                        $definition,
+                        $value
+                    );
+                }
+            }
+
+            $detail->settings = $settings;
+
+            return $detail;
+        });
+    }
+
+    public function pdf(TechnicalSheetExportPDFRequest $request, string $uuid)
+    {
+        try {
+            $technical_sheet = TechnicalSheet::with([
+                'collection',
+                'subgroup',
+                'color',
+                'waistband_type',
+                'garment_type',
+                'wash_tone',
+                'boot_type',
+                'yoke_type',
+                'back_type',
+                'technical_sheet_details',
+                'pattern_maker' => ['person', 'position'],
+                'variants' => ['supply_type'],
+                'product' => ['trademark' => ['group'], 'subcategory' => ['category']],
+                'products' => ['trademark'],
+            ])->where('uuid', $uuid)->firstOrFail();
+
+            $production_order = ProductionOrder::with([
+                'technical_sheet' => [
+                    'product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']],
+                    'products',
+                    'photo_d',
+                    'photo_t',
+                    'garment_type',
+                    'collection',
+                    'model' => ['product'],
+                    'derivatives' => ['product'],
+                ],
+                'production_order_details' => ['production_order_detail_quantities', 'model'],
+                'fabric.model',
+                'pieces',
+                'rolls',
+                'model' => ['technical_sheet' => ['product']],
+                'derivatives' => ['technical_sheet' => ['product']],
+            ])->where('id', $request->production_order_id)
+                ->where('technical_sheet_id', $technical_sheet->id)
+                ->firstOrFail();
+
+            $pdfUrl = URL::signedRoute(
+                'technical_sheets.pdf',
+                [
+                    'uuid' => $technical_sheet->uuid,
+                    'production_order_id' => $production_order->id,
+                ]
+            );
+
+            $qr = app(QrCodeService::class)->generate($pdfUrl);
+
+            $technical_sheet->technical_sheet_details =
+                $this->formatTechnicalSheetDetails(
+                    $technical_sheet->technical_sheet_details
+                );
+
+            $processes = Process::with(['subprocesses' => ['operations']])->where('settings->in_technical_sheet', true)
+                ->get();
+
+            $pdf = Pdf::loadView(
+                'pdf.TechnicalSheet.pdf',
+                [
+                    'technical_sheet' => $technical_sheet,
+                    'production_order' => $production_order,
+                    'processes' => $processes,
+                    'qr' => $qr,
+                ]
+            )->setPaper('a4', 'portrait');
+
+            $dompdf = $pdf->getDomPDF();
+
+            $dompdf->render();
+
+            $canvas = $dompdf->getCanvas();
+
+            $canvas->page_text(
+                270,
+                815,
+                'Página {PAGE_NUM} de {PAGE_COUNT}',
+                null,
+                9,
+                [0, 0, 0]
+            );
+
+            $has_stara = $production_order->production_order_details->contains(
+                fn ($item) => $item->destination === 'STARA'
+            );
+
+            $fileName = 'TS-'.
+                ($production_order->technical_sheet->product->code ?? 'SIN-CODIGO').
+                '-'.
+                ($production_order->cut ?? 'SIN-LOTE');
+
+            if ($has_stara) {
+                $staraReference = optional($production_order->technical_sheet->products->first())->code;
+
+                if ($staraReference) {
+                    $fileName .= ', '.$staraReference.'-'.($production_order->cut ?? 'SIN-LOTE');
+                }
+            }
+
+            $fileName .= '.pdf';
+
+            return response(
+                $dompdf->output(),
+                200,
+                [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'inline;  filename="'.$fileName.'"',
+                ]
+            );
+        } catch (\Throwable $e) {
+
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );

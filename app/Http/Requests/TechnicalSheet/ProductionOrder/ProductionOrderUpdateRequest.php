@@ -30,8 +30,6 @@ class ProductionOrderUpdateRequest extends FormRequest
 
     public function rules(): array
     {
-        logger(['Ingreso aqui']);
-        logger($this);
         return [
             'id' => ['required', 'exists:production_orders,id'],
             'date' => ['required', 'date_format:Y-m-d', 'before_or_equal:now'],

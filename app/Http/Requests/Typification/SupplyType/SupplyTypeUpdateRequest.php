@@ -25,7 +25,6 @@ class SupplyTypeUpdateRequest extends FormRequest
 
     public function rules(): array
     {
-        logger($this);
         return [
             'id' => ['required', 'exists:subitems,id,item_id,' . SupplyType::ITEM_ID],
             'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . SupplyType::ITEM_ID],

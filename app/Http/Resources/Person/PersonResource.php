@@ -15,7 +15,7 @@ class PersonResource extends JsonResource
                 'document' => $this->document,
                 'names' => $this->names,
                 'last_names' => $this->last_names,
-                'birth_date' => $this->birth_date,
+                'birth_date' => $this->birth_date?->format('Y-m-d'),
                 'address' => $this->address,
                 'phone' => $this->phone,
                 'created_at' => $this->formatDate($this->created_at),

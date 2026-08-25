@@ -11,6 +11,7 @@ use App\Models\Employee;
 use App\Models\FabricType;
 use App\Models\GarmentType;
 use App\Models\Group;
+use App\Models\Piece;
 use App\Models\ProductionOrder;
 use App\Models\Silhouette;
 use App\Models\Size;
@@ -181,6 +182,13 @@ class TechnicalSheetResource extends JsonResource
             'model' => YokeType::class,
             'url' => '/yoke_types/all',
             'option' => 'name'
+        ],
+        'pieces' => [
+            'label' => 'Piezas',
+            'model' => Piece::class,
+            'url' => '/pieces/all',
+            'option' => 'name',
+            'field' => 'piece_id',
         ],
         'suppliers' => [
             'label' => 'Proveedores',

@@ -31,7 +31,8 @@ class SupplyTypeAllRequest extends FormRequest
             'column' => ['nullable', 'string', 'in:id,name,description,created_at,updated_at,deleted_at'],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
             'with_trashed' => ['required', 'boolean'],
-            'in_technical_sheet' => ['nullable', 'boolean']
+            'in_technical_sheet' => ['nullable', 'boolean'],
+            'in_production_order' => ['nullable', 'boolean']
         ];
     }
 
@@ -64,6 +65,9 @@ class SupplyTypeAllRequest extends FormRequest
         $this->merge(['with_trashed' => $this->boolean('with_trashed')]);
         if ($this->has('in_technical_sheet')) {
             $this->merge(['in_technical_sheet' => $this->boolean('in_technical_sheet')]);
+        }
+        if ($this->has('in_production_order')) {
+            $this->merge(['in_production_order' => $this->boolean('in_production_order')]);
         }
     }
 }

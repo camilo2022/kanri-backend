@@ -70,6 +70,11 @@ class ProductionOrder extends Model implements Auditable
         return $this->morphTo();
     }
 
+    public function derivatives()
+    {
+        return $this->morphMany(ProductionOrder::class, 'model');
+    }
+
     public function pieces(): MorphToMany
     {
         return $this->morphedByMany(Piece::class, 'model', 'model_has_production_order', 'production_order_id', 'model_id')->withPivot('quantity');

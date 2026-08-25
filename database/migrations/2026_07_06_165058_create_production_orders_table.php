@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('consecutive', 11)->unique();
             $table->float('efficiency', 8.3)->nullable();
             $table->string('cut', 2);
-            $table->decimal('width', 8, 2);
+            $table->decimal('width', 8, 2)->nullable();
             $table->boolean('pocket_fabric')->default(false);
             $table->text('observation')->nullable();
             $table->json('settings')->default(new Expression('(JSON_OBJECT())'))->comment('Configuraciones');

@@ -16,13 +16,13 @@ use App\Traits\ApiResponser;
 
 /**
  * @OA\Tag(
- *     name="Clothing Lines",
- *     description="Endpoints para gestionar líneas de ropa"
+ *     name="Pieces",
+ *     description="Endpoints para gestionar piezas"
  * )
  *
  * @OA\PathItem(
  *     path="/pieces",
- *     description="Rutas de gestión de líneas de ropa"
+ *     description="Rutas de gestión de piezas"
  * )
  *
  * @OA\Schema(
@@ -55,7 +55,7 @@ class PieceController extends Controller
     /**
      * @OA\Get(
      *     path="/pieces/all",
-     *     tags={"Clothing Lines"},
+     *     tags={"Pieces"},
      *     summary="Listar lineas de ropa",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
@@ -143,8 +143,8 @@ class PieceController extends Controller
     {
         try {
             $pieces = Piece::when($request->filled('search'), function ($query) use ($request) {
-                    return $query->search($request->input('search'));
-                })
+                return $query->search($request->input('search'));
+            })
                 ->when($request->boolean('with_trashed'), function ($query) {
                     return $query->withTrashed();
                 })

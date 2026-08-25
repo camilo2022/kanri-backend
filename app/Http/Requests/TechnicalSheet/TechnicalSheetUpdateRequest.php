@@ -11,7 +11,6 @@ use App\Models\Product;
 use App\Models\Subgroup;
 use App\Models\SupplyType;
 use App\Models\TechnicalSheet;
-use App\Models\Trademark;
 use App\Models\Variant;
 use App\Models\WaistbandType;
 use App\Models\WashTone;
@@ -28,7 +27,7 @@ class TechnicalSheetUpdateRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -42,24 +41,24 @@ class TechnicalSheetUpdateRequest extends FormRequest
         return [
             'id' => ['required', 'exists:technical_sheets,id'],
             'date' => ['required', 'date_format:Y-m-d', 'before_or_equal:now'],
-            'status' =>  ['required', 'in:' . implode(',', [TechnicalSheet::PENDING, TechnicalSheet::REVIEW, TechnicalSheet::APPROVED, TechnicalSheet::CANCELLED])],
-            'code' => ['required', 'unique:technical_sheets,code,' . $this->input('id') . ',id'],
-            'product_id' => ['required', 'exists:products,id', 'unique:technical_sheets,product_id,' . $this->route('id') . ',id'],
-            'collection_id' => ['required', 'exists:subitems,id,item_id,' . Collection::ITEM_ID . ',deleted_at,NULL'],
-            'garment_type_id' => ['required', 'exists:subitems,id,item_id,' . GarmentType::ITEM_ID . ',deleted_at,NULL'],
-            'subgroup_id' => ['required', 'exists:subitems,id,item_id,' . Subgroup::ITEM_ID . ',deleted_at,NULL'],
-            'wash_tone_id' => ['required', 'exists:subitems,id,item_id,' . WashTone::ITEM_ID . ',deleted_at,NULL'],
-            'color_id' => ['required', 'exists:subitems,id,item_id,' . Color::ITEM_ID . ',deleted_at,NULL'],
-            'waistband_type_id' => ['required', 'exists:subitems,id,item_id,' . WaistbandType::ITEM_ID . ',deleted_at,NULL'],
+            'status' => ['required', 'in:'.implode(',', [TechnicalSheet::PENDING, TechnicalSheet::REVIEW, TechnicalSheet::APPROVED, TechnicalSheet::CANCELLED])],
+            'code' => ['required', 'unique:technical_sheets,code,'.$this->input('id').',id'],
+            'product_id' => ['required', 'exists:products,id', 'unique:technical_sheets,product_id,'.$this->route('id').',id'],
+            'collection_id' => ['required', 'exists:subitems,id,item_id,'.Collection::ITEM_ID.',deleted_at,NULL'],
+            'garment_type_id' => ['required', 'exists:subitems,id,item_id,'.GarmentType::ITEM_ID.',deleted_at,NULL'],
+            'subgroup_id' => ['required', 'exists:subitems,id,item_id,'.Subgroup::ITEM_ID.',deleted_at,NULL'],
+            'wash_tone_id' => ['required', 'exists:subitems,id,item_id,'.WashTone::ITEM_ID.',deleted_at,NULL'],
+            'color_id' => ['required', 'exists:subitems,id,item_id,'.Color::ITEM_ID.',deleted_at,NULL'],
+            'waistband_type_id' => ['required', 'exists:subitems,id,item_id,'.WaistbandType::ITEM_ID.',deleted_at,NULL'],
             'measure_of_waistband' => ['required', 'numeric', 'min:1'],
-            'boot_type_id' => ['required', 'exists:subitems,id,item_id,' . BootType::ITEM_ID . ',deleted_at,NULL'],
-            'yoke_type_id' => ['required', 'exists:subitems,id,item_id,' . YokeType::ITEM_ID . ',deleted_at,NULL'],
-            'back_type_id' => ['required', 'exists:subitems,id,item_id,' . BackType::ITEM_ID . ',deleted_at,NULL'],
+            'boot_type_id' => ['required', 'exists:subitems,id,item_id,'.BootType::ITEM_ID.',deleted_at,NULL'],
+            'yoke_type_id' => ['required', 'exists:subitems,id,item_id,'.YokeType::ITEM_ID.',deleted_at,NULL'],
+            'back_type_id' => ['required', 'exists:subitems,id,item_id,'.BackType::ITEM_ID.',deleted_at,NULL'],
             'pattern_maker_id' => ['required',  'exists:employees,id,deleted_at,NULL'],
             'physical_sample' => ['required', 'boolean'],
             'number_of_buttons' => ['required', 'numeric', 'min:1'],
-            'observation' =>  ['nullable', 'string', 'max:1000'],
-            'description' =>  ['nullable', 'string', 'max:1000'],
+            'observation' => ['nullable', 'string', 'max:1000'],
+            'description' => ['nullable', 'string', 'max:1000'],
             'photo_d' => ['required', 'array'],
             'photo_d.file' => ['sometimes', 'image', 'max:2048'],
             'photo_t' => ['required', 'array'],
@@ -83,7 +82,7 @@ class TechnicalSheetUpdateRequest extends FormRequest
             'required' => 'Es obligatorio.',
             'required_with' => 'Es requerido.',
             'date_format' => 'Formato inválido. Permitido :format.',
-            'date.before_or_equal' => 'No puede ser posterior a ' . now()->format('Y-d-m') . '.',
+            'date.before_or_equal' => 'No puede ser posterior a '.now()->format('Y-d-m').'.',
             'exists' => 'No registrado en el sistema.',
             'unique' => 'Ya está registrado.',
             'boolean' => 'Debe ser un dato tipo si/no',
@@ -94,7 +93,7 @@ class TechnicalSheetUpdateRequest extends FormRequest
             'array' => 'Debe ser un arreglo de datos',
             'image' => 'Debe ser una imagen.',
             'mimes' => 'Extensión inválida. Permitidas :values.',
-            'photo.max' => 'Se permite máximo :max KB.'
+            'photo.max' => 'Se permite máximo :max KB.',
         ];
     }
 
@@ -109,7 +108,6 @@ class TechnicalSheetUpdateRequest extends FormRequest
             'string' => 'Debe ser texto.',
             'in' => 'Seleccione una opción válida.',
             'nullable' => '',
-
         ];
     }
 
@@ -131,16 +129,18 @@ class TechnicalSheetUpdateRequest extends FormRequest
             'pattern_maker_id' => 'Identificador del patronista',
             'physical_sample' => 'Indicador de muestra física',
             'number_of_buttons' => 'Número de botones',
-            'observation' =>  'Observación',
-            'description' =>  'Descripción',
+            'observation' => 'Observación',
+            'description' => 'Descripción',
             'photo_d' => 'Foto delantera',
-            'photo_t' => 'Foto trasera'
+            'photo_t' => 'Foto trasera',
+            'technical_sheet_details' => 'Detalles de la ficha tecnica',
+
         ];
     }
 
     protected function resolveRule(string $rule): string
     {
-        if (!is_string($rule)) {
+        if (! is_string($rule)) {
             return $rule;
         }
 
@@ -172,50 +172,10 @@ class TechnicalSheetUpdateRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $product = Product::find($this->integer('product_id'));
-            $trademark = Trademark::find($product->trademark_id);
-            $code = $this->input('code');
-            $isValid = false;
-            $messages = [];
-
-            foreach ($trademark?->settings?->validations ?? [] as $item) {
-                if (preg_match($item->regex, $code)) {
-                    $isValid = true;
-                    break;
-                }
-                $messages[] = $item->message;
-            }
-
-            if (!$isValid) {
-                $validator->errors()->add(
-                    'code',
-                    "El código no cumple las siguientes validaciones:\n• " .
-                        implode("\n• ", $messages)
-                );
-            }
-
             $supply_types = SupplyType::with('variants')
                 ->where('settings->in_technical_sheet', true)->get();
 
-            foreach ($supply_types as $supply_type) {
-                $has_variants = $supply_type->variants
-                    ->pluck('id')
-                    ->intersect($this->input('variants', []))
-                    ->isNotEmpty();
-
-                if (!$has_variants) {
-                    $validator->errors()->add("variant.$supply_type->id", 'Debe seleccionar una variante');
-                }
-            }
-
-            $supply_type_ids = [];
-
-            foreach ($this->input('variants', []) as $key => $variant_id) {
-                $variant = Variant::with('supply_type')->find($variant_id);
-
-                if (in_array($variant?->supply_type->first()?->id, $supply_type_ids)) {
-                    $validator->errors()->add("variants.$key", 'La variante pertenece a un tipo de insumo ya registrado.');
-                }
-            }
+            $messages = [];
 
             $aux = [
                 'D' => 'photo_d.file',
@@ -226,7 +186,7 @@ class TechnicalSheetUpdateRequest extends FormRequest
                 $photo = $this->file($field);
 
                 if ($this->hasFile($field)) {
-                    $expectedName = $product->code . '-' . $suffix;
+                    $expectedName = $product->code.'-'.$suffix;
 
                     $filename = pathinfo(
                         $photo->getClientOriginalName(),
@@ -242,249 +202,268 @@ class TechnicalSheetUpdateRequest extends FormRequest
                 }
             }
 
+            foreach ($supply_types as $supply_type) {
+                $has_variants = $supply_type->variants
+                    ->pluck('id')
+                    ->intersect($this->input('variants', []))
+                    ->isNotEmpty();
+
+                if (! $has_variants) {
+                    $validator->errors()->add("variant.$supply_type->id", 'Debe seleccionar una variante');
+                }
+            }
+
+            $supply_type_ids = [];
+
+            foreach ($this->input('variants', []) as $key => $variant_id) {
+                $variant = Variant::with('supply_type')->find($variant_id);
+
+                if (in_array($variant?->supply_type->first()?->id, $supply_type_ids)) {
+                    $validator->errors()->add("variants.$key", 'La variante pertenece a un tipo de insumo ya registrado.');
+                }
+            }
+
             foreach ($this->input('technical_sheet_details', []) as $detail) {
 
                 $settings = $detail['settings'] ?? [];
                 $id = $detail['model_id'] ?? null;
 
-                if (!isset($settings['dinamic'])) {
+                if (! isset($settings['dinamic']) && ! isset($settings['static'])) {
                     continue;
                 }
 
-                $body = $settings['dinamic']['body'] ?? [];
-                $values = $settings['dinamic']['values'] ?? [];
-                $insertValues = $settings['dinamic']['insert_values'] ??  false;
+                if (isset($settings['dinamic'])) {
+                    $body = $settings['dinamic']['body'] ?? [];
+                    $values = $settings['dinamic']['values'] ?? [];
+                    $insertValues = $settings['dinamic']['insert_values'] ?? false;
 
-                if ($insertValues && empty($values)) {
-                    $validator->errors()->add(
-                        "technical_sheet_details.$id.settings.dinamic.values",
-                        'Si la tabla va a recibir informacion, debe agregar al menos una fila.'
-                    );
+                    if ($insertValues && empty($values)) {
+                        $validator->errors()->add(
+                            "technical_sheet_details.$id.settings.dinamic.values",
+                            'Si la tabla va a recibir informacion, debe agregar al menos una fila.'
+                        );
+                    }
+                    foreach ($values as $in => $row) {
+
+                        $rules = [];
+                        $uniqueFields = [];
+
+                        foreach ($body as $column) {
+
+                            $field = $column['field'] ?? null;
+
+                            if (! $field) {
+                                continue;
+                            }
+
+                            $fieldRules = [];
+
+                            foreach ($column['rules'] ?? [] as $rule) {
+
+                                $rule = $this->resolveRule($rule);
+
+                                if (is_string($rule) && str_starts_with($rule, 'unique')) {
+
+                                    $uniqueFields[] = $field;
+
+                                    continue;
+                                }
+
+                                $fieldRules[] = $rule;
+                            }
+
+                            $rules[$field] = $fieldRules;
+                        }
+
+                        $rules = collect($rules)
+                            ->map(function ($fieldRules) {
+                                return collect($fieldRules)
+                                    ->filter()
+                                    ->values()
+                                    ->map(function ($rule) {
+                                        $rule = is_string($rule) ? $this->resolveRule($rule) : $rule;
+
+                                        return $rule;
+                                    })
+                                    ->filter()
+                                    ->values()
+                                    ->toArray();
+                            })
+                            ->toArray();
+
+                        $rowValidator = Valid::make(
+                            $row,
+                            $rules,
+                            $this->messages()
+                        );
+
+                        if ($rowValidator->fails()) {
+
+                            foreach ($rowValidator->errors()->messages() as $field => $messages) {
+
+                                foreach ($messages as $message) {
+                                    if (isset($row['id'])) {
+                                        $id_row = $row['id'];
+                                        $validator->errors()->add(
+                                            "technical_sheet_details.$id.settings.dinamic.values.$id_row.$field",
+                                            $message
+                                        );
+                                    } else {
+                                        $validator->errors()->add(
+                                            "technical_sheet_details.$id.settings.dinamic.values.$in.$field",
+                                            $message
+                                        );
+                                    }
+                                }
+                            }
+                        }
+
+                        foreach ($uniqueFields as $field) {
+
+                            $seen = [];
+
+                            foreach ($values as $in => $row) {
+
+                                if (! array_key_exists($field, $row)) {
+                                    continue;
+                                }
+
+                                $value = $row[$field];
+
+                                if ($value === null) {
+                                    continue;
+                                }
+
+                                if (isset($seen[$value])) {
+
+                                    if (isset($row['id'])) {
+                                        $id_row = $row['id'];
+                                        $validator->errors()->add(
+                                            "technical_sheet_details.$id.settings.dinamic.values.$id_row.$field",
+                                            'El valor ya existe dentro de esta tabla.'
+                                        );
+                                    } else {
+                                        $validator->errors()->add(
+                                            "technical_sheet_details.$id.settings.dinamic.values.$in.$field",
+                                            'El valor ya existe dentro de esta tabla.'
+                                        );
+                                    }
+
+                                    continue;
+                                }
+
+                                $seen[$value] = true;
+                            }
+                        }
+                    }
                 }
 
-                foreach ($values as $in => $row) {
+                if (isset($settings['static'])) {
+                    $body = $settings['static']['body'] ?? [];
+                    $values = $settings['static']['values'] ?? [];
+                    $insertValues = $settings['static']['insert_values'] ?? false;
+
+                    if ($insertValues && empty($values)) {
+                        $validator->errors()->add(
+                            "technical_sheet_details.$id.settings.static.values",
+                            'Si la tabla va a recibir informacion, debe rellenar los campos'
+                        );
+                    }
+
+                    if (empty($values)) {
+                        continue;
+                    }
 
                     $rules = [];
                     $uniqueFields = [];
 
                     foreach ($body as $column) {
 
-                        $field = $column['field'] ?? null;
+                        foreach ($column as $cell) {
 
-                        if (!$field) {
-                            continue;
-                        }
-
-                        $fieldRules = [];
-
-
-                        foreach ($column['rules'] ?? [] as $rule) {
-
-                            $rule = $this->resolveRule($rule);
-
-                            if (is_string($rule) && str_starts_with($rule, 'unique')) {
-
-                                $uniqueFields[] = $field;
+                            if ($cell['cell'] === 'th') {
                                 continue;
                             }
 
-                            $fieldRules[] = $rule;
-                        }
+                            $field = $cell['field'] ?? null;
 
-                        $rules[$field] = $fieldRules;
+                            if (! $field) {
+                                continue;
+                            }
+
+                            $fieldRules = [];
+
+                            foreach ($cell['rules'] ?? [] as $rule) {
+
+                                $rule = $this->resolveRule($rule);
+
+                                if (is_string($rule) && str_starts_with($rule, 'unique')) {
+                                    $uniqueFields[] = $field;
+
+                                    continue;
+                                }
+
+                                $fieldRules[] = $rule;
+                            }
+
+                            $rules[$field] = $fieldRules;
+                        }
                     }
 
                     $rules = collect($rules)
                         ->map(function ($fieldRules) {
                             return collect($fieldRules)
-                                ->filter()
-                                ->values()
-                                ->map(function ($rule) {
-                                    $rule = is_string($rule) ? $this->resolveRule($rule) : $rule;
-
-                                    return $rule;
-                                })
-                                ->filter()
-                                ->values()
+                                ->map(
+                                    fn ($rule) => is_string($rule)
+                                        ? $this->resolveRule($rule)
+                                        : $rule
+                                )
                                 ->toArray();
                         })
                         ->toArray();
 
-                    $rowValidator = Valid::make(
-                        $row,
+                    $valueValidator = Valid::make(
+                        $values,
                         $rules,
                         $this->messages()
                     );
 
-                    if ($rowValidator->fails()) {
+                    if ($valueValidator->fails()) {
 
-                        foreach ($rowValidator->errors()->messages() as $field => $messages) {
+                        foreach ($valueValidator->errors()->messages() as $field => $messages) {
 
                             foreach ($messages as $message) {
-                                if (isset($row['id'])) {
-                                    $id_row = $row['id'];
-                                    $validator->errors()->add(
-                                        "technical_sheet_details.$id.settings.dinamic.values.$id_row.$field",
-                                        $message
-                                    );
-                                } else {
-                                    $validator->errors()->add(
-                                        "technical_sheet_details.$id.settings.dinamic.values.$in.$field",
-                                        $message
-                                    );
-                                }
+                                $validator->errors()->add(
+                                    "technical_sheet_details.$id.settings.static.values.$field",
+                                    $message
+                                );
                             }
                         }
                     }
 
                     foreach ($uniqueFields as $field) {
-
-                        $seen = [];
-
-                        foreach ($values as $in => $row) {
-
-                            if (!array_key_exists($field, $row)) {
-                                continue;
-                            }
-
-                            $value = $row[$field];
-
-                            if ($value === null) {
-                                continue;
-                            }
-
-                            if (isset($seen[$value])) {
-
-                                if (isset($row['id'])) {
-                                    $id_row = $row['id'];
-                                    $validator->errors()->add(
-                                        "technical_sheet_details.$id.settings.dinamic.values.$id_row.$field",
-                                        "El valor ya existe dentro de esta tabla."
-                                    );
-                                } else {
-                                    $validator->errors()->add(
-                                        "technical_sheet_details.$id.settings.dinamic.values.$in.$field",
-                                        "El valor ya existe dentro de esta tabla."
-                                    );
-                                }
-
-                                continue;
-                            }
-
-                            $seen[$value] = true;
-                        }
-                    }
-                }
-
-                if (!isset($settings['static'])) {
-                    continue;
-                }
-
-                $body = $settings['static']['body'] ?? [];
-                $values = $settings['static']['values'] ?? [];
-                $insertValues = $settings['static']['insert_values'] ?? false;
-
-                if ($insertValues && empty($values)) {
-                    $validator->errors()->add(
-                        "technical_sheet_details.$id.settings.static.values",
-                        'Si la tabla va a recibir informacion, debe rellenar los campos'
-                    );
-                }
-
-                if (empty($values)) {
-                    continue;
-                }
-
-                $rules = [];
-                $uniqueFields = [];
-
-                foreach ($body as $column) {
-
-                    foreach ($column as $cell) {
-
-                        if ($cell['cell'] === 'th') {
+                        if (! array_key_exists($field, $row)) {
                             continue;
                         }
 
-                        $field = $cell['field'] ?? null;
+                        $duplicates = collect($values)
+                            ->pluck($field)
+                            ->filter(fn ($value) => $value !== null)
+                            ->duplicates();
 
-                        if (!$field) {
-                            continue;
-                        }
-
-                        $fieldRules = [];
-
-                        foreach ($cell['rules'] ?? [] as $rule) {
-
-                            $rule = $this->resolveRule($rule);
-
-                            if (is_string($rule) && str_starts_with($rule, 'unique')) {
-                                $uniqueFields[] = $field;
-                                continue;
+                        if ($duplicates->contains($row[$field])) {
+                            if (isset($row['id'])) {
+                                $id_row = $row['id'];
+                                $validator->errors()->add(
+                                    "technical_sheet_details.$id.settings.dinamic.values.$id_row.$field",
+                                    'El valor ya existe dentro de esta tabla.'
+                                );
+                            } else {
+                                $validator->errors()->add(
+                                    "technical_sheet_details.$id.settings.dinamic.values.$in.$field",
+                                    'El valor ya existe dentro de esta tabla.'
+                                );
                             }
-
-                            $fieldRules[] = $rule;
-                        }
-
-                        $rules[$field] = $fieldRules;
-                    }
-                }
-
-                $rules = collect($rules)
-                    ->map(function ($fieldRules) {
-                        return collect($fieldRules)
-                            ->map(
-                                fn($rule) =>
-                                is_string($rule)
-                                    ? $this->resolveRule($rule)
-                                    : $rule
-                            )
-                            ->toArray();
-                    })
-                    ->toArray();
-
-                $valueValidator = Valid::make(
-                    $values,
-                    $rules,
-                    $this->messages()
-                );
-
-                if ($valueValidator->fails()) {
-
-                    foreach ($valueValidator->errors()->messages() as $field => $messages) {
-
-                        foreach ($messages as $message) {
-                            $validator->errors()->add(
-                                "technical_sheet_details.$id.settings.static.values.$field",
-                                $message
-                            );
-                        }
-                    }
-                }
-
-                foreach ($uniqueFields as $field) {
-
-                    if (!array_key_exists($field, $row)) {
-                        continue;
-                    }
-
-                    $duplicates = collect($values)
-                        ->pluck($field)
-                        ->filter(fn($value) => $value !== null)
-                        ->duplicates();
-
-                    if ($duplicates->contains($row[$field])) {
-                        if (isset($row['id'])) {
-                            $id_row = $row['id'];
-                            $validator->errors()->add(
-                                "technical_sheet_details.$id.settings.dinamic.values.$id_row.$field",
-                                "El valor ya existe dentro de esta tabla."
-                            );
-                        } else {
-                            $validator->errors()->add(
-                                "technical_sheet_details.$id.settings.dinamic.values.$in.$field",
-                                "El valor ya existe dentro de esta tabla."
-                            );
                         }
                     }
                 }
@@ -494,6 +473,21 @@ class TechnicalSheetUpdateRequest extends FormRequest
 
     protected function prepareForValidation()
     {
+        $details = $this->input('technical_sheet_details', []);
+
+        foreach ($details as $id => &$detail) {
+            if (isset($detail['settings']['dinamic']['insert_values'])) {
+                $detail['settings']['dinamic']['insert_values'] =
+                    filter_var($detail['settings']['dinamic']['insert_values'], FILTER_VALIDATE_BOOLEAN);
+            }
+
+            if (isset($detail['settings']['static']['insert_values'])) {
+                $detail['settings']['static']['insert_values'] =
+                    filter_var($detail['settings']['static']['insert_values'], FILTER_VALIDATE_BOOLEAN);
+            }
+        }
+
+        $this->merge(['technical_sheet_details' => $details]);
         $this->merge(['physical_sample' => $this->boolean('physical_sample')]);
         $this->merge(['id' => $this->route('id')]);
     }

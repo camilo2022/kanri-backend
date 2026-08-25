@@ -7,6 +7,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BackTypeController;
 use App\Http\Controllers\BloodTypeController;
 use App\Http\Controllers\BootTypeController;
+use App\Http\Controllers\BuilderController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\ColorController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\GenderController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\HealthEntityController;
 use App\Http\Controllers\ManagementCollectionController;
+use App\Http\Controllers\ManagementProductionController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\OperationController;
@@ -38,15 +40,14 @@ use App\Http\Controllers\SubmoduleController;
 use App\Http\Controllers\SubprocessController;
 use App\Http\Controllers\SupplyTypeController;
 use App\Http\Controllers\TechnicalSheetController;
-use App\Http\Controllers\TechnicalSheetDetailController;
 use App\Http\Controllers\ThreadTypeController;
 use App\Http\Controllers\TrademarkController;
+use App\Http\Controllers\TransformationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VariantController;
 use App\Http\Controllers\WaistbandTypeController;
 use App\Http\Controllers\WashToneController;
 use App\Http\Controllers\YokeTypeController;
-use App\Models\ProductionOrder;
 use Illuminate\Support\Facades\Route;
 
 
@@ -551,6 +552,11 @@ Route::prefix('/management')->group(function () {
             Route::post('/save', 'save')->middleware(['auth:sanctum', 'can:management.collections.find']);
         });
     });
+    Route::prefix('/production')->group(function () {
+        Route::controller(ManagementProductionController::class)->group(function () {
+            Route::post('/save', 'save')->middleware(['auth:sanctum', 'can:management.collections.find']);
+        });
+    });
 });
 
 Route::prefix('/products')->group(function () {
@@ -567,6 +573,7 @@ Route::prefix('/technical_sheets')->group(function () {
         Route::get('/find', 'find')->middleware(['auth:sanctum', 'can:technical_sheets.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:technical_sheets.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:technical_sheets.update']);
+        Route::get('/pdf/{uuid}', 'pdf')->name('technical_sheets.pdf');
     });
     Route::prefix('/production_orders')->group(function () {
         Route::controller(ProductionOrderController::class)->group(function () {
@@ -574,13 +581,28 @@ Route::prefix('/technical_sheets')->group(function () {
             Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.find']);
             Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.store']);
             Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.store']);
-            Route::get('/pdf/{id}', 'pdf')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.store']);
+            Route::get('/pdf/{uuid}', 'pdf')->name('production_orders.technical_sheets.pdf');
+        });
+    });
+    Route::prefix('/transformations')->group(function () {
+        Route::controller(TransformationController::class)->group(function () {
+            Route::get('/all/{technical_sheet_id}', 'all')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.all']);
+            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.find']);
+            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.store']);
+            Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.store']);
+            //Route::get('/pdf/{uuid}', 'pdf')->name('production_orders.technical_sheets.pdf');
         });
     });
 });
 
-Route::prefix('/technical_sheets_details')->group(function () {
-    Route::controller(TechnicalSheetDetailController::class)->group(function () {
-        Route::post('/save', 'save')->middleware(['auth:sanctum', 'can:technical_sheets.store']);
+Route::prefix('/cache')->group(function () {
+    Route::prefix('/builder')->group(function () {
+        Route::controller(BuilderController::class)->group(function () {
+            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:products.all']);
+            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:products.find']);
+            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:products.store']);
+            Route::put('/update/{uuid}', 'update')->middleware(['auth:sanctum', 'can:products.update']);
+            Route::delete('/delete/{uuid}', 'delete')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.operations.delete']);         
+        });
     });
 });

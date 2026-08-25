@@ -9270,6 +9270,7 @@ namespace App\Models {
     /**
      * App\Models\ProductionOrder
      *
+     * @property string $uuid
      * @property string|null $deleted_at
      * @property \Illuminate\Support\Carbon|null $updated_at
      * @property \Illuminate\Support\Carbon|null $created_at
@@ -9277,7 +9278,7 @@ namespace App\Models {
      * @property object $settings
      * @property string|null $observation
      * @property boolean $pocket_fabric
-     * @property float $width
+     * @property float|null $width
      * @property string $cut
      * @property mixed $efficiency
      * @property string $consecutive
@@ -9288,6 +9289,8 @@ namespace App\Models {
      * @property int $id
      * @property-read \App\Models\TechnicalSheet $technical_sheet
      * @property-read \App\Models\ProductionOrder $model
+     * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProductionOrder> $derivatives
+     * @property-read int|null $derivatives_count
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Piece> $pieces
      * @property-read int|null $pieces_count
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Variant> $rolls
@@ -9316,6 +9319,7 @@ namespace App\Models {
      * @method static \Illuminate\Database\Eloquent\Builder<ProductionOrder>|ProductionOrder whereCreatedAt($value)
      * @method static \Illuminate\Database\Eloquent\Builder<ProductionOrder>|ProductionOrder whereUpdatedAt($value)
      * @method static \Illuminate\Database\Eloquent\Builder<ProductionOrder>|ProductionOrder whereDeletedAt($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<ProductionOrder>|ProductionOrder whereUuid($value)
      * @method static \Illuminate\Database\Eloquent\Builder<ProductionOrder>|ProductionOrder newModelQuery()
      * @method static \Illuminate\Database\Eloquent\Builder<ProductionOrder>|ProductionOrder newQuery()
      * @method static \Illuminate\Database\Eloquent\Builder<ProductionOrder>|ProductionOrder query()
@@ -14105,6 +14109,9 @@ namespace App\Models {
      * @property string|null $model_type
      * @property string $uuid
      * @property int $id
+     * @property-read \App\Models\TechnicalSheet $model
+     * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TechnicalSheet> $derivatives
+     * @property-read int|null $derivatives_count
      * @property-read \App\Models\Product $product
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Product> $products
      * @property-read int|null $products_count

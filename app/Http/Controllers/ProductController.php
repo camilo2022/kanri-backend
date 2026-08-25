@@ -23,7 +23,7 @@ class ProductController extends Controller
             $products = Product::with([
                 'subcategory' => ['category'],
                 'trademark' => ['group', 'sizes'],
-                'technical_sheet' => ['collection', 'subgroup', 'color', 'waistband_type', 'garment_type', 'wash_tone', 'boot_type', 'yoke_type', 'back_type', 'technical_sheet_details', 'photo_d', 'photo_t', 'variants', 'production_orders' => ['fabric', 'color', 'production_order_details' => ['model', 'production_order_detail_quantities']]],
+                'technical_sheet' => ['model', 'collection', 'subgroup', 'color', 'waistband_type', 'garment_type', 'wash_tone', 'boot_type', 'yoke_type', 'back_type', 'technical_sheet_details', 'photo_d', 'photo_t', 'variants', 'production_orders' => ['fabric', 'color', 'production_order_details' => ['model', 'production_order_detail_quantities']]],
                 'technical_sheets' => ['collection', 'subgroup', 'color', 'waistband_type', 'garment_type', 'wash_tone', 'boot_type', 'yoke_type', 'back_type', 'technical_sheet_details', 'photo_d', 'photo_t', 'variants', 'production_orders' => ['fabric', 'color', 'production_order_details' => ['model', 'production_order_detail_quantities']]]
             ])
                 ->when($request->filled('search'), function ($query) use ($request) {

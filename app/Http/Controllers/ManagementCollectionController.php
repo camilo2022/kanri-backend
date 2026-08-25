@@ -14,6 +14,7 @@ use App\Services\FileService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ManagementCollectionController extends Controller
 {
@@ -52,10 +53,12 @@ class ManagementCollectionController extends Controller
             ]
         );
 
-        $technical_sheet = TechnicalSheet::updateOrCreate(
-            ['id' => $request->integer('id')],
+        /*$technical_sheet = TechnicalSheet::updateOrCreate(
             [
-                'code' => $request->input('code'),
+                'id' => $request->integer('id')
+                'code' =>  $result[0]->code
+            ]
+            [
                 'product_id' => $product->id,
                 'collection_id' => $request->integer('collection_id'),
                 'garment_type_id' => $request->integer('garment_type_id'),
@@ -64,7 +67,37 @@ class ManagementCollectionController extends Controller
                 'observation' => $request->input('observation'),
                 'status' => $request->input('status')
             ]
-        );
+        );*/
+
+         
+        $technical_sheet = TechnicalSheet::find($request->integer('id'));
+
+        if (!$technical_sheet) {
+            $result = DB::select('CALL generate_technical_sheet_code()');
+
+            $code = $result[0]->code;
+
+            $technical_sheet = TechnicalSheet::create([
+                'code' => $code,
+                'product_id' => $product->id,
+                'collection_id' => $request->integer('collection_id'),
+                'garment_type_id' => $request->integer('garment_type_id'),
+                'wash_tone_id' => $request->integer('wash_tone_id'),
+                'boot_type_id' => $request->integer('boot_type_id'),
+                'observation' => $request->input('observation'),
+                'status' => $request->input('status'),
+            ]);
+        } else {
+            $technical_sheet->update([
+                'product_id' => $product->id,
+                'collection_id' => $request->integer('collection_id'),
+                'garment_type_id' => $request->integer('garment_type_id'),
+                'wash_tone_id' => $request->integer('wash_tone_id'),
+                'boot_type_id' => $request->integer('boot_type_id'),
+                'observation' => $request->input('observation'),
+                'status' => $request->input('status'),
+            ]);
+        }
 
         foreach ($request->input('technical_sheet_details', []) as $technical_sheet_detail) {
             TechnicalSheetDetail::updateOrCreate(

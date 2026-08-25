@@ -46,6 +46,7 @@ class ProductionOrderResource extends JsonResource
                 'id' => $this->id,
                 'model_id' => $this->model_id,
                 'model_type' => $this->model_type,
+                'model' => $this->model,
                 'technical_sheet_id' => $this->technical_sheet_id,
                 'date' => $this->formatDateProductionOrder($this->date),
                 'consecutive' => $this->consecutive,

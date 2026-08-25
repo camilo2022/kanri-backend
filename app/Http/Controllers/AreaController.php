@@ -75,7 +75,7 @@ class AreaController extends Controller
      *         in="query",
      *         description="Filtro de Busqueda.",
      *         required=false,
-     *         @OA\Schema(type="string", example="juan")
+     *         @OA\Schema(type="string", example="LIDER DE MARCAS PROPIAS")
      *     ),
      *     @OA\Parameter(
      *         name="column",
@@ -194,7 +194,7 @@ class AreaController extends Controller
      *         in="path",
      *         description="Identificador del área",
      *         required=true,
-     *         @OA\Schema(type="integer", example=1)
+     *         @OA\Schema(type="integer", example=234)
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -290,7 +290,7 @@ class AreaController extends Controller
      *             @OA\Property(
      *                 property="description",
      *                 type="string",
-     *                 example="LISTA",
+     *                 example="ADMINISTRACION",
      *                 description="Descripción del Área"
      *              )
      *         )

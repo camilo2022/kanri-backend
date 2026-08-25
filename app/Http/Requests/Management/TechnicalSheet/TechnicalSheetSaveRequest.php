@@ -44,7 +44,7 @@ class TechnicalSheetSaveRequest extends FormRequest
     {
         return [
             'id' => ['sometimes', 'exists:technical_sheets,id'],
-            'code' => ['required', 'unique:technical_sheets,code,' . $this->input('id') . ',id'],
+            //'code' => ['required', 'unique:technical_sheets,code,' . $this->input('id') . ',id'],
             'collection_id' => ['required', 'exists:subitems,id,item_id,' . Collection::ITEM_ID],
             'garment_type_id' => ['required', 'exists:subitems,id,item_id,' . GarmentType::ITEM_ID],
             'wash_tone_id' => ['required', 'exists:subitems,id,item_id,' . WashTone::ITEM_ID],

@@ -155,6 +155,9 @@ class SupplyTypeController extends Controller
                 ->when($request->filled('in_technical_sheet'), function ($query) use ($request) {
                     return $query->where('settings->in_technical_sheet', $request->boolean('in_technical_sheet'));
                 })
+                ->when($request->filled('in_production_order'), function ($query) use ($request) {
+                    return $query->where('settings->in_production_order', $request->boolean('in_production_order'));
+                })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
                     return $query->orderBy($request->input('column'), $request->input('dir'));
                 });

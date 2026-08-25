@@ -875,35 +875,4 @@ class PersonController extends Controller
             );
         }
     }
-
-    public function pdf()
-    {
-        try {
-            $people = Person::all();
-            $pdf = Pdf::loadView('person', compact('people'))->setPaper('letter');
-            return $pdf->download('people.pdf');
-        } catch (\Throwable $e) {
-            return $this->errorResponse(
-                [
-                    'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
-                ],
-                $this->getCode(class_basename($e))
-            );
-        }
-    }
-
-    public function excel()
-    {
-        return Excel::download(new PeopleExport, 'people.xlsx');
-    }
-
-    public function import(Request $request)
-    {
-        Excel::import(new PeopleImport, $request->file('file'));
-
-        return response()->json([
-            'message' => 'Importación exitosa'
-        ]);
-    }
 }
