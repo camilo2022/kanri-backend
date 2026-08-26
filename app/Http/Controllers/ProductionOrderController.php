@@ -14,7 +14,7 @@ use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderDetailQuantities;
-use App\Models\Variant;
+use App\Models\Supply;
 use App\Services\FileService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -223,7 +223,7 @@ class ProductionOrderController extends Controller
                     $quantities = $production_order_detail_item['sizes'];
                 }
 
-                if ($production_order_detail_item['model_type'] === Variant::class) {
+                if ($production_order_detail_item['model_type'] === Supply::class) {
                     foreach ($production_order_detail_item['rows'] as $row) {
                         $quantities = array_merge($quantities, $row['sizes']);
                     }
@@ -242,7 +242,7 @@ class ProductionOrderController extends Controller
                     'destination' => $production_order_detail_item['destination'],
                 ]);
 
-                if ($production_order_detail['model_type'] === Variant::class) {
+                if ($production_order_detail['model_type'] === Supply::class) {
                     foreach ($production_order_detail_item['rows'] as $row) {
                         foreach ($row['sizes'] as $size) {
                             ProductionOrderDetailQuantities::updateOrCreate([

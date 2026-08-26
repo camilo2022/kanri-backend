@@ -40,7 +40,7 @@ class TechnicalSheetController extends Controller
                 'back_type',
                 'technical_sheet_details',
                 'pattern_maker' => ['person', 'position'],
-                'variants' => ['supply_type'],
+                'supplies' => ['supply_type'],
                 'product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']],
                 'products' => ['trademark'],
             ])
@@ -99,7 +99,7 @@ class TechnicalSheetController extends Controller
 
             $technical_sheet->save();
 
-            $technical_sheet->auditSync('variants', $request->input('variants', []));
+            $technical_sheet->auditSync('supplies', $request->input('supplies', []));
 
             if ($request->hasFile('photo_d')) {
                 app(FileService::class)->save(
@@ -167,7 +167,7 @@ class TechnicalSheetController extends Controller
             $technical_sheet->status = $request->input('status');
 
             $technical_sheet->save();
-            $technical_sheet->auditSync('variants', $request->input('variants', []));
+            $technical_sheet->auditSync('supplies', $request->input('supplies', []));
 
             if ($request->hasFile('photo_d')) {
                 app(FileService::class)->save(
@@ -361,7 +361,7 @@ class TechnicalSheetController extends Controller
                 'back_type',
                 'technical_sheet_details',
                 'pattern_maker' => ['person', 'position'],
-                'variants' => ['supply_type'],
+                'supplies' => ['supply_type'],
                 'product' => ['trademark' => ['group'], 'subcategory' => ['category']],
                 'products' => ['trademark'],
             ])->where('uuid', $uuid)->firstOrFail();

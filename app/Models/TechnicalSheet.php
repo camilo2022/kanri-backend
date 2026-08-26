@@ -169,9 +169,9 @@ class TechnicalSheet extends Model implements Auditable
         return $this->belongsTo(Employee::class, 'pattern_maker_id')->withTrashed();
     }
 
-    public function variants(): MorphToMany
+    public function supplies(): MorphToMany
     {
-        return $this->morphedByMany(Variant::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id')->withTrashed();
+        return $this->morphedByMany(Supply::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id')->withTrashed();
     }
 
     public function technical_sheet_details(): HasMany

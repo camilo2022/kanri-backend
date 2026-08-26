@@ -1,21 +1,20 @@
 <?php
 
-namespace App\Http\Requests\Typification\SupplyType\Variant;
+namespace App\Http\Requests\Typification\SupplyType\Supply;
 
-use App\Models\Variant;
+use App\Models\Supply;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\Rule;
 
-class VariantRestoreRequest extends FormRequest
+class SupplyDeleteRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -27,7 +26,7 @@ class VariantRestoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', Rule::exists('subitems', 'id')->where('item_id', Variant::ITEM_ID)->whereNotNull('deleted_at')]
+            'id' => ['required', 'exists:subitems,id,deleted_at,NULL,item_id,'.Supply::ITEM_ID],
         ];
     }
 
@@ -35,14 +34,14 @@ class VariantRestoreRequest extends FormRequest
     {
         return [
             'required' => 'Es obligatorio.',
-            'exists' => 'No hay ningún registro.'
+            'exists' => 'No hay ningún registro.',
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador de la variante'
+            'id' => 'Identificador del insumo',
         ];
     }
 

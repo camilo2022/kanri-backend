@@ -6,19 +6,19 @@ use App\Models\SupplyType;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-class VariantImport implements WithMultipleSheets
+class SupplyImport implements WithMultipleSheets
 {
-    protected VariantImportBuilder $builder;
+    protected SupplyImportBuilder $builder;
 
     public function __construct(protected SupplyType $supply_type)
     {
-        $this->builder = new VariantImportBuilder($supply_type);
+        $this->builder = new SupplyImportBuilder($supply_type);
     }
 
     public function sheets(): array
     {
         $sheets = [
-            'VARIANTS' => new VariantSheetImport($this->builder),
+            'SUPPLIES' => new SupplySheetImport($this->builder),
         ];
 
         foreach ($this->multipleRelations() as $field) {
@@ -38,7 +38,7 @@ class VariantImport implements WithMultipleSheets
         return $sheets;
     }
 
-    public function builder(): VariantImportBuilder
+    public function builder(): SupplyImportBuilder
     {
         return $this->builder;
     }

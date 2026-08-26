@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Http\Requests\Typification\SupplyType\Variant;
+namespace App\Http\Requests\Typification\SupplyType\Supply;
 
-use App\Models\Variant;
+use App\Models\SupplyType;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class VariantDeleteRequest extends FormRequest
+class SupplyExcelRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -26,7 +26,7 @@ class VariantDeleteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:subitems,id,deleted_at,NULL,item_id,' . Variant::ITEM_ID],
+            'supply_type_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.SupplyType::ITEM_ID],
         ];
     }
 
@@ -34,19 +34,20 @@ class VariantDeleteRequest extends FormRequest
     {
         return [
             'required' => 'Es obligatorio.',
-            'exists' => 'No hay ningún registro.'
+            'numeric' => 'Debe ser un valor numérico.',
+            'exists' => 'No hay ningún registro.',
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador de la variante'
+            'supply_type_id' => 'Identificador del tipo de insumo',
         ];
     }
 
     protected function prepareForValidation()
     {
-        $this->merge(['id' => $this->route('id')]);
+        $this->merge(['supply_type_id' => $this->route('supply_type_id')]);
     }
 }

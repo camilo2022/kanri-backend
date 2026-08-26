@@ -2,43 +2,44 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\VariantExport;
-use App\Http\Requests\Typification\SupplyType\Variant\VariantAllRequest;
-use App\Http\Requests\Typification\SupplyType\Variant\VariantDeleteRequest;
-use App\Http\Requests\Typification\SupplyType\Variant\VariantExcelRequest;
-use App\Http\Requests\Typification\SupplyType\Variant\VariantFindRequest;
-use App\Http\Requests\Typification\SupplyType\Variant\VariantRestoreRequest;
-use App\Http\Requests\Typification\SupplyType\Variant\VariantSaveRequest;
-use App\Http\Requests\Typification\SupplyType\Variant\VariantStoreRequest;
-use App\Http\Requests\Typification\SupplyType\Variant\VariantUpdateRequest;
-use App\Http\Resources\Typification\SupplyType\Variant\VariantCollection;
-use App\Http\Resources\Typification\SupplyType\Variant\VariantResource;
+use App\Exports\SupplyExport;
+use App\Http\Requests\Typification\SupplyType\Supply\SupplyAllRequest;
+use App\Http\Requests\Typification\SupplyType\Supply\SupplyDeleteRequest;
+use App\Http\Requests\Typification\SupplyType\Supply\SupplyExcelRequest;
+use App\Http\Requests\Typification\SupplyType\Supply\SupplyFindRequest;
+use App\Http\Requests\Typification\SupplyType\Supply\SupplyRestoreRequest;
+use App\Http\Requests\Typification\SupplyType\Supply\SupplySaveRequest;
+use App\Http\Requests\Typification\SupplyType\Supply\SupplyStoreRequest;
+use App\Http\Requests\Typification\SupplyType\Supply\SupplyUpdateRequest;
+use App\Http\Resources\Typification\SupplyType\Supply\SupplyCollection;
+use App\Http\Resources\Typification\SupplyType\Supply\SupplyResource;
 use App\Imports\ImportErrorReport;
-use App\Imports\VariantImport;
+use App\Imports\SupplyImport;
+use App\Models\Supply;
 use App\Models\SupplyType;
-use App\Models\Variant;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
-use Illuminate\Support\Arr;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 
 /**
  * @OA\Tag(
- *     name="Variants",
- *     description="Endpoints para gestionar variantes"
+ *     name="Supplies",
+ *     description="Endpoints para gestionar insumos"
  * )
  *
  * @OA\PathItem(
- *     path="/Variants",
- *     description="Rutas de gestión de variantes"
+ *     path="/Supplies",
+ *     description="Rutas de gestión de insumos"
  * )
  *
  * @OA\Schema(
- *     schema="Variant",
+ *     schema="Supply",
  *     type="object",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="item_id", type="integer", example=10),
  *     @OA\Property(property="name", type="string", example="No Aplica"),
@@ -50,8 +51,8 @@ use Illuminate\Support\Facades\Validator;
  *         property="item",
  *         type="object",
  *         @OA\Property(property="id", type="integer", example=34),
- *         @OA\Property(property="name", type="string", example="Variantes"),
- *         @OA\Property(property="description", type="string", example="Listado de variantes."),
+ *         @OA\Property(property="name", type="string", example="Supplyes"),
+ *         @OA\Property(property="description", type="string", example="Listado de insumos."),
  *         @OA\Property(property="settings", type="string", example="{}"),
  *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
  *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
@@ -59,64 +60,78 @@ use Illuminate\Support\Facades\Validator;
  *     ),
  * )
  */
-class VariantController extends Controller
+class SupplyController extends Controller
 {
-
     use ApiMessage, ApiResponser;
 
     /**
      * @OA\Get(
-     *     path="/variants/all",
-     *     tags={"Variants"},
-     *     summary="Listar variantes",
+     *     path="/supplies/all",
+     *     tags={"Supplies"},
+     *     summary="Listar Insumos",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Filtro de Busqueda.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="juan")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
      *         description="Columna a ordenar.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"id","name","description","created_at", "updated_at"}, example="name")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="dir",
      *         in="query",
      *         description="Dirección de ordenamiento.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Registros por página.",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=10)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="with_trashed",
      *         in="query",
      *         description="Registros inactivos.",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
-     *         description="Lista de variantes cargada correctamente",
+     *         description="Lista de insumos cargada correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
-     *                     property="variants",
+     *                     property="supplies",
      *                     type="array",
-     *                     @OA\Items(ref="#/components/schemas/Variant")
+     *
+     *                     @OA\Items(ref="#/components/schemas/Supply")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="meta",
      *                     type="object",
@@ -135,27 +150,31 @@ class VariantController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
      */
-    public function all(VariantAllRequest $request, $supply_type_id)
+    public function all(SupplyAllRequest $request, $supply_type_id)
     {
         try {
-            $variants = Variant::with(['supply_type', 'production_orders'])
-                ->whereHas('supply_type', fn($r) => $r->where('id', $supply_type_id))
+            $supplys = Supply::with(['supply_type', 'production_orders'])
+                ->whereHas('supply_type', fn ($r) => $r->where('id', $supply_type_id))
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -166,10 +185,10 @@ class VariantController extends Controller
                     return $query->orderBy($request->input('column'), $request->input('dir'));
                 });
 
-            $variants = $variants->paginate($request->integer('per_page', $variants->count()));
+            $supplys = $supplys->paginate($request->integer('per_page', $supplys->count()));
 
             return $this->successResponse(
-                new VariantCollection($variants),
+                new SupplyCollection($supplys),
                 $this->getMessage('Success'),
                 200
             );
@@ -177,7 +196,7 @@ class VariantController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -186,37 +205,45 @@ class VariantController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/variants/find/{id}",
-     *     tags={"Variants"},
-     *     summary="Obtener un tipo de insumo específica",
+     *     path="/supplies/find/{id}",
+     *     tags={"Supplies"},
+     *     summary="Obtener un insumo específico",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
-     *         description="Identificador del tipo de insumo",
+     *         description="Identificador del insumo",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
-     *         description="Tipo de insumo cargado con éxito",
+     *         description="Insumo cargado con éxito",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
-     *                     property="variant",
-     *                     ref="#/components/schemas/Variant"
+     *                     property="supply",
+     *                     ref="#/components/schemas/Supply"
      *                 ),
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
-     *         description="Identificador del tipo de insumo no registrado.",
+     *         description="Identificador del insumo no registrado.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -229,34 +256,39 @@ class VariantController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
      */
-    public function find(VariantFindRequest $request, $id)
+    public function find(SupplyFindRequest $request, $id)
     {
         try {
-            $variant = Variant::with(['supply_type'])->findOrFail($id);
+            $supply = Supply::with(['supply_type'])->findOrFail($id);
 
             return $this->successResponse(
-                new VariantResource($variant),
+                new SupplyResource($supply),
                 $this->getMessage('Success'),
                 200
             );
@@ -264,7 +296,7 @@ class VariantController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -273,40 +305,46 @@ class VariantController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/variants/store",
-     *     tags={"Variants"},
-     *     summary="Crear un tipo de insumo",
+     *     path="/supplies/store",
+     *     tags={"Supplies"},
+     *     summary="Crear un insumo",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"name"},
+     *
      *             @OA\Property(
      *                 property="name",
      *                 type="string",
-     *                 example="XS",
-     *                 description="Nombre del tipo de insumo"
+     *                 example="ROLLO",
+     *                 description="Nombre del insumo"
      *             ),
      *             @OA\Property(
      *                 property="description",
      *                 type="string",
-     *                 example="LISTA",
-     *                 description="Descripción del tipo de insumo"
+     *                 example="ROLLO",
+     *                 description="Descripción del insumo"
      *              )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
-     *         description="Tipo de insumo creado correctamente",
+     *         description="Insumo creado correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
-     *                     property="variant",
+     *                     property="supply",
      *                     type="object",
-     *                     @OA\Property(property="name", type="string", example="NAME_WAISTBAND_TYPE"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_WAISTBAND_TYPE"),
+     *                     @OA\Property(property="name", type="string", example="NAME_SUPPLY"),
+     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_SUPPLY"),
      *                     @OA\Property(property="item_id", type="integer", example=1),
      *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
      *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
@@ -317,16 +355,19 @@ class VariantController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
      *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del tipo de insumo"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del tipo de insumo")
+     *                 @OA\Property(property="name", type="string", example="Nombre del insumo"),
+     *                 @OA\Property(property="description", type="string", example="Descripción del insumo")
      *             ),
      *             @OA\Property(
      *                 property="errors",
@@ -334,52 +375,57 @@ class VariantController extends Controller
      *                 @OA\Property(
      *                     property="name",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
      */
-    public function store(VariantStoreRequest $request)
+    public function store(SupplyStoreRequest $request)
     {
         try {
-            $variant = new Variant();
-            $variant->name = $request->input('name');
-            $variant->description = $request->input('description');
-            $variant->settings = $request->input('settings');
-            $variant->save();
+            $supply = new Supply;
+            $supply->name = $request->input('name');
+            $supply->description = $request->input('description');
+            $supply->settings = $request->input('settings');
+            $supply->save();
 
-            $variant->auditSync('supply_type', $request->integer('supply_type_id'));
+            $supply->auditSync('supply_type', $request->integer('supply_type_id'));
 
-            $variant->load(['supply_type']);
+            $supply->load(['supply_type']);
 
-            collect($variant->supply_type->first()?->settings?->form ?? [])
+            collect($supply->supply_type->first()?->settings?->form ?? [])
                 ->where('type', 'selectdinamic')
-                ->each(function ($relationship) use ($variant, $request) {
+                ->each(function ($relationship) use ($supply, $request) {
 
                     if ($request->has("class.$relationship->field")) {
-                        $variant->related($relationship->model)
+                        $supply->related($relationship->model)
                             ->sync(Arr::wrap($request->input("class.$relationship->field")));
                     }
                 });
 
             return $this->successResponse(
-                new VariantResource($variant),
+                new SupplyResource($supply),
                 $this->getMessage('Success'),
                 201
             );
@@ -387,7 +433,7 @@ class VariantController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -396,49 +442,57 @@ class VariantController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/variants/update/{id}",
-     *     tags={"Variants"},
-     *     summary="Editar un tipo de insumo específica",
+     *     path="/supplies/update/{id}",
+     *     tags={"Supplies"},
+     *     summary="Editar un insumo específico",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
-     *         description="Identificador del tipo de insumo",
+     *         description="Identificador del insumo",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"name"},
+     *
      *             @OA\Property(
      *                 property="name",
      *                 type="string",
-     *                 example="XXS",
-     *                 description="Nombre del tipo de insumo"
+     *                 example="ROLLO",
+     *                 description="Nombre del insumo"
      *             ),
      *             @OA\Property(
      *                 property="description",
      *                 type="string",
-     *                 example="LISTA DE USUARIOS",
-     *                 description="Descripción del tipo de insumo"
+     *                 example="INSUMOS ROLLOS",
+     *                 description="Descripción del insumo"
      *              )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
-     *         description="Tipo de insumo editado correctamente",
+     *         description="Insumo editado correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
-     *                     property="variant",
+     *                     property="supply",
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_WAISTBAND_TYPE"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_WAISTBAND_TYPE"),
+     *                     @OA\Property(property="name", type="string", example="NAME_SUPPLY"),
+     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_SUPPLY"),
      *                     @OA\Property(property="settings", type="string", example="{}"),
      *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
      *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
@@ -449,16 +503,19 @@ class VariantController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
      *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del tipo de insumo"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del tipo de insumo")
+     *                 @OA\Property(property="name", type="string", example="Nombre del insumo"),
+     *                 @OA\Property(property="description", type="string", example="Descripción del insumo")
      *             ),
      *             @OA\Property(
      *                 property="errors",
@@ -466,50 +523,55 @@ class VariantController extends Controller
      *                 @OA\Property(
      *                     property="name",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
      */
-    public function update(VariantUpdateRequest $request, $id)
+    public function update(SupplyUpdateRequest $request, $id)
     {
         try {
-            $variant = Variant::findOrFail($id);
-            $variant->name = $request->input('name');
-            $variant->description = $request->input('description');
-            $variant->settings = $request->input('settings');
-            $variant->save();
+            $supply = Supply::findOrFail($id);
+            $supply->name = $request->input('name');
+            $supply->description = $request->input('description');
+            $supply->settings = $request->input('settings');
+            $supply->save();
 
-            $variant->load(['supply_type']);
+            $supply->load(['supply_type']);
 
-            collect($variant->supply_type->first()?->settings?->form ?? [])
+            collect($supply->supply_type->first()?->settings?->form ?? [])
                 ->where('type', 'selectdinamic')
-                ->each(function ($relationship) use ($variant, $request) {
+                ->each(function ($relationship) use ($supply, $request) {
 
                     if ($request->has("class.$relationship->field")) {
-                        $variant->related($relationship->model)
+                        $supply->related($relationship->model)
                             ->sync(Arr::wrap($request->input("class.$relationship->field")));
                     }
                 });
 
             return $this->successResponse(
-                new VariantResource($variant),
+                new SupplyResource($supply),
                 $this->getMessage('Success'),
                 200
             );
@@ -517,7 +579,7 @@ class VariantController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -526,31 +588,36 @@ class VariantController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/variants/delete/{id}",
-     *     tags={"Variants"},
-     *     summary="Desactivar un tipo de insumo específica",
+     *     path="/supplies/delete/{id}",
+     *     tags={"Supplies"},
+     *     summary="Desactivar un insumo específico",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
-     *         description="Identificador del tipo de insumo",
+     *         description="Identificador del insumo",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
-     *         description="Tipo de insumo desactivado correctamente",
+     *         description="Insumo desactivado correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
-     *                     property="variant",
+     *                     property="supply",
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_WAISTBAND_TYPE"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_WAISTBAND_TYPE"),
+     *                     @OA\Property(property="name", type="string", example="NAME_SUPPLY"),
+     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_SUPPLY"),
      *                     @OA\Property(property="settings", type="string", example="{}"),
      *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
      *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
@@ -561,15 +628,18 @@ class VariantController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
      *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador de la variantes")
+     *                 @OA\Property(property="id", type="string", example="Identificador del insumo")
      *             ),
      *             @OA\Property(
      *                 property="errors",
@@ -577,35 +647,40 @@ class VariantController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
      */
-    public function delete(VariantDeleteRequest $request, $id)
+    public function delete(SupplyDeleteRequest $request, $id)
     {
         try {
-            $variant = Variant::findOrFail($id);
-            $variant->delete();
+            $supply = Supply::findOrFail($id);
+            $supply->delete();
 
             return $this->successResponse(
-                new VariantResource($variant),
+                new SupplyResource($supply),
                 $this->getMessage('Success'),
                 200
             );
@@ -613,7 +688,7 @@ class VariantController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -622,31 +697,36 @@ class VariantController extends Controller
 
     /**
      * @OA\Patch(
-     *     path="/variants/restore/{id}",
-     *     tags={"Variants"},
-     *     summary="Activar un tipo de insumo específica",
+     *     path="/supplies/restore/{id}",
+     *     tags={"Supplies"},
+     *     summary="Activar un insumo específico",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
-     *         description="Identificador del tipo de insumo",
+     *         description="Identificador del insumo",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
-     *         description="Tipo de insumo activado correctamente",
+     *         description="Insumo activado correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
-     *                     property="variant",
+     *                     property="supply",
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_WAISTBAND_TYPE"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_WAISTBAND_TYPE"),
+     *                     @OA\Property(property="name", type="string", example="NAME_SUPPLY"),
+     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_SUPPLY"),
      *                     @OA\Property(property="settings", type="string", example="{}"),
      *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
      *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
@@ -657,15 +737,18 @@ class VariantController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
      *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador de la variantes")
+     *                 @OA\Property(property="id", type="string", example="Identificador del insumo")
      *             ),
      *             @OA\Property(
      *                 property="errors",
@@ -673,35 +756,40 @@ class VariantController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
      */
-    public function restore(VariantRestoreRequest $request, $id)
+    public function restore(SupplyRestoreRequest $request, $id)
     {
         try {
-            $variant = Variant::withTrashed()->findOrFail($id);
-            $variant->restore();
+            $supply = Supply::withTrashed()->findOrFail($id);
+            $supply->restore();
 
             return $this->successResponse(
-                new VariantResource($variant),
+                new SupplyResource($supply),
                 $this->getMessage('Success'),
                 200
             );
@@ -709,16 +797,16 @@ class VariantController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
         }
     }
 
-    public function excel(VariantExcelRequest $request, $supply_type_id)
+    public function export(SupplyExcelRequest $request, $supply_type_id)
     {
-        return Excel::download(new VariantExport($supply_type_id), 'variants.xlsx');
+        return Excel::download(new SupplyExport($supply_type_id), 'supplys.xlsx');
     }
 
     public function import(Request $request, $supply_type_id)
@@ -726,20 +814,20 @@ class VariantController extends Controller
         try {
             $supply_type = SupplyType::findOrFail($supply_type_id);
 
-            $import = new VariantImport($supply_type);
+            $import = new SupplyImport($supply_type);
 
             Excel::import($import, $request->file('file'));
 
-            $formRequest = new VariantSaveRequest();
+            $formRequest = new SupplySaveRequest;
 
-            $variants = $import->builder()->build();
+            $supplys = $import->builder()->build();
 
-            $duplicates = $import->builder()->duplicateVariants();
+            $duplicates = $import->builder()->duplicateSupplys();
 
             $validator = Validator::make(
                 [
                     'supply_type_id' => $supply_type_id,
-                    'variants' => $variants,
+                    'supplys' => $supplys,
                 ],
                 $formRequest->rules(),
                 $formRequest->messages(),
@@ -755,7 +843,7 @@ class VariantController extends Controller
             if ($validator->fails()) {
                 $path = app(ImportErrorReport::class)->generate(
                     $validator->errors()->toArray(),
-                    $variants,
+                    $supplys,
                     $supply_type
                 );
 
@@ -766,9 +854,9 @@ class VariantController extends Controller
                 ], 422);
             }
 
-            DB::transaction(function () use ($variants, $supply_type_id) {
-                foreach ($variants as $item) {
-                    $variant = Variant::updateOrCreate(
+            DB::transaction(function () use ($supplys, $supply_type_id) {
+                foreach ($supplys as $item) {
+                    $supply = Supply::updateOrCreate(
                         ['name' => $item['name']],
                         [
                             'description' => $item['description'],
@@ -776,15 +864,15 @@ class VariantController extends Controller
                         ]
                     );
 
-                    $variant->auditSync('supply_type', $supply_type_id);
+                    $supply->auditSync('supply_type', $supply_type_id);
 
-                    $variant->load(['supply_type']);
+                    $supply->load(['supply_type']);
 
-                    collect($variant->supply_type->first()?->settings?->form ?? [])
+                    collect($supply->supply_type->first()?->settings?->form ?? [])
                         ->where('type', 'selectdinamic')
-                        ->each(function ($relationship) use ($variant, $item) {
+                        ->each(function ($relationship) use ($supply, $item) {
                             if (Arr::has($item, "class.$relationship->field")) {
-                                $variant->related($relationship->model)
+                                $supply->related($relationship->model)
                                     ->sync(
                                         Arr::wrap(
                                             Arr::get($item, "class.$relationship->field")
@@ -796,7 +884,7 @@ class VariantController extends Controller
             });
 
             return $this->successResponse(
-                $variants,
+                $supplys,
                 $this->getMessage('Success'),
                 200
             );
@@ -805,7 +893,7 @@ class VariantController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );

@@ -1,5 +1,5 @@
 @php
-    use App\Models\Variant;
+    use App\Models\Supply;
     use App\Models\Product;
 @endphp
 
@@ -280,7 +280,7 @@
                     );
 
                     $detail = $production_order->production_order_details->first(
-                        fn($item) => $item->model_type === Variant::class,
+                        fn($item) => $item->model_type === Supply::class,
                     );
 
                     $total_unidades = $detail
@@ -439,7 +439,7 @@
 
             @php
                 $detail = $production_order->production_order_details->first(
-                    fn($item) => $item->model_type === Variant::class,
+                    fn($item) => $item->model_type === Supply::class,
                 );
 
                 $grouped = $detail ? $detail->production_order_detail_quantities->groupBy('size_id') : collect();
@@ -546,7 +546,7 @@
     <div class="section">
         @php
             $detail = $production_order->production_order_details->first(
-                fn($item) => $item->model_type === Variant::class,
+                fn($item) => $item->model_type === Supply::class,
             );
 
             $sizes = $production_order->technical_sheet->product->trademark->sizes;
@@ -671,7 +671,7 @@
                     @foreach ($production_order->rolls as $roll)
                         <tr>
                             @php
-                                $fabric = $roll->related(Variant::class)->first();
+                                $fabric = $roll->related(Supply::class)->first();
                             @endphp
                             <td class="value-primary">
                                 {{ ($fabric?->name ?? '-') . ' - ' . ($fabric?->description ?? '-') }}

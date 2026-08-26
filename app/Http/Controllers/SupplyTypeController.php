@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\SupplyTypeExport;
 use App\Http\Requests\Typification\SupplyType\SupplyTypeAllRequest;
 use App\Http\Requests\Typification\SupplyType\SupplyTypeDeleteRequest;
 use App\Http\Requests\Typification\SupplyType\SupplyTypeFindRequest;
@@ -30,6 +29,7 @@ use App\Traits\ApiResponser;
  * @OA\Schema(
  *     schema="SupplyType",
  *     type="object",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="item_id", type="integer", example=10),
  *     @OA\Property(property="name", type="string", example="No Aplica"),
@@ -52,7 +52,6 @@ use App\Traits\ApiResponser;
  */
 class SupplyTypeController extends Controller
 {
-
     use ApiMessage, ApiResponser;
 
     /**
@@ -61,53 +60,68 @@ class SupplyTypeController extends Controller
      *     tags={"Supply Types"},
      *     summary="Listar tipos de insumo",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Filtro de Busqueda.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="juan")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
      *         description="Columna a ordenar.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"id","name","description","created_at", "updated_at"}, example="name")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="dir",
      *         in="query",
      *         description="Dirección de ordenamiento.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Registros por página.",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=10)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="with_trashed",
      *         in="query",
      *         description="Registros inactivos.",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Lista de tipos de insumo cargada correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
      *                     property="supply_types",
      *                     type="array",
+     *
      *                     @OA\Items(ref="#/components/schemas/SupplyType")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="meta",
      *                     type="object",
@@ -126,16 +140,20 @@ class SupplyTypeController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -145,7 +163,7 @@ class SupplyTypeController extends Controller
     public function all(SupplyTypeAllRequest $request)
     {
         try {
-            $supply_types = SupplyType::with(['variants'])
+            $supply_types = SupplyType::with(['supplies'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -173,7 +191,7 @@ class SupplyTypeController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -186,17 +204,22 @@ class SupplyTypeController extends Controller
      *     tags={"Supply Types"},
      *     summary="Obtener un tipo de insumo específica",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador del tipo de insumo",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tipo de insumo cargado con éxito",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -209,10 +232,13 @@ class SupplyTypeController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Identificador del tipo de insumo no registrado.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -225,21 +251,26 @@ class SupplyTypeController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -249,7 +280,7 @@ class SupplyTypeController extends Controller
     public function find(SupplyTypeFindRequest $request, $id)
     {
         try {
-            $supply_type = SupplyType::with(['variants'])
+            $supply_type = SupplyType::with(['supplies'])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -261,7 +292,7 @@ class SupplyTypeController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -274,10 +305,13 @@ class SupplyTypeController extends Controller
      *     tags={"Supply Types"},
      *     summary="Crear un tipo de insumo",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"name"},
+     *
      *             @OA\Property(
      *                 property="name",
      *                 type="string",
@@ -292,10 +326,13 @@ class SupplyTypeController extends Controller
      *              )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tipo de insumo creado correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -314,10 +351,13 @@ class SupplyTypeController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -331,21 +371,26 @@ class SupplyTypeController extends Controller
      *                 @OA\Property(
      *                     property="name",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -355,7 +400,7 @@ class SupplyTypeController extends Controller
     public function store(SupplyTypeStoreRequest $request)
     {
         try {
-            $supply_type = new SupplyType();
+            $supply_type = new SupplyType;
             $supply_type->name = $request->input('name');
             $supply_type->description = $request->input('description');
             $supply_type->settings = $request->input('settings');
@@ -371,7 +416,7 @@ class SupplyTypeController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -384,17 +429,22 @@ class SupplyTypeController extends Controller
      *     tags={"Supply Types"},
      *     summary="Editar un tipo de insumo específica",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador del tipo de insumo",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"name"},
+     *
      *             @OA\Property(
      *                 property="name",
      *                 type="string",
@@ -409,10 +459,13 @@ class SupplyTypeController extends Controller
      *              )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tipo de insumo editado correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -433,10 +486,13 @@ class SupplyTypeController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -450,21 +506,26 @@ class SupplyTypeController extends Controller
      *                 @OA\Property(
      *                     property="name",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -489,7 +550,7 @@ class SupplyTypeController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -502,17 +563,22 @@ class SupplyTypeController extends Controller
      *     tags={"Supply Types"},
      *     summary="Desactivar un tipo de insumo específica",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador del tipo de insumo",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tipo de insumo desactivado correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -533,10 +599,13 @@ class SupplyTypeController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -549,21 +618,26 @@ class SupplyTypeController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -585,7 +659,7 @@ class SupplyTypeController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -598,17 +672,22 @@ class SupplyTypeController extends Controller
      *     tags={"Supply Types"},
      *     summary="Activar un tipo de insumo específica",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador del tipo de insumo",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tipo de insumo activado correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -629,10 +708,13 @@ class SupplyTypeController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -645,21 +727,26 @@ class SupplyTypeController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -681,7 +768,7 @@ class SupplyTypeController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -705,7 +792,7 @@ class SupplyTypeController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );

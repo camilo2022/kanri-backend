@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Area;
 use App\Models\BackType;
-use App\Models\RiskManager;
 use App\Models\BloodType;
 use App\Models\BootType;
 use App\Models\Category;
@@ -12,28 +11,29 @@ use App\Models\Collection;
 use App\Models\Color;
 use App\Models\CompensationFund;
 use App\Models\FabricType;
-use App\Models\HealthEntity;
 use App\Models\FileSubtype;
 use App\Models\FileType;
 use App\Models\GarmentType;
 use App\Models\Gender;
 use App\Models\Group;
+use App\Models\HealthEntity;
 use App\Models\Item;
 use App\Models\Operation;
 use App\Models\PensionFund;
 use App\Models\Piece;
 use App\Models\Position;
 use App\Models\Process;
+use App\Models\RiskManager;
 use App\Models\Silhouette;
 use App\Models\Size;
 use App\Models\Subcategory;
 use App\Models\Subgroup;
 use App\Models\Subprocess;
 use App\Models\Supplier;
+use App\Models\Supply;
 use App\Models\SupplyType;
 use App\Models\ThreadType;
 use App\Models\Trademark;
-use App\Models\Variant;
 use App\Models\WaistbandType;
 use App\Models\WashTone;
 use App\Models\YokeType;
@@ -44,7 +44,7 @@ class ItemsAndSubitemsSeeder extends Seeder
     public function run(): void
     {
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Tipos de archivos';
         $item->description = 'Clasificación estandarizada de archivos según su naturaleza, uso y propósito dentro de procesos administrativos, legales o documentales.';
         $item->save();
@@ -55,7 +55,7 @@ class ItemsAndSubitemsSeeder extends Seeder
             ['item_id' => FileType::ITEM_ID, 'name' => 'Archivos de productos', 'description' => 'Archivos en formato imagen o video relacionados con productos.'],
         ]);
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Subtipos de archivos';
         $item->description = 'Clasificación específica de archivos según su contenido y función.';
         $item->save();
@@ -70,92 +70,92 @@ class ItemsAndSubitemsSeeder extends Seeder
             ['item_id' => FileSubtype::ITEM_ID, 'name' => 'Imagen', 'description' => 'Archivo de imagen (JPG, PNG, etc.).'],
             ['item_id' => FileSubtype::ITEM_ID, 'name' => 'Video', 'description' => 'Archivo de video (MP4, AVI, etc.).'],
             ['item_id' => FileSubtype::ITEM_ID, 'name' => 'Audio', 'description' => 'Archivo de audio (MP3, WAV, etc.).'],
-            ['item_id' => FileSubtype::ITEM_ID, 'name' => 'Documento digital', 'description' => 'Archivo digital como PDF, Word o Excel.']
+            ['item_id' => FileSubtype::ITEM_ID, 'name' => 'Documento digital', 'description' => 'Archivo digital como PDF, Word o Excel.'],
         ]);
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Áreas';
         $item->description = 'Listado de áreas disponibles en la organización.';
         $item->save();
 
-        $area = new Area();
+        $area = new Area;
         $area->name = 'No aplica';
         $area->description = 'No aplica';
         $area->save();
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Cargos';
         $item->description = 'Listado de cargos disponibles en la organización.';
         $item->save();
 
-        $position = new Position();
+        $position = new Position;
         $position->name = 'No aplica';
         $position->description = 'No aplica';
         $position->save();
 
         $position->area()->sync([$area->id]);
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Géneros';
         $item->description = 'Listado de géneros disponibles.';
         $item->save();
 
-        $gender = new Gender();
+        $gender = new Gender;
         $gender->name = 'No aplica';
         $gender->description = 'No aplica';
         $gender->save();
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Tipos de sangre';
         $item->description = 'Listado de tipos de sangre.';
         $item->save();
 
-        $blood_type = new BloodType();
+        $blood_type = new BloodType;
         $blood_type->name = 'No aplica';
         $blood_type->description = 'No aplica';
         $blood_type->save();
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Administradora de Riesgos';
         $item->description = 'Listado de administradoras de riesgos laborales.';
         $item->save();
 
-        $risk_manager = new RiskManager();
+        $risk_manager = new RiskManager;
         $risk_manager->name = 'No aplica';
         $risk_manager->description = 'No aplica';
         $risk_manager->save();
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Entidades de Salud';
         $item->description = 'Listado de entidades promotoras de salud.';
         $item->save();
 
-        $health_entity = new HealthEntity();
+        $health_entity = new HealthEntity;
         $health_entity->name = 'No aplica';
         $health_entity->description = 'No aplica';
         $health_entity->save();
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Fondos de pensión';
         $item->description = 'Listado de fondos de pensión.';
         $item->save();
 
-        $pension_fund = new PensionFund();
+        $pension_fund = new PensionFund;
         $pension_fund->name = 'No aplica';
         $pension_fund->description = 'No aplica';
         $pension_fund->save();
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Cajas de compensación';
         $item->description = 'Listado de cajas de compensación.';
         $item->save();
 
-        $compensation_fund = new CompensationFund();
+        $compensation_fund = new CompensationFund;
         $compensation_fund->name = 'No aplica';
         $compensation_fund->description = 'No aplica';
         $compensation_fund->save();
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Categorías';
         $item->description = 'Listado de categorías.';
         $item->save();
@@ -169,15 +169,15 @@ class ItemsAndSubitemsSeeder extends Seeder
         $categories['MODA'] = Category::create(['name' => 'MODA', 'description' => 'MODA']);
         $categories['MONOLOOK'] = Category::create(['name' => 'MONOLOOK', 'description' => 'MONOLOOK']);
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Subcategorías';
         $item->description = 'Listado de subcategorías.';
         $item->save();
 
         $subcategories = [
-            ['name' => 'NO APLICA', 'category' => 'NO APLICA',],
-            ['name' => 'JEAN SKINNY', 'category' => 'CLASICO',],
-            ['name' => 'JEAN SKINNY CARGO', 'category' => 'CLASICO',],
+            ['name' => 'NO APLICA', 'category' => 'NO APLICA'],
+            ['name' => 'JEAN SKINNY', 'category' => 'CLASICO'],
+            ['name' => 'JEAN SKINNY CARGO', 'category' => 'CLASICO'],
             ['name' => 'CLASICO CABALLERO', 'category' => 'CLASICO'],
             ['name' => 'JEAN MOLDEADOR SIN BOLSILLO', 'category' => 'MOLDEADOR'],
             ['name' => 'JEAN MOLDEADOR CON BOLSILLO', 'category' => 'MOLDEADOR'],
@@ -225,7 +225,7 @@ class ItemsAndSubitemsSeeder extends Seeder
             }
         }
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Grupos';
         $item->description = 'Listado de grupos.';
         $item->save();
@@ -240,17 +240,17 @@ class ItemsAndSubitemsSeeder extends Seeder
         $groups['NIÑA'] = Group::create(['name' => 'NIÑA', 'description' => 'NIÑA']);
         $groups['NIÑO'] = Group::create(['name' => 'NIÑO', 'description' => 'NIÑO']);
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Subgrupos';
         $item->description = 'Listado de subgrupos.';
         $item->save();
 
-        $subcategory = new Subgroup();
+        $subcategory = new Subgroup;
         $subcategory->name = 'No aplica';
         $subcategory->description = 'No aplica';
         $subcategory->save();
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Marcas';
         $item->description = 'Listado de marcas.';
         $item->save();
@@ -267,8 +267,8 @@ class ItemsAndSubitemsSeeder extends Seeder
                         'created_at' => now(),
                         'updated_at' => null,
                         'deleted_at' => null,
-                    ]
-                ]
+                    ],
+                ],
             ],
             [
                 'name' => 'BLESS',
@@ -281,8 +281,8 @@ class ItemsAndSubitemsSeeder extends Seeder
                         'created_at' => now(),
                         'updated_at' => null,
                         'deleted_at' => null,
-                    ]
-                ]
+                    ],
+                ],
             ],
             ['name' => 'BLESS 23', 'group' => 'CABALLERO', 'validations' => [
                 [
@@ -292,7 +292,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'BLESS JUNIOR', 'group' => 'JUVENIL DAMA', 'validations' => [
                 [
@@ -302,7 +302,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'ZARETH', 'group' => 'DAMA', 'validations' => [
                 [
@@ -312,7 +312,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'ZARETH PREMIUM', 'group' => 'DAMA', 'validations' => [
                 [
@@ -322,7 +322,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'ZARETH CURVI', 'group' => 'DAMA', 'validations' => [
                 [
@@ -332,7 +332,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'ZARETH TEENS', 'group' => 'JUVENIL DAMA', 'validations' => [
                 [
@@ -342,7 +342,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'ZARETH REBELS', 'group' => 'CABALLERO', 'validations' => [
                 [
@@ -352,7 +352,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'CALIFORNIA DAMA', 'group' => 'DAMA', 'validations' => [
                 [
@@ -362,7 +362,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'CALIFORNIA CABALLERO', 'group' => 'CABALLERO', 'validations' => [
                 [
@@ -372,7 +372,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'CALIFORNIA KIDS', 'group' => 'NIÑO', 'validations' => [
                 [
@@ -382,7 +382,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'MICHELL VILLAMIZAR', 'group' => 'DAMA', 'validations' => [
                 [
@@ -392,7 +392,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'MICHELL PLUS', 'group' => 'DAMA', 'validations' => [
                 [
@@ -402,7 +402,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'NEW YORK DAMA', 'group' => 'DAMA', 'validations' => [
                 [
@@ -412,7 +412,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'NEW YORK KIDS', 'group' => 'NIÑO', 'validations' => [
                 [
@@ -422,7 +422,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'NEW YORK CABALLERO', 'group' => 'CABALLERO', 'validations' => [
                 [
@@ -432,7 +432,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'SHIREL CLASSIC', 'group' => 'DAMA', 'validations' => [
                 [
@@ -442,7 +442,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'SHIREL', 'group' => 'DAMA', 'validations' => [
                 [
@@ -452,7 +452,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'SHIREL PLUS', 'group' => 'DAMA', 'validations' => [
                 [
@@ -462,7 +462,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'DHARA', 'group' => 'DAMA', 'validations' => [
                 [
@@ -472,7 +472,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'STARA DENIM', 'group' => 'DAMA', 'validations' => [
                 [
@@ -482,7 +482,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'STARA MEN', 'group' => 'CABALLERO', 'validations' => [
                 [
@@ -492,7 +492,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'STARA', 'group' => 'CABALLERO', 'validations' => [
                 [
@@ -502,7 +502,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'NEON', 'group' => 'JUVENIL CABALLERO', 'validations' => [
                 [
@@ -512,7 +512,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'NEON KIDS', 'group' => 'NIÑO', 'validations' => [
                 [
@@ -522,7 +522,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'LOA CABALLERO', 'group' => 'CABALLERO', 'validations' => [
                 [
@@ -532,7 +532,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'LOA DAMA', 'group' => 'DAMA', 'validations' => [
                 [
@@ -542,7 +542,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
+                ],
             ]],
             ['name' => 'LOA KIDS', 'group' => 'NIÑO', 'validations' => [
                 [
@@ -552,8 +552,8 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => null,
                     'deleted_at' => null,
-                ]
-            ]]
+                ],
+            ]],
         ];
 
         foreach ($trademarks as $data) {
@@ -562,8 +562,8 @@ class ItemsAndSubitemsSeeder extends Seeder
                 'name' => $data['name'],
                 'description' => $data['name'],
                 'settings' => [
-                    'validations' => $data['validations'] ?? []
-                ]
+                    'validations' => $data['validations'] ?? [],
+                ],
             ]);
 
             if (isset($groups[$data['group']])) {
@@ -574,23 +574,23 @@ class ItemsAndSubitemsSeeder extends Seeder
             }
         }
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Tallas';
         $item->description = 'Listado de tallas.';
         $item->settings = (object) [
             'finished_product' => (object) [
                 'name' => 'regex:/^(?:\d[02468]|XS|S|M|L|XL|XXL)$/',
-                'description' => 'regex:/^T\d{2,}$/'
-            ]
+                'description' => 'regex:/^T\d{2,}$/',
+            ],
         ];
         $item->save();
 
-        $size = new Size();
+        $size = new Size;
         $size->name = 'No aplica';
         $size->description = 'No aplica';
         $size->save();
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Tipos de Prenda';
         $item->description = 'Listado de tipos de prenda.';
         $item->save();
@@ -613,7 +613,7 @@ class ItemsAndSubitemsSeeder extends Seeder
             ]);
         }
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Tipos de Bota';
         $item->description = 'Listado de tipos de bota.';
         $item->save();
@@ -646,7 +646,7 @@ class ItemsAndSubitemsSeeder extends Seeder
             ]);
         }
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Tipos de Cotilla';
         $item->description = 'Listado de tipos de cotilla.';
         $item->save();
@@ -666,7 +666,7 @@ class ItemsAndSubitemsSeeder extends Seeder
             ]);
         }
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Tipos de Trasero';
         $item->description = 'Listado de tipos de trasero.';
         $item->save();
@@ -686,7 +686,7 @@ class ItemsAndSubitemsSeeder extends Seeder
             ]);
         }
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Tipos de Pretina';
         $item->description = 'Listado de tipos de pretina.';
         $item->save();
@@ -706,7 +706,7 @@ class ItemsAndSubitemsSeeder extends Seeder
             ]);
         }
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Colores';
         $item->description = 'Listado de colores.';
         $item->save();
@@ -765,7 +765,7 @@ class ItemsAndSubitemsSeeder extends Seeder
             ]);
         }
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Tonos de Lavado';
         $item->description = 'Listado de tonos de lavado.';
         $item->save();
@@ -799,8 +799,7 @@ class ItemsAndSubitemsSeeder extends Seeder
             ]);
         }
 
-
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Procesos';
         $item->description = 'Listado de procesos.';
         $item->save();
@@ -825,42 +824,42 @@ class ItemsAndSubitemsSeeder extends Seeder
                 'description' => $data['name'],
                 'settings' => [
                     'subprocesses' => $data['subprocesses'] ?? [],
-                    'in_technical_sheet' => $data['in_technical_sheet'] ?? false
-                ]
+                    'in_technical_sheet' => $data['in_technical_sheet'] ?? false,
+                ],
             ]);
         }
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Subprocesos';
         $item->description = 'Listado de subprocesos.';
         $item->save();
 
-        $subprocess = new Subprocess();
+        $subprocess = new Subprocess;
         $subprocess->name = 'No aplica';
         $subprocess->description = 'No aplica';
         $subprocess->save();
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Operaciones';
         $item->description = 'Listado de operaciones.';
         $item->save();
 
-        $operation = new Operation();
+        $operation = new Operation;
         $operation->name = 'No aplica';
         $operation->description = 'No aplica';
         $operation->save();
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Proveedores';
         $item->description = 'Listado de proveedores.';
         $item->save();
 
-        $supplier = new Supplier();
+        $supplier = new Supplier;
         $supplier->name = 'No aplica';
         $supplier->description = 'No aplica';
         $supplier->save();
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Tipos de Insumo';
         $item->description = 'Listado de tipos de insumo.';
         $item->save();
@@ -868,45 +867,45 @@ class ItemsAndSubitemsSeeder extends Seeder
         $supply_types = [];
 
         $supply_types['NO APLICA'] = SupplyType::create(['name' => 'NO APLICA', 'description' => 'NO APLICA', 'settings' => [
-            'in_technical_sheet' => false
+            'in_technical_sheet' => false,
         ]]);
         $supply_types['TELA'] = SupplyType::create(['name' => 'TELA', 'description' => 'TELA', 'settings' => [
             'in_technical_sheet' => true,
-            'has_variants' => true
+            'has_supplies' => true,
         ]]);
         $supply_types['HILO'] = SupplyType::create(['name' => 'HILO', 'description' => 'HILO', 'settings' => [
             'in_technical_sheet' => true,
-            'has_variants' => true
+            'has_supplies' => true,
         ]]);
 
-        $item = new Item();
-        $item->name = 'Variantes';
-        $item->description = 'Listado de variantes.';
+        $item = new Item;
+        $item->name = 'Insumos';
+        $item->description = 'Listado de insumos.';
         $item->save();
 
-        $variants = [
-            ['name' => 'NO APLICA', 'supply_type' => 'NO APLICA',],
-            ['name' => 'ROSAL', 'supply_type' => 'TELA',],
-            ['name' => 'DOBLE', 'supply_type' => 'TELA',],
+        $supplies = [
+            ['name' => 'NO APLICA', 'supply_type' => 'NO APLICA'],
+            ['name' => 'ROSAL', 'supply_type' => 'TELA'],
+            ['name' => 'DOBLE', 'supply_type' => 'TELA'],
             ['name' => 'PASAR', 'supply_type' => 'TELA'],
             ['name' => 'NEGRO', 'supply_type' => 'HILO'],
         ];
 
-        foreach ($variants as $data) {
+        foreach ($supplies as $data) {
 
-            $variant = Variant::create([
+            $supply = Supply::create([
                 'name' => $data['name'],
                 'description' => $data['name'],
             ]);
 
             if (isset($supply_types[$data['supply_type']])) {
-                $variant->supply_type()->sync(
+                $supply->supply_type()->sync(
                     [$supply_types[$data['supply_type']]->id]
                 );
             }
         }
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Colección';
         $item->description = 'Listado de colecciones.';
         $item->save();
@@ -919,7 +918,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'code' => 'NOAP',
                     'start_date' => '2026-01-01',
                     'end_date' => '2026-12-31',
-                ]
+                ],
             ],
             [
                 'name' => 'COLOMBIA MODA',
@@ -928,7 +927,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'code' => 'C52026',
                     'start_date' => '2026-07-01',
                     'end_date' => '2026-07-31',
-                ]
+                ],
             ],
             [
                 'name' => 'VERANO URBANO',
@@ -937,7 +936,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'code' => 'VU2026',
                     'start_date' => '2026-03-01',
                     'end_date' => '2026-05-31',
-                ]
+                ],
             ],
             [
                 'name' => 'DENIM ESSENCE',
@@ -946,7 +945,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'code' => 'DE2026',
                     'start_date' => '2026-06-01',
                     'end_date' => '2026-08-31',
-                ]
+                ],
             ],
             [
                 'name' => 'OTOÑO ELEGANTE',
@@ -955,7 +954,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                     'code' => 'OE2026',
                     'start_date' => '2026-09-01',
                     'end_date' => '2026-11-30',
-                ]
+                ],
             ],
         ];
 
@@ -967,42 +966,42 @@ class ItemsAndSubitemsSeeder extends Seeder
             ]);
         }
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Piezas';
         $item->description = 'Listado de piezas.';
         $item->save();
 
-        $clothing_line = new Piece();
+        $clothing_line = new Piece;
         $clothing_line->name = 'No aplica';
         $clothing_line->description = 'No aplica';
         $clothing_line->save();
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Siluetas';
         $item->description = 'Listado de siluetas.';
         $item->save();
 
-        $silhouette = new Silhouette();
+        $silhouette = new Silhouette;
         $silhouette->name = 'No aplica';
         $silhouette->description = 'No aplica';
         $silhouette->save();
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Tipos de Tela';
         $item->description = 'Listado de tipos de tela.';
         $item->save();
 
-        $fabric_type = new FabricType();
+        $fabric_type = new FabricType;
         $fabric_type->name = 'No aplica';
         $fabric_type->description = 'No aplica';
         $fabric_type->save();
 
-        $item = new Item();
+        $item = new Item;
         $item->name = 'Tipos de Hilo';
         $item->description = 'Listado de tipos de hilo.';
         $item->save();
 
-        $thread_type = new ThreadType();
+        $thread_type = new ThreadType;
         $thread_type->name = 'No aplica';
         $thread_type->description = 'No aplica';
         $thread_type->save();

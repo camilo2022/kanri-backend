@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Requests\Typification\SupplyType\Variant;
+namespace App\Http\Requests\Typification\SupplyType\Supply;
 
-use App\Models\SupplyType;
+use App\Models\Supply;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class VariantExcelRequest extends FormRequest
+class SupplyFindRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -26,7 +26,7 @@ class VariantExcelRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'supply_type_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . SupplyType::ITEM_ID]
+            'id' => ['required', 'exists:subitems,id,item_id,' . Supply::ITEM_ID],
         ];
     }
 
@@ -34,7 +34,6 @@ class VariantExcelRequest extends FormRequest
     {
         return [
             'required' => 'Es obligatorio.',
-            'numeric' => 'Debe ser un valor numérico.',
             'exists' => 'No hay ningún registro.'
         ];
     }
@@ -42,12 +41,12 @@ class VariantExcelRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'supply_type_id' => 'Identificador del tipo de insumo'
+            'id' => 'Identificador del insumo'
         ];
     }
 
     protected function prepareForValidation()
     {
-        $this->merge(['supply_type_id' => $this->route('supply_type_id')]);
+        $this->merge(['id' => $this->route('id')]);
     }
 }

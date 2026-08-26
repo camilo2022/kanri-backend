@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Http\Requests\Typification\SupplyType\Variant;
+namespace App\Http\Requests\Typification\SupplyType\Supply;
 
-use App\Models\Variant;
+use App\Models\Supply;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 
-class VariantFindRequest extends FormRequest
+class SupplyRestoreRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -26,7 +27,7 @@ class VariantFindRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:subitems,id,item_id,' . Variant::ITEM_ID],
+            'id' => ['required', Rule::exists('subitems', 'id')->where('item_id', Supply::ITEM_ID)->whereNotNull('deleted_at')]
         ];
     }
 
@@ -41,7 +42,7 @@ class VariantFindRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador de la variante'
+            'id' => 'Identificador del insumo'
         ];
     }
 

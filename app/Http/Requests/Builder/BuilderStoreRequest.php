@@ -3,15 +3,9 @@
 namespace App\Http\Requests\Builder;
 
 use App\Models\Category;
-use App\Models\Color;
-use App\Models\Piece;
-use App\Models\Product;
-use App\Models\ProductionOrder;
 use App\Models\Size;
 use App\Models\Subcategory;
-use App\Models\TechnicalSheet;
 use App\Models\Trademark;
-use App\Models\Variant;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -109,7 +103,7 @@ class BuilderStoreRequest extends FormRequest
             }
 
             $sizes = Size::with('trademark')->get()->keyBy('id');
-            
+
             foreach ($percentages as $key => $value) {
                 $size = $sizes->get($key);
                 if (!$size) {

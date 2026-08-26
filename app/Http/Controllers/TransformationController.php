@@ -4,41 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\TechnicalSheet\TechnicalSheetExportPDFRequest;
 use App\Http\Requests\TechnicalSheet\TechnicalSheetFindRequest;
-use App\Http\Requests\TechnicalSheet\TechnicalSheetStoreRequest;
 use App\Http\Requests\TechnicalSheet\TechnicalSheetUpdateRequest;
 use App\Http\Requests\TechnicalSheet\Transformation\TransformationStoreRequest;
 use App\Http\Resources\Product\ProductResource;
 use App\Http\Resources\TechnicalSheet\TechnicalSheetResource;
-use App\Models\BackType;
-use App\Models\BootType;
-use App\Models\Category;
-use App\Models\Collection;
-use App\Models\Color;
-use App\Models\Employee;
-use App\Models\FabricType;
 use App\Models\File;
-use App\Models\GarmentType;
-use App\Models\Group;
-use App\Models\Piece;
 use App\Models\Process;
 use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderDetailQuantities;
-use App\Models\Silhouette;
-use App\Models\Size;
-use App\Models\Subcategory;
-use App\Models\Subgroup;
-use App\Models\Supplier;
-use App\Models\SupplyType;
 use App\Models\TechnicalSheet;
 use App\Models\TechnicalSheetDetail;
-use App\Models\ThreadType;
-use App\Models\Trademark;
-use App\Models\Variant;
-use App\Models\WaistbandType;
-use App\Models\WashTone;
-use App\Models\YokeType;
 use App\Services\FileService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -47,10 +24,11 @@ use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\URL;
 use App\Services\QrCodeService;
+use App\Traits\ModelTypes;
 
 class TransformationController extends Controller
 {
-    use ApiMessage, ApiResponser;
+    use ApiMessage, ApiResponser, ModelTypes;
 
     public function find(TechnicalSheetFindRequest $request, $id = null)
     {
@@ -67,7 +45,7 @@ class TransformationController extends Controller
                 'back_type',
                 'technical_sheet_details',
                 'pattern_maker' => ['person', 'position'],
-                'variants' => ['supply_type'],
+                'supplies' => ['supply_type'],
                 'product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']],
                 'products' => ['trademark']
             ])
@@ -258,7 +236,7 @@ class TransformationController extends Controller
             $technical_sheet->status = $request->input('status');
 
             $technical_sheet->save();
-            $technical_sheet->auditSync('variants', $request->input('variants', []));
+            $technical_sheet->auditSync('supplies', $request->input('supplies', []));
 
             if ($request->hasFile('photo_d')) {
                 app(FileService::class)->save(
@@ -358,157 +336,6 @@ class TransformationController extends Controller
         }
     }
 
-    private $model_types = [
-        'trademarks' => [
-            'label' => 'Marcas',
-            'model' => Trademark::class,
-            'url' => '/trademarks/all',
-            'value' => 'id',
-            'option' => 'name'
-        ],
-        'silhouettes' => [
-            'label' => 'Siluetas',
-            'model' => Silhouette::class,
-            'url' => '/silhouettes/all',
-            'option' => 'name'
-        ],
-        'sizes' => [
-            'label' => 'Tallas',
-            'model' => Size::class,
-            'url' => '/sizes/all',
-            'option' => 'name'
-        ],
-        'subgroups' => [
-            'label' => 'Subgrupos',
-            'model' => Subgroup::class,
-            'url' => '/classification/subgroups/all',
-            'option' => 'name'
-        ],
-        'groups' => [
-            'label' => 'Grupos',
-            'model' => Group::class,
-            'url' => '/classification/groups/all',
-            'option' => 'name'
-        ],
-        'garment_types' => [
-            'label' => 'Tipos de Prenda',
-            'model' => GarmentType::class,
-            'url' => '/garment_types/all',
-            'option' => 'name'
-        ],
-        'boot_types' => [
-            'label' => 'Tipos de Bota',
-            'model' => BootType::class,
-            'url' => '/boot_types/all',
-            'option' => 'name'
-        ],
-        'back_types' => [
-            'label' => 'Tipos de Trasero',
-            'model' => BackType::class,
-            'url' => '/back_types/all',
-            'option' => 'name'
-        ],
-        'waistband_types' => [
-            'label' => 'Tipos de Pretina',
-            'model' => WaistbandType::class,
-            'url' => '/waistband_types/all',
-            'option' => 'name'
-        ],
-        'categories' => [
-            'label' => 'Categorías',
-            'model' => Category::class,
-            'url' => '/categorization/categories/all',
-            'option' => 'name'
-        ],
-        'subcategories' => [
-            'label' => 'Subcategorías',
-            'model' => Subcategory::class,
-            'url' => '/categorization/subcategories/all',
-            'option' => 'name'
-        ],
-        'wash_tones' => [
-            'label' => 'Tonos de Lavado',
-            'model' => WashTone::class,
-            'url' => '/wash_tones/all',
-            'option' => 'name'
-        ],
-        'colors' => [
-            'label' => 'Colores',
-            'model' => Color::class,
-            'url' => '/colors/all',
-            'field' => 'color_id',
-            'option' => ['settings.code', 'name']
-        ],
-        'collections' => [
-            'label' => 'Colecciones',
-            'model' => Collection::class,
-            'url' => '/collections/all',
-            'option' => 'name'
-        ],
-        'yoke_types' => [
-            'label' => 'Tipos de Cotilla',
-            'model' => YokeType::class,
-            'url' => '/yoke_types/all',
-            'option' => 'name'
-        ],
-        'pieces' => [
-            'label' => 'Piezas',
-            'model' => Piece::class,
-            'url' => '/pieces/all',
-            'option' => 'name',
-            'field' => 'piece_id',
-        ],
-        'suppliers' => [
-            'label' => 'Proveedores',
-            'model' => Supplier::class,
-            'url' => '/suppliers/all',
-            'field' => 'supplier_id',
-            'option' => 'name',
-        ],
-        'fabric_types' => [
-            'label' => 'Tipos de Tela',
-            'model' => FabricType::class,
-            'url' => '/fabric_types/all',
-            'option' => 'name'
-        ],
-        'thread_types' => [
-            'label' => 'Tipos de Hilo',
-            'model' => ThreadType::class,
-            'url' => '/thread_types/all',
-            'option' => 'name'
-        ],
-        'supply_types' => [
-            'label' => 'Tipos de Insumo',
-            'model' => SupplyType::class,
-            'url' => '/typification/supply_types/all',
-            'option' => 'name',
-            'field' => 'supply_type_id'
-        ],
-        'employees' => [
-            'label' => 'Empleados',
-            'model' => Employee::class,
-            'url' => '/employees/all',
-            'value' => 'id',
-            'option' => ['person.names', 'person.last_names']
-        ],
-        'variants' => [
-            'label' => 'Variantes',
-            'model' => Variant::class,
-            'url' => '/typification/supply_types/variants/all/{supply_type_id}',
-            'option' => 'name',
-            'field' => 'variant_id',
-            'param' => SupplyType::class,
-            'params' => [
-                Color::class
-            ],
-            'columns' => [
-                'description' => 'Descripcion',
-                'color' => 'Color',
-                'supplier' => 'Proveedor'
-            ]
-        ]
-    ];
-
     private function resolveDynamicField($field, $value)
     {
 
@@ -524,7 +351,7 @@ class TransformationController extends Controller
             return $value;
         }
 
-        $config = collect($this->model_types)
+        $config = collect($this->getModelTypes())
             ->firstWhere('model', $model);
 
         if (!$config) {
@@ -632,7 +459,7 @@ class TransformationController extends Controller
                 'back_type',
                 'technical_sheet_details',
                 'pattern_maker' => ['person', 'position'],
-                'variants' => ['supply_type'],
+                'supplies' => ['supply_type'],
                 'product' => ['trademark' => ['group'], 'subcategory' => ['category']],
                 'products' => ['trademark']
             ])->where('uuid', $uuid)->firstOrFail();

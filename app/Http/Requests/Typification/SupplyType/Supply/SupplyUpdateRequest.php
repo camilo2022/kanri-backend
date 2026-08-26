@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Http\Requests\Typification\SupplyType\Variant;
+namespace App\Http\Requests\Typification\SupplyType\Supply;
 
 use App\Models\SupplyType;
-use App\Models\Variant;
+use App\Models\Supply;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Validator as Valid;
 
-class VariantStoreRequest extends FormRequest
+class SupplyUpdateRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
@@ -28,9 +28,9 @@ class VariantStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'supply_type_id' => ['required', 'exists:subitems,id,item_id,' . SupplyType::ITEM_ID],
-            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Variant::ITEM_ID],
-            'description' => ['required', 'uppercase', 'string', 'max:255'],
+            'id' => ['required', 'exists:subitems,id,item_id,' . Supply::ITEM_ID],
+            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Supply::ITEM_ID],
+            'description' => ['required', 'uppercase', 'string', 'max:255',],
         ];
     }
 
@@ -42,6 +42,7 @@ class VariantStoreRequest extends FormRequest
             'max' => 'Se permite máximo :max caracteres.',
             'min' => 'Se permite mínimo :min caracteres.',
             'unique' => 'Ya está registrado.',
+            'exists' => 'No está registrado.',
             'uppercase' => 'Debe de ingresar mayúsculas.'
         ];
     }
@@ -49,11 +50,13 @@ class VariantStoreRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'supply_type_id' => 'Identificador del tipo de insumo',
+            'id' => 'Identificador del insumo',
             'name' => 'Nombre',
             'description' => 'Descripción',
         ];
     }
+
+
 
     protected function resolveRule(string $rule): string
     {
@@ -132,5 +135,10 @@ class VariantStoreRequest extends FormRequest
                 }
             }
         });
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->merge(['id' => $this->route('id')]);
     }
 }

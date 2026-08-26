@@ -6,19 +6,19 @@ use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-class VariantSheetImport implements ToCollection, WithHeadingRow
+class SupplySheetImport implements ToCollection, WithHeadingRow
 {
-    public function __construct(protected VariantImportBuilder $builder) {}
+    public function __construct(protected SupplyImportBuilder $builder) {}
 
     public function collection(Collection $rows): void
     {
         foreach ($rows as $row) {
 
-            if ($row->every(fn($value) => blank($value) || $value === '-')) {
+            if ($row->every(fn ($value) => blank($value) || $value === '-')) {
                 continue;
             }
 
-            $this->builder->addVariant(
+            $this->builder->addSupply(
                 $row->toArray()
             );
         }

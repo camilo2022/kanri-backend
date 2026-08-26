@@ -15,7 +15,6 @@ use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderDetailQuantities;
 use App\Models\TechnicalSheet;
 use App\Models\TechnicalSheetDetail;
-use App\Models\Variant;
 use App\Services\FileService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;

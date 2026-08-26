@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
+use OwenIt\Auditing\Contracts\Auditable;
 use Spatie\Permission\Traits\HasRoles;
 
-class Variant extends Model implements Auditable
+class Supply extends Model implements Auditable
 {
     use Auditing, HasRoles, SoftDeletes;
 
@@ -25,18 +25,18 @@ class Variant extends Model implements Auditable
         'item_id',
         'name',
         'description',
-        'settings'
+        'settings',
     ];
 
     protected $auditInclude = [
         'item_id',
         'name',
         'description',
-        'settings'
+        'settings',
     ];
 
     protected $casts = [
-        'settings' => 'object'
+        'settings' => 'object',
     ];
 
     protected static function booted()
@@ -69,7 +69,6 @@ class Variant extends Model implements Auditable
         return $this->morphToMany(TechnicalSheet::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
     }
 
-
     public function related(string $model): MorphToMany
     {
         return $this->morphedByMany($model, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
@@ -83,13 +82,15 @@ class Variant extends Model implements Auditable
     public function scopeSearch(Builder $query, ?string $search = null): Builder
     {
         $search = trim((string) $search);
-        if ($search === '') return $query;
+        if ($search === '') {
+            return $query;
+        }
 
         $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
 
         return $query->where(function (Builder $q) use ($terms) {
             foreach ($terms as $term) {
-                $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $term) . '%';
+                $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $term).'%';
                 $q->where(function (Builder $sq) use ($like) {
                     $sq->orWhere('name', 'LIKE', $like)
                         ->orWhere('description', 'LIKE', $like);

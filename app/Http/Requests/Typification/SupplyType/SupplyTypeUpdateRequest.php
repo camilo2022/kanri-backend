@@ -30,7 +30,7 @@ class SupplyTypeUpdateRequest extends FormRequest
             'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . SupplyType::ITEM_ID],
             'description' => ['required', 'uppercase', 'string', 'max:255',],
             'settings' => ['required', 'array'],
-            'settings.has_variants' => ['required', 'boolean'],
+            'settings.has_supplies' => ['required', 'boolean'],
             'settings.in_technical_sheet' => ['required', 'boolean'],
             'settings.in_production_order' => ['required', 'boolean'],
             'settings.paragraph' => ['nullable', 'required_if:settings.in_production_order,true', 'in:fabric,roll'],
@@ -57,7 +57,7 @@ class SupplyTypeUpdateRequest extends FormRequest
             'name' => 'Nombre',
             'description' => 'Descripción',
             'settings' => 'Configuraciones',
-            'settings.has_variants' => 'Tiene variantes',
+            'settings.has_supplies' => 'Tiene insumos',
             'settings.in_technical_sheet' => 'Aplica a Ficha Técnica'
         ];
     }

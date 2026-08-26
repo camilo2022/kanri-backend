@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
-use OwenIt\Auditing\Contracts\Auditable;
-use OwenIt\Auditing\Auditable as Auditing;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use OwenIt\Auditing\Auditable as Auditing;
+use OwenIt\Auditing\Contracts\Auditable;
 
 class ProductionOrder extends Model implements Auditable
 {
@@ -19,7 +19,9 @@ class ProductionOrder extends Model implements Auditable
     protected $table = 'production_orders';
 
     public const PENDING = 'Pendiente';
+
     public const APPROVED = 'Aprobado';
+
     public const CANCELLED = 'Cancelado';
 
     protected $fillable = [
@@ -35,7 +37,7 @@ class ProductionOrder extends Model implements Auditable
         'pocket_fabric',
         'observation',
         'settings',
-        'status'
+        'status',
     ];
 
     protected $auditInclude = [
@@ -51,7 +53,7 @@ class ProductionOrder extends Model implements Auditable
         'pocket_fabric',
         'observation',
         'settings',
-        'status'
+        'status',
     ];
 
     protected $casts = [
@@ -82,7 +84,7 @@ class ProductionOrder extends Model implements Auditable
 
     public function rolls(): MorphToMany
     {
-        return $this->morphedByMany(Variant::class, 'model', 'model_has_production_order', 'production_order_id', 'model_id')->withPivot('quantity');
+        return $this->morphedByMany(Supply::class, 'model', 'model_has_production_order', 'production_order_id', 'model_id')->withPivot('quantity');
     }
 
     public function color(): MorphToMany
@@ -92,7 +94,7 @@ class ProductionOrder extends Model implements Auditable
 
     public function fabric(): HasOne
     {
-        return $this->hasOne(ProductionOrderDetail::class)->where('model_type', Variant::class);
+        return $this->hasOne(ProductionOrderDetail::class)->where('model_type', Supply::class);
     }
 
     public function production_order_details(): HasMany
@@ -110,15 +112,17 @@ class ProductionOrder extends Model implements Auditable
     public function scopeSearch(Builder $query, ?string $search = null): Builder
     {
         $search = trim((string) $search);
-        if ($search === '') return $query;
+        if ($search === '') {
+            return $query;
+        }
 
         $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
 
         return $query->where(function (Builder $q) use ($terms) {
             foreach ($terms as $term) {
                 $q->orWhere(function (Builder $sq) use ($term) {
-                    $sq->orWhere('consecutive', 'LIKE', '%' . $term . '%')
-                        ->orWhere('cut', 'LIKE', '%' . $term . '%');
+                    $sq->orWhere('consecutive', 'LIKE', '%'.$term.'%')
+                        ->orWhere('cut', 'LIKE', '%'.$term.'%');
                 });
             }
         });
@@ -129,7 +133,7 @@ class ProductionOrder extends Model implements Auditable
         return [
             self::PENDING,
             self::CANCELLED,
-            self::APPROVED
+            self::APPROVED,
         ];
     }
 }

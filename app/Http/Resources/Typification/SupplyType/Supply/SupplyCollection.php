@@ -1,25 +1,25 @@
 <?php
 
-namespace App\Http\Resources\Typification\SupplyType\Variant;
+namespace App\Http\Resources\Typification\SupplyType\Supply;
 
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Str;
 
-class VariantCollection extends ResourceCollection
+class SupplyCollection extends ResourceCollection
 {
     public function toArray($request)
     {
         return [
-            'variants' => $this->collection->map(function ($variant) {
-                $relationships = collect($variant->supply_type->first()?->settings?->form ?? [])
+            'supplies' => $this->collection->map(function ($supply) {
+                $relationships = collect($supply->supply_type->first()?->settings?->form ?? [])
                     ->where('type', 'selectdinamic')
-                    ->mapWithKeys(function ($field) use ($variant) {
+                    ->mapWithKeys(function ($field) use ($supply) {
                         $key = Str::lower(Str::camel(
                             class_basename($field->model)
                         ));
 
-                        $query = $variant->related($field->model);
+                        $query = $supply->related($field->model);
 
                         return [
                             $key => $field->cardinality === 'single'
@@ -32,17 +32,18 @@ class VariantCollection extends ResourceCollection
                         ];
                     })
                     ->all();
+
                 return [
-                    'id' => $variant->id,
-                    'item' => $variant->item,
-                    'name' => $variant->name,
-                    'description' => $variant->description,
-                    'created_at' => $this->formatDate($variant->created_at),
-                    'updated_at' => $this->formatDate($variant->updated_at),
-                    'deleted_at' => $this->formatDate($variant->deleted_at),
-                    'settings' => $variant->settings,
-                    'production_orders' => $variant->production_orders,
-                    ...$relationships
+                    'id' => $supply->id,
+                    'item' => $supply->item,
+                    'name' => $supply->name,
+                    'description' => $supply->description,
+                    'created_at' => $this->formatDate($supply->created_at),
+                    'updated_at' => $this->formatDate($supply->updated_at),
+                    'deleted_at' => $this->formatDate($supply->deleted_at),
+                    'settings' => $supply->settings,
+                    'production_orders' => $supply->production_orders,
+                    ...$relationships,
                 ];
             }),
             'meta' => [

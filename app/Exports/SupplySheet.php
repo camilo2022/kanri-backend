@@ -3,34 +3,34 @@
 namespace App\Exports;
 
 use App\Models\SupplyType;
-use App\Models\Variant;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
-use Illuminate\Support\Str;
 
-class VariantSheet implements FromCollection, WithHeadings, WithMapping, WithTitle
+class SupplySheet implements FromCollection, WithHeadings, WithMapping, WithTitle
 {
     protected $supply_type;
-    protected $variants;
 
-    public function __construct(SupplyType $supply_type, $variants)
+    protected $supplies;
+
+    public function __construct(SupplyType $supply_type, $supplies)
     {
         $this->supply_type = $supply_type;
-        $this->variants = $variants;
+        $this->supplies = $supplies;
     }
 
     public function collection()
     {
-        return $this->variants;
+        return $this->supplies;
     }
 
-    public function map($variant): array
+    public function map($supply): array
     {
         $row = [
-            $variant->name ?? '-',
-            $variant->description ?? '-',
+            $supply->name ?? '-',
+            $supply->description ?? '-',
         ];
 
         $relationships = collect($this->supply_type->settings->form ?? [])
@@ -43,11 +43,12 @@ class VariantSheet implements FromCollection, WithHeadings, WithMapping, WithTit
             }
 
             if (isset($relationships[$field->field])) {
-                $row[] = data_get($variant->related($field->model)->first(), $field->path, '-') ?? '-';
+                $row[] = data_get($supply->related($field->model)->first(), $field->path, '-') ?? '-';
+
                 continue;
             }
 
-            $row[] = $variant->settings->values->{$field->field} ?? '-';
+            $row[] = $supply->settings->values->{$field->field} ?? '-';
         }
 
         return $row;
@@ -76,6 +77,6 @@ class VariantSheet implements FromCollection, WithHeadings, WithMapping, WithTit
 
     public function title(): string
     {
-        return 'VARIANTS';
+        return 'SUPPLIES';
     }
 }

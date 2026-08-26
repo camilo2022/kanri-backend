@@ -682,7 +682,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 'role' => [
                     'name' => 'typification',
                     'title' => 'Tipificaciones',
-                    'description' => 'Gestión de tipos de insumo y variantes.',
+                    'description' => 'Gestión de tipos de insumo e insumos.',
                 ],
                 'permissions' => [
                     ['name' => 'typification.supply_types.all', 'title' => 'Listar tipos de insumo', 'description' => 'Permite listar tipos de insumo.'],
@@ -692,13 +692,13 @@ class RolesAndPermissionsSeeder extends Seeder
                     ['name' => 'typification.supply_types.delete', 'title' => 'Eliminar tipos de insumo', 'description' => 'Permite eliminar tipos de insumo.'],
                     ['name' => 'typification.supply_types.restore', 'title' => 'Restaurar tipos de insumo', 'description' => 'Permite restaurar tipos de insumo.'],
                     ['name' => 'typification.supply_types.settings', 'title' => 'Configurar tipos de insumo', 'description' => 'Permite configurar tipos de insumo.'],
-                    ['name' => 'typification.supply_types.variants.all', 'title' => 'Listar variantes', 'description' => 'Permite listar variantes.'],
-                    ['name' => 'typification.supply_types.variants.find', 'title' => 'Consultar variantes', 'description' => 'Permite consultar variantes'],
-                    ['name' => 'typification.supply_types.variants.store', 'title' => 'Crear variantes', 'description' => 'Permite crear variantes.'],
-                    ['name' => 'typification.supply_types.variants.update', 'title' => 'Actualizar variantes', 'description' => 'Permite actualizar variantes.'],
-                    ['name' => 'typification.supply_types.variants.delete', 'title' => 'Eliminar variantes', 'description' => 'Permite eliminar variantes.'],
-                    ['name' => 'typification.supply_types.variants.restore', 'title' => 'Restaurar variantes', 'description' => 'Permite restaurar variantes.'],
-                    ['name' => 'typification.supply_types.variants.settings', 'title' => 'Configurar variantes', 'description' => 'Permite configurar variantes.'],
+                    ['name' => 'typification.supply_types.supplies.all', 'title' => 'Listar insumos', 'description' => 'Permite listar insumos.'],
+                    ['name' => 'typification.supply_types.supplies.find', 'title' => 'Consultar insumos', 'description' => 'Permite consultar insumos'],
+                    ['name' => 'typification.supply_types.supplies.store', 'title' => 'Crear insumos', 'description' => 'Permite crear insumos.'],
+                    ['name' => 'typification.supply_types.supplies.update', 'title' => 'Actualizar insumos', 'description' => 'Permite actualizar insumos.'],
+                    ['name' => 'typification.supply_types.supplies.delete', 'title' => 'Eliminar insumos', 'description' => 'Permite eliminar insumos.'],
+                    ['name' => 'typification.supply_types.supplies.restore', 'title' => 'Restaurar insumos', 'description' => 'Permite restaurar insumos.'],
+                    ['name' => 'typification.supply_types.supplies.settings', 'title' => 'Configurar insumos', 'description' => 'Permite configurar insumos.'],
 
                 ]
             ],

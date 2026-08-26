@@ -16,7 +16,7 @@ use App\Models\SupplyType;
 use App\Models\TechnicalSheet;
 use App\Models\TechnicalSheetDetail;
 use App\Models\Trademark;
-use App\Models\Variant;
+use App\Models\Supply;
 use App\Models\WaistbandType;
 use App\Models\WashTone;
 use App\Models\YokeType;
@@ -62,8 +62,8 @@ class TechnicalSheetSaveRequest extends FormRequest
             'technical_sheet_details.*.model_type' => ['required'],
             'technical_sheet_details.*.model_id' => ['required', 'exists:subitems,id'],
             'technical_sheet_details.*.status' => ['required', 'in:' . implode(',', [TechnicalSheetDetail::PENDING, TechnicalSheetDetail::REVIEW, TechnicalSheetDetail::APPROVED])],
-            'variants' => ['required', 'array'],
-            'variants.*' => ['sometimes', 'numeric', 'exists:subitems,id,item_id,' . Variant::ITEM_ID],
+            'supplies' => ['required', 'array'],
+            'supplies.*' => ['sometimes', 'numeric', 'exists:subitems,id,item_id,' . Supply::ITEM_ID],
             'photo_d' => ['required', 'array'],
             'photo_d.file' => ['sometimes', 'image', 'max:2048'],
             'photo_t' => ['required', 'array'],
@@ -102,10 +102,10 @@ class TechnicalSheetSaveRequest extends FormRequest
             $attributes["$base.status"] = "Estado (Detalle n° $n)";
         }
 
-        foreach ($this->input('variants', []) as $i => $v) {
+        foreach ($this->input('supplies', []) as $i => $v) {
             $n = $i + 1;
-            $base = "variants.$i";
-            $attributes["$base.id"] = "Id (Variante n° $n)";
+            $base = "supplies.$i";
+            $attributes["$base.id"] = "Id (Supplye n° $n)";
         }
 
         return [
@@ -153,27 +153,27 @@ class TechnicalSheetSaveRequest extends FormRequest
                 );
             }
 
-            $supply_types = SupplyType::with('variants')
+            $supply_types = SupplyType::with('supplies')
                 ->where('settings->in_technical_sheet', true)->get();
 
             foreach ($supply_types as $supply_type) {
-                $has_variants = $supply_type->variants
+                $has_supplies = $supply_type->supplies
                     ->pluck('id')
-                    ->intersect($this->input('variants', []))
+                    ->intersect($this->input('supplies', []))
                     ->isNotEmpty();
 
-                if (!$has_variants) {
-                    $validator->errors()->add("variant.$supply_type->id", 'Debe seleccionar una variante');
+                if (!$has_supplies) {
+                    $validator->errors()->add("supply.$supply_type->id", 'Debe seleccionar una supplye');
                 }
             }
 
             $supply_type_ids = [];
 
-            foreach ($this->input('variants', []) as $key => $variant_id) {
-                $variant = Variant::with('supply_type')->find($variant_id);
+            foreach ($this->input('supplies', []) as $key => $supply_id) {
+                $supply = Supply::with('supply_type')->find($supply_id);
 
-                if (in_array($variant?->supply_type->first()?->id, $supply_type_ids)) {
-                    $validator->errors()->add("variants.$key", 'La variante pertenece a un tipo de insumo ya registrado.');
+                if (in_array($supply?->supply_type->first()?->id, $supply_type_ids)) {
+                    $validator->errors()->add("supplies.$key", 'La supplye pertenece a un tipo de insumo ya registrado.');
                 }
             }
 

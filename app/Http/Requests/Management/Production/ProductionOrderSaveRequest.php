@@ -9,7 +9,7 @@ use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\Size;
 use App\Models\TechnicalSheet;
-use App\Models\Variant;
+use App\Models\Supply;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -41,7 +41,7 @@ class ProductionOrderSaveRequest extends FormRequest
             'cut' => ['required', 'string', 'uppercase', 'max:2'],
             'status' =>  ['required', 'in:' . implode(',', [ProductionOrder::PENDING, ProductionOrder::APPROVED, ProductionOrder::CANCELLED])],
             'production_order_details' => ['required', 'array', 'min:1', 'max:5'],
-            'production_order_details.*.model_type' => ['required',  'in:' . implode(',', [Product::class, Variant::class, Color::class])],
+            'production_order_details.*.model_type' => ['required',  'in:' . implode(',', [Product::class, Supply::class, Color::class])],
             'production_order_details.*.model_id' => ['nullable', 'numeric'],
             'production_order_details.*.destination' => ['nullable', 'string', 'in:NACIONAL,MEDELLIN,STARA'],
             'reasigned_curve' => ['boolean'],
@@ -129,11 +129,11 @@ class ProductionOrderSaveRequest extends FormRequest
 
             $details = $this->production_order_details ?? [];
 
-            $hasVariant = collect($details)->contains(function ($detail) {
-                return ($detail['model_type'] ?? null) === Variant::class;
+            $hasSupply = collect($details)->contains(function ($detail) {
+                return ($detail['model_type'] ?? null) === Supply::class;
             });
 
-            if (!$hasVariant) {
+            if (!$hasSupply) {
                 $validator->errors()->add("fabric_id", 'Es obligatorio.');
             }
 
@@ -197,13 +197,13 @@ class ProductionOrderSaveRequest extends FormRequest
                     }
                 }
 
-                if ($model === Variant::class) {
+                if ($model === Supply::class) {
                     if (!empty($detail['model_id'])) {
-                        $variant = Variant::with('supply_type')->find($detail['model_id']);
-                        $settings = $variant->supply_type->first()->settings;
+                        $supply = Supply::with('supply_type')->find($detail['model_id']);
+                        $settings = $supply->supply_type->first()->settings;
 
                         if (!empty($this->color_id)) {
-                            $exists = $variant
+                            $exists = $supply
                                 ->related(Color::class)
                                 ->where('id', $this->color_id)
                                 ->exists();

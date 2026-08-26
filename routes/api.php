@@ -44,7 +44,7 @@ use App\Http\Controllers\ThreadTypeController;
 use App\Http\Controllers\TrademarkController;
 use App\Http\Controllers\TransformationController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\VariantController;
+use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\WaistbandTypeController;
 use App\Http\Controllers\WashToneController;
 use App\Http\Controllers\YokeTypeController;
@@ -121,6 +121,19 @@ Route::prefix('/boot_types')->group(function () {
     });
 });
 
+
+Route::prefix('/cache')->group(function () {
+    Route::prefix('/builder')->group(function () {
+        Route::controller(BuilderController::class)->group(function () {
+            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:cache.builders.all']);
+            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:cache.builders.find']);
+            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:cache.builders.store']);
+            Route::put('/update/{uuid}', 'update')->middleware(['auth:sanctum', 'can:cache.builders.update']);
+            Route::delete('/delete/{uuid}', 'delete')->middleware(['auth:sanctum', 'can:cache.builders.delete']);         
+        });
+    });
+});
+
 Route::prefix('/categorization')->group(function () {
     Route::prefix('/categories')->group(function () {
         Route::controller(CategoryController::class)->group(function () {
@@ -171,30 +184,6 @@ Route::prefix('/classification')->group(function () {
     });
 });
 
-Route::prefix('/pieces')->group(function () {
-    Route::controller(PieceController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:pieces.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
-        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:pieces.find']);
-        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:pieces.store']);
-        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:pieces.update']);
-        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:pieces.setting']);
-        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:pieces.delete']);
-        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:pieces.restore']);
-    });
-});
-
-Route::prefix('/suppliers')->group(function () {
-    Route::controller(SupplierController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:suppliers.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
-        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:suppliers.find']);
-        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:suppliers.store']);
-        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:suppliers.update']);
-        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:suppliers.setting']);
-        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:suppliers.delete']);
-        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:suppliers.restore']);
-    });
-});
-
 Route::prefix('/collections')->group(function () {
     Route::controller(CollectionController::class)->group(function () {
         Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:collections.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
@@ -207,15 +196,14 @@ Route::prefix('/collections')->group(function () {
     });
 });
 
-Route::prefix('/yoke_types')->group(function () {
-    Route::controller(YokeTypeController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:yoke_types.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
-        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:yoke_types.find']);
-        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:yoke_types.store']);
-        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:yoke_types.update']);
-        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:yoke_types.setting']);
-        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:yoke_types.delete']);
-        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:yoke_types.restore']);
+Route::prefix('/compensation_funds')->group(function () {
+    Route::controller(CompensationFundController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:compensation_funds.all|employees.store|employees.update']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:compensation_funds.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:compensation_funds.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:compensation_funds.update']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:compensation_funds.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:compensation_funds.restore']);
     });
 });
 
@@ -228,17 +216,6 @@ Route::prefix('/colors')->group(function () {
         Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:colors.setting']);
         Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:colors.delete']);
         Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:colors.restore']);
-    });
-});
-
-Route::prefix('/compensation_funds')->group(function () {
-    Route::controller(CompensationFundController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:compensation_funds.all|employees.store|employees.update']);
-        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:compensation_funds.find']);
-        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:compensation_funds.store']);
-        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:compensation_funds.update']);
-        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:compensation_funds.delete']);
-        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:compensation_funds.restore']);
     });
 });
 
@@ -284,6 +261,20 @@ Route::prefix('/health_entities')->group(function () {
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:health_entities.update']);
         Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:health_entities.delete']);
         Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:health_entities.restore']);
+    });
+});
+
+Route::prefix('/management')->group(function () {
+    Route::prefix('/collections')->group(function () {
+        Route::controller(ManagementCollectionController::class)->group(function () {
+            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:management.collections.find']);
+            Route::post('/save', 'save')->middleware(['auth:sanctum', 'can:management.collections.save']);
+        });
+    });
+    Route::prefix('/production')->group(function () {
+        Route::controller(ManagementProductionController::class)->group(function () {
+            Route::post('/save', 'save')->middleware(['auth:sanctum', 'can:management.production.find']);
+        });
     });
 });
 
@@ -358,9 +349,27 @@ Route::prefix('/people')->group(function () {
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:people.update']);
         Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:people.delete']);
         Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:people.restore']);
-        Route::get('/pdf', 'pdf')->middleware(['auth:sanctum', 'can:people.all']);
-        Route::get('/excel', 'excel')->middleware(['auth:sanctum', 'can:people.all']);
-        Route::post('/import', 'import')->middleware(['auth:sanctum', 'can:people.all']);
+    });
+});
+
+Route::prefix('/pieces')->group(function () {
+    Route::controller(PieceController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:pieces.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:pieces.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:pieces.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:pieces.update']);
+        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:pieces.setting']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:pieces.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:pieces.restore']);
+    });
+});
+
+Route::prefix('/products')->group(function () {
+    Route::controller(ProductController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:products.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:products.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:products.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:products.update']);
     });
 });
 
@@ -372,18 +381,6 @@ Route::prefix('/risk_managers')->group(function () {
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:risk_managers.update']);
         Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:risk_managers.delete']);
         Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:risk_managers.restore']);
-    });
-});
-
-Route::prefix('/silhouettes')->group(function () {
-    Route::controller(SilhouetteController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:silhouettes.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
-        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:silhouettes.find']);
-        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:silhouettes.store']);
-        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:silhouettes.update']);
-        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:silhouettes.setting']);
-        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:silhouettes.delete']);
-        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:silhouettes.restore']);
     });
 });
 
@@ -399,6 +396,44 @@ Route::prefix('/sizes')->group(function () {
     });
 });
 
+Route::prefix('/suppliers')->group(function () {
+    Route::controller(SupplierController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:suppliers.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:suppliers.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:suppliers.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:suppliers.update']);
+        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:suppliers.setting']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:suppliers.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:suppliers.restore']);
+    });
+});
+
+Route::prefix('/technical_sheets')->group(function () {
+    Route::controller(TechnicalSheetController::class)->group(function () {
+        Route::get('/find', 'find')->middleware(['auth:sanctum', 'can:technical_sheets.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:technical_sheets.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:technical_sheets.update']);
+        Route::get('/pdf/{uuid}', 'pdf')->name('technical_sheets.pdf');
+    });
+    Route::prefix('/production_orders')->group(function () {
+        Route::controller(ProductionOrderController::class)->group(function () {
+            Route::get('/all/{technical_sheet_id}', 'all')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.all']);
+            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.find']);
+            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.store']);
+            Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.update']);
+            Route::get('/pdf/{uuid}', 'pdf')->name('production_orders.technical_sheets.pdf');
+        });
+    });
+    Route::prefix('/transformations')->group(function () {
+        Route::controller(TransformationController::class)->group(function () {
+            Route::get('/all/{technical_sheet_id}', 'all')->middleware(['auth:sanctum', 'can:technical_sheets.transformations.all']);
+            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:technical_sheets.transformations.find']);
+            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:technical_sheets.transformations.store']);
+            Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:technical_sheets.transformations.update']);
+        });
+    });
+});
+
 Route::prefix('/trademarks')->group(function () {
     Route::controller(TrademarkController::class)->group(function () {
         Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:trademarks.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
@@ -411,6 +446,34 @@ Route::prefix('/trademarks')->group(function () {
         Route::prefix('/size')->group(function () {
             Route::post('/assign/{id}', 'size_assign')->middleware(['auth:sanctum', 'can:trademarks.size.assign']);
             Route::post('/remove/{id}', 'size_remove')->middleware(['auth:sanctum', 'can:trademarks.size.remove']);
+        });
+    });
+});
+
+Route::prefix('/typification')->group(function () {
+    Route::prefix('/supply_types')->group(function () {
+        Route::controller(SupplyTypeController::class)->group(function () {
+            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:typification.supply_types.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
+            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:typification.supply_types.find']);
+            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:typification.supply_types.store']);
+            Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:typification.supply_types.update']);
+            Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:typification.supply_types.settings']);
+            Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:typification.supply_types.delete']);
+            Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:typification.supply_types.restore']);
+        });
+
+        Route::prefix('/supplies')->group(function () {
+            Route::controller(SupplyController::class)->group(function () {
+                Route::get('/all/{supply_type_id}', 'all')->middleware(['auth:sanctum', 'can:typification.supply_types.supplies.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
+                Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:typification.supply_types.supplies.find']);
+                Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:typification.supply_types.supplies.store']);
+                Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:typification.supply_types.supplies.update']);
+                Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:typification.supply_types.supplies.setting']);
+                Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:typification.supply_types.supplies.delete']);
+                Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:typification.supply_types.supplies.restore']);
+                Route::get('/export/{supply_type_id}', 'export')->middleware(['auth:sanctum', 'can:typification.supply_types.supplies.export']);
+                Route::post('/import/{supply_type_id}', 'import')->middleware(['auth:sanctum', 'can:typification.supply_types.supplies.import']);
+            });
         });
     });
 });
@@ -439,58 +502,6 @@ Route::prefix('/waistband_types')->group(function () {
         Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:waistband_types.setting']);
         Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:waistband_types.delete']);
         Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:waistband_types.restore']);
-    });
-});
-
-Route::prefix('/fabric_types')->group(function () {
-    Route::controller(FabricTypeController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:fabric_types.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
-        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:fabric_types.find']);
-        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:fabric_types.store']);
-        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:fabric_types.update']);
-        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:fabric_types.setting']);
-        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:fabric_types.delete']);
-        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:fabric_types.restore']);
-    });
-});
-
-Route::prefix('/thread_types')->group(function () {
-    Route::controller(ThreadTypeController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:thread_types.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
-        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:thread_types.find']);
-        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:thread_types.store']);
-        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:thread_types.update']);
-        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:thread_types.setting']);
-        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:thread_types.delete']);
-        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:thread_types.restore']);
-    });
-});
-
-Route::prefix('/typification')->group(function () {
-    Route::prefix('/supply_types')->group(function () {
-        Route::controller(SupplyTypeController::class)->group(function () {
-            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:typification.supply_types.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
-            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:typification.supply_types.find']);
-            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:typification.supply_types.store']);
-            Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:typification.supply_types.update']);
-            Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:typification.supply_types.settings']);
-            Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:typification.supply_types.delete']);
-            Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:typification.supply_types.restore']);
-        });
-
-        Route::prefix('/variants')->group(function () {
-            Route::controller(VariantController::class)->group(function () {
-                Route::get('/all/{supply_type_id}', 'all')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
-                Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.find']);
-                Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.store']);
-                Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.update']);
-                Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.setting']);
-                Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.delete']);
-                Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.restore']);
-                Route::get('/excel/{supply_type_id}', 'excel')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.restore']);
-                Route::post('/import/{supply_type_id}', 'import')->middleware(['auth:sanctum', 'can:typification.supply_types.variants.restore']);
-            });
-        });
     });
 });
 
@@ -545,64 +556,52 @@ Route::prefix('/workflow')->group(function () {
     });
 });
 
-Route::prefix('/management')->group(function () {
-    Route::prefix('/collections')->group(function () {
-        Route::controller(ManagementCollectionController::class)->group(function () {
-            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:management.collections.find']);
-            Route::post('/save', 'save')->middleware(['auth:sanctum', 'can:management.collections.find']);
-        });
-    });
-    Route::prefix('/production')->group(function () {
-        Route::controller(ManagementProductionController::class)->group(function () {
-            Route::post('/save', 'save')->middleware(['auth:sanctum', 'can:management.collections.find']);
-        });
+Route::prefix('/yoke_types')->group(function () {
+    Route::controller(YokeTypeController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:yoke_types.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:yoke_types.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:yoke_types.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:yoke_types.update']);
+        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:yoke_types.setting']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:yoke_types.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:yoke_types.restore']);
     });
 });
 
-Route::prefix('/products')->group(function () {
-    Route::controller(ProductController::class)->group(function () {
-        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:products.all']);
-        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:products.find']);
-        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:products.store']);
-        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:products.update']);
+/*
+Route::prefix('/silhouettes')->group(function () {
+    Route::controller(SilhouetteController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:silhouettes.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:silhouettes.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:silhouettes.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:silhouettes.update']);
+        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:silhouettes.setting']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:silhouettes.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:silhouettes.restore']);
     });
 });
 
-Route::prefix('/technical_sheets')->group(function () {
-    Route::controller(TechnicalSheetController::class)->group(function () {
-        Route::get('/find', 'find')->middleware(['auth:sanctum', 'can:technical_sheets.find']);
-        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:technical_sheets.store']);
-        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:technical_sheets.update']);
-        Route::get('/pdf/{uuid}', 'pdf')->name('technical_sheets.pdf');
-    });
-    Route::prefix('/production_orders')->group(function () {
-        Route::controller(ProductionOrderController::class)->group(function () {
-            Route::get('/all/{technical_sheet_id}', 'all')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.all']);
-            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.find']);
-            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.store']);
-            Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.store']);
-            Route::get('/pdf/{uuid}', 'pdf')->name('production_orders.technical_sheets.pdf');
-        });
-    });
-    Route::prefix('/transformations')->group(function () {
-        Route::controller(TransformationController::class)->group(function () {
-            Route::get('/all/{technical_sheet_id}', 'all')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.all']);
-            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.find']);
-            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.store']);
-            Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.store']);
-            //Route::get('/pdf/{uuid}', 'pdf')->name('production_orders.technical_sheets.pdf');
-        });
+Route::prefix('/fabric_types')->group(function () {
+    Route::controller(FabricTypeController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:fabric_types.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:fabric_types.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:fabric_types.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:fabric_types.update']);
+        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:fabric_types.setting']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:fabric_types.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:fabric_types.restore']);
     });
 });
 
-Route::prefix('/cache')->group(function () {
-    Route::prefix('/builder')->group(function () {
-        Route::controller(BuilderController::class)->group(function () {
-            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:products.all']);
-            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:products.find']);
-            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:products.store']);
-            Route::put('/update/{uuid}', 'update')->middleware(['auth:sanctum', 'can:products.update']);
-            Route::delete('/delete/{uuid}', 'delete')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.operations.delete']);         
-        });
+Route::prefix('/thread_types')->group(function () {
+    Route::controller(ThreadTypeController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:thread_types.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:thread_types.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:thread_types.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:thread_types.update']);
+        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:thread_types.setting']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:thread_types.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:thread_types.restore']);
     });
 });
+*/

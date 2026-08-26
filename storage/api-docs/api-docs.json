@@ -105,8 +105,8 @@
         "/users": {
             "description": "Rutas de gestión de usuarios"
         },
-        "/Variants": {
-            "description": "Rutas de gestión de variantes"
+        "/Supplies": {
+            "description": "Rutas de gestión de insumos"
         },
         "/WaistbandTypes": {
             "description": "Rutas de gestión de tipos de pretina"
@@ -34667,12 +34667,12 @@
                 ]
             }
         },
-        "/variants/all": {
+        "/supplies/all": {
             "get": {
                 "tags": [
-                    "Variants"
+                    "Supplies"
                 ],
-                "summary": "Listar variantes",
+                "summary": "Listar insumos",
                 "operationId": "87a56ac50e592856a04dc988765c3311",
                 "parameters": [
                     {
@@ -34739,17 +34739,17 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lista de variantes cargada correctamente",
+                        "description": "Lista de insumos cargada correctamente",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "data": {
                                             "properties": {
-                                                "variants": {
+                                                "supplies": {
                                                     "type": "array",
                                                     "items": {
-                                                        "$ref": "#/components/schemas/Variant"
+                                                        "$ref": "#/components/schemas/Supply"
                                                     }
                                                 },
                                                 "meta": {
@@ -34827,10 +34827,10 @@
                 ]
             }
         },
-        "/variants/find/{id}": {
+        "/supplies/find/{id}": {
             "get": {
                 "tags": [
-                    "Variants"
+                    "Supplies"
                 ],
                 "summary": "Obtener un tipo de insumo específica",
                 "operationId": "499d33adf3023b764442b21f94b52324",
@@ -34855,8 +34855,8 @@
                                     "properties": {
                                         "data": {
                                             "properties": {
-                                                "variant": {
-                                                    "$ref": "#/components/schemas/Variant"
+                                                "supply": {
+                                                    "$ref": "#/components/schemas/Supply"
                                                 }
                                             },
                                             "type": "object"
@@ -34940,10 +34940,10 @@
                 ]
             }
         },
-        "/variants/store": {
+        "/supplies/store": {
             "post": {
                 "tags": [
-                    "Variants"
+                    "Supplies"
                 ],
                 "summary": "Crear un tipo de insumo",
                 "operationId": "b0d07ce5330a41f4a7e435953a975ab6",
@@ -34981,7 +34981,7 @@
                                     "properties": {
                                         "data": {
                                             "properties": {
-                                                "variant": {
+                                                "supply": {
                                                     "properties": {
                                                         "name": {
                                                             "type": "string",
@@ -35098,10 +35098,10 @@
                 ]
             }
         },
-        "/variants/update/{id}": {
+        "/supplies/update/{id}": {
             "put": {
                 "tags": [
-                    "Variants"
+                    "Supplies"
                 ],
                 "summary": "Editar un tipo de insumo específica",
                 "operationId": "96a460630bc048b64c7de39df134b0fd",
@@ -35151,7 +35151,7 @@
                                     "properties": {
                                         "data": {
                                             "properties": {
-                                                "variant": {
+                                                "supply": {
                                                     "properties": {
                                                         "id": {
                                                             "type": "integer",
@@ -35278,10 +35278,10 @@
                 ]
             }
         },
-        "/variants/delete/{id}": {
+        "/supplies/delete/{id}": {
             "delete": {
                 "tags": [
-                    "Variants"
+                    "Supplies"
                 ],
                 "summary": "Desactivar un tipo de insumo específica",
                 "operationId": "7dda97259caf24b1c381a726bb146ce1",
@@ -35306,7 +35306,7 @@
                                     "properties": {
                                         "data": {
                                             "properties": {
-                                                "variant": {
+                                                "supply": {
                                                     "properties": {
                                                         "id": {
                                                             "type": "integer",
@@ -35377,7 +35377,7 @@
                                             "properties": {
                                                 "id": {
                                                     "type": "string",
-                                                    "example": "Identificador de la variantes"
+                                                    "example": "Identificador de la insumos"
                                                 }
                                             },
                                             "type": "object"
@@ -35428,10 +35428,10 @@
                 ]
             }
         },
-        "/variants/restore/{id}": {
+        "/supplies/restore/{id}": {
             "patch": {
                 "tags": [
-                    "Variants"
+                    "Supplies"
                 ],
                 "summary": "Activar un tipo de insumo específica",
                 "operationId": "767d30bfa6849ff12067348f3d6bed49",
@@ -35456,7 +35456,7 @@
                                     "properties": {
                                         "data": {
                                             "properties": {
-                                                "variant": {
+                                                "supply": {
                                                     "properties": {
                                                         "id": {
                                                             "type": "integer",
@@ -35528,7 +35528,7 @@
                                             "properties": {
                                                 "id": {
                                                     "type": "string",
-                                                    "example": "Identificador de la variantes"
+                                                    "example": "Identificador de la insumos"
                                                 }
                                             },
                                             "type": "object"
@@ -42168,7 +42168,7 @@
                 },
                 "type": "object"
             },
-            "Variant": {
+            "Supply": {
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -42210,11 +42210,11 @@
                             },
                             "name": {
                                 "type": "string",
-                                "example": "Variantes"
+                                "example": "Supplyes"
                             },
                             "description": {
                                 "type": "string",
-                                "example": "Listado de variantes."
+                                "example": "Listado de insumos."
                             },
                             "settings": {
                                 "type": "string",
@@ -42861,8 +42861,8 @@
             "description": "Endpoints para gestionar usuarios"
         },
         {
-            "name": "Variants",
-            "description": "Endpoints para gestionar variantes"
+            "name": "Supplies",
+            "description": "Endpoints para gestionar insumos"
         },
         {
             "name": "Waistband Types",

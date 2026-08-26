@@ -1,5 +1,5 @@
 @php
-    use App\Models\Variant;
+    use App\Models\Supply;
     use App\Models\Product;
     use App\Models\Process;
 @endphp
@@ -284,7 +284,7 @@
     <div class="section">
         @php
             $detail = $production_order->production_order_details->first(
-                fn($item) => $item->model_type === Variant::class,
+                fn($item) => $item->model_type === Supply::class,
             );
 
             $grouped = $detail ? $detail->production_order_detail_quantities->groupBy('size_id') : collect();
@@ -399,7 +399,7 @@
                     );
 
                     $detail = $production_order->production_order_details->first(
-                        fn($item) => $item->model_type === Variant::class,
+                        fn($item) => $item->model_type === Supply::class,
                     );
 
                     $total_unidades = $detail
@@ -569,11 +569,11 @@
                 <td class="label-primary">Insumo</td>
             </tr>
 
-            @foreach ($technical_sheet->variants as $variant)
+            @foreach ($technical_sheet->supplies as $supply)
                 <tr>
-                    <td class="value-primary">{{ optional($variant->supply_type->first())->name ?? '-' }}</td>
-                    <td class="value-primary">{{ optional($variant->supply_type->first())->description ?? '-' }}</td>
-                    <td class="value-primary">{{ ($variant->name ?? '-') . ' - ' . ($variant->description ?? '-') }}
+                    <td class="value-primary">{{ optional($supply->supply_type->first())->name ?? '-' }}</td>
+                    <td class="value-primary">{{ optional($supply->supply_type->first())->description ?? '-' }}</td>
+                    <td class="value-primary">{{ ($supply->name ?? '-') . ' - ' . ($supply->description ?? '-') }}
                     </td>
                 </tr>
             @endforeach

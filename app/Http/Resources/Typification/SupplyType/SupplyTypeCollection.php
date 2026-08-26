@@ -20,7 +20,7 @@ class SupplyTypeCollection extends ResourceCollection
                     'updated_at' => $this->formatDate($supply_type->updated_at),
                     'deleted_at' => $this->formatDate($supply_type->deleted_at),
                     'settings' => $supply_type->settings,
-                    'variants' => $supply_type->variants
+                    'supplies' => $supply_type->supplies
                 ];
             }),
             'meta' => [

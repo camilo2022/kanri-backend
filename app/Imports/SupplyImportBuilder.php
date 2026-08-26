@@ -6,11 +6,11 @@ use App\Models\SupplyType;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
-class VariantImportBuilder
+class SupplyImportBuilder
 {
     protected Collection $form;
 
-    public array $variants = [];
+    public array $supplies = [];
 
     public array $relations = [];
 
@@ -21,38 +21,38 @@ class VariantImportBuilder
         $this->form = collect($this->supplyType->settings->form ?? []);
     }
 
-    public function addVariant(array $variant): void
+    public function addSupply(array $supply): void
     {
-        $name = $variant['name'];
+        $name = $supply['name'];
 
-        if (isset($this->variants[$name])) {
+        if (isset($this->supplies[$name])) {
 
             $this->duplicates[] = $name;
 
             return;
         }
 
-        $this->variants[$name] = $variant;
+        $this->supplies[$name] = $supply;
     }
 
-    public function addRelation(string $relation, string $variant, mixed $value): void
+    public function addRelation(string $relation, string $supply, mixed $value): void
     {
-        $this->relations[$relation][$variant][] = $value;
+        $this->relations[$relation][$supply][] = $value;
     }
 
     public function build(): array
     {
-        return collect($this->variants)
-            ->map(fn($variant) => $this->buildVariant($variant))
+        return collect($this->supplies)
+            ->map(fn($supply) => $this->buildSupply($supply))
             ->values()
             ->all();
     }
 
-    private function buildVariant(array $variant): array
+    private function buildSupply(array $supply): array
     {
         $item = [];
 
-        foreach ($variant as $field => $value) {
+        foreach ($supply as $field => $value) {
 
             $config = $this->fieldConfig($field);
 
@@ -75,15 +75,15 @@ class VariantImportBuilder
             }
         }
 
-        foreach ($this->relations as $field => $variants) {
+        foreach ($this->relations as $field => $supplies) {
 
-            if (!isset($variants[$variant['name']])) {
+            if (!isset($supplies[$supply['name']])) {
                 continue;
             }
 
             $config = $this->fieldConfig($field);
 
-            $item['class'][$field] = collect($variants[$variant['name']])
+            $item['class'][$field] = collect($supplies[$supply['name']])
                 ->map(fn($value) => $this->relationId($config, $value))
                 ->filter()
                 ->values()
@@ -150,7 +150,7 @@ class VariantImportBuilder
             ->value('id');
     }
 
-    public function duplicateVariants(): array
+    public function duplicateSupplys(): array
     {
         return array_unique($this->duplicates);
     }

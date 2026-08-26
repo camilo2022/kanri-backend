@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\TechnicalSheet;
-use App\Models\Variant;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Query\Expression;
 use Illuminate\Database\Schema\Blueprint;

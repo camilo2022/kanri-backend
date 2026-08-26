@@ -59,9 +59,9 @@ class SupplyType extends Model implements Auditable
         return $this->belongsTo(Item::class);
     }
 
-    public function variants(): MorphToMany
+    public function supplies(): MorphToMany
     {
-        return $this->morphedByMany(Variant::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
+        return $this->morphedByMany(Supply::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
     }
 
     public function scopeSearch(Builder $query, ?string $search = null): Builder

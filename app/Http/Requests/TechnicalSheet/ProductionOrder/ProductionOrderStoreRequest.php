@@ -8,7 +8,7 @@ use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\Size;
 use App\Models\TechnicalSheet;
-use App\Models\Variant;
+use App\Models\Supply;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -36,7 +36,7 @@ class ProductionOrderStoreRequest extends FormRequest
             'technical_sheet_id' => ['required', 'exists:technical_sheets,id'],
             'efficiency' => ['required', 'numeric', 'min:1'],
             'cut' => ['required', 'string', 'uppercase', 'max:2'],
-            'fabric_id' => ['required', 'exists:subitems,id,item_id,' . Variant::ITEM_ID . ',deleted_at,NULL'],
+            'fabric_id' => ['required', 'exists:subitems,id,item_id,' . Supply::ITEM_ID . ',deleted_at,NULL'],
             'color_id' => ['required', 'exists:subitems,id,item_id,' . Color::ITEM_ID . ',deleted_at,NULL'],
             'width' => ['required', 'numeric', 'decimal:0,2', 'min:1', 'max:999999.99'],
             'pocket_fabric' => ['required', 'boolean'],
@@ -47,7 +47,7 @@ class ProductionOrderStoreRequest extends FormRequest
             'rolls' => ['nullable', 'array'],
             'rolls.*.quantity' => ['required', 'numeric', 'min:1'],
             'production_order_details' => ['required', 'array', 'min:1', 'max:5'],
-            'production_order_details.*.model_type' => ['required',  'in:' . implode(',', [Product::class, Variant::class, Color::class])],
+            'production_order_details.*.model_type' => ['required',  'in:' . implode(',', [Product::class, Supply::class, Color::class])],
             'production_order_details.*.model_id' => ['nullable', 'numeric'],
             'production_order_details.*.destination' => ['nullable', 'string', 'in:NACIONAL,MEDELLIN,STARA'],
             'settings' => ['required', 'array'],
@@ -109,12 +109,12 @@ class ProductionOrderStoreRequest extends FormRequest
             }
 
             if (!empty($this->fabric_id)) {
-                $variant = Variant::with('supply_type')->find($this->fabric_id);
-                $settings = $variant->supply_type->first()->settings;
+                $supply = Supply::with('supply_type')->find($this->fabric_id);
+                $settings = $supply->supply_type->first()->settings;
 
                 //Valido que el color este asociado con la tela
                 if (!empty($this->color_id)) {
-                    $exists = $variant
+                    $exists = $supply
                         ->related(Color::class)
                         ->where('id', $this->color_id)
                         ->exists();
@@ -148,7 +148,7 @@ class ProductionOrderStoreRequest extends FormRequest
 
             //Valido que los rollos existen
             foreach (array_keys($this->rolls ?? []) as $roll_id) {
-                if (!Variant::where('id', $roll_id)->exists()) {
+                if (!Supply::where('id', $roll_id)->exists()) {
                     $validator->errors()->add(
                         "rolls.$roll_id",
                         "Rollo no registrado."
@@ -226,7 +226,7 @@ class ProductionOrderStoreRequest extends FormRequest
                     }
                 }
 
-                if ($model === Variant::class) {
+                if ($model === Supply::class) {
                     if ($detail['model_id'] !== $this->fabric_id) {
                         $validator->errors()->add(
                             "production_order_details.$model.model_id",

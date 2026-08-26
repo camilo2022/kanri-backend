@@ -1,17 +1,15 @@
 <?php
 
-namespace App\Http\Requests\Typification\SupplyType\Variant;
+namespace App\Http\Requests\Typification\SupplyType\Supply;
 
 use App\Models\SupplyType;
-use App\Models\Variant;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Validator as Valid;
 
-class VariantSaveRequest extends FormRequest
+class SupplySaveRequest extends FormRequest
 {
-
     public array $duplicates = [];
 
     protected function failedValidation(Validator $validator)
@@ -19,7 +17,7 @@ class VariantSaveRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -31,10 +29,10 @@ class VariantSaveRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'variants' => ['required', 'array'],
-            'variants.*' => ['required', 'array'],
-            'variants.*.name' => ['required', 'min:4', 'max:50'],
-            'variants.*.description' => ['required', 'uppercase', 'string', 'max:255']
+            'supplies' => ['required', 'array'],
+            'supplies.*' => ['required', 'array'],
+            'supplies.*.name' => ['required', 'min:4', 'max:50'],
+            'supplies.*.description' => ['required', 'uppercase', 'string', 'max:255'],
         ];
     }
 
@@ -55,13 +53,13 @@ class VariantSaveRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'variants' => 'Variantes',
+            'supplies' => 'Supplyes',
         ];
     }
 
     protected function resolveRule(string $rule): string
     {
-        if (!is_string($rule)) {
+        if (! is_string($rule)) {
             return $rule;
         }
 
@@ -89,7 +87,7 @@ class VariantSaveRequest extends FormRequest
         return $rule;
     }
 
-    protected  function dynamicRules(): array
+    protected function dynamicRules(): array
     {
         $supply_type = SupplyType::find($this->input('supply_type_id'));
 
@@ -98,7 +96,7 @@ class VariantSaveRequest extends FormRequest
             'nullable',
             'min',
             'max',
-            'size'
+            'size',
         ];
 
         $rules = [];
@@ -107,7 +105,7 @@ class VariantSaveRequest extends FormRequest
 
             $field = $column->field ?? null;
 
-            if (!$field) {
+            if (! $field) {
                 continue;
             }
 
@@ -121,6 +119,7 @@ class VariantSaveRequest extends FormRequest
                 if (is_string($rule) && str_starts_with($rule, 'unique')) {
 
                     $uniqueFields[] = $field;
+
                     continue;
                 }
 
@@ -152,17 +151,17 @@ class VariantSaveRequest extends FormRequest
             foreach ($this->duplicates as $duplicate) {
 
                 $validator->errors()->add(
-                    'variants',
-                    "La variante {$duplicate} está repetida en la hoja Variantes."
+                    'supplies',
+                    "El insumo {$duplicate} está repetido en la hoja Supplies."
                 );
             }
 
             $rules = $this->dynamicRules();
 
-            foreach ($this->input('variants', []) as $index => $variant) {
+            foreach ($this->input('supplies', []) as $index => $supply) {
 
                 $rowValidator = Valid::make(
-                    $variant,
+                    $supply,
                     $rules,
                     $this->messages()
                 );
@@ -174,7 +173,7 @@ class VariantSaveRequest extends FormRequest
                         foreach ($messages as $message) {
 
                             $validator->errors()->add(
-                                "variants.$index.$field",
+                                "supplies.$index.$field",
                                 $message
                             );
                         }

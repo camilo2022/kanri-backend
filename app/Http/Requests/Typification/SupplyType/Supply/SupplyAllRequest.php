@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Http\Requests\Typification\SupplyType\Variant;
+namespace App\Http\Requests\Typification\SupplyType\Supply;
 
 use App\Models\SupplyType;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class VariantAllRequest extends FormRequest
+class SupplyAllRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -32,7 +32,7 @@ class VariantAllRequest extends FormRequest
             'column' => ['nullable', 'string', 'in:id,name,description,created_at,updated_at,deleted_at'],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
             'with_trashed' => ['required', 'boolean'],
-            'supply_type_id' => ['nullable', 'numeric', 'exists:subitems,id,item_id,' . SupplyType::ITEM_ID]
+            'supply_type_id' => ['nullable', 'numeric', 'exists:subitems,id,item_id,'.SupplyType::ITEM_ID],
         ];
     }
 
@@ -44,7 +44,7 @@ class VariantAllRequest extends FormRequest
             'numeric' => 'Debe ser un valor numérico.',
             'in' => 'Valor inválido. Permitidos: :values.',
             'boolean' => 'Deber ser verdadero o falso.',
-            'exists' => 'No hay ningún registro.'
+            'exists' => 'No hay ningún registro.',
         ];
     }
 
@@ -56,7 +56,7 @@ class VariantAllRequest extends FormRequest
             'search' => 'Filtro de Busqueda.',
             'column' => 'Columna a ordenar.',
             'dir' => 'Sentido del orden.',
-            'with_trashed' => 'Registros inactivos'
+            'with_trashed' => 'Registros inactivos',
         ];
     }
 

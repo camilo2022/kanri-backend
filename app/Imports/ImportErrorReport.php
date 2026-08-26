@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ImportErrorReport
 {
-    public function generate(array $errors, array $variants, SupplyType $supply_type): string
+    public function generate(array $errors, array $supplies, SupplyType $supply_type): string
     {
         $lines = [];
 
@@ -26,7 +26,7 @@ class ImportErrorReport
 
         foreach ($errors as $attribute => $messages) {
 
-            if (!preg_match('/variants\.(\d+)\.(.+)/', $attribute, $matches)) {
+            if (! preg_match('/supplies\.(\d+)\.(.+)/', $attribute, $matches)) {
                 continue;
             }
 
@@ -45,7 +45,7 @@ class ImportErrorReport
         foreach ($grouped as $index => $attributes) {
 
             $lines[] = str_repeat('=', 80);
-            $lines[] = 'FILA ' . ($index + 2);
+            $lines[] = 'FILA '.($index + 2);
             $lines[] = str_repeat('=', 80);
             $lines[] = '';
 
@@ -62,7 +62,7 @@ class ImportErrorReport
                 $label = $fields[$field]->label ?? $field;
 
                 $value = data_get(
-                    $variants[$index],
+                    $supplies[$index],
                     $path
                 );
 
@@ -76,7 +76,7 @@ class ImportErrorReport
 
                 $lines[] = "Campo : {$label}";
                 $lines[] = "Valor : {$value}";
-                $lines[] = "Errores:";
+                $lines[] = 'Errores:';
 
                 foreach ($attribute['messages'] as $message) {
                     $lines[] = "  • {$message}";
@@ -88,7 +88,7 @@ class ImportErrorReport
             $lines[] = '';
         }
 
-        $filename = 'imports/errors_' . now()->format('Ymd_His') . '.txt';
+        $filename = 'imports/errors_'.now()->format('Ymd_His').'.txt';
 
         Storage::disk('public')->put(
             $filename,

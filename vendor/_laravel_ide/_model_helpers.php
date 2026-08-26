@@ -9293,7 +9293,7 @@ namespace App\Models {
      * @property-read int|null $derivatives_count
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Piece> $pieces
      * @property-read int|null $pieces_count
-     * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Variant> $rolls
+     * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Supply> $rolls
      * @property-read int|null $rolls_count
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Color> $color
      * @property-read int|null $color_count
@@ -13744,8 +13744,8 @@ namespace App\Models {
      * @property int $item_id
      * @property int $id
      * @property-read \App\Models\Item $item
-     * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Variant> $variants
-     * @property-read int|null $variants_count
+     * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Supply> $supplies
+     * @property-read int|null $supplies_count
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \OwenIt\Auditing\Models\Audit> $audits
      * @property-read int|null $audits_count
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Permission\Models\Role> $roles
@@ -14127,8 +14127,8 @@ namespace App\Models {
      * @property-read \App\Models\File $photo_d
      * @property-read \App\Models\File $photo_t
      * @property-read \App\Models\Employee $pattern_maker
-     * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Variant> $variants
-     * @property-read int|null $variants_count
+     * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Supply> $supplies
+     * @property-read int|null $supplies_count
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TechnicalSheetDetail> $technical_sheet_details
      * @property-read int|null $technical_sheet_details_count
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProductionOrder> $production_orders
@@ -15859,7 +15859,7 @@ namespace App\Models {
     }
 
     /**
-     * App\Models\Variant
+     * App\Models\Supply
      *
      * @property \Illuminate\Support\Carbon|null $deleted_at
      * @property \Illuminate\Support\Carbon|null $updated_at
@@ -15882,22 +15882,22 @@ namespace App\Models {
      * @property-read int|null $roles_count
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Permission\Models\Permission> $permissions
      * @property-read int|null $permissions_count
-     * @method static \Illuminate\Database\Eloquent\Builder<Variant>|Variant whereId($value)
-     * @method static \Illuminate\Database\Eloquent\Builder<Variant>|Variant whereItemId($value)
-     * @method static \Illuminate\Database\Eloquent\Builder<Variant>|Variant whereName($value)
-     * @method static \Illuminate\Database\Eloquent\Builder<Variant>|Variant whereDescription($value)
-     * @method static \Illuminate\Database\Eloquent\Builder<Variant>|Variant whereSettings($value)
-     * @method static \Illuminate\Database\Eloquent\Builder<Variant>|Variant whereCreatedAt($value)
-     * @method static \Illuminate\Database\Eloquent\Builder<Variant>|Variant whereUpdatedAt($value)
-     * @method static \Illuminate\Database\Eloquent\Builder<Variant>|Variant whereDeletedAt($value)
-     * @method static \Illuminate\Database\Eloquent\Builder<Variant>|Variant newModelQuery()
-     * @method static \Illuminate\Database\Eloquent\Builder<Variant>|Variant newQuery()
-     * @method static \Illuminate\Database\Eloquent\Builder<Variant>|Variant query()
-     * @method static \Illuminate\Database\Eloquent\Builder<Variant>|Variant search(?string $search = null) {@see App\Models\Variant::scopeSearch()}
-     * @method static \Illuminate\Database\Eloquent\Builder<Variant>|Variant role(mixed $roles, mixed $guard = null, mixed $without = false) {@see App\Models\Variant::scopeRole()}
-     * @method static \Illuminate\Database\Eloquent\Builder<Variant>|Variant withoutRole(mixed $roles, mixed $guard = null) {@see App\Models\Variant::scopeWithoutRole()}
-     * @method static \Illuminate\Database\Eloquent\Builder<Variant>|Variant permission(mixed $permissions, mixed $without = false) {@see App\Models\Variant::scopePermission()}
-     * @method static \Illuminate\Database\Eloquent\Builder<Variant>|Variant withoutPermission(mixed $permissions) {@see App\Models\Variant::scopeWithoutPermission()}
+     * @method static \Illuminate\Database\Eloquent\Builder<Supply>|Supply whereId($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Supply>|Supply whereItemId($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Supply>|Supply whereName($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Supply>|Supply whereDescription($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Supply>|Supply whereSettings($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Supply>|Supply whereCreatedAt($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Supply>|Supply whereUpdatedAt($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Supply>|Supply whereDeletedAt($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Supply>|Supply newModelQuery()
+     * @method static \Illuminate\Database\Eloquent\Builder<Supply>|Supply newQuery()
+     * @method static \Illuminate\Database\Eloquent\Builder<Supply>|Supply query()
+     * @method static \Illuminate\Database\Eloquent\Builder<Supply>|Supply search(?string $search = null) {@see App\Models\Supply::scopeSearch()}
+     * @method static \Illuminate\Database\Eloquent\Builder<Supply>|Supply role(mixed $roles, mixed $guard = null, mixed $without = false) {@see App\Models\Supply::scopeRole()}
+     * @method static \Illuminate\Database\Eloquent\Builder<Supply>|Supply withoutRole(mixed $roles, mixed $guard = null) {@see App\Models\Supply::scopeWithoutRole()}
+     * @method static \Illuminate\Database\Eloquent\Builder<Supply>|Supply permission(mixed $permissions, mixed $without = false) {@see App\Models\Supply::scopePermission()}
+     * @method static \Illuminate\Database\Eloquent\Builder<Supply>|Supply withoutPermission(mixed $permissions) {@see App\Models\Supply::scopeWithoutPermission()}
      * @method static mixed select($columns)
      * @method static mixed selectSub($query, $as)
      * @method static mixed selectExpression($expression, $as)
@@ -16063,7 +16063,7 @@ namespace App\Models {
      * @method static mixed lock($value)
      * @method static mixed lockForUpdate()
      * @method static mixed sharedLock()
-     * @method static \Illuminate\Database\Eloquent\Builder<Variant>|Variant timeout(int $seconds)
+     * @method static \Illuminate\Database\Eloquent\Builder<Supply>|Supply timeout(int $seconds)
      * @method static mixed beforeQuery(callable $callback)
      * @method static mixed applyBeforeQueryCallbacks()
      * @method static mixed afterQuery(Closure $callback)
@@ -16205,7 +16205,7 @@ namespace App\Models {
      * @method static mixed macroCall($method, $parameters)
      * @mixin \Illuminate\Database\Query\Builder
      */
-    class Variant extends \Illuminate\Database\Eloquent\Model
+    class Supply extends \Illuminate\Database\Eloquent\Model
     {
         //
     }

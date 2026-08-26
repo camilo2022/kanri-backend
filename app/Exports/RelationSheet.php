@@ -13,28 +13,28 @@ class RelationSheet implements FromCollection, WithHeadings, WithMapping, withTi
 {
     protected $supply_type;
     protected $field;
-    protected $variants;
+    protected $supplies;
 
-    public function __construct(SupplyType $supply_type, $field, $variants)
+    public function __construct(SupplyType $supply_type, $field, $supplies)
     {
         $this->supply_type = $supply_type;
         $this->field = $field;
-        $this->variants = $variants;
+        $this->supplies = $supplies;
     }
 
     public function collection()
     {
         $rows = collect();
 
-        foreach ($this->variants as $variant) {
+        foreach ($this->supplies as $supply) {
 
-            $relations = $variant
+            $relations = $supply
                 ->related($this->field->model)
                 ->get();
 
             foreach ($relations as $relation) {
                 $rows->push([
-                    'variant' => $variant,
+                    'supply' => $supply,
                     'relation' => $relation,
                 ]);
             }
@@ -54,7 +54,7 @@ class RelationSheet implements FromCollection, WithHeadings, WithMapping, withTi
     public function map($row): array
     {
         return [
-            $row['variant']->name,
+            $row['supply']->name,
             $this->optionValue($row['relation']) ?: '-',
         ];
     }
@@ -62,7 +62,7 @@ class RelationSheet implements FromCollection, WithHeadings, WithMapping, withTi
     public function headings(): array
     {
         return [
-            'variant',
+            'supply',
             Str::lower(class_basename($this->field->model)),
         ];
     }
