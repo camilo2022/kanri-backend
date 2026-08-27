@@ -15,7 +15,7 @@ class SupplyTypeRestoreRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -27,7 +27,7 @@ class SupplyTypeRestoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', Rule::exists('subitems', 'id')->where('item_id', SupplyType::ITEM_ID)->whereNotNull('deleted_at')]
+            'id' => ['required', Rule::exists('subitems', 'id')->where('item_id', SupplyType::ITEM_ID)->whereNotNull('deleted_at')],
         ];
     }
 
@@ -35,14 +35,14 @@ class SupplyTypeRestoreRequest extends FormRequest
     {
         return [
             'required' => 'Es obligatorio.',
-            'exists' => 'No hay ningún registro.'
+            'exists' => 'No hay ningún registro.',
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador del tipo de tela'
+            'id' => 'Identificador del tipo de insumo',
         ];
     }
 

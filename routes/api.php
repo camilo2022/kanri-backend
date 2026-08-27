@@ -14,6 +14,8 @@ use App\Http\Controllers\ColorController;
 use App\Http\Controllers\CompensationFundController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\FabricTypeController;
+use App\Http\Controllers\FileTypeController;
+use App\Http\Controllers\FileSubtypeController;
 use App\Http\Controllers\GarmentTypeController;
 use App\Http\Controllers\GenderController;
 use App\Http\Controllers\GroupController;
@@ -473,6 +475,28 @@ Route::prefix('/typification')->group(function () {
                 Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:typification.supply_types.supplies.restore']);
                 Route::get('/export/{supply_type_id}', 'export')->middleware(['auth:sanctum', 'can:typification.supply_types.supplies.export']);
                 Route::post('/import/{supply_type_id}', 'import')->middleware(['auth:sanctum', 'can:typification.supply_types.supplies.import']);
+            });
+        });
+    });
+
+    Route::prefix('/file_types')->group(function () {
+        Route::controller(FileTypeController::class)->group(function () {
+            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:typification.file_types.all']);
+            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:typification.file_types.find']);
+            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:typification.file_types.store']);
+            Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:typification.file_types.update']);
+            Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:typification.file_types.delete']);
+            Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:typification.file_types.restore']);
+        });
+
+        Route::prefix('/file_subtypes')->group(function () {
+            Route::controller(FileSubtypeController::class)->group(function () {
+                Route::get('/all/{file_type_id}', 'all')->middleware(['auth:sanctum', 'can:typification.file_types.file_subtypes.all']);
+                Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:typification.file_types.file_subtypes.find']);
+                Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:typification.file_types.file_subtypes.store']);
+                Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:typification.file_types.file_subtypes.update']);
+                Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:typification.file_types.file_subtypes.delete']);
+                Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:typification.file_types.file_subtypes.restore']);
             });
         });
     });

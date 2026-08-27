@@ -56,7 +56,7 @@ class FileSubtype extends Model implements Auditable
         return $this->belongsTo(Item::class);
     }
 
-    public function file_types(): MorphToMany
+    public function file_type(): MorphToMany
     {
         return $this->morphToMany(FileType::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
     }
