@@ -1,21 +1,21 @@
 <?php
 
-namespace App\Http\Requests\Supplier;
+namespace App\Http\Requests\Bank;
 
-use App\Models\Supplier;
+use App\Models\Bank;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 
-class SupplierRestoreRequest extends FormRequest
+class BankRestoreRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -27,7 +27,7 @@ class SupplierRestoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', Rule::exists('subitems', 'id')->where('item_id', Supplier::ITEM_ID)->whereNotNull('deleted_at')]
+            'id' => ['required', Rule::exists('subitems', 'id')->where('item_id', Bank::ITEM_ID)->whereNotNull('deleted_at')],
         ];
     }
 
@@ -35,14 +35,14 @@ class SupplierRestoreRequest extends FormRequest
     {
         return [
             'required' => 'Es obligatorio.',
-            'exists' => 'No hay ningún registro.'
+            'exists' => 'No hay ningún registro.',
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador del proveedor'
+            'id' => 'Identificador del banco',
         ];
     }
 

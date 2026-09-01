@@ -2,20 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Management\Collection\CollectionFindRequest;
 use App\Http\Requests\Management\Production\ProductionOrderSaveRequest;
-use App\Http\Requests\Management\TechnicalSheet\TechnicalSheetSaveRequest;
-use App\Http\Resources\Management\Collection\CollectionResource;
-use App\Http\Resources\Management\Collection\TechnicalSheetResource;
 use App\Http\Resources\TechnicalSheet\ProductionOrder\ProductionOrderResource;
-use App\Models\Collection;
 use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderDetailQuantities;
-use App\Models\TechnicalSheet;
-use App\Models\TechnicalSheetDetail;
-use App\Services\FileService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 use Illuminate\Support\Facades\DB;
@@ -29,8 +21,8 @@ class ManagementProductionController extends Controller
     {
         $production_order = ProductionOrder::firstOrNew(['id' => $request->input('id')]);
 
-        if (!$production_order->exists) {
-            $result = DB::select("CALL generate_production_order_code()");
+        if (! $production_order->exists) {
+            $result = DB::select('CALL generate_production_order_code()');
             $production_order->consecutive = $result[0]->consecutive;
             $production_order->uuid = Str::uuid();
         }
@@ -40,10 +32,11 @@ class ManagementProductionController extends Controller
             $production_order->model_type = ProductionOrder::class;
         }
 
-        $production_order->date = $request->input('date');
         $production_order->technical_sheet_id = $request->integer('technical_sheet_id');
         $production_order->cut = $request->input('cut');
         $production_order->status = $request->input('status');
+        $production_order->production_place = $request->input('production_place');
+        $production_order->supplier_id = $request->integer('supplier_id');
 
         $production_order->save();
 
@@ -83,6 +76,7 @@ class ManagementProductionController extends Controller
                         'model_id' => $production_order_detail_item['model_id'],
                         'model_type' => $production_order_detail_item['model_type'],
                         'destination' => $production_order_detail_item['destination'],
+                        'settings' => $production_order_detail_item['settings'] ?? [],
                     ]);
                 } else {
                     $production_order_detail = ProductionOrderDetail::create([
@@ -90,6 +84,7 @@ class ManagementProductionController extends Controller
                         'model_id' => $production_order_detail_item['model_id'],
                         'model_type' => $production_order_detail_item['model_type'],
                         'destination' => $production_order_detail_item['destination'],
+                        'settings' => $production_order_detail_item['settings'] ?? [],
                     ]);
                 }
 
@@ -148,8 +143,6 @@ class ManagementProductionController extends Controller
                 ->where('model_type', Product::class)
                 ->get();
 
-
-
             foreach ($reassigned_by_size as $size_id => $quantity_to_subtract) {
 
                 $remaining = $quantity_to_subtract;
@@ -163,14 +156,14 @@ class ManagementProductionController extends Controller
                         return $item->destination === $location;
                     });
 
-                    if (!$detail) {
+                    if (! $detail) {
                         continue;
                     }
 
                     $quantity = $detail->production_order_detail_quantities
                         ->firstWhere('size_id', $size_id);
 
-                    if (!$quantity) {
+                    if (! $quantity) {
                         continue;
                     }
 

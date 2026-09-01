@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Http\Requests\Supplier;
+namespace App\Http\Requests\Typification\SupplierType;
 
-use App\Models\Supplier;
+use App\Models\SupplierType;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class SupplierStoreRequest extends FormRequest
+class SupplierTypeStoreRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -26,10 +26,13 @@ class SupplierStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Supplier::ITEM_ID],
+            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.SupplierType::ITEM_ID],
             'description' => ['required', 'uppercase', 'string', 'max:255'],
             'settings' => ['required', 'array'],
-            'settings.code' => ['required', 'numeric', 'digits_between:2,5'],
+            'settings.has_person' => ['required', 'boolean'],
+            'settings.has_account_bank' => ['required', 'boolean'],
+            'settings.in_production_order' => ['required', 'boolean'],
+            'settings.paragraph' => ['required_if:settings.in_production_order,true', 'in:production'],
         ];
     }
 
@@ -44,7 +47,7 @@ class SupplierStoreRequest extends FormRequest
             'min' => 'Se permite mínimo :min caracteres.',
             'unique' => 'Ya está registrado.',
             'uppercase' => 'El campo debe estar en mayúsculas.',
-            'digits_between' => 'Debe tener entre 2 y 5 dígitos.'
+            'digits_between' => 'Debe tener entre 2 y 5 dígitos.',
         ];
     }
 
@@ -54,7 +57,10 @@ class SupplierStoreRequest extends FormRequest
             'name' => 'Nombre',
             'description' => 'Descripción',
             'settings' => 'Configuraciones',
-            'settings.code' => 'Código',
+            'settings.has_person' => 'Indicador de datos de persona',
+            'settings.has_account_bank' => 'Indicador de datos de bancarios',
+            'settings.in_production_order' => 'Indicador de orden de producción',
+            'settings.paragraph' => 'Indicador de apartado al que pertenece en la orden de producción',
         ];
     }
 
@@ -62,18 +68,21 @@ class SupplierStoreRequest extends FormRequest
     {
         $validator->after(function ($validator) {
 
-            if (!$this->filled('settings.code')) {
+            if (empty($this->settings['in_production_order'])) {
                 return;
             }
 
-            $exists = Supplier::query()
-                ->where('settings->code', $this->input('settings.code'))
-                ->exists();
+            $exist = SupplierType::all()->first(function ($supplier_type) {
+                $settings = $supplier_type->settings;
 
-            if ($exists) {
+                return ! empty($settings->in_production_order)
+                    && $settings->paragraph === $this->settings['paragraph'];
+            });
+
+            if ($exist) {
                 $validator->errors()->add(
-                    'settings.code',
-                    'El código ya se encuentra registrado.'
+                    'paragraph',
+                    'Ya existe un tipo de insumo configurado con este apartado. Solo puede existir uno por apartado.'
                 );
             }
         });

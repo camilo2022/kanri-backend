@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Http\Requests\Supplier;
+namespace App\Http\Requests\Typification\SupplierType\Supplier;
 
 use App\Models\Supplier;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class SupplierFindRequest extends FormRequest
+class SupplierDeleteRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -26,7 +26,7 @@ class SupplierFindRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:subitems,id,item_id,' . Supplier::ITEM_ID],
+            'id' => ['required', 'exists:subitems,id,deleted_at,NULL,item_id,'.Supplier::ITEM_ID],
         ];
     }
 
@@ -34,14 +34,14 @@ class SupplierFindRequest extends FormRequest
     {
         return [
             'required' => 'Es obligatorio.',
-            'exists' => 'No hay ningún registro.'
+            'exists' => 'No hay ningún registro.',
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador del proveedor'
+            'id' => 'Identificador del proveedor',
         ];
     }
 

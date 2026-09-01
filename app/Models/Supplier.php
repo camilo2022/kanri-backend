@@ -5,16 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
+use OwenIt\Auditing\Contracts\Auditable;
 
 class Supplier extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
 
-    public const ITEM_ID = 27;
+    public const ITEM_ID = 37;
 
     protected $table = 'subitems';
 
@@ -24,18 +26,18 @@ class Supplier extends Model implements Auditable
         'item_id',
         'name',
         'description',
-        'settings'
+        'settings',
     ];
 
     protected $auditInclude = [
         'item_id',
         'name',
         'description',
-        'settings'
+        'settings',
     ];
 
     protected $casts = [
-        'settings' => 'object'
+        'settings' => 'object',
     ];
 
     protected static function booted()
@@ -58,16 +60,33 @@ class Supplier extends Model implements Auditable
         return $this->belongsTo(Item::class);
     }
 
+    public function supplier_type(): MorphToMany
+    {
+        return $this->morphToMany(SupplierType::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
+    }
+
+    public function person(): MorphToMany
+    {
+        return $this->morphedByMany(Person::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
+    }
+
+    public function bank_account(): MorphMany
+    {
+        return $this->morphMany(BankAccount::class, 'model');
+    }
+
     public function scopeSearch(Builder $query, ?string $search = null): Builder
     {
         $search = trim((string) $search);
-        if ($search === '') return $query;
+        if ($search === '') {
+            return $query;
+        }
 
         $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
 
         return $query->where(function (Builder $q) use ($terms) {
             foreach ($terms as $term) {
-                $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $term) . '%';
+                $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $term).'%';
 
                 $q->where(function (Builder $sq) use ($like) {
                     $sq->orWhere('name', 'LIKE', $like)

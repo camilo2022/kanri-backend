@@ -3,17 +3,14 @@
 namespace App\Http\Requests\Management\Production;
 
 use App\Models\Color;
-use App\Models\Piece;
+use App\Models\Process;
 use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
-use App\Models\Size;
-use App\Models\TechnicalSheet;
 use App\Models\Supply;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Support\Str;
 
 class ProductionOrderSaveRequest extends FormRequest
 {
@@ -22,7 +19,7 @@ class ProductionOrderSaveRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -35,13 +32,12 @@ class ProductionOrderSaveRequest extends FormRequest
     {
         return [
             'id' => ['nullable', 'exists:production_orders,id'],
-            'color_id' => ['required', 'exists:subitems,id,item_id,' . Color::ITEM_ID . ',deleted_at,NULL'],
-            'date' => ['required', 'date_format:Y-m-d'],
+            'color_id' => ['required', 'exists:subitems,id,item_id,'.Color::ITEM_ID.',deleted_at,NULL'],
             'technical_sheet_id' => ['required', 'exists:technical_sheets,id'],
             'cut' => ['required', 'string', 'uppercase', 'max:2'],
-            'status' =>  ['required', 'in:' . implode(',', [ProductionOrder::PENDING, ProductionOrder::APPROVED, ProductionOrder::CANCELLED])],
-            'production_order_details' => ['required', 'array', 'min:1', 'max:5'],
-            'production_order_details.*.model_type' => ['required',  'in:' . implode(',', [Product::class, Supply::class, Color::class])],
+            'status' => ['required', 'in:'.implode(',', [ProductionOrder::PENDING, ProductionOrder::APPROVED, ProductionOrder::CANCELLED])],
+            'production_order_details' => ['required', 'array', 'min:1'],
+            'production_order_details.*.model_type' => ['required',  'in:'.implode(',', [Product::class, Supply::class, Color::class, Process::class])],
             'production_order_details.*.model_id' => ['nullable', 'numeric'],
             'production_order_details.*.destination' => ['nullable', 'string', 'in:NACIONAL,MEDELLIN,STARA'],
             'reasigned_curve' => ['boolean'],
@@ -60,12 +56,11 @@ class ProductionOrderSaveRequest extends FormRequest
             'boolean' => 'Debe ser un dato tipo si/no',
             'numeric' => 'Debe ser un dato númerico',
             'min' => 'El valor debe ser mayor o igual a :min',
-            'production_order_details.max' => 'El valor debe ser menor o igual a :min',
             'string' => 'Debe ser una cadena de texto.',
             'max' => 'Se permite máximo :max caracteres.',
             'in' => 'Valor inválido. Permitidos: :values.',
             'integer' => 'Debe ser un dato númerico',
-            'distinct' => 'Debe ser un valor unico'
+            'distinct' => 'Debe ser un valor unico',
         ];
     }
 
@@ -79,7 +74,7 @@ class ProductionOrderSaveRequest extends FormRequest
             'fabric_id' => 'Identificador de la tela',
             'width' => 'Ancho de la tela',
             'pocket_fabric' => 'Indicador de uso de tela de bolsillo',
-            'observation' =>  'Observación',
+            'observation' => 'Observación',
             'status' => 'Estado de la orden de producción',
         ];
     }
@@ -87,6 +82,7 @@ class ProductionOrderSaveRequest extends FormRequest
     private function getNextCut(string $cut): string
     {
         $cut = strtoupper(trim($cut));
+
         return chr(ord($cut) + 1);
     }
 
@@ -113,7 +109,7 @@ class ProductionOrderSaveRequest extends FormRequest
                         if ($current_cut !== $expectedCut) {
                             $validator->errors()->add(
                                 'cut',
-                                "No es consecutivo."
+                                'No es consecutivo.'
                             );
                         }
                     } else {
@@ -133,16 +129,16 @@ class ProductionOrderSaveRequest extends FormRequest
                 return ($detail['model_type'] ?? null) === Supply::class;
             });
 
-            if (!$hasSupply) {
-                $validator->errors()->add("fabric_id", 'Es obligatorio.');
+            if (! $hasSupply) {
+                $validator->errors()->add('fabric_id', 'Es obligatorio.');
             }
 
             $hasProducts = collect($details)->contains(function ($detail) {
                 return ($detail['model_type'] ?? null) === Product::class;
             });
 
-            if (!$hasProducts) {
-                $validator->errors()->add("curve", 'Es obligatorio.');
+            if (! $hasProducts) {
+                $validator->errors()->add('curve', 'Es obligatorio.');
             }
 
             $empty = [];
@@ -151,23 +147,25 @@ class ProductionOrderSaveRequest extends FormRequest
                 $model = $detail['model_type'];
                 $destination = $detail['destination'] ?? null;
 
-                if (!class_exists($model)) {
+                if (! class_exists($model)) {
                     $validator->errors()->add(
                         "production_order_details.$model.model_type",
                         'El tipo de modelo no es válido.'
                     );
+
                     continue;
                 }
 
-                if (!isset($detail['model_id'])) {
+                if (! isset($detail['model_id'])) {
                     $validator->errors()->add(
                         "production_order_details.$model.$destination.model_id",
                         'No hay identificador del detalle.'
                     );
+
                     continue;
                 }
 
-                if (!$model::whereKey($detail['model_id'])->exists()) {
+                if (! $model::whereKey($detail['model_id'])->exists()) {
                     $validator->errors()->add(
                         "production_order_details.$model.model_id",
                         'El modelo seleccionado no existe.'
@@ -187,6 +185,7 @@ class ProductionOrderSaveRequest extends FormRequest
                             "production_order_details.$model.$destination.model_id",
                             'Es obligatorio ingresar curva.'
                         );
+
                         continue;
                     }
 
@@ -198,17 +197,17 @@ class ProductionOrderSaveRequest extends FormRequest
                 }
 
                 if ($model === Supply::class) {
-                    if (!empty($detail['model_id'])) {
+                    if (! empty($detail['model_id'])) {
                         $supply = Supply::with('supply_type')->find($detail['model_id']);
                         $settings = $supply->supply_type->first()->settings;
 
-                        if (!empty($this->color_id)) {
+                        if (! empty($this->color_id)) {
                             $exists = $supply
                                 ->related(Color::class)
                                 ->where('id', $this->color_id)
                                 ->exists();
 
-                            if (!$exists) {
+                            if (! $exists) {
                                 $validator->errors()->add(
                                     'color_id',
                                     'El color seleccionado no esta asociado a la tela.'
@@ -219,7 +218,7 @@ class ProductionOrderSaveRequest extends FormRequest
                         if (empty($settings->in_production_order) && $settings->paragraph !== 'fabric') {
                             $validator->errors()->add(
                                 'fabric_id',
-                                "El tipo de insumo no es apto para asociar una orden de producción"
+                                'El tipo de insumo no es apto para asociar una orden de producción'
                             );
                         }
                     }
@@ -231,6 +230,7 @@ class ProductionOrderSaveRequest extends FormRequest
                             "production_order_details.$index.model_id",
                             'El modelo seleccionado no corresponde con el color de la tela seleccionada.'
                         );
+
                         continue;
                     }
                 }
@@ -248,7 +248,7 @@ class ProductionOrderSaveRequest extends FormRequest
             if ($this->reasigned_curve) {
                 $production_order_origin = ProductionOrder::findOrFail($this->input('production_order_id'));
 
-                if (!$production_order_origin) {
+                if (! $production_order_origin) {
                     $validator->errors()->add(
                         'production_order_id',
                         'Es requerida una orden de origen válida para realizar la reasignación.'
@@ -269,6 +269,7 @@ class ProductionOrderSaveRequest extends FormRequest
                         'selected_rows',
                         'Debe seleccionar al menos un destino de origen para realizar la reasignación.'
                     );
+
                     return;
                 }
 
@@ -282,7 +283,7 @@ class ProductionOrderSaveRequest extends FormRequest
                 foreach ($origin_details as $detail) {
                     $destination = $detail->destination;
 
-                    if (!in_array($destination, $selected_destinations)) {
+                    if (! in_array($destination, $selected_destinations)) {
                         continue;
                     }
 

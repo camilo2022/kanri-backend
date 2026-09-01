@@ -28,6 +28,7 @@ use App\Traits\ApiResponser;
  * @OA\Schema(
  *     schema="Collection",
  *     type="object",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="item_id", type="integer", example=20),
  *     @OA\Property(property="name", type="string", example="No Aplica"),
@@ -58,53 +59,68 @@ class CollectionController extends Controller
      *     tags={"Collections"},
      *     summary="Listar coleccións de ropa",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Filtro de Busqueda.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="juan")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
      *         description="Columna a ordenar.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"id","name","description","created_at", "updated_at"}, example="name")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="dir",
      *         in="query",
      *         description="Dirección de ordenamiento.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Registros por página.",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=10)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="with_trashed",
      *         in="query",
      *         description="Registros inactivos.",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Lista de coleccións de ropa cargada correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
      *                     property="collections",
      *                     type="array",
+     *
      *                     @OA\Items(ref="#/components/schemas/Collection")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="meta",
      *                     type="object",
@@ -123,16 +139,20 @@ class CollectionController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -164,7 +184,7 @@ class CollectionController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -177,17 +197,22 @@ class CollectionController extends Controller
      *     tags={"Collections"},
      *     summary="Obtener una colección de ropa específica",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador de la colección",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Colección cargada con éxito",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -200,10 +225,13 @@ class CollectionController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Identificador de la colección no registrado.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -216,21 +244,26 @@ class CollectionController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -240,7 +273,7 @@ class CollectionController extends Controller
     public function find(CollectionFindRequest $request, $id)
     {
         try {
-            $collection = Collection::with(['item', 'technical_sheets' => ['product' => ['trademark' => ['sizes'], 'subcategory' => ['category']], 'garment_type', 'wash_tone', 'boot_type',  'photo_d', 'photo_t', 'products', 'production_orders' => ['production_order_details' => ['production_order_detail_quantities', 'model'], 'fabric' => ['model'], 'color', 'model']]])
+            $collection = Collection::with(['item', 'technical_sheets' => ['technical_sheet_details', 'product' => ['trademark' => ['sizes'], 'subcategory' => ['category']], 'garment_type', 'wash_tone', 'boot_type',  'photo_d', 'photo_t', 'products', 'production_orders' => ['production_order_details' => ['production_order_detail_quantities', 'model'], 'fabric' => ['model'], 'color', 'model']]])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -252,7 +285,7 @@ class CollectionController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -265,10 +298,13 @@ class CollectionController extends Controller
      *     tags={"Collections"},
      *     summary="Crear una colección",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"name"},
+     *
      *             @OA\Property(
      *                 property="name",
      *                 type="string",
@@ -283,10 +319,13 @@ class CollectionController extends Controller
      *              )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Colección creada correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -305,10 +344,13 @@ class CollectionController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -322,21 +364,26 @@ class CollectionController extends Controller
      *                 @OA\Property(
      *                     property="name",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -346,7 +393,7 @@ class CollectionController extends Controller
     public function store(CollectionStoreRequest $request)
     {
         try {
-            $collection = new Collection();
+            $collection = new Collection;
             $collection->name = $request->input('name');
             $collection->description = $request->input('description');
             $collection->settings = $request->input('settings');
@@ -362,14 +409,12 @@ class CollectionController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
         }
     }
-
-
 
     /**
      * @OA\Put(
@@ -377,17 +422,22 @@ class CollectionController extends Controller
      *     tags={"Collections"},
      *     summary="Editar una colección específica",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador de la colección",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"name"},
+     *
      *             @OA\Property(
      *                 property="name",
      *                 type="string",
@@ -402,10 +452,13 @@ class CollectionController extends Controller
      *              )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Colección editada correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -426,10 +479,13 @@ class CollectionController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -443,21 +499,26 @@ class CollectionController extends Controller
      *                 @OA\Property(
      *                     property="name",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -482,7 +543,7 @@ class CollectionController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -495,17 +556,22 @@ class CollectionController extends Controller
      *     tags={"Collections"},
      *     summary="Desactivar una colección específica",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador de la colección",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Colección desactivada correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -526,10 +592,13 @@ class CollectionController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -542,21 +611,26 @@ class CollectionController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -578,7 +652,7 @@ class CollectionController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -591,17 +665,22 @@ class CollectionController extends Controller
      *     tags={"Collections"},
      *     summary="Activar una colección específica",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador de la colección",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Colección activada correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -622,10 +701,13 @@ class CollectionController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -638,21 +720,26 @@ class CollectionController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -674,7 +761,7 @@ class CollectionController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );

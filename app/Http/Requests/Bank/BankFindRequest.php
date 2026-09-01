@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Http\Requests\Supplier;
+namespace App\Http\Requests\Bank;
 
-use App\Models\Supplier;
+use App\Models\Bank;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class SupplierDeleteRequest extends FormRequest
+class BankFindRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -26,7 +26,7 @@ class SupplierDeleteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:subitems,id,deleted_at,NULL,item_id,' . Supplier::ITEM_ID],
+            'id' => ['required', 'exists:subitems,id,item_id,'.Bank::ITEM_ID],
         ];
     }
 
@@ -34,14 +34,14 @@ class SupplierDeleteRequest extends FormRequest
     {
         return [
             'required' => 'Es obligatorio.',
-            'exists' => 'No hay ningún registro.'
+            'exists' => 'No hay ningún registro.',
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador del proveedor'
+            'id' => 'Identificador del banco',
         ];
     }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Person;
 
 use App\Models\BloodType;
+use App\Models\DocumentType;
 use App\Models\Gender;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -15,7 +16,7 @@ class PersonStoreRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -27,15 +28,16 @@ class PersonStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'document_type_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.DocumentType::ITEM_ID.',deleted_at,NULL'],
             'document' => ['required', 'numeric', 'digits_between:5,14', 'unique:people,document'],
             'names' => ['required', 'string', 'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/'],
             'last_names' => ['required', 'string', 'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/'],
-            'gender_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Gender::ITEM_ID . ',deleted_at,NULL'],
+            'gender_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.Gender::ITEM_ID.',deleted_at,NULL'],
             'birth_date' => ['required', 'date', 'date_format:Y-m-d', 'before:now'],
-            'blood_type_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . BloodType::ITEM_ID . ',deleted_at,NULL'],
+            'blood_type_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.BloodType::ITEM_ID.',deleted_at,NULL'],
             'address' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'numeric', 'digits:10'],
-            'photo' => ['sometimes', 'image', 'mimes:jpg,jpeg,png', 'max:2048']
+            'photo' => ['sometimes', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
         ];
     }
 
@@ -57,8 +59,36 @@ class PersonStoreRequest extends FormRequest
             'before' => 'Debe ser una fecha anterior a :date.',
             'image' => 'Debe ser una imagen.',
             'mimes' => 'Extensión inválida. Permitidas :values.',
-            'photo.max' => 'Se permite máximo :max KB.'
+            'photo.max' => 'Se permite máximo :max KB.',
+            'digits' => 'Debe tener :digits números',
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            if (filled($this->input('document_type_id')) && filled($this->input('document'))) {
+                $document_type = DocumentType::find($this->input('document_type_id'));
+                $document = $this->input('document');
+                $isValid = false;
+                $messages = [];
+
+                foreach ($document_type?->settings?->validations ?? [] as $item) {
+                    if (preg_match($item->regex, $document)) {
+                        $isValid = true;
+                        break;
+                    }
+                    $messages[] = $item->message;
+                }
+
+                if (! $isValid) {
+                    $validator->errors()->add(
+                        'document',
+                        implode("\n", $messages)
+                    );
+                }
+            }
+        });
     }
 
     public function attributes(): array
@@ -69,10 +99,11 @@ class PersonStoreRequest extends FormRequest
             'last_names' => 'Apellidos',
             'gender_id' => 'Genero',
             'birth_date' => 'Fecha de nacimiento',
+            'document_type_id' => 'Tipo de Documento',
             'blood_type_id' => 'Tipo de sangre',
             'address' => 'Dirección',
             'phone' => 'Número de teléfono',
-            'photo' => 'Foto'
+            'photo' => 'Foto',
         ];
     }
 }

@@ -13,6 +13,7 @@ use App\Models\WashTone;
 use App\Models\YokeType;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -26,7 +27,7 @@ return new class extends Migration
             $table->id();
             $table->uuid();
             $table->nullableMorphs('model');
-             $table->string('code', 11)->unique();
+            $table->string('code', 11)->unique();
             $table->date('date')->nullable();
             $table->foreignIdFor(Product::class)->unique()->constrained()->cascadeOnUpdate();
             $table->foreignIdFor(Collection::class)->constrained()->cascadeOnUpdate();
@@ -79,7 +80,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::unprepared("DROP PROCEDURE IF EXISTS generate_technical_sheet_code");
+        DB::unprepared('DROP PROCEDURE IF EXISTS generate_technical_sheet_code');
         Schema::dropIfExists('technical_sheets');
     }
 };

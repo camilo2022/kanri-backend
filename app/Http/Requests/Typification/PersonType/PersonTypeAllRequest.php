@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Http\Requests\Supplier;
+namespace App\Http\Requests\Typification\PersonType;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class SupplierAllRequest extends FormRequest
+class PersonTypeAllRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -30,7 +30,7 @@ class SupplierAllRequest extends FormRequest
             'search' => ['nullable', 'string'],
             'column' => ['nullable', 'string', 'in:id,name,description,created_at,updated_at,deleted_at'],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
-            'with_trashed' => ['required', 'boolean']
+            'with_trashed' => ['required', 'boolean'],
         ];
     }
 
@@ -41,7 +41,7 @@ class SupplierAllRequest extends FormRequest
             'string' => 'Debe ser una cadena de texto.',
             'numeric' => 'Debe ser un valor numérico.',
             'in' => 'Valor inválido. Permitidos: :values.',
-            'boolean' => 'Deber ser verdadero o falso.'
+            'boolean' => 'Deber ser verdadero o falso.',
         ];
     }
 
@@ -53,7 +53,8 @@ class SupplierAllRequest extends FormRequest
             'search' => 'Filtro de Busqueda.',
             'column' => 'Columna a ordenar.',
             'dir' => 'Sentido del orden.',
-            'with_trashed' => 'Registros inactivos'
+            'with_trashed' => 'Registros inactivos',
+            'in_technical_sheet' => 'Aplica a Ficha Técnica',
         ];
     }
 

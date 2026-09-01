@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Http\Resources\Supplier;
+namespace App\Http\Resources\Typification\PersonType\DocumentType;
 
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class SupplierResource extends JsonResource
+class DocumentTypeResource extends JsonResource
 {
     public function toArray($request)
     {
         return [
-            'supplier' => [
+            'document_type' => [
                 'id' => $this->id,
                 'item_id' => $this->item_id,
                 'name' => $this->name,
@@ -20,8 +20,8 @@ class SupplierResource extends JsonResource
                 'updated_at' => $this->formatDate($this->updated_at),
                 'deleted_at' => $this->formatDate($this->deleted_at),
                 'item' => $this->item,
-                'process' => $this->process,
-            ]
+                'person_type' => $this->person_type->first(),
+            ],
         ];
     }
 

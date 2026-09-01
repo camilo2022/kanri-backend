@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Resources\Supplier;
+namespace App\Http\Resources\Typification\SupplierType\Supplier;
 
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\ResourceCollection;

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\PeopleExport;
 use App\Http\Requests\Person\PersonAllRequest;
 use App\Http\Requests\Person\PersonDeleteRequest;
 use App\Http\Requests\Person\PersonFindRequest;
@@ -11,14 +10,10 @@ use App\Http\Requests\Person\PersonStoreRequest;
 use App\Http\Requests\Person\PersonUpdateRequest;
 use App\Http\Resources\Person\PersonCollection;
 use App\Http\Resources\Person\PersonResource;
-use App\Imports\PeopleImport;
 use App\Models\Person;
 use App\Services\FileService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Http\Request;
 
 /**
  * @OA\Tag(
@@ -34,6 +29,7 @@ use Illuminate\Http\Request;
  * @OA\Schema(
  *     schema="Person",
  *     type="object",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="document", type="integer", example=10000001),
  *     @OA\Property(property="names", type="string", example="NAME_EXAMPLE"),
@@ -133,53 +129,68 @@ class PersonController extends Controller
      *     tags={"People"},
      *     summary="Listar las personas",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Filtro de Busqueda.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="juan")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
      *         description="Columna a ordenar.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"id","document","names","last_names","gender_id","birth_date","blood_type_id","address","phone","created_at","updated_at","deleted_at"}, example="names")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="dir",
      *         in="query",
      *         description="Dirección de ordenamiento.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Registros por página.",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=10)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="with_trashed",
      *         in="query",
      *         description="Registros inactivos.",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Lista de personas cargada con éxito",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
      *                     property= "users",
      *                     type="array",
+     *
      *                     @OA\Items(ref="#/components/schemas/Person")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="meta",
      *                     type="object",
@@ -198,16 +209,20 @@ class PersonController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -218,19 +233,19 @@ class PersonController extends Controller
     {
         try {
             $people = Person::with(['gender', 'blood_type', 'employee', 'photo'])
-                ->when($request->boolean('with_employee'), function ($query) use ($request) {
+                ->when($request->boolean('with_employee'), function ($query) {
                     return $query;
                 })
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
-                ->when($request->boolean('with_trashed'), function ($query) use ($request) {
+                ->when($request->boolean('with_trashed'), function ($query) {
                     return $query->withTrashed();
                 })
                 ->when($request->has('with_employee'), function ($query) use ($request) {
                     return $request->boolean('with_employee')
-                        ? $query->whereHas('employee', fn($q) => $q->withTrashed())
-                        : $query->whereDoesntHave('employee', fn($q) => $q->withTrashed());
+                        ? $query->whereHas('employee', fn ($q) => $q->withTrashed())
+                        : $query->whereDoesntHave('employee', fn ($q) => $q->withTrashed());
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
                     return $query->orderBy($request->input('column'), $request->input('dir'));
@@ -247,7 +262,7 @@ class PersonController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -260,17 +275,22 @@ class PersonController extends Controller
      *     tags={"People"},
      *     summary="Obtener una persona específica",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador de la persona",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Persona cargada con éxito",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -283,16 +303,20 @@ class PersonController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -302,7 +326,7 @@ class PersonController extends Controller
     public function find(PersonFindRequest $request, $id)
     {
         try {
-            $person = Person::with(['gender', 'blood_type', 'employee', 'photo'])
+            $person = Person::with(['gender', 'blood_type', 'employee' => ['person'], 'photo', 'document_type' => ['person_type']])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -314,7 +338,7 @@ class PersonController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -327,12 +351,16 @@ class PersonController extends Controller
      *     tags={"People"},
      *     summary="Crear una persona",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
+     *
      *             @OA\Schema(
      *                 required={"document","names","last_names","gender_id","birth_date","blood_type_id","address","phone","photo_type_id","photo_subtype_id"},
+     *
      *                 @OA\Property(
      *                     property="document",
      *                     type="string",
@@ -394,10 +422,13 @@ class PersonController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Persona creada con éxito",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -419,10 +450,13 @@ class PersonController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -443,21 +477,26 @@ class PersonController extends Controller
      *                 @OA\Property(
      *                     property="document",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Es obligatorio.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -467,7 +506,8 @@ class PersonController extends Controller
     public function store(PersonStoreRequest $request)
     {
         try {
-            $person = new Person();
+            $person = new Person;
+            $person->document_type_id = $request->integer('document_type_id');
             $person->document = $request->input('document');
             $person->names = $request->input('names');
             $person->last_names = $request->input('last_names');
@@ -498,7 +538,7 @@ class PersonController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -511,12 +551,16 @@ class PersonController extends Controller
      *     tags={"People"},
      *     summary="Editar la información de una persona en específico",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
+     *
      *             @OA\Schema(
      *                 required={"document","names","last_names","gender_id","birth_date","blood_type_id","address","phone"},
+     *
      *                 @OA\Property(
      *                     property="document",
      *                     type="string",
@@ -568,10 +612,13 @@ class PersonController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Persona editada con éxito",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -594,10 +641,13 @@ class PersonController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -618,21 +668,26 @@ class PersonController extends Controller
      *                 @OA\Property(
      *                     property="document",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Es obligatorio.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -643,6 +698,7 @@ class PersonController extends Controller
     {
         try {
             $person = Person::findOrFail($id);
+            $person->document_type_id = $request->input('document_type_id');
             $person->document = $request->input('document');
             $person->names = $request->input('names');
             $person->last_names = $request->input('last_names');
@@ -673,7 +729,7 @@ class PersonController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -686,17 +742,22 @@ class PersonController extends Controller
      *     tags={"People"},
      *     summary="Desactivar una persona específica",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador de la persona",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Persona desactivada correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -719,10 +780,13 @@ class PersonController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -735,21 +799,26 @@ class PersonController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -771,7 +840,7 @@ class PersonController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -784,17 +853,22 @@ class PersonController extends Controller
      *     tags={"People"},
      *     summary="Activar una persona específica",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador de la persona",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Persona activada correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -817,10 +891,13 @@ class PersonController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -833,21 +910,26 @@ class PersonController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -869,7 +951,7 @@ class PersonController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );

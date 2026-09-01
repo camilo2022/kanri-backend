@@ -26,10 +26,11 @@ class ProductionOrder extends Model implements Auditable
 
     protected $fillable = [
         'technical_sheet_id',
-        'date',
         'model_id',
         'model_type',
         'consecutive',
+        'production_place',
+        'supplier_id',
         'efficiency',
         'cut',
         'fabric_id',
@@ -42,10 +43,11 @@ class ProductionOrder extends Model implements Auditable
 
     protected $auditInclude = [
         'technical_sheet_id',
-        'date',
         'model_id',
         'model_type',
         'consecutive',
+        'production_place',
+        'supplier_id',
         'efficiency',
         'cut',
         'fabric_id',
@@ -107,6 +109,11 @@ class ProductionOrder extends Model implements Auditable
         return $this->morphOne(File::class, 'model')
             ->where('file_type_id', 3)
             ->where('file_subtype_id', 13);
+    }
+
+    public function satellite(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class)->withTrashed();
     }
 
     public function scopeSearch(Builder $query, ?string $search = null): Builder

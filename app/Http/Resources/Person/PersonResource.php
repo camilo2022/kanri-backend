@@ -24,8 +24,9 @@ class PersonResource extends JsonResource
                 'gender' => $this->gender,
                 'photo' => $this->photo,
                 'blood_type' => $this->blood_type,
-                'employee' => $this->employee
-            ]
+                'document_type' => $this->document_type,
+                'employee' => $this->employee,
+            ],
         ];
     }
 
