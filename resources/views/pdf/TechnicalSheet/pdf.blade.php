@@ -591,8 +591,6 @@
                     fn($item) => $item->model_id === $process->id,
                 );
 
-                logger([$process->id, $detail_process]);
-
                 $status = $detail_process->status ?? null;
 
                 switch ($status) {

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\TechnicalSheet\ProductionOrder\ProductionOrderFindRequest;
 use App\Http\Requests\TechnicalSheet\ProductionOrder\ProductionOrderAllRequest;
 use App\Http\Requests\TechnicalSheet\ProductionOrder\ProductionOrderExportPDFRequest;
+use App\Http\Requests\TechnicalSheet\ProductionOrder\ProductionOrderFindRequest;
 use App\Http\Requests\TechnicalSheet\ProductionOrder\ProductionOrderStoreRequest;
 use App\Http\Requests\TechnicalSheet\ProductionOrder\ProductionOrderUpdateRequest;
 use App\Http\Resources\TechnicalSheet\ProductionOrder\ProductionOrderCollection;
@@ -16,24 +16,56 @@ use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderDetailQuantities;
 use App\Models\Supply;
 use App\Services\FileService;
+use App\Services\QrCodeService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
-use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
-use setasign\Fpdi\Fpdi;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
-use App\Services\QrCodeService;
 use Illuminate\Support\Str;
+use setasign\Fpdi\Fpdi;
 
 class ProductionOrderController extends Controller
 {
     use ApiMessage, ApiResponser;
 
-    public function all(ProductionOrderAllRequest $request, $technical_sheet_id)
+    public function all(ProductionOrderAllRequest $request, $technical_sheet_id = null)
     {
         try {
-            $production_orders = ProductionOrder::with(['strokes', 'fabric', 'pieces', 'technical_sheet' => ['product', 'products'], 'production_order_details' => ['production_order_detail_quantities']])
-                ->whereHas('technical_sheet', fn($r) => $r->where('id', $technical_sheet_id))
+            $production_orders = ProductionOrder::with(['strokes', 'fabric', 'pieces', 'technical_sheet' => ['product', 'products', 'garment_type'], 'production_order_details' => ['production_order_detail_quantities', 'model']])
+                ->when($technical_sheet_id, function ($query) use ($technical_sheet_id) {
+                    return $query->where('technical_sheet_id', $technical_sheet_id);
+                })
+                ->when($request->has('has_programations'), function ($query) use ($request) {
+                    if ($request->boolean('has_programations')) {
+                        return $query->whereHas('production_order_details', function ($r) {
+                            $r->whereNotNull('settings->date');
+                        });
+                    }
+
+                    return $query->whereDoesntHave('production_order_details', function ($r) {
+                        $r->whereNotNull('settings->date');
+                    });
+                })
+                ->when($request->filled('processes_id') || $request->filled('start_date') || $request->filled('end_date'),
+                    function ($query) use ($request) {
+                        return $query->whereHas('production_order_details', function ($r) use ($request) {
+                            if ($request->filled('processes_id')) {
+                                $r->whereIn('model_id', $request->input('processes_id'));
+                            }
+
+                            if ($request->filled('start_date')) {
+                                $r->whereNotNull('settings->date')
+                                    ->where('settings->date', '>=', $request->date('start_date'));
+                            }
+
+                            if ($request->filled('end_date')) {
+                                $r->whereNotNull('settings->date')
+                                    ->where('settings->date', '<=', $request->date('end_date'));
+                            }
+                        });
+                    }
+                )
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -55,7 +87,7 @@ class ProductionOrderController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -65,7 +97,7 @@ class ProductionOrderController extends Controller
     public function find(ProductionOrderFindRequest $request, $id)
     {
         try {
-            $production_order = ProductionOrder::with(['model' => ['production_order_details' => ['production_order_detail_quantities', 'model'], 'technical_sheet' => ['product' => ['trademark' => ['sizes']]]], 'technical_sheet' => ['product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']], 'products', 'garment_type', 'subgroup', 'collection', 'photo_d', 'photo_t',], 'production_order_details' => ['production_order_detail_quantities', 'model'], 'fabric' => ['model'], 'pieces', 'rolls' => ['production_orders']])
+            $production_order = ProductionOrder::with(['model' => ['production_order_details' => ['production_order_detail_quantities', 'model'], 'technical_sheet' => ['product' => ['trademark' => ['sizes']]]], 'technical_sheet' => ['product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']], 'products', 'garment_type', 'subgroup', 'collection', 'photo_d', 'photo_t'], 'production_order_details' => ['production_order_detail_quantities', 'model'], 'fabric' => ['model'], 'pieces', 'rolls' => ['production_orders']])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -77,7 +109,7 @@ class ProductionOrderController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -87,8 +119,8 @@ class ProductionOrderController extends Controller
     public function store(ProductionOrderStoreRequest $request)
     {
         try {
-            $result = DB::select("CALL generate_production_order_code()");
-            $production_order = new ProductionOrder();
+            $result = DB::select('CALL generate_production_order_code()');
+            $production_order = new ProductionOrder;
             $consecutive = $result[0]->consecutive;
 
             $production_order->consecutive = $consecutive;
@@ -154,7 +186,7 @@ class ProductionOrderController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -205,7 +237,7 @@ class ProductionOrderController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -215,7 +247,6 @@ class ProductionOrderController extends Controller
     public function save_details(array $production_order_details, int $production_order_id)
     {
         try {
-            logger($production_order_details);
             foreach ($production_order_details as $production_order_detail_item) {
                 $quantities = [];
 
@@ -233,7 +264,7 @@ class ProductionOrderController extends Controller
                     continue;
                 }
 
-                $production_order_detail = new ProductionOrderDetail();
+                $production_order_detail = new ProductionOrderDetail;
 
                 $production_order_detail = ProductionOrderDetail::firstOrCreate([
                     'production_order_id' => $production_order_id,
@@ -323,7 +354,7 @@ class ProductionOrderController extends Controller
             $canvas->page_text(
                 730,
                 565,
-                "Página {PAGE_NUM} de {PAGE_COUNT}",
+                'Página {PAGE_NUM} de {PAGE_COUNT}',
                 null,
                 9,
                 [0, 0, 0]
@@ -331,18 +362,18 @@ class ProductionOrderController extends Controller
 
             $tempDir = storage_path('app/temp');
 
-            if (!is_dir($tempDir)) {
+            if (! is_dir($tempDir)) {
                 mkdir($tempDir, 0777, true);
             }
 
-            $mainPdf = $tempDir . '/orden_' . $production_order->id . '.pdf';
+            $mainPdf = $tempDir.'/orden_'.$production_order->id.'.pdf';
 
             file_put_contents(
                 $mainPdf,
                 $dompdf->output()
             );
 
-            $fpdi = new Fpdi();
+            $fpdi = new Fpdi;
 
             $pageCount = $fpdi->setSourceFile($mainPdf);
 
@@ -395,19 +426,19 @@ class ProductionOrderController extends Controller
             @unlink($mainPdf);
 
             $has_stara = $production_order->production_order_details->contains(
-                fn($item) => $item->destination === 'STARA'
+                fn ($item) => $item->destination === 'STARA'
             );
 
-            $fileName = 'PO-' .
-                ($production_order->technical_sheet->product->code ?? 'SIN-CODIGO') .
-                '-' .
+            $fileName = 'PO-'.
+                ($production_order->technical_sheet->product->code ?? 'SIN-CODIGO').
+                '-'.
                 ($production_order->cut ?? 'SIN-LOTE');
 
             if ($has_stara) {
                 $staraReference = optional($production_order->technical_sheet->products->first())->code;
 
                 if ($staraReference) {
-                    $fileName .= ', ' . $staraReference . '-' . ($production_order->cut ?? 'SIN-LOTE');
+                    $fileName .= ', '.$staraReference.'-'.($production_order->cut ?? 'SIN-LOTE');
                 }
             }
 
@@ -418,7 +449,7 @@ class ProductionOrderController extends Controller
                 200,
                 [
                     'Content-Type' => 'application/pdf',
-                    'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+                    'Content-Disposition' => 'inline; filename="'.$fileName.'"',
                 ]
             );
         } catch (\Throwable $e) {
@@ -426,7 +457,7 @@ class ProductionOrderController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );

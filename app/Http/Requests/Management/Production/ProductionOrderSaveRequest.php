@@ -43,6 +43,7 @@ class ProductionOrderSaveRequest extends FormRequest
             'reasigned_curve' => ['boolean'],
             'production_order_id' => ['required_if:reasigned_curve,true', 'exists:production_orders,id'],
             'selected_rows' => ['required_if:reasigned_curve,true', 'array', 'min:1', 'max:3'],
+            'production_place' => ['required', 'string', 'in:BLESS,SATELITE'],
         ];
     }
 

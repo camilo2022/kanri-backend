@@ -574,9 +574,6 @@
             $total_sizes_colum = $agrupaciones->sum(function ($grupo) {
                 return $grupo['tallas']->count();
             });
-
-            logger($agrupaciones);
-            logger($total_sizes_colum);
         @endphp
 
         <table class="info-table">

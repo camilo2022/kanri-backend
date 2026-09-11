@@ -78,7 +78,6 @@ class DocumentTypeSettingsRequest extends FormRequest
         $validator->after(function ($validator) {
             foreach ($this->input('settings.validations', []) as $i => $v) {
                 $regex = $v['regex'] ?? null;
-                logger($regex);
                 if (! is_string($regex) || @preg_match($regex, '') === false) {
                     $validator->errors()->add(
                         "settings.validations.$i.regex",

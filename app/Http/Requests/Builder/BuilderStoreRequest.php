@@ -29,7 +29,6 @@ class BuilderStoreRequest extends FormRequest
 
     public function rules(): array
     {
-        logger($this);
         return [
             'trademark_id' => ['required', 'array', 'min:1'],
             'trademark_id.*' => ['exists:subitems,id,item_id,' . Trademark::ITEM_ID . ',deleted_at,NULL'],
@@ -115,15 +114,10 @@ class BuilderStoreRequest extends FormRequest
                     break;
                 }
 
-                logger(['Size Find' => $size]);
-                logger(['Size Find Trademark' => $size->trademark]);
-
                 $size_trademark_ids = $size->trademark
                     ->pluck('id')
                     ->map(fn($id) => (string) $id)
                     ->toArray();
-
-                logger(['Size Trademark IDs' => $size_trademark_ids]);
 
                 $selected_trademark_ids = array_map(
                     'strval',
@@ -192,12 +186,6 @@ class BuilderStoreRequest extends FormRequest
 
                         $category_id = $subcategory->category->first()->id;
                         $cache_key = "curve_builder:index:" . "{$trademark_id}:" . "{$category_id}:" . "{$subcategory->id}";
-
-                        logger([
-                            'CACHE KEY' => $cache_key,
-                            'CACHE EXISTS' => Cache::has($cache_key),
-                            'CACHE VALUE' => Cache::get($cache_key),
-                        ]);
 
 
                         if (Cache::has($cache_key)) {

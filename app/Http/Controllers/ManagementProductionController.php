@@ -36,7 +36,10 @@ class ManagementProductionController extends Controller
         $production_order->cut = $request->input('cut');
         $production_order->status = $request->input('status');
         $production_order->production_place = $request->input('production_place');
-        $production_order->supplier_id = $request->integer('supplier_id');
+
+        if ($request->input('supplier_id')) {
+            $production_order->supplier_id = $request->integer('supplier_id');
+        }
 
         $production_order->save();
 

@@ -472,14 +472,6 @@ class SupplierController extends Controller
                     'account_number' => $account_bank_data['account_number'],
                 ]);
 
-                logger()->debug('Cuenta bancaria creada', [
-                    'id' => $bank_account->id,
-                    'model_id' => $bank_account->model_id,
-                    'model_type' => $bank_account->model_type,
-                    'bank_id' => $bank_account->bank_id,
-                    'account_type_id' => $bank_account->account_type_id,
-                ]);
-
                 if ($request->hasFile('account_bank.bank_certificate.file')) {
 
                     app(FileService::class)->save(

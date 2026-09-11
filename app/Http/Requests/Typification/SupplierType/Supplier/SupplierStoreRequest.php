@@ -145,8 +145,6 @@ class SupplierStoreRequest extends FormRequest
 
             $file = $this->file('account_bank.bank_certificate.file');
 
-            logger($file);
-
             if (! $file) {
                 return;
             }
@@ -155,8 +153,6 @@ class SupplierStoreRequest extends FormRequest
                 $file->getClientOriginalName(),
                 PATHINFO_FILENAME
             );
-
-            logger($file_name);
 
             $normalize = function ($value) {
                 return mb_strtoupper(

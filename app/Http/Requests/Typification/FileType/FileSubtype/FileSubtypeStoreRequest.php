@@ -26,7 +26,6 @@ class FileSubtypeStoreRequest extends FormRequest
 
     public function rules(): array
     {
-        logger($this);
 
         return [
             'file_type_id' => ['required', 'exists:subitems,id,item_id,'.FileType::ITEM_ID],

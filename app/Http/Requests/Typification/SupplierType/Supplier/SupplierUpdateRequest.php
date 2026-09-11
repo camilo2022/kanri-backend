@@ -32,8 +32,6 @@ class SupplierUpdateRequest extends FormRequest
     public function rules(): array
     {
 
-        logger($this);
-
         $supplier_type = SupplierType::find($this->input('supplier_type_id'));
 
         $rules = [

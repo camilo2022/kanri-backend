@@ -2,10 +2,10 @@
 
 namespace App\Providers;
 
-use App\Models\User;
-use Illuminate\Support\ServiceProvider;
+use App\Models\Report;
+use App\Policies\ReportPolicy;
 use Illuminate\Support\Facades\Gate;
-use Spatie\Permission\Models\Permission;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -17,9 +17,8 @@ class AppServiceProvider extends ServiceProvider
         //
     }
 
-
     public function boot(): void
     {
-        Gate::define('viewPulse', fn() => true);
+        Gate::policy(Report::class, ReportPolicy::class);
     }
 }

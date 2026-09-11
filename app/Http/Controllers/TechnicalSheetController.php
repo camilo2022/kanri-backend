@@ -39,6 +39,7 @@ class TechnicalSheetController extends Controller
                 'yoke_type',
                 'back_type',
                 'technical_sheet_details',
+                'technical_sheet_details_processes',
                 'pattern_maker' => ['person', 'position'],
                 'supplies' => ['supply_type'],
                 'product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']],

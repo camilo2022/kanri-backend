@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphToMany;
-use OwenIt\Auditing\Contracts\Auditable;
-use OwenIt\Auditing\Auditable as Auditing;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Support\Str;
+use OwenIt\Auditing\Auditable as Auditing;
+use OwenIt\Auditing\Contracts\Auditable;
 
 class TechnicalSheet extends Model implements Auditable
 {
@@ -19,8 +19,11 @@ class TechnicalSheet extends Model implements Auditable
     protected $table = 'technical_sheets';
 
     public const PENDING = 'Pendiente';
+
     public const REVIEW = 'En revision';
+
     public const APPROVED = 'Aprobado';
+
     public const CANCELLED = 'Cancelado';
 
     protected $fillable = [
@@ -43,7 +46,7 @@ class TechnicalSheet extends Model implements Auditable
         'number_of_buttons',
         'description',
         'observation',
-        'status'
+        'status',
     ];
 
     protected $auditInclude = [
@@ -66,12 +69,12 @@ class TechnicalSheet extends Model implements Auditable
         'number_of_buttons',
         'description',
         'observation',
-        'status'
+        'status',
     ];
 
-
     protected $casts = [
-        'physical_sample' => 'boolean'
+        'date' => 'date',
+        'physical_sample' => 'boolean',
     ];
 
     protected static function booted()
@@ -179,6 +182,12 @@ class TechnicalSheet extends Model implements Auditable
         return $this->hasMany(TechnicalSheetDetail::class);
     }
 
+    public function technical_sheet_details_processes(): HasMany
+    {
+        return $this->hasMany(TechnicalSheetDetail::class)
+            ->where('model_type', Process::class);
+    }
+
     public function production_orders(): HasMany
     {
         return $this->hasMany(ProductionOrder::class);
@@ -187,16 +196,18 @@ class TechnicalSheet extends Model implements Auditable
     public function scopeSearch(Builder $query, ?string $search = null): Builder
     {
         $search = trim((string) $search);
-        if ($search === '') return $query;
+        if ($search === '') {
+            return $query;
+        }
 
         $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
 
         return $query->where(function (Builder $q) use ($terms) {
             foreach ($terms as $term) {
                 $q->orWhere(function (Builder $sq) use ($term) {
-                    $sq->orWhere('name', 'LIKE', '%' . $term . '%')
-                        ->orWhere('title', 'LIKE', '%' . $term . '%')
-                        ->orWhere('description', 'LIKE', '%' . $term . '%');
+                    $sq->orWhere('name', 'LIKE', '%'.$term.'%')
+                        ->orWhere('title', 'LIKE', '%'.$term.'%')
+                        ->orWhere('description', 'LIKE', '%'.$term.'%');
                 });
             }
         });
@@ -208,7 +219,7 @@ class TechnicalSheet extends Model implements Auditable
             self::PENDING,
             self::REVIEW,
             self::APPROVED,
-            self::CANCELLED
+            self::CANCELLED,
         ];
     }
 }

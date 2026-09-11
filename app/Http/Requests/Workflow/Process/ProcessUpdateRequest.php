@@ -34,6 +34,7 @@ class ProcessUpdateRequest extends FormRequest
             'settings' => ['required', 'array'],
             'settings.subprocesses' => ['required', 'boolean'],
             'settings.in_technical_sheet' => ['required', 'boolean'],
+            'settings.in_production_order' => ['required', 'boolean'],
         ];
     }
 
@@ -60,6 +61,7 @@ class ProcessUpdateRequest extends FormRequest
             'settings' => 'Configuraciones',
             'settings.subprocesses' => 'Subprocesos',
             'settings.in_technical_sheet' => 'Aplica a Ficha Técnica',
+            'settings.in_production_order' => 'Aplica a Orden de Producción',
         ];
     }
 

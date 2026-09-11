@@ -42,7 +42,6 @@ class TransformationStoreRequest extends FormRequest
 
     public function rules(): array
     {
-        logger($this);
         return [
             'technical_sheet_id' => ['required', 'exists:technical_sheets,id'],
             'reasigned_curve' => ['nullable', 'boolean'],
@@ -194,14 +193,12 @@ class TransformationStoreRequest extends FormRequest
             }
 
             $product_stara = $this->input('product_stara');
-            logger($product_stara);
 
             if (!empty($product_stara)) {
 
                 if (
                     Product::where('code', $product_stara['code'] ?? null)->exists()
                 ) {
-                    logger('Ingreso');
                     $validator->errors()->add(
                         "production_order_details..Product.STARA.model_id",
                         'El código del producto STARA ya existe.'

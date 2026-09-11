@@ -43,6 +43,7 @@ class TechnicalSheetResource extends JsonResource
                 'updated_at' => $this->formatDate($this->updated_at),
                 'deleted_at' => $this->formatDate($this->deleted_at),
                 'technical_sheet_details' => $this->technical_sheet_details,
+                'technical_sheet_details_processes' => $this->technical_sheet_details_processes,
                 'supplies' => $this->supplies,
                 'pattern_maker' => $this->pattern_maker,
                 'product' => $this->product,

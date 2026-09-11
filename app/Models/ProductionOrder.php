@@ -24,6 +24,12 @@ class ProductionOrder extends Model implements Auditable
 
     public const CANCELLED = 'Cancelado';
 
+    public const NACIONAL = 'NACIONAL';
+
+    public const MEDELLIN = 'MEDELLIN';
+
+    public const STARA = 'STARA';
+
     protected $fillable = [
         'technical_sheet_id',
         'model_id',
@@ -141,6 +147,15 @@ class ProductionOrder extends Model implements Auditable
             self::PENDING,
             self::CANCELLED,
             self::APPROVED,
+        ];
+    }
+
+    public static function destinations()
+    {
+        return [
+            self::NACIONAL,
+            self::MEDELLIN,
+            self::STARA,
         ];
     }
 }

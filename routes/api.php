@@ -35,6 +35,7 @@ use App\Http\Controllers\PositionController;
 use App\Http\Controllers\ProcessController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductionOrderController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RiskManagerController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SilhouetteController;
@@ -400,6 +401,15 @@ Route::prefix('/products')->group(function () {
     });
 });
 
+Route::prefix('/reports')->group(function () {
+    Route::controller(ReportController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:reports.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:reports.find']);
+        Route::post('/{id}/generate', 'generate')->middleware(['auth:sanctum']);
+        Route::post('/{id}/export', 'export')->middleware(['auth:sanctum']);
+    });
+});
+
 Route::prefix('/risk_managers')->group(function () {
     Route::controller(RiskManagerController::class)->group(function () {
         Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:risk_managers.all|employees.store|employees.update']);
@@ -432,7 +442,7 @@ Route::prefix('/technical_sheets')->group(function () {
     });
     Route::prefix('/production_orders')->group(function () {
         Route::controller(ProductionOrderController::class)->group(function () {
-            Route::get('/all/{technical_sheet_id}', 'all')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.all']);
+            Route::get('/all/{technical_sheet_id?}', 'all')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.all']);
             Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.find']);
             Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.store']);
             Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.update']);

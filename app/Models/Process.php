@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
+use OwenIt\Auditing\Contracts\Auditable;
 
 class Process extends Model implements Auditable
 {
@@ -24,19 +24,25 @@ class Process extends Model implements Auditable
         'item_id',
         'name',
         'description',
-        'settings'
+        'settings',
     ];
 
     protected $auditInclude = [
         'item_id',
         'name',
         'description',
-        'settings'
+        'settings',
     ];
 
     protected $casts = [
-        'settings' => 'object'
+        'settings' => 'object',
     ];
+
+    public const PENDING = 'Pendiente';
+
+    public const REVIEW = 'En revision';
+
+    public const APPROVED = 'Aprobado';
 
     protected static function booted()
     {
@@ -76,18 +82,29 @@ class Process extends Model implements Auditable
     public function scopeSearch(Builder $query, ?string $search = null): Builder
     {
         $search = trim((string) $search);
-        if ($search === '') return $query;
+        if ($search === '') {
+            return $query;
+        }
 
         $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
 
         return $query->where(function (Builder $q) use ($terms) {
             foreach ($terms as $term) {
-                $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $term) . '%';
+                $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $term).'%';
                 $q->where(function (Builder $sq) use ($like) {
                     $sq->orWhere('name', 'LIKE', $like)
                         ->orWhere('description', 'LIKE', $like);
                 });
             }
         });
+    }
+
+    public static function statuses()
+    {
+        return [
+            self::PENDING,
+            self::REVIEW,
+            self::APPROVED,
+        ];
     }
 }

@@ -1,0 +1,532 @@
+{
+    "model": "App\\Models\\TechnicalSheet",
+    "fields": {
+        "product": {
+            "label": "Producto",
+            "fields": {
+                "reference": {
+                    "label": "Referencia",
+                    "data_key": "product.code"
+                },
+                "category_id": {
+                    "label": "Categoría",
+                    "data_key": "product.subcategory.category.0.name"
+                },
+                "trademark_id": {
+                    "label": "Marca",
+                    "data_key": "product.trademark.name"
+                },
+                "subcategory_id": {
+                    "label": "Subcategoría",
+                    "data_key": "product.subcategory.name"
+                },
+                "group": {
+                    "label": "Grupo",
+                    "data_key": "product.trademark.group.0.name"
+                }
+            }
+        },
+        "technical_sheet": {
+            "label": "Ficha Técnica",
+            "fields": {
+                "code": {
+                    "label": "Código",
+                    "data_key": "code"
+                },
+                "date": {
+                    "label": "Fecha",
+                    "data_key": "date",
+                    "display": {
+                        "type": "date",
+                        "default": "d-m-Y",
+                        "options": [
+                            {
+                                "value": "d-m-Y",
+                                "label": "dd-mm-yyyy"
+                            },
+                            {
+                                "value": "Y-m-d",
+                                "label": "yyyy-mm-dd"
+                            },
+                            {
+                                "value": "d/m/Y",
+                                "label": "dd/mm/yyyy"
+                            },
+                            {
+                                "value": "Y/m/d",
+                                "label": "yyyy/mm/dd"
+                            },
+                            {
+                                "value": "d-m-y",
+                                "label": "dd-mm-yy"
+                            },
+                            {
+                                "value": "d/m/y",
+                                "label": "dd/mm/yy"
+                            }
+                        ]
+                    }
+                },
+                "color": {
+                    "label": "Color",
+                    "data_key": "color",
+                    "display": {
+                        "type": "relation",
+                        "default": "name",
+                        "options": [
+                            {
+                                "value": "name",
+                                "label": "Nombre"
+                            },
+                            {
+                                "value": "code_name",
+                                "label": "Código - Nombre",
+                                "paths": [
+                                    "settings.code",
+                                    "name"
+                                ],
+                                "separator": " - "
+                            }
+                        ]
+                    }
+                },
+                "status": {
+                    "label": "Estado",
+                    "data_key": "status",
+                    "display": {
+                        "type": "status",
+                        "default": "badge",
+                        "styles": {
+                            "Pendiente": {
+                                "background": "#FEF3C7",
+                                "color": "#92400E",
+                                "borderLeft": "4px solid #F59E0B"
+                            },
+                            "En revision": {
+                                "background": "#DBEAFE",
+                                "color": "#1D4ED8",
+                                "borderLeft": "4px solid #3B82F6"
+                            },
+                            "Aprobado": {
+                                "background": "#DCFCE7",
+                                "color": "#166534",
+                                "borderLeft": "4px solid #22C55E"
+                            },
+                            "Cancelado": {
+                                "background": "#FEE2E2",
+                                "color": "#991B1B",
+                                "borderLeft": "4px solid #EF4444"
+                            }
+                        }
+                    }
+                },
+                "subgroup": {
+                    "label": "Subgrupo",
+                    "data_key": "subgroup.name"
+                },
+                "back_type": {
+                    "label": "Tipo de Trasero",
+                    "data_key": "back_type",
+                    "display": {
+                        "type": "relation",
+                        "default": "name",
+                        "options": [
+                            {
+                                "value": "name",
+                                "label": "Nombre"
+                            },
+                            {
+                                "value": "code_name",
+                                "label": "Código - Nombre",
+                                "paths": [
+                                    "settings.code",
+                                    "name"
+                                ],
+                                "separator": " - "
+                            }
+                        ]
+                    }
+                },
+                "boot_type": {
+                    "label": "Tipo de Bota",
+                    "data_key": "boot_type",
+                    "display": {
+                        "type": "relation",
+                        "default": "name",
+                        "options": [
+                            {
+                                "value": "name",
+                                "label": "Nombre"
+                            },
+                            {
+                                "value": "code_name",
+                                "label": "Código - Nombre",
+                                "paths": [
+                                    "settings.code",
+                                    "name"
+                                ],
+                                "separator": " - "
+                            }
+                        ]
+                    }
+                },
+                "wash_tone": {
+                    "label": "Tono de Lavado",
+                    "data_key": "wash_tone",
+                    "display": {
+                        "type": "relation",
+                        "default": "name",
+                        "options": [
+                            {
+                                "value": "name",
+                                "label": "Nombre"
+                            },
+                            {
+                                "value": "code_name",
+                                "label": "Código - Nombre",
+                                "paths": [
+                                    "settings.code",
+                                    "name"
+                                ],
+                                "separator": " - "
+                            }
+                        ]
+                    }
+                },
+                "yoke_type": {
+                    "label": "Tipo de Cotilla",
+                    "data_key": "yoke_type",
+                    "display": {
+                        "type": "relation",
+                        "default": "name",
+                        "options": [
+                            {
+                                "value": "name",
+                                "label": "Nombre"
+                            },
+                            {
+                                "value": "code_name",
+                                "label": "Código - Nombre",
+                                "paths": [
+                                    "settings.code",
+                                    "name"
+                                ],
+                                "separator": " - "
+                            }
+                        ]
+                    }
+                },
+                "collection": {
+                    "label": "Colección",
+                    "data_key": "collection",
+                    "display": {
+                        "type": "relation",
+                        "default": "name",
+                        "options": [
+                            {
+                                "value": "name",
+                                "label": "Nombre"
+                            },
+                            {
+                                "value": "code_name",
+                                "label": "Código - Nombre",
+                                "paths": [
+                                    "settings.code",
+                                    "name"
+                                ],
+                                "separator": " - "
+                            }
+                        ]
+                    }
+                },
+                "created_at": {
+                    "label": "Fecha de Creación",
+                    "data_key": "created_at",
+                    "display": {
+                        "type": "date",
+                        "default": "d-m-Y h:i A",
+                        "options": [
+                            {
+                                "value": "d-m-Y h:i A",
+                                "label": "dd-mm-yyyy hh:mm AM/PM"
+                            },
+                            {
+                                "value": "Y-m-d h:i A",
+                                "label": "yyyy-mm-dd hh:mm AM/PM"
+                            },
+                            {
+                                "value": "d/m/Y h:i A",
+                                "label": "dd/mm/yyyy hh:mm AM/PM"
+                            },
+                            {
+                                "value": "Y/m/d h:i A",
+                                "label": "yyyy/mm/dd hh:mm AM/PM"
+                            }
+                        ]
+                    }
+                },
+                "updated_at": {
+                    "label": "Fecha de Actualización",
+                    "data_key": "updated_at",
+                    "display": {
+                        "type": "date",
+                        "default": "d-m-Y h:i A",
+                        "options": [
+                            {
+                                "value": "d-m-Y h:i A",
+                                "label": "dd-mm-yyyy hh:mm AM/PM"
+                            },
+                            {
+                                "value": "Y-m-d h:i A",
+                                "label": "yyyy-mm-dd hh:mm AM/PM"
+                            },
+                            {
+                                "value": "d/m/Y h:i A",
+                                "label": "dd/mm/yyyy hh:mm AM/PM"
+                            },
+                            {
+                                "value": "Y/m/d h:i A",
+                                "label": "yyyy/mm/dd hh:mm AM/PM"
+                            }
+                        ]
+                    }
+                },
+                "description": {
+                    "label": "Descripción",
+                    "data_key": "description"
+                },
+                "observation": {
+                    "label": "Observación",
+                    "data_key": "observation"
+                },
+                "garment_type": {
+                    "label": "Tipo de Prenda",
+                    "data_key": "garment_type",
+                    "display": {
+                        "type": "relation",
+                        "default": "name",
+                        "options": [
+                            {
+                                "value": "name",
+                                "label": "Nombre"
+                            },
+                            {
+                                "value": "code_name",
+                                "label": "Código - Nombre",
+                                "paths": [
+                                    "settings.code",
+                                    "name"
+                                ],
+                                "separator": " - "
+                            }
+                        ]
+                    }
+                },
+                "waistband_type": {
+                    "label": "Tipo de Pretina",
+                    "data_key": "waistband_type",
+                    "display": {
+                        "type": "relation",
+                        "default": "name",
+                        "options": [
+                            {
+                                "value": "name",
+                                "label": "Nombre"
+                            },
+                            {
+                                "value": "code_name",
+                                "label": "Código - Nombre",
+                                "paths": [
+                                    "settings.code",
+                                    "name"
+                                ],
+                                "separator": " - "
+                            }
+                        ]
+                    }
+                },
+                "physical_sample": {
+                    "label": "Muestra Física",
+                    "data_key": "physical_sample",
+                    "display": {
+                        "type": "boolean",
+                        "default": "yes_no",
+                        "options": [
+                            {
+                                "value": "yes_no",
+                                "label": "Sí / No"
+                            },
+                            {
+                                "value": "true_false",
+                                "label": "True / False"
+                            }
+                        ]
+                    }
+                },
+                "number_of_buttons": {
+                    "label": "Número de Botones",
+                    "data_key": "number_of_buttons",
+                    "display": {
+                        "type": "number",
+                        "default": "integer"
+                    }
+                },
+                "measure_of_waistband": {
+                    "label": "Medida de Pretina",
+                    "data_key": "measure_of_waistband",
+                    "display": {
+                        "type": "number",
+                        "default": "decimal"
+                    }
+                }
+            }
+        },
+        "process": {
+            "label": "Procesos",
+            "dynamic": true,
+            "url": "/workflow/processes/all",
+            "params": {
+                "in_technical_sheet": true
+            },
+            "display": {
+                "type": "status",
+                "default": "badge",
+                "styles": {
+                    "_default": {
+                        "background": "#F1F5F9",
+                        "color": "#64748B"
+                    },
+                    "Pendiente": {
+                        "background": "#FEF3C7",
+                        "color": "#92400E",
+                        "borderLeft": "4px solid #F59E0B"
+                    },
+                    "En revision": {
+                        "background": "#DBEAFE",
+                        "color": "#1D4ED8",
+                        "borderLeft": "4px solid #3B82F6"
+                    },
+                    "Aprobado": {
+                        "background": "#DCFCE7",
+                        "color": "#166534",
+                        "borderLeft": "4px solid #22C55E"
+                    }
+                }
+            }
+        }
+    },
+    "filters": {
+        "status": {
+            "data": "statusses",
+            "type": "select",
+            "label": "Estado",
+            "data_key": "status",
+            "show_by_default": true
+        },
+        "created_at": {
+            "data": "created_at",
+            "type": "date_range",
+            "label": "Fecha de creación",
+            "data_key": "created_at",
+            "show_by_default": false
+        },
+        "App\\Models\\Color": {
+            "data": "colors",
+            "type": "select",
+            "label": "Color",
+            "data_key": "color_id",
+            "show_by_default": false
+        },
+        "App\\Models\\Group": {
+            "data": "groups",
+            "type": "select",
+            "label": "Grupo",
+            "data_key": "product.trademark.group.id",
+            "show_by_default": false
+        },
+        "App\\Models\\BackType": {
+            "data": "back_types",
+            "type": "select",
+            "label": "Tipo de Trasero",
+            "data_key": "back_type_id",
+            "show_by_default": false
+        },
+        "App\\Models\\BootType": {
+            "data": "boot_types",
+            "type": "select",
+            "label": "Tipo de Bota",
+            "data_key": "boot_type_id",
+            "show_by_default": false
+        },
+        "App\\Models\\Category": {
+            "data": "categories",
+            "type": "select",
+            "label": "Categoría",
+            "data_key": "product.subcategory.category.id",
+            "show_by_default": false
+        },
+        "App\\Models\\Subgroup": {
+            "data": "subgroups",
+            "type": "select",
+            "label": "Subgrupo",
+            "data_key": "subgroup_id",
+            "show_by_default": false
+        },
+        "App\\Models\\WashTone": {
+            "data": "wash_tones",
+            "type": "select",
+            "label": "Tono de Lavado",
+            "data_key": "wash_tone_id",
+            "show_by_default": false
+        },
+        "App\\Models\\YokeType": {
+            "data": "yoke_types",
+            "type": "select",
+            "label": "Tipo de Cotilla",
+            "data_key": "yoke_type_id",
+            "show_by_default": false
+        },
+        "App\\Models\\Trademark": {
+            "data": "trademarks",
+            "type": "select",
+            "label": "Marca",
+            "data_key": "product.trademark_id",
+            "show_by_default": true
+        },
+        "App\\Models\\Collection": {
+            "data": "collections",
+            "type": "select",
+            "label": "Colección",
+            "data_key": "collection_id",
+            "show_by_default": true
+        },
+        "App\\Models\\GarmentType": {
+            "data": "garment_types",
+            "type": "select",
+            "label": "Tipo de Prenda",
+            "data_key": "garment_type_id",
+            "show_by_default": false
+        },
+        "App\\Models\\Subcategory": {
+            "data": "subcategories",
+            "type": "select",
+            "label": "Subcategoría",
+            "data_key": "product.subcategory_id",
+            "show_by_default": false
+        },
+        "App\\Models\\WaistbandType": {
+            "data": "waistband_types",
+            "type": "select",
+            "label": "Tipo de Pretina",
+            "data_key": "waistband_type_id",
+            "show_by_default": false
+        },
+        "App\\Models\\Process": {
+            "data": "processes",
+            "type": "select",
+            "label": "Procesos",
+            "data_key": "technical_sheet_details.status",
+            "show_by_default": true
+        }
+    }
+}
