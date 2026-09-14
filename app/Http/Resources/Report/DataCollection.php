@@ -32,7 +32,6 @@ class DataCollection extends JsonResource
             });
 
         $labels = [];
-        $styles = [];
 
         foreach ($this->fields as $item) {
 
@@ -43,17 +42,10 @@ class DataCollection extends JsonResource
             }
 
             if (preg_match('/^(\d+)_(.+)$/', $data_key, $matches)) {
-                $process_name = $matches[2];
 
-                $labels[] = $process_name;
+                $name = $matches[2];
 
-                $process_styles = data_get($this->configured_fields, 'process.display.styles', []);
-
-                $process_styles = json_decode(json_encode($process_styles), true);
-
-                if (! empty($process_styles)) {
-                    $styles[$process_name] = $process_styles;
-                }
+                $labels[] = $name;
 
                 continue;
             }
@@ -75,14 +67,6 @@ class DataCollection extends JsonResource
 
             $labels[] = $label;
 
-            $field_styles = data_get($configured_field, 'display.styles', []);
-
-            $field_styles = json_decode(json_encode($field_styles), true);
-
-            if (! empty($field_styles)) {
-                $styles[$label] = $field_styles;
-            }
-
         }
 
         $data = collect($this->resource)
@@ -95,6 +79,7 @@ class DataCollection extends JsonResource
                     $data_key = data_get($item, 'data_key');
                     $format = data_get($item, 'format');
                     $display = data_get($item, 'display');
+                    $key = data_get($item, 'key');
 
                     if (! $data_key) {
                         continue;
@@ -102,13 +87,79 @@ class DataCollection extends JsonResource
 
                     if (preg_match('/^(\d+)_(.+)$/', $data_key, $matches)) {
 
-                        $process_id = (int) $matches[1];
-                        $process_name = $matches[2];
+                        $configured_field_aux = collect($this->configured_fields)->get($key);
 
-                        $detail = collect($report->technical_sheet_details_processes ?? [])
-                            ->firstWhere('model_id', $process_id);
+                        $item_id = (int) $matches[1];
+                        $item_name = $matches[2];
 
-                        $row[$process_name] = data_get($detail, 'status', '-');
+                        $model = data_get($configured_field_aux, 'model');
+
+                        $value = null;
+
+                        $value_relation = data_get($configured_field_aux, 'relations.value');
+                        $value_relation_path = data_get($value_relation, 'relation');
+                        $value_property_relation = data_get($value_relation, 'property_relation');
+                        $value_property = data_get($value_relation, 'property');
+
+                        if ($value_relation_path) {
+
+                            $value_detail = collect(data_get($report, $value_relation_path) ?? []
+                            )->first(function ($detail) use ($item_id, $value_property_relation) {
+                                return (int) data_get($detail, $value_property_relation) === $item_id;
+                            });
+
+                            $value = data_get($value_detail, $value_property);
+
+                        } else {
+
+                            $value_detail = collect($this->resource ?? [])
+                                ->first(function ($detail) use ($item_id, $model, $report) {
+                                    return data_get($detail, 'production_order_id') === data_get($report, 'production_order_id')
+                                        && (int) data_get($detail, 'model_id') === $item_id
+                                        && data_get($detail, 'model_type') === $model;
+                                });
+
+                            $value = data_get($value_detail, 'settings.date');
+                            $value = data_get($value_detail, $value_property);
+                        }
+
+                        $style = null;
+
+                        $style_relation = data_get($configured_field_aux, 'relations.style');
+                        $style_relation_path = data_get($style_relation, 'relation');
+
+                        if ($style_relation_path) {
+                            $style_details = data_get($report, $style_relation_path) ?? [];
+
+                            $style_detail = collect($style_details)->first(function ($detail) use ($item_id, $model, $style_relation) {
+                                return (int) data_get($detail, data_get($style_relation, 'property_relation')) === $item_id && data_get($detail, 'model_type') === $model;
+                            });
+
+                            $status = data_get($style_detail, data_get($style_relation, 'property'));
+
+                            $styles = json_decode(
+                                json_encode(data_get($configured_field_aux, 'display.styles', [])),
+                                true
+                            );
+
+                            $style = $styles[$status]
+                                ?? $styles['default']
+                                ?? [];
+
+                        }
+
+                        if ($format && $value !== null && data_get($configured_field_aux, 'display.type') === 'date') {
+                            if ($value instanceof Carbon) {
+                                $value = $value->format($format);
+                            } else {
+                                $value = Carbon::parse($value)->format($format);
+                            }
+                        }
+
+                        $row[$item_name] = [
+                            'value' => $value,
+                            'style' => $style,
+                        ];
 
                         continue;
                     }
@@ -155,10 +206,63 @@ class DataCollection extends JsonResource
                         }
 
                     } else {
-                        $value = data_get($report, $data_key);
+                        logger()->debug('DATA', [
+                            'REPORT' => $report,
+                            'PRODUCTION_ORDER' => data_get($report, 'production_order'),
+                            'DATA_KEY' => $data_key,
+                            'RESULT' => data_get($report, $data_key),
+                            'PRODUCTION_ORDER_SATELITE' => data_get($report, 'production_order.supplier'),
+                        ]);
+
+                        $value = data_get(
+                            $report,
+                            $data_key,
+                            str_contains($data_key, 'production_order.supplier') ? 'BLESS' : null
+                        );
+
                     }
 
-                    logger([$label, $value]);
+                    if (data_get($configured_field, 'display.type') === 'operation') {
+                        $relation = data_get($configured_field, 'display.value.relation');
+                        $operation = data_get($configured_field, 'display.value.operation');
+                        $property = data_get($configured_field, 'display.value.property');
+
+                        $details = collect(data_get($report, $relation) ?? []);
+
+                        switch (strtoupper($operation)) {
+                            case 'SUM':
+                                $value = $details->sum(function ($detail) use ($property) {
+                                    return (float) data_get($detail, $property, 0);
+                                });
+                                break;
+
+                            case 'COUNT':
+                                $value = $details->count();
+                                break;
+
+                            case 'AVG':
+                                $value = $details->avg(function ($detail) use ($property) {
+                                    return (float) data_get($detail, $property, 0);
+                                });
+                                break;
+
+                            case 'MIN':
+                                $value = $details->min(function ($detail) use ($property) {
+                                    return (float) data_get($detail, $property, 0);
+                                });
+                                break;
+
+                            case 'MAX':
+                                $value = $details->max(function ($detail) use ($property) {
+                                    return (float) data_get($detail, $property, 0);
+                                });
+                                break;
+
+                            default:
+                                $value = null;
+                                break;
+                        }
+                    }
 
                     if ($format && $value instanceof Carbon) {
                         $value = $value->format($format);
@@ -172,7 +276,47 @@ class DataCollection extends JsonResource
                         $value = $value ? 'True' : 'False';
                     }
 
-                    $row[$label] = $value;
+                    $row[$label]['value'] = $value;
+
+                    $style = null;
+
+                    $style_relation = data_get($configured_field, 'relations.style');
+                    $style_relation_path = data_get($style_relation, 'relation');
+                    $style_relation_property = data_get($style_relation, 'property');
+
+                    if ($style_relation_path) {
+                        $style_detail = data_get(data_get($report, $style_relation_path), data_get($style_relation, 'property'));
+
+                        logger()->debug('DETAILS', [
+                            'STYLE DETAIL' => $style_detail,
+                        ]);
+
+                        $styles = json_decode(
+                            json_encode(data_get($configured_field, 'display.styles', [])),
+                            true
+                        );
+
+                        $style = $styles[$style_detail]
+                            ?? $styles['default']
+                            ?? [];
+                    } else {
+                        if ($style_relation_property) {
+
+                            $style_detail = data_get($report, $style_relation_property);
+
+                            $styles = json_decode(
+                                json_encode(data_get($configured_field, 'display.styles', [])),
+                                true
+                            );
+
+                            $style = $styles[$style_detail]
+                                ?? $styles['default']
+                                ?? [];
+
+                        }
+                    }
+
+                    $row[$label]['style'] = $style;
                 }
 
                 return $row;
@@ -182,7 +326,6 @@ class DataCollection extends JsonResource
         return [
             'data' => $data,
             'fields' => $labels,
-            'styles' => $styles,
         ];
 
     }

@@ -17,13 +17,10 @@ class ReportExport implements FromArray, WithEvents, WithHeadings
 
     protected array $fields;
 
-    protected array $styles;
-
-    public function __construct(array $data, array $fields, array $styles = [])
+    public function __construct(array $data, array $fields)
     {
         $this->data = $data;
         $this->fields = $fields;
-        $this->styles = $styles;
     }
 
     public function headings(): array
@@ -37,7 +34,18 @@ class ReportExport implements FromArray, WithEvents, WithHeadings
             ->map(function ($row) {
                 return collect($this->fields)
                     ->map(function ($field) use ($row) {
-                        return $row[$field] ?? '-';
+
+                        $value = data_get($row, "{$field}.value");
+
+                        logger()->debug('EXPORT VALUE', [
+                            'field' => $field,
+                            'value' => $value,
+                            'type' => gettype($value),
+                        ]);
+
+                        return $value === null || $value === 0
+                            ? ''
+                            : $value;
                     })
                     ->toArray();
             })
@@ -82,7 +90,7 @@ class ReportExport implements FromArray, WithEvents, WithHeadings
 
                 $sheet = $event->sheet->getDelegate();
 
-                $sheet->setTitle('Resultados');
+                $sheet->setTitle('REPORTE');
 
                 $last_column = $this->getLastColumn();
                 $last_row = count($this->data) + 1;
@@ -96,9 +104,14 @@ class ReportExport implements FromArray, WithEvents, WithHeadings
                         ],
                         'fill' => [
                             'fillType' => Fill::FILL_SOLID,
-                            'startColor' => ['rgb' => '24247F'],
+                            'startColor' => [
+                                'rgb' => '24247F',
+                            ],
                         ],
-                        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+                        'alignment' => [
+                            'horizontal' => Alignment::HORIZONTAL_CENTER,
+                            'vertical' => Alignment::VERTICAL_CENTER,
+                        ],
                         'borders' => [
                             'allBorders' => [
                                 'borderStyle' => Border::BORDER_THIN,
@@ -109,25 +122,26 @@ class ReportExport implements FromArray, WithEvents, WithHeadings
                         ],
                     ]);
 
-                $sheet
-                    ->getStyle("A1:{$last_column}{$last_row}")
-                    ->applyFromArray([
-                        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
-                        'borders' => [
-                            'allBorders' => [
-                                'borderStyle' => Border::BORDER_THIN,
-                                'color' => [
-                                    'rgb' => '000000',
+                if ($last_row >= 2) {
+                    $sheet
+                        ->getStyle("A2:{$last_column}{$last_row}")
+                        ->applyFromArray([
+                            'alignment' => [
+                                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                                'vertical' => Alignment::VERTICAL_CENTER,
+                            ],
+                            'borders' => [
+                                'allBorders' => [
+                                    'borderStyle' => Border::BORDER_THIN,
+                                    'color' => [
+                                        'rgb' => '000000',
+                                    ],
                                 ],
                             ],
-                        ],
-                    ]);
+                        ]);
+                }
 
                 foreach ($this->fields as $index => $field) {
-
-                    if (! isset($this->styles[$field])) {
-                        continue;
-                    }
 
                     $column = Coordinate::stringFromColumnIndex(
                         $index + 1
@@ -135,21 +149,19 @@ class ReportExport implements FromArray, WithEvents, WithHeadings
 
                     foreach ($this->data as $row_index => $row) {
 
-                        $value = $row[$field] ?? 'null';
+                        $style = data_get($row, "{$field}.style");
 
-                        if ($value === null) {
-                            continue;
-                        }
-
-                        $style = $this->styles[$field][$value] ?? $this->styles[$field]['_default'] ?? null;
-
-                        if (! $style) {
+                        if (empty($style)) {
                             continue;
                         }
 
                         $excel_row = $row_index + 2;
 
-                        $this->applyCellStyle($sheet, "{$column}{$excel_row}", $style);
+                        $this->applyCellStyle(
+                            $sheet,
+                            "{$column}{$excel_row}",
+                            $style
+                        );
                     }
                 }
 

@@ -51,6 +51,7 @@ class ProductionOrderDetail extends Model implements Auditable
         return $this->hasMany(ProductionOrderDetailQuantities::class);
     }
 
+
     public function scopeSearch(Builder $query, ?string $search = null): Builder
     {
         $search = trim((string) $search);

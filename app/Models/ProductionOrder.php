@@ -110,6 +110,18 @@ class ProductionOrder extends Model implements Auditable
         return $this->hasMany(ProductionOrderDetail::class);
     }
 
+    public function production_order_details_processes(): HasMany
+    {
+        return $this->hasMany(ProductionOrderDetail::class)
+            ->where('model_type', Process::class);
+    }
+
+    public function production_order_details_product(): HasMany
+    {
+        return $this->hasMany(ProductionOrderDetail::class)
+            ->where('model_type', Product::class);
+    }
+
     public function strokes()
     {
         return $this->morphOne(File::class, 'model')
@@ -117,7 +129,7 @@ class ProductionOrder extends Model implements Auditable
             ->where('file_subtype_id', 13);
     }
 
-    public function satellite(): BelongsTo
+    public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class)->withTrashed();
     }

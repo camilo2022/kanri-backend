@@ -273,7 +273,7 @@ class CollectionController extends Controller
     public function find(CollectionFindRequest $request, $id)
     {
         try {
-            $collection = Collection::with(['item', 'technical_sheets' => ['technical_sheet_details', 'product' => ['trademark' => ['sizes'], 'subcategory' => ['category']], 'garment_type', 'wash_tone', 'boot_type',  'photo_d', 'photo_t', 'products', 'production_orders' => ['production_order_details' => ['production_order_detail_quantities', 'model'], 'fabric' => ['model'], 'color', 'model']]])
+            $collection = Collection::with(['item', 'technical_sheets' => ['technical_sheet_details', 'product' => ['trademark' => ['sizes'], 'subcategory' => ['category']], 'garment_type', 'wash_tone', 'boot_type',  'photo_d', 'photo_t', 'products', 'production_orders' => ['production_order_details' => ['production_order_detail_quantities', 'model'], 'fabric' => ['model'], 'color', 'supplier', 'model']]])
                 ->findOrFail($id);
 
             return $this->successResponse(

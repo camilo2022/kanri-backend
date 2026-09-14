@@ -93,6 +93,13 @@
                 "status": {
                     "label": "Estado",
                     "data_key": "status",
+                    "relations": {
+                        "style": {
+                            "relation": null,
+                            "property_relation": null,
+                            "property": "status"
+                        }
+                    },
                     "display": {
                         "type": "status",
                         "default": "badge",
@@ -381,20 +388,33 @@
                 }
             }
         },
-        "process": {
+        "processes": {
             "label": "Procesos",
             "dynamic": true,
+            "model": "App\\Models\\Process",
             "url": "/workflow/processes/all",
             "params": {
                 "in_technical_sheet": true
             },
+            "relations": {
+                "style": {
+                    "relation": "technical_sheet_details_processes",
+                    "property_relation": "model_id",
+                    "property": "status"
+                },
+                "value": {
+                    "relation": "technical_sheet_details_processes",
+                    "property_relation": "model_id",
+                    "property": "status"
+                }
+            },
             "display": {
                 "type": "status",
-                "default": "badge",
                 "styles": {
-                    "_default": {
+                    "default": {
                         "background": "#F1F5F9",
-                        "color": "#64748B"
+                        "color": "#64748B",
+                        "borderLeft": "4px solid #CBD5E1"
                     },
                     "Pendiente": {
                         "background": "#FEF3C7",

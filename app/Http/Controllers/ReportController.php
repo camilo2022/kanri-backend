@@ -246,7 +246,6 @@ class ReportController extends Controller
         }
 
         if ($data === 'processes') {
-
             $process_filters = collect($values)
                 ->map(function ($value) {
 
@@ -299,7 +298,6 @@ class ReportController extends Controller
 
             $configured_fields = $report->settings->fields ?? [];
 
-
             $configured_filters = $report->settings->filters ?? [];
 
             $available_filters = collect($configured_filters)
@@ -317,9 +315,27 @@ class ReportController extends Controller
 
             $query = $report->settings->model::query();
 
+            $base_filters = $report->settings->base_filters ?? [];
+
+            foreach ($base_filters as $column => $config) {
+
+                $operator = data_get($config, 'operator', '=');
+                $value = data_get($config, 'value');
+
+                $query->where($column, $operator, $value);
+            }
+
             foreach ($filters as $filter_key => $values) {
+
                 $filter_config = $available_filters[$filter_key];
-                $query = $this->apply_filter($query, $filter_config['data'], $filter_config['data_key'], $values, $filter_config['type']);
+
+                $query = $this->apply_filter(
+                    $query,
+                    $filter_config['data'],
+                    $filter_config['data_key'],
+                    $values,
+                    $filter_config['type']
+                );
             }
 
             $data = $query->get();
@@ -367,6 +383,16 @@ class ReportController extends Controller
 
             $query = $report->settings->model::query();
 
+            $base_filters = $report->settings->base_filters ?? [];
+
+            foreach ($base_filters as $column => $config) {
+
+                $operator = data_get($config, 'operator', '=');
+                $value = data_get($config, 'value');
+
+                $query->where($column, $operator, $value);
+            }
+
             foreach ($filters as $filter_key => $values) {
 
                 $filter_config = $available_filters[$filter_key];
@@ -376,15 +402,10 @@ class ReportController extends Controller
 
             $data = $query->get();
 
-            $data_export = (new DataCollection(
-                $data,
-                $fields,
-                $configured_fields
-            ))->toArray($request);
+            $data_export = (new DataCollection($data, $fields, $configured_fields))
+                ->toArray($request);
 
-            logger()->debug('DATA REQUEST', [$data_export]);
-
-            return Excel::download(new ReportExport($data_export['data']->toArray(), $data_export['fields'], $data_export['styles']), 'report.xlsx');
+            return Excel::download(new ReportExport($data_export['data']->toArray(), $data_export['fields']), 'report.xlsx');
 
         } catch (\Throwable $e) {
             return $this->errorResponse(

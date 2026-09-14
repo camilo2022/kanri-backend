@@ -1,5 +1,11 @@
 {
     "model": "App\\Models\\ProductionOrderDetail",
+    "base_filters": {
+        "model_type": {
+            "operator": "=",
+            "value": "App\\Models\\Product"
+        }
+    },
     "fields": {
         "product": {
             "label": "Producto",
@@ -93,6 +99,13 @@
                 "status": {
                     "label": "Estado",
                     "data_key": "production_order.technical_sheet.status",
+                    "relations": {
+                        "style": {
+                            "relation": "production_order.technical_sheet",
+                            "property_relation": null,
+                            "property": "status"
+                        }
+                    },
                     "display": {
                         "type": "status",
                         "default": "badge",
@@ -384,9 +397,22 @@
         "processes": {
             "label": "Procesos",
             "dynamic": true,
+            "model": "App\\Models\\Process",
             "url": "/workflow/processes/all",
             "params": {
                 "in_production_order": true
+            },
+            "relations": {
+                "style": {
+                    "relation": "production_order.technical_sheet.technical_sheet_details",
+                    "property_relation": "model_id",
+                    "property": "status"
+                },
+                "value": {
+                    "relation": "production_order.production_order_details_processes",
+                    "property_relation": "model_id",
+                    "property": "settings.date"
+                }
             },
             "display": {
                 "type": "date",
@@ -418,9 +444,10 @@
                     }
                 ],
                 "styles": {
-                    "_default": {
+                    "default": {
                         "background": "#F1F5F9",
-                        "color": "#64748B"
+                        "color": "#64748B",
+                        "borderLeft": "4px solid #CBD5E1"
                     },
                     "Pendiente": {
                         "background": "#FEF3C7",
@@ -453,7 +480,26 @@
                 },
                 "production_place": {
                     "label": "Lugar de Producción",
-                    "data_key": "production_order.production_place"
+                    "data_key": "production_order.supplier",
+                    "display": {
+                        "type": "relation",
+                        "default": "name",
+                        "options": [
+                            {
+                                "value": "name",
+                                "label": "Nombre"
+                            },
+                            {
+                                "value": "code_name",
+                                "label": "Código - Nombre",
+                                "paths": [
+                                    "settings.code",
+                                    "name"
+                                ],
+                                "separator": " - "
+                            }
+                        ]
+                    }
                 },
                 "efficiency": {
                     "label": "Eficiencia",
@@ -467,11 +513,15 @@
                     "label": "Total Destino",
                     "data_key": "total",
                     "display": {
-                        "type": "number",
-                        "default": "integer"
+                        "type": "operation",
+                        "value": {
+                            "relation": "production_order_detail_quantities",
+                            "operation": "SUM",
+                            "property": "quantity"
+                        }
                     }
                 },
-                "created_at": {
+                "created_at_production_order": {
                     "label": "Fecha Creación Orden Producción",
                     "data_key": "production_order.created_at",
                     "display": {
@@ -497,7 +547,7 @@
                         ]
                     }
                 },
-                "updated_at": {
+                "updated_at_production_order": {
                     "label": "Fecha Actualización Orden Producción",
                     "data_key": "production_order.updated_at",
                     "display": {
@@ -528,12 +578,19 @@
         "sizes": {
             "label": "Tallas",
             "dynamic": true,
+            "model": "App\\Models\\Sizes",
             "params": {
                 "is_finished_product": true
             },
             "url": "/sizes/all",
-            "relation": "production_order_detail_quantities"
-            
+            "relations": {
+                "style": null,
+                "value": {
+                    "relation": "production_order_detail_quantities",
+                    "property_relation": "size_id",
+                    "property": "quantity"
+                }
+            }
         }
     },
     "filters": {
@@ -541,7 +598,7 @@
             "data": "statusses",
             "type": "select",
             "label": "Estado",
-            "data_key": "status",
+            "data_key": "production_order.technical_sheet.status",
             "show_by_default": false
         },
         "destinations": {
@@ -562,98 +619,98 @@
             "data": "colors",
             "type": "select",
             "label": "Color",
-            "data_key": "color_id",
+            "data_key": "production_order.technical_sheet.color_id",
             "show_by_default": false
         },
         "App\\Models\\Group": {
             "data": "groups",
             "type": "select",
             "label": "Grupo",
-            "data_key": "product.trademark.group.id",
+            "data_key": "production_order.technical_sheet.product.trademark.group.id",
             "show_by_default": false
         },
         "App\\Models\\BackType": {
             "data": "back_types",
             "type": "select",
             "label": "Tipo de Trasero",
-            "data_key": "back_type_id",
+            "data_key": "production_order.technical_sheet.back_type_id",
             "show_by_default": false
         },
         "App\\Models\\BootType": {
             "data": "boot_types",
             "type": "select",
             "label": "Tipo de Bota",
-            "data_key": "boot_type_id",
+            "data_key": "production_order.technical_sheet.boot_type_id",
             "show_by_default": false
         },
         "App\\Models\\Category": {
             "data": "categories",
             "type": "select",
             "label": "Categoría",
-            "data_key": "product.subcategory.category.id",
+            "data_key": "production_order.technical_sheet.product.subcategory.category.id",
             "show_by_default": false
         },
         "App\\Models\\Subgroup": {
             "data": "subgroups",
             "type": "select",
             "label": "Subgrupo",
-            "data_key": "subgroup_id",
+            "data_key": "production_order.technical_sheet.subgroup_id",
             "show_by_default": false
         },
         "App\\Models\\WashTone": {
             "data": "wash_tones",
             "type": "select",
             "label": "Tono de Lavado",
-            "data_key": "wash_tone_id",
+            "data_key": "production_order.technical_sheet.wash_tone_id",
             "show_by_default": false
         },
         "App\\Models\\YokeType": {
             "data": "yoke_types",
             "type": "select",
             "label": "Tipo de Cotilla",
-            "data_key": "yoke_type_id",
+            "data_key": "production_order.technical_sheet.yoke_type_id",
             "show_by_default": false
         },
         "App\\Models\\Trademark": {
             "data": "trademarks",
             "type": "select",
             "label": "Marca",
-            "data_key": "product.trademark_id",
+            "data_key": "production_order.technical_sheet.product.trademark_id",
             "show_by_default": true
         },
         "App\\Models\\Collection": {
             "data": "collections",
             "type": "select",
             "label": "Colección",
-            "data_key": "collection_id",
+            "data_key": "production_order.technical_sheet.collection_id",
             "show_by_default": true
         },
         "App\\Models\\GarmentType": {
             "data": "garment_types",
             "type": "select",
             "label": "Tipo de Prenda",
-            "data_key": "garment_type_id",
+            "data_key": "production_order.technical_sheet.garment_type_id",
             "show_by_default": false
         },
         "App\\Models\\Subcategory": {
             "data": "subcategories",
             "type": "select",
             "label": "Subcategoría",
-            "data_key": "product.subcategory_id",
+            "data_key": "production_order.technical_sheet.product.subcategory_id",
             "show_by_default": false
         },
         "App\\Models\\WaistbandType": {
             "data": "waistband_types",
             "type": "select",
             "label": "Tipo de Pretina",
-            "data_key": "waistband_type_id",
+            "data_key": "production_order.technical_sheet.waistband_type_id",
             "show_by_default": false
         },
         "App\\Models\\Process": {
             "data": "processes",
             "type": "select",
             "label": "Procesos",
-            "data_key": "technical_sheet_details.status",
+            "data_key": "production_order.technical_sheet.technical_sheet_details.status",
             "show_by_default": true
         }
     }
