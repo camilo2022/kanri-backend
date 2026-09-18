@@ -199,6 +199,12 @@ class ReportController extends Controller
 
     private function apply_filter($query, string $data, string $data_key, $values, string $type = 'select')
     {
+        logger()->debug('DATA DENTRO', ['QUERY' => $query,
+            'DATA' => $data,
+            'DATA_KEY' => $data_key,
+            'VALUES' => $values,
+            'TYPE' => $type,
+        ]);
         $parts = explode('.', $data_key);
 
         $column = array_pop($parts);
@@ -317,6 +323,8 @@ class ReportController extends Controller
 
             $base_filters = $report->settings->base_filters ?? [];
 
+            $dynamic_filters = $report->settings->dynamic_filters ?? [];
+
             foreach ($base_filters as $column => $config) {
 
                 $operator = data_get($config, 'operator', '=');
@@ -324,6 +332,20 @@ class ReportController extends Controller
 
                 $query->where($column, $operator, $value);
             }
+
+            foreach ($dynamic_filters as $column => $config) {
+
+                $operator = data_get($config, 'operator', '=');
+                $value = $request->input($column);
+
+                if ($value === null) {
+                    continue;
+                }
+
+                $query->where($column, $operator, $value);
+            }
+
+            logger()->debug('QUERY', [$query]);
 
             foreach ($filters as $filter_key => $values) {
 
@@ -340,8 +362,11 @@ class ReportController extends Controller
 
             $data = $query->get();
 
+            $model_type = $request->input('model_type');
+            $model_id = $request->input('model_id');
+
             return $this->successResponse(
-                new DataCollection($data, $fields, $configured_fields),
+                new DataCollection($data, $fields, $configured_fields, data_get($report->settings, 'context'), $model_type, $model_id),
                 $this->getMessage('Success'),
                 200
             );
@@ -385,10 +410,24 @@ class ReportController extends Controller
 
             $base_filters = $report->settings->base_filters ?? [];
 
+            $dynamic_filters = $report->settings->dynamic_filters ?? [];
+
             foreach ($base_filters as $column => $config) {
 
                 $operator = data_get($config, 'operator', '=');
                 $value = data_get($config, 'value');
+
+                $query->where($column, $operator, $value);
+            }
+
+            foreach ($dynamic_filters as $column => $config) {
+
+                $operator = data_get($config, 'operator', '=');
+                $value = $request->input($column);
+
+                if ($value === null) {
+                    continue;
+                }
 
                 $query->where($column, $operator, $value);
             }
@@ -402,7 +441,10 @@ class ReportController extends Controller
 
             $data = $query->get();
 
-            $data_export = (new DataCollection($data, $fields, $configured_fields))
+            $model_type = $request->input('model_type');
+            $model_id = $request->input('model_id');
+
+            $data_export = (new DataCollection($data, $fields, $configured_fields, data_get($report->settings, 'context'), $model_type, $model_id))
                 ->toArray($request);
 
             return Excel::download(new ReportExport($data_export['data']->toArray(), $data_export['fields']), 'report.xlsx');

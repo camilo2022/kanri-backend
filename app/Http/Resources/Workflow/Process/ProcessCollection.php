@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Workflow\Process;
 
+use App\Models\Process;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
@@ -14,6 +15,7 @@ class ProcessCollection extends ResourceCollection
                 return [
                     'id' => $process->id,
                     'item_id' => $process->item_id,
+                    'model_type' => Process::class,
                     'name' => $process->name,
                     'description' => $process->description,
                     'created_at' => $this->formatDate($process->created_at),

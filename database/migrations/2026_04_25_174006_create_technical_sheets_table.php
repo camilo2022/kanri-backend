@@ -27,7 +27,7 @@ return new class extends Migration
             $table->id();
             $table->uuid();
             $table->nullableMorphs('model');
-            $table->string('code', 11)->unique();
+            $table->string('code', 11)->unique()->nullable();
             $table->date('date')->nullable();
             $table->foreignIdFor(Product::class)->unique()->constrained()->cascadeOnUpdate();
             $table->foreignIdFor(Collection::class)->constrained()->cascadeOnUpdate();
@@ -51,28 +51,45 @@ return new class extends Migration
         });
 
         DB::unprepared("
-            CREATE PROCEDURE generate_technical_sheet_code()
-                BEGIN
+            CREATE PROCEDURE generate_technical_sheet_consecutive()
+            BEGIN
 
-                    DECLARE date_code CHAR(6);
-                    DECLARE last_consecutive VARCHAR(11);
-                    DECLARE next_consecutive INT;
+                DECLARE date_consecutive CHAR(6);
+                DECLARE last_consecutive VARCHAR(11);
+                DECLARE next_consecutive INT;
 
-                    SET date_code  = DATE_FORMAT(CURDATE(), '%y%m%d');
+                SET date_consecutive = DATE_FORMAT(CURDATE(), '%y%m%d');
 
-                    SELECT code INTO last_consecutive FROM technical_sheets
-                    WHERE code LIKE CONCAT('TS', date_code , '%') ORDER BY code DESC LIMIT 1;
+                SELECT consecutive
+                INTO last_consecutive
+                FROM technical_sheets
+                WHERE consecutive LIKE CONCAT('TS', date_consecutive, '%')
+                ORDER BY consecutive DESC
+                LIMIT 1;
 
-                    IF last_consecutive IS NULL THEN
-                        SELECT CONCAT('TS', date_code , '001') AS code;
-                    ELSE
-                        SET next_consecutive = CAST(RIGHT(last_consecutive, 3) AS UNSIGNED) + 1;
+                IF last_consecutive IS NULL THEN
 
-                        SELECT CONCAT('TS', date_code , LPAD(next_consecutive, 3, '0')) AS code;
-                    END IF;
+                    SELECT CONCAT(
+                        'TS',
+                        date_consecutive,
+                        '001'
+                    ) AS consecutive;
 
-                END
-            ");
+                ELSE
+
+                    SET next_consecutive =
+                        CAST(RIGHT(last_consecutive, 3) AS UNSIGNED) + 1;
+
+                    SELECT CONCAT(
+                        'TS',
+                        date_consecutive,
+                        LPAD(next_consecutive, 3, '0')
+                    ) AS consecutive;
+
+                END IF;
+
+            END
+        ");
     }
 
     /**
@@ -80,7 +97,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::unprepared('DROP PROCEDURE IF EXISTS generate_technical_sheet_code');
+        DB::unprepared('DROP PROCEDURE IF EXISTS generate_technical_sheet_consecutive');
         Schema::dropIfExists('technical_sheets');
     }
 };

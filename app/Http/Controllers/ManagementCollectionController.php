@@ -71,22 +71,24 @@ class ManagementCollectionController extends Controller
         $technical_sheet = TechnicalSheet::find($request->integer('id'));
 
         if (! $technical_sheet) {
-            $result = DB::select('CALL generate_technical_sheet_code()');
+            $result = DB::select('CALL generate_technical_sheet_consecutive()');
 
-            $code = $result[0]->code;
+            $consecutive = $result[0]->consecutive;
 
             $technical_sheet = TechnicalSheet::create([
-                'code' => $code,
+                'code' => $request->input('code'),
                 'product_id' => $product->id,
                 'collection_id' => $request->integer('collection_id'),
                 'garment_type_id' => $request->integer('garment_type_id'),
                 'wash_tone_id' => $request->integer('wash_tone_id'),
                 'boot_type_id' => $request->integer('boot_type_id'),
                 'observation' => $request->input('observation'),
+                'consecutive' => $consecutive,
                 'status' => $request->input('status'),
             ]);
         } else {
             $technical_sheet->update([
+                'code' => $request->input('code'),
                 'product_id' => $product->id,
                 'collection_id' => $request->integer('collection_id'),
                 'garment_type_id' => $request->integer('garment_type_id'),

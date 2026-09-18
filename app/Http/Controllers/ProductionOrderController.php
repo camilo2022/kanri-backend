@@ -32,7 +32,7 @@ class ProductionOrderController extends Controller
     public function all(ProductionOrderAllRequest $request, $technical_sheet_id = null)
     {
         try {
-            $production_orders = ProductionOrder::with(['strokes', 'fabric', 'pieces', 'technical_sheet' => ['product', 'products', 'garment_type'], 'production_order_details' => ['production_order_detail_quantities', 'model']])
+            $production_orders = ProductionOrder::with(['strokes', 'supplier', 'fabric', 'pieces', 'technical_sheet' => ['product', 'products', 'garment_type'], 'production_order_details' => ['production_order_detail_quantities', 'model']])
                 ->when($technical_sheet_id, function ($query) use ($technical_sheet_id) {
                     return $query->where('technical_sheet_id', $technical_sheet_id);
                 })

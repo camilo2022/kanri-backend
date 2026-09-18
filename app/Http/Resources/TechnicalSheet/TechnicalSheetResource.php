@@ -21,7 +21,7 @@ class TechnicalSheetResource extends JsonResource
                 'model_id' => $this->model_id,
                 'model_type' => $this->model_type,
                 'code' => $this->code,
-                'date' => $this->date,
+                'date' => $this->formatDateTechnicalSheet($this->date),
                 'product_id' => $this->product_id,
                 'collection_id' => $this->collection_id,
                 'garment_type_id' => $this->garment_type_id,
@@ -71,5 +71,10 @@ class TechnicalSheetResource extends JsonResource
     protected function formatDate($date)
     {
         return $date ? Carbon::parse($date)->format('Y-m-d H:i:s') : null;
+    }
+
+    protected function formatDateTechnicalSheet($date)
+    {
+        return $date ? Carbon::parse($date)->format('Y-m-d') : null;
     }
 }

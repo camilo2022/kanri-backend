@@ -1,4 +1,4 @@
-<?php
+ <?php
 
 use App\Models\ProductionOrder;
 use Illuminate\Database\Migrations\Migration;

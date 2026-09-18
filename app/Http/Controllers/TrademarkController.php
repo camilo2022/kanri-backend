@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Trademark\TrademarkSettingRequest;
 use App\Http\Requests\Trademark\TrademarkAllRequest;
 use App\Http\Requests\Trademark\TrademarkDeleteRequest;
 use App\Http\Requests\Trademark\TrademarkFindRequest;
 use App\Http\Requests\Trademark\TrademarkRestoreRequest;
+use App\Http\Requests\Trademark\TrademarkSettingRequest;
 use App\Http\Requests\Trademark\TrademarkSizeAssignRequest;
 use App\Http\Requests\Trademark\TrademarkSizeRemoveRequest;
 use App\Http\Requests\Trademark\TrademarkStoreRequest;
 use App\Http\Requests\Trademark\TrademarkUpdateRequest;
 use App\Http\Resources\Trademark\TrademarkCollection;
 use App\Http\Resources\Trademark\TrademarkResource;
-use App\Models\Category;
 use App\Models\Trademark;
 use App\Services\FileService;
 use App\Traits\ApiMessage;
@@ -33,6 +32,7 @@ use App\Traits\ApiResponser;
  * @OA\Schema(
  *     schema="Trademark",
  *     type="object",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="item_id", type="integer", example=10),
  *     @OA\Property(property="name", type="string", example="No Aplica"),
@@ -46,8 +46,10 @@ use App\Traits\ApiResponser;
  *         @OA\Property(
  *             property="validations",
  *             type="array",
+ *
  *             @OA\Items(
  *                 type="object",
+ *
  *                 @OA\Property(property="id", type="integer", example=1),
  *                 @OA\Property(property="regex", type="string", example="/^[A-Za-zÁÉÍÓÚáéíóúñÑ ]+$/"),
  *                 @OA\Property(property="message", type="string", example="El nombre solo puede contener letras"),
@@ -71,8 +73,10 @@ use App\Traits\ApiResponser;
  *     @OA\Property(
  *         property="group",
  *         type="array",
+ *
  *         @OA\Items(
  *             type="object",
+ *
  *             @OA\Property(property="id", type="integer", example=1),
  *             @OA\Property(property="item_id", type="integer", example=10),
  *             @OA\Property(property="name", type="string", example="No Aplica"),
@@ -101,53 +105,68 @@ class TrademarkController extends Controller
      *     tags={"Trademarks"},
      *     summary="Listar marcas",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Filtro de Busqueda.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="juan")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
      *         description="Columna a ordenar.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"id","name","description","created_at", "updated_at"}, example="name")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="dir",
      *         in="query",
      *         description="Dirección de ordenamiento.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Registros por página.",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=10)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="with_trashed",
      *         in="query",
      *         description="Registros inactivos.",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Lista de marcas cargada correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
      *                     property="trademarks",
      *                     type="array",
+     *
      *                     @OA\Items(ref="#/components/schemas/Trademark")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="meta",
      *                     type="object",
@@ -166,16 +185,20 @@ class TrademarkController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -207,7 +230,7 @@ class TrademarkController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -220,17 +243,22 @@ class TrademarkController extends Controller
      *     tags={"Trademarks"},
      *     summary="Obtener una marca específica",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador de la marca",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Marca cargada con éxito",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -243,10 +271,13 @@ class TrademarkController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Identificador de la marca no registrado.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -259,21 +290,26 @@ class TrademarkController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -295,7 +331,7 @@ class TrademarkController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -308,10 +344,13 @@ class TrademarkController extends Controller
      *     tags={"Trademarks"},
      *     summary="Crear una marca",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"name","group_id"},
+     *
      *             @OA\Property(
      *                 property="name",
      *                 type="string",
@@ -332,10 +371,13 @@ class TrademarkController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Marca creada correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -354,10 +396,13 @@ class TrademarkController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -371,21 +416,26 @@ class TrademarkController extends Controller
      *                 @OA\Property(
      *                     property="name",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -395,7 +445,7 @@ class TrademarkController extends Controller
     public function store(TrademarkStoreRequest $request)
     {
         try {
-            $trademark = new Trademark();
+            $trademark = new Trademark;
             $trademark->name = $request->input('name');
             $trademark->description = $request->input('description');
             $trademark->save();
@@ -435,7 +485,7 @@ class TrademarkController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -448,17 +498,22 @@ class TrademarkController extends Controller
      *     tags={"Trademarks"},
      *     summary="Editar una marca específica",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador de la marca",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"name","group_id"},
+     *
      *             @OA\Property(
      *                 property="name",
      *                 type="string",
@@ -479,10 +534,13 @@ class TrademarkController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Marca editada correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -503,10 +561,13 @@ class TrademarkController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -520,21 +581,26 @@ class TrademarkController extends Controller
      *                 @OA\Property(
      *                     property="name",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -547,6 +613,7 @@ class TrademarkController extends Controller
             $trademark = Trademark::findOrFail($id);
             $trademark->name = $request->input('name');
             $trademark->description = $request->input('description');
+            $trademark->settings = $request->input('settings');
             $trademark->save();
 
             $trademark->auditSync('group', [$request->integer('group_id')]);
@@ -584,7 +651,7 @@ class TrademarkController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -597,17 +664,22 @@ class TrademarkController extends Controller
      *     tags={"Trademarks"},
      *     summary="Desactivar una marca específica",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador de la marca",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Marca desactivada correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -628,10 +700,13 @@ class TrademarkController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -644,21 +719,26 @@ class TrademarkController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -680,7 +760,7 @@ class TrademarkController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -693,17 +773,22 @@ class TrademarkController extends Controller
      *     tags={"Trademarks"},
      *     summary="Activar una marca específica",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador de la marca",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Marca activada correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -724,10 +809,13 @@ class TrademarkController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -740,21 +828,26 @@ class TrademarkController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -776,7 +869,7 @@ class TrademarkController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -789,26 +882,33 @@ class TrademarkController extends Controller
      *     tags={"Trademarks"},
      *     summary="Modificar validaciones de una marca específica",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador de la marca",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Estructura completa de settings con sus validaciones",
+     *
      *         @OA\JsonContent(
      *             required={"settings"},
+     *
      *             @OA\Property(
      *                 property="settings",
      *                 type="object",
      *                 @OA\Property(
      *                     property="validations",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(
      *                             property="regex",
@@ -846,10 +946,13 @@ class TrademarkController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Validacion agregada correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -869,8 +972,10 @@ class TrademarkController extends Controller
      *                         @OA\Property(
      *                             property="validations",
      *                             type="array",
+     *
      *                             @OA\Items(
      *                                 type="object",
+     *
      *                                 @OA\Property(property="id", type="integer", example=1),
      *                                 @OA\Property(property="regex", type="string", example="/^[A-Za-zÁÉÍÓÚáéíóúñÑ ]+$/"),
      *                                 @OA\Property(property="message", type="string", example="El nombre solo puede contener letras"),
@@ -886,10 +991,13 @@ class TrademarkController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -902,21 +1010,26 @@ class TrademarkController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -940,7 +1053,7 @@ class TrademarkController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -965,7 +1078,7 @@ class TrademarkController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -990,7 +1103,7 @@ class TrademarkController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );

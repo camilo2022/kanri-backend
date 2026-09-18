@@ -283,7 +283,7 @@ class ProcessController extends Controller
     public function find(ProcessFindRequest $request, $id)
     {
         try {
-            $process = Process::with(['before_processes', 'after_processes'])
+            $process = Process::with(['item', 'before_processes', 'after_processes', 'subprocesses' => ['operations']])
                 ->findOrFail($id);
 
             return $this->successResponse(

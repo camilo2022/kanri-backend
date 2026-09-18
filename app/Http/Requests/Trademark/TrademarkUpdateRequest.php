@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Trademark;
 
-use App\Models\Category;
 use App\Models\Group;
 use App\Models\Trademark;
 use Illuminate\Contracts\Validation\Validator;
@@ -16,7 +15,7 @@ class TrademarkUpdateRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -28,14 +27,16 @@ class TrademarkUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:subitems,id,item_id,' . Trademark::ITEM_ID],
-            'group_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Group::ITEM_ID],
-            'name' => ['required', 'string', 'min:4', 'max:50', 'uppercase', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Trademark::ITEM_ID],
+            'id' => ['required', 'exists:subitems,id,item_id,'.Trademark::ITEM_ID],
+            'group_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.Group::ITEM_ID],
+            'name' => ['required', 'string', 'min:4', 'max:50', 'uppercase', 'unique:subitems,name,'.$this->route('id').',id,item_id,'.Trademark::ITEM_ID],
             'description' => ['required', 'uppercase', 'string', 'max:255'],
             'logo' => ['required', 'array'],
             'logo.file' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
             'cover' => ['nullable', 'array'],
-            'cover.file' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048']
+            'cover.file' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'settings' => ['required', 'array'],
+            'settings.code' => ['required', 'string'],
         ];
     }
 
@@ -52,7 +53,7 @@ class TrademarkUpdateRequest extends FormRequest
             'uppercase' => 'El campo debe estar en mayúsculas.',
             'image' => 'Debe ser una imagen.',
             'mimes' => 'Extensión inválida. Permitidas :values.',
-            'photo.max' => 'Se permite máximo :max KB.'
+            'photo.max' => 'Se permite máximo :max KB.',
         ];
     }
 
@@ -64,7 +65,7 @@ class TrademarkUpdateRequest extends FormRequest
             'name' => 'Nombre',
             'description' => 'Descripción',
             'logo' => 'Logo de la Marca',
-            'cover' => 'Imagen de portada para el catálogo'
+            'cover' => 'Imagen de portada para el catálogo',
         ];
     }
 

@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Storage;
 use App\Models\File;
+use Illuminate\Support\Facades\Storage;
 
 class FileService
 {
@@ -14,7 +14,7 @@ class FileService
         }
 
         $path = Storage::disk($disk)->putFile($folder, $file);
-        $storage_path = storage_path($disk . '/storage/' . $path);
+        $storage_path = storage_path($disk.'/storage/'.$path);
         $this->corregirOrientacion($storage_path);
 
         $metadata = [
@@ -59,7 +59,7 @@ class FileService
         }
 
         $path = Storage::disk($disk)->putFile($folder, $file);
-        $storage_path = storage_path($disk . '/storage/' . $path);
+        $storage_path = storage_path($disk.'/storage/'.$path);
         $this->corregirOrientacion($storage_path);
 
         $metadata = [
@@ -106,7 +106,7 @@ class FileService
         }
 
         $exif = @exif_read_data($rutaImagen);
-        if (!$exif || !isset($exif['Orientation'])) {
+        if (! $exif || ! isset($exif['Orientation'])) {
             return false;
         }
 
@@ -150,7 +150,7 @@ class FileService
                 break;
 
             case 'image/png':
-                $image = imagecreatefrompng($path);
+                $image = @imagecreatefrompng($path);
                 break;
 
             default:
@@ -160,8 +160,7 @@ class FileService
         if ($mime === 'image/jpeg' && function_exists('exif_read_data')) {
             $exif = @exif_read_data($path);
 
-
-            if (!empty($exif['Orientation'])) {
+            if (! empty($exif['Orientation'])) {
                 $image = $this->fix_orientation($image, $exif['Orientation']);
             }
         }

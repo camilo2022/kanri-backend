@@ -2,20 +2,32 @@
 
 namespace App\Http\Resources\Report;
 
+use App\Traits\ModelTypes;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class DataCollection extends JsonResource
 {
+    use ModelTypes;
+
     protected array $fields;
 
     protected $configured_fields;
 
-    public function __construct($resource, array $fields = [], $configured_fields = [])
+    protected $context;
+
+    protected $model_type;
+
+    protected $model_id;
+
+    public function __construct($resource, array $fields = [], $configured_fields = [], $context = null, $model_type = null, $model_id = null)
     {
         parent::__construct($resource);
         $this->fields = $fields;
         $this->configured_fields = $configured_fields;
+        $this->context = $context;
+        $this->model_type = $model_type;
+        $this->model_id = $model_id;
     }
 
     public function toArray($request)
@@ -30,6 +42,18 @@ class DataCollection extends JsonResource
             ->keyBy(function ($field) {
                 return data_get($field, 'data_key');
             });
+
+        $context_model = null;
+
+        if ($this->model_type && $this->model_id) {
+            $context_model = $this->model_type::find($this->model_id);
+        }
+
+        $context_fields = collect(
+            data_get($context_model, data_get($this->context, 'source.fields'), [])
+        );
+
+        logger()->debug('MODEL', ['CONTEXT_MODEL' => $context_model, 'CONTEXT_FIELDS' => $context_fields]);
 
         $labels = [];
 
@@ -53,6 +77,7 @@ class DataCollection extends JsonResource
             $configured_field = $configured_fields->get($data_key);
 
             if (! $configured_field) {
+
                 $configured_field = $configured_fields
                     ->filter(function ($field, $key) use ($data_key) {
                         return str_starts_with($data_key, $key.'.');
@@ -61,16 +86,39 @@ class DataCollection extends JsonResource
                         return strlen($key);
                     })
                     ->first();
+
             }
 
-            $label = data_get($configured_field, 'label', $data_key);
+            $label = data_get($configured_field, 'label', data_get($item, 'label', $data_key));
 
             $labels[] = $label;
 
         }
 
-        $data = collect($this->resource)
-            ->map(function ($report) use ($configured_fields, &$labels) {
+        $values_path = data_get($this->context, 'source.values');
+
+        $reports = collect($this->resource)
+            ->flatMap(function ($report) use ($values_path) {
+
+                if (! $values_path) {
+                    return [$report];
+                }
+
+                return collect(data_get($report, $values_path, []))
+                    ->map(function ($value) use ($report) {
+
+                        $row = (array) $value;
+
+                        $row['technical_sheet_details'] = $report;
+
+                        return $row;
+                    });
+            });
+
+        $data = $reports
+            ->map(function ($report) use ($configured_fields, &$labels, $context_fields) {
+
+                logger()->debug('REPORT', ['report' => $report]);
 
                 $row = [];
 
@@ -166,8 +214,9 @@ class DataCollection extends JsonResource
 
                     $configured_field = $configured_fields->get($data_key);
 
-                    if (! $configured_field) {
+                    logger()->debug('CONFIGURED FIELD', ['FIELD' => $configured_field]);
 
+                    if (! $configured_field) {
                         $configured_field = $configured_fields
                             ->filter(function ($field, $key) use ($data_key) {
                                 return str_starts_with($data_key, $key.'.');
@@ -178,7 +227,7 @@ class DataCollection extends JsonResource
                             ->first();
                     }
 
-                    $label = data_get($configured_field, 'label', $data_key);
+                    $label = data_get($configured_field, 'label', data_get($item, 'label', $data_key));
 
                     if ($display === 'code_name') {
 
@@ -206,20 +255,58 @@ class DataCollection extends JsonResource
                         }
 
                     } else {
-                        logger()->debug('DATA', [
-                            'REPORT' => $report,
-                            'PRODUCTION_ORDER' => data_get($report, 'production_order'),
-                            'DATA_KEY' => $data_key,
-                            'RESULT' => data_get($report, $data_key),
-                            'PRODUCTION_ORDER_SATELITE' => data_get($report, 'production_order.supplier'),
-                        ]);
+                        $context_field = $context_fields->firstWhere('field', $data_key);
 
-                        $value = data_get(
-                            $report,
-                            $data_key,
-                            str_contains($data_key, 'production_order.supplier') ? 'BLESS' : null
-                        );
+                        if (data_get($context_field, 'type') === 'selectdinamic') {
+                            $model = data_get($context_field, 'model');
+                            $id = data_get($report, $data_key);
 
+                            if ($model && $id !== null) {
+                                $related_model = $model::find($id);
+
+                                if ($related_model) {
+                                    $model_types = $this->getModelTypes();
+
+                                    $model_type = collect($model_types)
+                                        ->firstWhere('model', $model);
+
+                                    $options = data_get($model_type, 'option');
+
+                                    if (is_array($options)) {
+                                        $value = collect($options)
+                                            ->map(function ($option) use ($related_model) {
+                                                return data_get($related_model, $option);
+                                            })
+                                            ->filter(fn ($value) => filled($value))
+                                            ->implode(' ');
+                                    } else {
+                                        $value = data_get($related_model, $options);
+                                    }
+                                } else {
+                                    $value = null;
+                                }
+                            } else {
+                                $value = data_get(
+                                    $report,
+                                    $data_key,
+                                    str_contains($data_key, 'production_order.supplier') ? 'BLESS' : null
+                                );
+                            }
+                        } else {
+                            $value = data_get(
+                                $report,
+                                $data_key,
+                                str_contains($data_key, 'production_order.supplier') ? 'BLESS' : null
+                            );
+                        }
+
+                        if (data_get($context_field, 'type') === 'boolean') {
+                            if ($value === 'true') {
+                                $value = 'Sí';
+                            } else {
+                                $value = 'No';
+                            }
+                        }
                     }
 
                     if (data_get($configured_field, 'display.type') === 'operation') {

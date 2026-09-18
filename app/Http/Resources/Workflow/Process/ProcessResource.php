@@ -26,6 +26,7 @@ class ProcessResource extends JsonResource
                 'before_processes' => $this->before_processes,
                 'after_processes' => $this->after_processes,
                 'subprocesses' => $this->subprocesses,
+                'pivot' => $this->item?->pivot,
             ],
             'model_types' => $this->getModelTypes(),
         ];
