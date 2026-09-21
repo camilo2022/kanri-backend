@@ -42,7 +42,6 @@ class ReportGenerateRequest extends FormRequest
 
     public function rules(): array
     {
-        logger($this);
 
         return [
             'model' => ['required', 'string'],
@@ -187,6 +186,33 @@ class ReportGenerateRequest extends FormRequest
                             .implode(', ', $invalid_ids)
                         );
                     }
+                }
+            }
+
+            foreach ($this->input('fields', []) as $index => $field) {
+
+                $format = data_get($field, 'format');
+
+                if (blank($format)) {
+                    continue;
+                }
+
+                $valid_formats = [
+                    'd/m/Y',
+                    'm/d/Y',
+                    'Y-m-d',
+                    'd-m-Y',
+                    'Y-m-d H:i',
+                    'd/m/Y H:i',
+                    'yes_no',
+                    'true_false',
+                ];
+
+                if (! in_array($format, $valid_formats, true)) {
+                    $validator->errors()->add(
+                        "fields.$index.format",
+                        "El formato '{$format}' no es válido."
+                    );
                 }
             }
         });

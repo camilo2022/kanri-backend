@@ -23,7 +23,12 @@
                 "data": "operations",
                 "label": "Operación"
             }
-        ]
+        ],
+        "source": {
+            "fields": "settings.schema.static.body",
+            "values": "settings.static.values",
+            "multiple": false
+        }
     },
     "dynamic_filters": {
         "model_type": {

@@ -21,7 +21,8 @@
         ],
         "source": {
             "fields": "settings.schema.dinamic.body",
-            "values": "settings.dinamic.values"
+            "values": "settings.dinamic.values",
+            "multiple": true
         }
     },
     "dynamic_filters": {

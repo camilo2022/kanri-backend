@@ -49,12 +49,6 @@ class DataCollection extends JsonResource
             $context_model = $this->model_type::find($this->model_id);
         }
 
-        $context_fields = collect(
-            data_get($context_model, data_get($this->context, 'source.fields'), [])
-        );
-
-        logger()->debug('MODEL', ['CONTEXT_MODEL' => $context_model, 'CONTEXT_FIELDS' => $context_fields]);
-
         $labels = [];
 
         foreach ($this->fields as $item) {
@@ -97,28 +91,50 @@ class DataCollection extends JsonResource
 
         $values_path = data_get($this->context, 'source.values');
 
+        $multiple = data_get($this->context, 'source.multiple', false);
+
         $reports = collect($this->resource)
-            ->flatMap(function ($report) use ($values_path) {
+            ->flatMap(function ($report) use ($values_path, $multiple) {
 
                 if (! $values_path) {
                     return [$report];
                 }
 
-                return collect(data_get($report, $values_path, []))
-                    ->map(function ($value) use ($report) {
+                $values = data_get($report, $values_path);
 
-                        $row = (array) $value;
+                if ($multiple) {
+                    return collect($values ?? [])
+                        ->map(function ($value) use ($report) {
+                            $row = (array) $value;
+                            $row['technical_sheet_details'] = $report;
 
-                        $row['technical_sheet_details'] = $report;
+                            return $row;
+                        });
+                }
 
-                        return $row;
-                    });
+                $row = (array) $values;
+
+                if ($row === []) {
+                    return [];
+                }
+
+                $row['technical_sheet_details'] = $report;
+
+                return [$row];
             });
+
+        $context_fields = collect(
+            data_get($context_model, data_get($this->context, 'source.fields'), [])
+        );
+
+        if (! $multiple) {
+            $context_fields = $context_fields->flatMap(function ($fields) {
+                return collect($fields);
+            });
+        }
 
         $data = $reports
             ->map(function ($report) use ($configured_fields, &$labels, $context_fields) {
-
-                logger()->debug('REPORT', ['report' => $report]);
 
                 $row = [];
 
@@ -213,9 +229,6 @@ class DataCollection extends JsonResource
                     }
 
                     $configured_field = $configured_fields->get($data_key);
-
-                    logger()->debug('CONFIGURED FIELD', ['FIELD' => $configured_field]);
-
                     if (! $configured_field) {
                         $configured_field = $configured_fields
                             ->filter(function ($field, $key) use ($data_key) {
@@ -255,6 +268,7 @@ class DataCollection extends JsonResource
                         }
 
                     } else {
+
                         $context_field = $context_fields->firstWhere('field', $data_key);
 
                         if (data_get($context_field, 'type') === 'selectdinamic') {
@@ -373,10 +387,6 @@ class DataCollection extends JsonResource
 
                     if ($style_relation_path) {
                         $style_detail = data_get(data_get($report, $style_relation_path), data_get($style_relation, 'property'));
-
-                        logger()->debug('DETAILS', [
-                            'STYLE DETAIL' => $style_detail,
-                        ]);
 
                         $styles = json_decode(
                             json_encode(data_get($configured_field, 'display.styles', [])),

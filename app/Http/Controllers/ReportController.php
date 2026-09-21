@@ -199,12 +199,6 @@ class ReportController extends Controller
 
     private function apply_filter($query, string $data, string $data_key, $values, string $type = 'select')
     {
-        logger()->debug('DATA DENTRO', ['QUERY' => $query,
-            'DATA' => $data,
-            'DATA_KEY' => $data_key,
-            'VALUES' => $values,
-            'TYPE' => $type,
-        ]);
         $parts = explode('.', $data_key);
 
         $column = array_pop($parts);
@@ -344,8 +338,6 @@ class ReportController extends Controller
 
                 $query->where($column, $operator, $value);
             }
-
-            logger()->debug('QUERY', [$query]);
 
             foreach ($filters as $filter_key => $values) {
 
