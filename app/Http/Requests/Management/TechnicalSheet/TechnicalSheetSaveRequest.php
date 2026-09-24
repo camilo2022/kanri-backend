@@ -34,7 +34,6 @@ class TechnicalSheetSaveRequest extends FormRequest
 
     public function rules(): array
     {
-        logger($this);
 
         return [
             'id' => ['sometimes', 'exists:technical_sheets,id'],

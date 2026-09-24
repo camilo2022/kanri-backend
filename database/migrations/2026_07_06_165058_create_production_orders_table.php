@@ -9,16 +9,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('production_orders', function (Blueprint $table) {
             $table->id();
-            $table->date('date')->nullable();
             $table->foreignIdFor(TechnicalSheet::class)->constrained()->cascadeOnUpdate();
-            $table->nullableMorphs('model');
             $table->string('consecutive', 11)->unique();
             $table->float('efficiency', 8.3)->nullable();
             $table->string('cut', 2);
@@ -56,14 +51,12 @@ return new class extends Migration
             ");
     }
 
-
-
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        DB::unprepared("DROP PROCEDURE IF EXISTS generate_production_order_code");
+        DB::unprepared('DROP PROCEDURE IF EXISTS generate_production_order_code');
 
         Schema::dropIfExists('production_orders');
     }

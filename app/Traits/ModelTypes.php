@@ -17,6 +17,7 @@ use App\Models\Size;
 use App\Models\Subcategory;
 use App\Models\Subgroup;
 use App\Models\Supplier;
+use App\Models\SupplierType;
 use App\Models\Supply;
 use App\Models\SupplyType;
 use App\Models\Trademark;
@@ -130,15 +131,15 @@ trait ModelTypes
                 'option' => 'name',
                 'field' => 'piece_id',
             ],
-            'suppliers' => [
-                'label' => 'Proveedores',
-                'model' => Supplier::class,
-                'url' => '/suppliers/all',
-                'field' => 'supplier_id',
+            'supplier_types' => [
+                'label' => 'Tipo de Proveedor',
+                'model' => SupplierType::class,
+                'url' => '/typification/supplier_types/all',
+                'field' => 'supplier_type_id',
                 'option' => 'name',
             ],
             'supply_types' => [
-                'label' => 'Tipos de Insumo',
+                'label' => 'Tipo de Insumo',
                 'model' => SupplyType::class,
                 'url' => '/typification/supply_types/all',
                 'option' => 'name',
@@ -166,6 +167,14 @@ trait ModelTypes
                     'color' => 'Color',
                     'supplier' => 'Proveedor',
                 ],
+            ],
+            'suppliers' => [
+                'label' => 'Proveedores',
+                'model' => Supplier::class,
+                'url' => '/typification/supplier_types/suppliers/all/{supplier_type_id}',
+                'option' => 'name',
+                'field' => 'supplier_id',
+                'param' => SupplierType::class,
             ],
         ];
     }

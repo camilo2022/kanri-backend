@@ -37,12 +37,6 @@ class ReportExport implements FromArray, WithEvents, WithHeadings
 
                         $value = data_get($row, "{$field}.value");
 
-                        logger()->debug('EXPORT VALUE', [
-                            'field' => $field,
-                            'value' => $value,
-                            'type' => gettype($value),
-                        ]);
-
                         return $value === null || $value === 0
                             ? ''
                             : $value;

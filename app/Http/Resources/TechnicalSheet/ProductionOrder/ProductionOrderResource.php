@@ -13,7 +13,8 @@ class ProductionOrderResource extends JsonResource
     {
 
         $rolls = $this->rolls->map(function ($roll) {
-            $relations = collect($roll->supply_type->first()?->settings?->form ?? [])
+            logger(['roll', $roll]);
+            $relations = collect($roll->model->supply_type->first()?->settings?->form ?? [])
                 ->where('type', 'selectdinamic')
                 ->mapWithKeys(function ($field) use ($roll) {
 
@@ -21,16 +22,20 @@ class ProductionOrderResource extends JsonResource
                         class_basename($field->model)
                     ));
 
-                    $query = $roll->related($field->model);
+                    $query = $roll->model->related($field->model);
 
                     return [
-                        $key => $field->cardinality === 'single'
+                        /*$key => $field->cardinality === 'single'
                             ? $query->first()
                             : $query->get(),
 
                         $field->field => $field->cardinality === 'single'
                             ? $query->first()
-                            : $query->get()->modelKeys(),
+                            : $query->get()->modelKeys(),*/
+
+                        $field->field => $field->cardinality === 'single'
+                                                        ? $query->first()
+                                                        : $query->get(),
                     ];
                 });
             $roll->setRawAttributes(array_merge(
@@ -48,7 +53,6 @@ class ProductionOrderResource extends JsonResource
                 'model_type' => $this->model_type,
                 'model' => $this->model,
                 'technical_sheet_id' => $this->technical_sheet_id,
-                'date' => $this->formatDateProductionOrder($this->date),
                 'consecutive' => $this->consecutive,
                 'efficiency' => $this->efficiency,
                 'cut' => $this->cut,
@@ -57,6 +61,8 @@ class ProductionOrderResource extends JsonResource
                 'observation' => $this->observation,
                 'settings' => $this->settings,
                 'status' => $this->status,
+                'production_place' => $this->production_place,
+                'supplier_id' => $this->supplier_id ?? null,
                 'created_at' => $this->formatDate($this->created_at),
                 'updated_at' => $this->formatDate($this->updated_at),
                 'deleted_at' => $this->formatDate($this->deleted_at),
@@ -67,8 +73,9 @@ class ProductionOrderResource extends JsonResource
                 'color' => $this->color,
                 'pieces' => $this->pieces,
                 'rolls' => $rolls,
+                'reassignments' => $this->reassignments,
             ],
-            'status_production_order' => ProductionOrder::statuses()
+            'status_production_order' => ProductionOrder::statuses(),
         ];
     }
 

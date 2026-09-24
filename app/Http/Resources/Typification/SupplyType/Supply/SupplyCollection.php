@@ -10,6 +10,7 @@ class SupplyCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+
         return [
             'supplies' => $this->collection->map(function ($supply) {
                 $relationships = collect($supply->supply_type->first()?->settings?->form ?? [])
@@ -22,6 +23,7 @@ class SupplyCollection extends ResourceCollection
                         $query = $supply->related($field->model);
 
                         return [
+                            /*
                             $key => $field->cardinality === 'single'
                                 ? $query->first()
                                 : $query->get(),
@@ -29,6 +31,10 @@ class SupplyCollection extends ResourceCollection
                             $field->field => $field->cardinality === 'single'
                                 ? $query->first()
                                 : $query->get()->modelKeys(),
+                            */
+                            $field->field => $field->cardinality === 'single'
+                                                            ? $query->first()
+                                                            : $query->get(),
                         ];
                     })
                     ->all();
@@ -42,7 +48,7 @@ class SupplyCollection extends ResourceCollection
                     'updated_at' => $this->formatDate($supply->updated_at),
                     'deleted_at' => $this->formatDate($supply->deleted_at),
                     'settings' => $supply->settings,
-                    'production_orders' => $supply->production_orders,
+                    'production_order_details' => $supply->production_order_details,
                     ...$relationships,
                 ];
             }),

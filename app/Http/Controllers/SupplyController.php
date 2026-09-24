@@ -173,7 +173,7 @@ class SupplyController extends Controller
     public function all(SupplyAllRequest $request, $supply_type_id)
     {
         try {
-            $supplys = Supply::with(['supply_type', 'production_orders'])
+            $supplies = Supply::with(['supply_type', 'production_order_details'])
                 ->whereHas('supply_type', fn ($r) => $r->where('id', $supply_type_id))
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
@@ -185,10 +185,12 @@ class SupplyController extends Controller
                     return $query->orderBy($request->input('column'), $request->input('dir'));
                 });
 
-            $supplys = $supplys->paginate($request->integer('per_page', $supplys->count()));
+            $supplies = $supplies->paginate($request->integer('per_page', $supplies->count()));
+
+            logger()->debug('DATA', ['SUPPLY_TYPE' => $supply_type_id, 'RESULT' => $supplies]);
 
             return $this->successResponse(
-                new SupplyCollection($supplys),
+                new SupplyCollection($supplies),
                 $this->getMessage('Success'),
                 200
             );

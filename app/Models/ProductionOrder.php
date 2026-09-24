@@ -7,14 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable as Auditing;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class ProductionOrder extends Model implements Auditable
 {
-    use Auditing;
+    use Auditing, SoftDeletes;
 
     protected $table = 'production_orders';
 
@@ -75,24 +75,9 @@ class ProductionOrder extends Model implements Auditable
         return $this->belongsTo(TechnicalSheet::class);
     }
 
-    public function model(): MorphTo
-    {
-        return $this->morphTo();
-    }
-
     public function derivatives()
     {
         return $this->morphMany(ProductionOrder::class, 'model');
-    }
-
-    public function pieces(): MorphToMany
-    {
-        return $this->morphedByMany(Piece::class, 'model', 'model_has_production_order', 'production_order_id', 'model_id')->withPivot('quantity');
-    }
-
-    public function rolls(): MorphToMany
-    {
-        return $this->morphedByMany(Supply::class, 'model', 'model_has_production_order', 'production_order_id', 'model_id')->withPivot('quantity');
     }
 
     public function color(): MorphToMany
@@ -108,6 +93,27 @@ class ProductionOrder extends Model implements Auditable
     public function production_order_details(): HasMany
     {
         return $this->hasMany(ProductionOrderDetail::class);
+    }
+
+    public function rolls(): HasMany
+    {
+        return $this->hasMany(ProductionOrderDetail::class)
+            ->where('model_type', Supply::class)
+            ->whereNull('destination')
+            ->whereNotNull('settings->quantity')
+            ->whereDoesntHave('production_order_detail_quantities');
+    }
+
+    public function pieces(): HasMany
+    {
+        return $this->hasMany(ProductionOrderDetail::class)
+            ->where('model_type', Piece::class);
+    }
+
+    public function reassignments(): HasMany
+    {
+        return $this->hasMany(ProductionOrderDetail::class)
+            ->where('model_type', ProductionOrder::class);
     }
 
     public function production_order_details_processes(): HasMany

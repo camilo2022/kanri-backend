@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable as Auditing;
@@ -74,9 +75,12 @@ class Supply extends Model implements Auditable
         return $this->morphedByMany($model, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
     }
 
-    public function production_orders(): MorphToMany
+    public function production_order_details(): MorphMany
     {
-        return $this->morphToMany(ProductionOrder::class, 'model', 'model_has_production_order', 'model_id', 'production_order_id')->withPivot('quantity');
+        return $this->morphMany(
+            ProductionOrderDetail::class,
+            'model'
+        );
     }
 
     public function scopeSearch(Builder $query, ?string $search = null): Builder

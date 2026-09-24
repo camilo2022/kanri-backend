@@ -10,6 +10,7 @@ use App\Http\Requests\TechnicalSheet\ProductionOrder\ProductionOrderUpdateReques
 use App\Http\Resources\TechnicalSheet\ProductionOrder\ProductionOrderCollection;
 use App\Http\Resources\TechnicalSheet\ProductionOrder\ProductionOrderResource;
 use App\Models\File;
+use App\Models\Piece;
 use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
@@ -97,7 +98,7 @@ class ProductionOrderController extends Controller
     public function find(ProductionOrderFindRequest $request, $id)
     {
         try {
-            $production_order = ProductionOrder::with(['model' => ['production_order_details' => ['production_order_detail_quantities', 'model'], 'technical_sheet' => ['product' => ['trademark' => ['sizes']]]], 'technical_sheet' => ['product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']], 'products', 'garment_type', 'subgroup', 'collection', 'photo_d', 'photo_t'], 'production_order_details' => ['production_order_detail_quantities', 'model'], 'fabric' => ['model'], 'pieces', 'rolls' => ['production_orders']])
+            $production_order = ProductionOrder::with(['technical_sheet' => ['product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']], 'products', 'garment_type', 'subgroup', 'collection', 'photo_d', 'photo_t'], 'production_order_details' => ['production_order_detail_quantities', 'model'], 'fabric' => ['model'], 'pieces', 'rolls' => ['model' => ['supply_type', 'production_order_details']], 'reassignments'])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -110,6 +111,8 @@ class ProductionOrderController extends Controller
                 [
                     'message' => $this->getMessage(class_basename($e)),
                     'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -125,11 +128,6 @@ class ProductionOrderController extends Controller
 
             $production_order->consecutive = $consecutive;
             $production_order->uuid = Str::uuid();
-            if ($request->boolean('reasigned_curve')) {
-                $production_order->model_id = $request->input('production_order_id');
-                $production_order->model_type = ProductionOrder::class;
-            }
-            $production_order->date = $request->input('date');
             $production_order->technical_sheet_id = $request->integer('technical_sheet_id');
             $production_order->efficiency = $request->input('efficiency');
             $production_order->cut = $request->input('cut');
@@ -138,6 +136,11 @@ class ProductionOrderController extends Controller
             $production_order->observation = $request->input('observation');
             $production_order->status = $request->input('status');
             $production_order->settings = $request->input('settings');
+            $production_order->production_place = $request->input('production_place');
+
+            if ($request->input('supplier_id')) {
+                $production_order->supplier_id = $request->integer('supplier_id');
+            }
 
             $production_order->save();
 
@@ -172,10 +175,11 @@ class ProductionOrderController extends Controller
 
             $production_order->color()->sync([$request->input('color_id')]);
 
-            $this->save_details($request->input('production_order_details', []), $production_order->id);
+            if ($request->boolean('reasigned_curve')) {
+                $this->update_origin_curve($request->input('reassigned_origins', []), $production_order->id);
+            }
 
-            $production_order->auditAttach('pieces', $request->array('pieces'));
-            $production_order->auditAttach('rolls', $request->array('rolls'));
+            $this->save_details($request->input('production_order_details', []), $production_order->id);
 
             return $this->successResponse(
                 new ProductionOrderResource($production_order),
@@ -187,6 +191,9 @@ class ProductionOrderController extends Controller
                 [
                     'message' => $this->getMessage(class_basename($e)),
                     'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -198,7 +205,6 @@ class ProductionOrderController extends Controller
         try {
             $production_order = ProductionOrder::findOrFail($id);
 
-            $production_order->date = $request->input('date');
             $production_order->technical_sheet_id = $request->integer('technical_sheet_id');
             $production_order->efficiency = $request->input('efficiency');
             $production_order->cut = $request->input('cut');
@@ -207,6 +213,11 @@ class ProductionOrderController extends Controller
             $production_order->observation = $request->input('observation');
             $production_order->status = $request->input('status');
             $production_order->settings = $request->input('settings');
+            $production_order->production_place = $request->input('production_place');
+
+            if ($request->input('supplier_id')) {
+                $production_order->supplier_id = $request->integer('supplier_id');
+            }
 
             $production_order->save();
 
@@ -223,10 +234,11 @@ class ProductionOrderController extends Controller
 
             $production_order->color()->sync([$request->input('color_id')]);
 
-            $this->save_details($request->input('production_order_details', []), $production_order->id);
+            if ($request->boolean('reasigned_curve')) {
+                $this->update_origin_curve($request->input('reassigned_origins', []), $production_order->id);
+            }
 
-            $production_order->pieces()->sync($request->array('pieces'));
-            $production_order->rolls()->sync($request->array('rolls'));
+            $this->save_details($request->input('production_order_details', []), $production_order->id);
 
             return $this->successResponse(
                 new ProductionOrderResource($production_order),
@@ -248,46 +260,81 @@ class ProductionOrderController extends Controller
     {
         try {
             foreach ($production_order_details as $production_order_detail_item) {
-                $quantities = [];
 
-                if ($production_order_detail_item['model_type'] === Product::class) {
-                    $quantities = $production_order_detail_item['sizes'];
-                }
+                $model_type = $production_order_detail_item['model_type'];
 
-                if ($production_order_detail_item['model_type'] === Supply::class) {
-                    foreach ($production_order_detail_item['rows'] as $row) {
-                        $quantities = array_merge($quantities, $row['sizes']);
+                if ($model_type === Product::class) {
+                    $sizes = $production_order_detail_item['sizes'] ?? [];
+                    if (array_sum(array_column($sizes, 'quantity')) === 0) {
+                        continue;
                     }
                 }
 
-                if (array_sum(array_column($quantities, 'quantity')) === 0) {
-                    continue;
-                }
+                if ($model_type === Supply::class) {
 
-                $production_order_detail = new ProductionOrderDetail;
+                    if (! empty($production_order_detail_item['rows'])) {
 
-                $production_order_detail = ProductionOrderDetail::firstOrCreate([
-                    'production_order_id' => $production_order_id,
-                    'model_type' => $production_order_detail_item['model_type'],
-                    'model_id' => $production_order_detail_item['model_id'],
-                    'destination' => $production_order_detail_item['destination'],
-                ]);
+                        $quantities = [];
 
-                if ($production_order_detail['model_type'] === Supply::class) {
-                    foreach ($production_order_detail_item['rows'] as $row) {
-                        foreach ($row['sizes'] as $size) {
-                            ProductionOrderDetailQuantities::updateOrCreate([
-                                'id' => $size['id'],
-                            ], [
-                                'production_order_detail_id' => $production_order_detail->id,
-                                'size_id' => $size['size_id'],
-                                'quantity' => $size['quantity'],
-                            ]);
+                        foreach ($production_order_detail_item['rows'] as $row) {
+                            $quantities = array_merge($quantities, $row['sizes'] ?? []);
+                        }
+
+                        if (array_sum(array_column($quantities, 'quantity')) === 0) {
+                            continue;
+                        }
+
+                    } else {
+                        $quantity = data_get($production_order_detail_item, 'settings.quantity');
+
+                        if ($quantity === null || $quantity <= 0) {
+                            continue;
                         }
                     }
                 }
 
-                if ($production_order_detail['model_type'] === Product::class) {
+                if ($model_type === Piece::class) {
+
+                    $quantity = data_get($production_order_detail_item, 'settings.quantity');
+
+                    if ($quantity === null || $quantity <= 0) {
+                        continue;
+                    }
+                }
+
+                $production_order_detail = ProductionOrderDetail::firstOrCreate(
+                    [
+                        'production_order_id' => $production_order_id,
+                        'model_type' => $model_type,
+                        'model_id' => $production_order_detail_item['model_id'],
+                        'destination' => $production_order_detail_item['destination'] ?? null,
+                    ]
+                );
+
+                if ($model_type === Supply::class) {
+
+                    if (! empty($production_order_detail_item['rows'])) {
+
+                        foreach ($production_order_detail_item['rows'] as $row) {
+                            foreach ($row['sizes'] as $size) {
+                                ProductionOrderDetailQuantities::updateOrCreate([
+                                    'id' => $size['id'],
+                                ], [
+                                    'production_order_detail_id' => $production_order_detail->id,
+                                    'size_id' => $size['size_id'],
+                                    'quantity' => $size['quantity'],
+                                ]);
+                            }
+                        }
+
+                    } else {
+                        $production_order_detail->settings = $production_order_detail_item['settings'] ?? [];
+                        $production_order_detail->save();
+                    }
+                }
+
+                if ($model_type === Product::class) {
+
                     foreach ($production_order_detail_item['sizes'] as $size) {
                         ProductionOrderDetailQuantities::updateOrCreate(
                             [
@@ -299,8 +346,109 @@ class ProductionOrderController extends Controller
                             ]
                         );
                     }
+
+                }
+
+                if ($model_type === Piece::class) {
+                    $production_order_detail->settings = $production_order_detail_item['settings'] ?? [];
+                    $production_order_detail->save();
                 }
             }
+
+        } catch (\Throwable $e) {
+            throw $e;
+        }
+    }
+
+    public function update_origin_curve(array $reassigned_origins, int $production_order_id)
+    {
+        try {
+            foreach ($reassigned_origins as $reassigned_origin) {
+                logger($reassigned_origin['production_order_id']);
+                $production_order_origin = ProductionOrder::findOrFail($reassigned_origin['production_order_id']);
+
+                if (empty($reassigned_origin['selected_rows'])) {
+                    return;
+                }
+
+                $reassigned_by_size = [];
+
+                logger(['REASSIGNED DETAILS', $reassigned_origin['reassigned_details']]);
+
+                foreach ($reassigned_origin['reassigned_details'] as $detail) {
+
+                    logger(['DETAIL', $detail]);
+
+                    foreach ($detail['sizes'] ?? [] as $size) {
+
+                        $size_id = $size['size_id'];
+                        $quantity = (int) ($size['quantity'] ?? 0);
+
+                        if ($quantity <= 0) {
+                            continue;
+                        }
+
+                        $reassigned_by_size[$size_id] =
+                            ($reassigned_by_size[$size_id] ?? 0) + $quantity;
+                    }
+                }
+
+                $origin_details = ProductionOrderDetail::with('production_order_detail_quantities')
+                    ->where('production_order_id', $production_order_origin->id)
+                    ->where('model_type', Product::class)
+                    ->get();
+
+                logger($reassigned_by_size);
+
+                foreach ($reassigned_by_size as $size_id => $quantity_to_subtract) {
+
+                    $remaining = $quantity_to_subtract;
+
+                    foreach ($reassigned_origin['selected_rows'] as $location) {
+                        if ($remaining <= 0) {
+                            break;
+                        }
+
+                        $detail = $origin_details->first(function ($item) use ($location) {
+                            return $item->destination === $location;
+                        });
+
+                        if (! $detail) {
+                            continue;
+                        }
+
+                        $quantity = $detail->production_order_detail_quantities
+                            ->firstWhere('size_id', $size_id);
+
+                        if (! $quantity) {
+                            continue;
+                        }
+
+                        $available = (int) $quantity->quantity;
+
+                        if ($available <= 0) {
+                            continue;
+                        }
+
+                        $amount_to_subtract = min($available, $remaining);
+
+                        $quantity->quantity = $available - $amount_to_subtract;
+                        $quantity->save();
+
+                        $remaining -= $amount_to_subtract;
+                    }
+                }
+
+                ProductionOrderDetail::firstOrCreate(
+                    [
+                        'production_order_id' => $production_order_id,
+                        'model_type' => ProductionOrder::class,
+                        'model_id' => $production_order_origin->id,
+                        'destination' => null,
+                    ]
+                );
+            }
+
         } catch (\Throwable $e) {
             throw $e;
         }

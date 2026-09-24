@@ -71,5 +71,6 @@ class ProductionOrderAllRequest extends FormRequest
     protected function prepareForValidation()
     {
         $this->merge(['with_trashed' => $this->boolean('with_trashed')]);
+        $this->merge(['technical_sheet_id' => $this->route('technical_sheet_id')]);
     }
 }

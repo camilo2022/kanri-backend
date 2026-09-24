@@ -42,7 +42,6 @@ class ReportExportRequest extends FormRequest
 
     public function rules(): array
     {
-        logger($this);
 
         return [
             'model' => ['required', 'string'],

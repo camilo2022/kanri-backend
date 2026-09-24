@@ -6,7 +6,9 @@ use App\Models\Color;
 use App\Models\Piece;
 use App\Models\Product;
 use App\Models\ProductionOrder;
+use App\Models\ProductionOrderDetail;
 use App\Models\Size;
+use App\Models\Supplier;
 use App\Models\Supply;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -19,7 +21,7 @@ class ProductionOrderUpdateRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -32,28 +34,28 @@ class ProductionOrderUpdateRequest extends FormRequest
     {
         return [
             'id' => ['required', 'exists:production_orders,id'],
-            'date' => ['required', 'date_format:Y-m-d', 'before_or_equal:now'],
             'technical_sheet_id' => ['required', 'exists:technical_sheets,id'],
             'efficiency' => ['required', 'numeric', 'min:1'],
             'cut' => ['required', 'string', 'uppercase', 'max:2'],
-            'fabric_id' => ['required', 'exists:subitems,id,item_id,' . Supply::ITEM_ID . ',deleted_at,NULL'],
-            'color_id' => ['required', 'exists:subitems,id,item_id,' . Color::ITEM_ID . ',deleted_at,NULL'],
+            'fabric_id' => ['required', 'exists:subitems,id,item_id,'.Supply::ITEM_ID.',deleted_at,NULL'],
+            'color_id' => ['required', 'exists:subitems,id,item_id,'.Color::ITEM_ID.',deleted_at,NULL'],
             'width' => ['required', 'numeric', 'decimal:0,2', 'min:1', 'max:999999.99'],
             'pocket_fabric' => ['required', 'boolean'],
-            'reasigned_curve' => ['required', 'boolean'],
-            'production_order_id' => ['nullable', 'required_if:reasigned_curve,true', 'exists:production_orders,id'],
-            'observation' =>  ['nullable', 'string', 'max:1000'],
-            'status' =>  ['required', 'in:' . implode(',', [ProductionOrder::PENDING, ProductionOrder::APPROVED, ProductionOrder::CANCELLED])],
-            'pieces' => ['nullable', 'array'],
-            'pieces.*.quantity' => ['required', 'integer', 'min:1'],
-            'rolls' => ['nullable', 'array'],
-            'rolls.*.quantity' => ['required', 'numeric', 'min:1'],
-            'production_order_details' => ['required', 'array', 'min:1', 'max:5'],
-            'production_order_details.*.model_type' => ['required',  'in:' . implode(',', [Product::class, Supply::class, Color::class])],
+            'observation' => ['nullable', 'string', 'max:1000'],
+            'status' => ['required', 'in:'.implode(',', [ProductionOrder::PENDING, ProductionOrder::APPROVED, ProductionOrder::CANCELLED])], 'production_place' => ['required', 'string', 'in:BLESS,SATELITE'],
+            'supplier_id' => ['nullable', 'required_if:production_place,SATELITE', 'exists:subitems,id,item_id,'.Supplier::ITEM_ID],
+            'reasigned_curve' => ['boolean'],
+            'reassigned_origins' => ['nullable', 'required_if:reasigned_curve,true', 'array', 'min:1'],
+            'reassigned_origins.*.production_order_id' => ['required', 'integer', 'exists:production_orders,id'],
+            'reassigned_origins.*.selected_rows' => ['required', 'array', 'min:1'],
+            'reassigned_origins.*.selected_rows.*' => ['string', 'in:NACIONAL,MEDELLIN,STARA'],
+            'reassigned_origins.*.reassigned_details' => ['required', 'array', 'min:1'],
+            'production_order_details' => ['required', 'array'],
+            'production_order_details.*.model_type' => ['required',  'in:'.implode(',', [Product::class, Supply::class, Color::class, Piece::class])],
             'production_order_details.*.model_id' => ['nullable', 'numeric'],
             'production_order_details.*.destination' => ['nullable', 'string', 'in:NACIONAL,MEDELLIN,STARA'],
             'settings' => ['required', 'array'],
-            'settings.*.large' => ['required', 'numeric', 'min:1'],
+            'settings.*.large' => ['required', 'numeric'],
             'settings.*.quantity' => ['required', 'integer', 'min:1', 'distinct'],
             'strokes_file' => ['nullable', 'array'],
             'strokes_file.file' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
@@ -63,10 +65,7 @@ class ProductionOrderUpdateRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'required' => 'Es obligatorio.',
-            'date_format' => 'Formato inválido. Permitido :format.',
-            'date.before_or_equal' => 'No puede ser posterior a ' . now()->format('Y-d-m') . '.',
-            'exists' => 'No registrado en el sistema.',
+            'required' => 'Es obligatorio.', 'exists' => 'No registrado en el sistema.',
             'boolean' => 'Debe ser un dato tipo si/no',
             'numeric' => 'Debe ser un dato númerico',
             'min' => 'El valor debe ser mayor o igual a :min',
@@ -76,7 +75,7 @@ class ProductionOrderUpdateRequest extends FormRequest
             'in' => 'Valor inválido. Permitidos: :values.',
             'integer' => 'Debe ser un dato númerico',
             'distinct' => 'Debe ser un valor unico',
-            'required_if' => 'Es obligatorio'
+            'required_if' => 'Es obligatorio',
         ];
     }
 
@@ -85,7 +84,6 @@ class ProductionOrderUpdateRequest extends FormRequest
 
         return [
             'id' => 'Identificador de la orden de producción',
-            'date' => 'Fecha de aprobación de la orden de producción',
             'technical_sheet_id' => 'Identificador de la ficha técnica',
             'efficiency' => 'Eficiencia',
             'cut' => 'Identificador de lote',
@@ -95,12 +93,12 @@ class ProductionOrderUpdateRequest extends FormRequest
             'pocket_fabric' => 'Indicador de uso de tela de bolsillo',
             'reasigned_curve' => 'Indicador de reasignación de curva',
             'production_order_id' => 'Identificador de la orden de producción de reasiganción',
-            'observation' =>  'Observación',
+            'observation' => 'Observación',
             'status' => 'Estado de la orden de producción',
             'pieces' => 'Piezas',
             'rolls' => 'Rollos',
             'production_order_details' => 'Detalles de la orden de producción',
-            'settings' => 'Configuracion de la orden de producción'
+            'settings' => 'Configuracion de la orden de producción',
         ];
     }
 
@@ -121,18 +119,18 @@ class ProductionOrderUpdateRequest extends FormRequest
                 );
             }
 
-            if (!empty($this->fabric_id)) {
+            if (! empty($this->fabric_id)) {
                 $supply = Supply::with('supply_type')->find($this->fabric_id);
                 $settings = $supply->supply_type->first()->settings;
 
-                //Valido que el color este asociado con la tela
-                if (!empty($this->color_id)) {
+                // Valido que el color este asociado con la tela
+                if (! empty($this->color_id)) {
                     $exists = $supply
                         ->related(Color::class)
                         ->where('id', $this->color_id)
                         ->exists();
 
-                    if (!$exists) {
+                    if (! $exists) {
                         $validator->errors()->add(
                             'color_id',
                             'El color seleccionado no esta asociado a la tela.'
@@ -140,31 +138,31 @@ class ProductionOrderUpdateRequest extends FormRequest
                     }
                 }
 
-                //Valido que el tipo de insumo tela este asociado con la orden de producción
+                // Valido que el tipo de insumo tela este asociado con la orden de producción
                 if (empty($settings->in_production_order) && $settings->paragraph !== 'fabric') {
                     $validator->errors()->add(
                         'fabric_id',
-                        "El tipo de insumo no es apto para asociar una orden de producción"
+                        'El tipo de insumo no es apto para asociar una orden de producción'
                     );
                 }
             }
 
-            //Valido que las piezas existan
+            // Valido que las piezas existan
             foreach (array_keys($this->pieces ?? []) as $piece_id) {
-                if (!Piece::where('id', $piece_id)->exists()) {
+                if (! Piece::where('id', $piece_id)->exists()) {
                     $validator->errors()->add(
                         "pieces.$piece_id",
-                        "Pieza no registrada."
+                        'Pieza no registrada.'
                     );
                 }
             }
 
-            //Valido que los rollos existen
+            // Valido que los rollos existen
             foreach (array_keys($this->rolls ?? []) as $roll_id) {
-                if (!Supply::where('id', $roll_id)->exists()) {
+                if (! Supply::where('id', $roll_id)->exists()) {
                     $validator->errors()->add(
                         "rolls.$roll_id",
-                        "Rollo no registrado."
+                        'Rollo no registrado.'
                     );
                 }
             }
@@ -174,24 +172,27 @@ class ProductionOrderUpdateRequest extends FormRequest
             foreach ($this->production_order_details as $index => $detail) {
                 $model = $detail['model_type'];
                 $destination = $detail['destination'] ?? null;
+                $quantity = data_get($detail, 'settings.quantity', null);
 
-                if (!class_exists($model)) {
+                if (! class_exists($model)) {
                     $validator->errors()->add(
                         "production_order_details.$model.model_type",
                         'El tipo de modelo no es válido.'
                     );
+
                     continue;
                 }
 
-                if (!isset($detail['model_id'])) {
+                if (! isset($detail['model_id'])) {
                     $validator->errors()->add(
                         "production_order_details.$model.$destination.model_id",
                         'No hay identificador del detalle.'
                     );
+
                     continue;
                 }
 
-                if (!$model::whereKey($detail['model_id'])->exists()) {
+                if (! $model::whereKey($detail['model_id'])->exists()) {
                     $validator->errors()->add(
                         "production_order_details.$model.model_id",
                         'El modelo seleccionado no existe.'
@@ -211,6 +212,7 @@ class ProductionOrderUpdateRequest extends FormRequest
                             "production_order_details.$model.$destination.model_id",
                             'Es obligatorio ingresar curva.'
                         );
+
                         continue;
                     }
 
@@ -222,46 +224,112 @@ class ProductionOrderUpdateRequest extends FormRequest
                 }
 
                 if ($model === Supply::class) {
-                    if ($detail['model_id'] !== $this->fabric_id) {
-                        $validator->errors()->add(
-                            "production_order_details.$model.model_id",
-                            'El modelo seleccionado no corresponde con la tela seleccionada.'
-                        );
-                        continue;
-                    }
+                    if (! empty($detail['rows'])) {
+                        if ($detail['model_id'] !== $this->fabric_id) {
+                            $validator->errors()->add(
+                                "production_order_details.$model.model_id",
+                                'El modelo seleccionado no corresponde con la tela seleccionada.'
+                            );
 
-                    if (empty($detail['rows'])) {
-                        $validator->errors()->add(
-                            "production_order_details.$model.$destination.rows",
-                            'El detalle no cuenta con distribución por filas.'
-                        );
-                    } else {
-                        $rows = [];
+                            continue;
+                        }
 
-                        foreach ($detail['rows'] as $i => $row) {
-                            if (empty($row['sizes']) || !is_array($row['sizes'])) {
-                                $rows[] = $i;
-                                continue;
+                        if (empty($detail['rows'])) {
+                            $validator->errors()->add(
+                                "production_order_details.$model.$destination.rows",
+                                'El detalle no cuenta con distribución por filas.'
+                            );
+                        } else {
+                            $rows = [];
+
+                            foreach ($detail['rows'] as $i => $row) {
+                                if (empty($row['sizes']) || ! is_array($row['sizes'])) {
+                                    $rows[] = $i;
+
+                                    continue;
+                                }
+                                foreach ($row['sizes'] as $a => $size) {
+                                    if (empty($size['size_id']) || ! Size::whereKey($size['size_id'])->exists()) {
+                                        $validator->errors()->add(
+                                            "production_order_details.$index.rows.$i.sizes.$a",
+                                            'La talla ingresada no existe.'
+                                        );
+                                    }
+                                }
                             }
-                            foreach ($row['sizes'] as $a => $size) {
-                                if (empty($size['size_id']) || !Size::whereKey($size['size_id'])->exists()) {
+
+                            if (count($rows) === count($detail['rows'])) {
+                                foreach ($rows as $item) {
                                     $validator->errors()->add(
-                                        "production_order_details.$index.rows.$i.sizes.$a",
-                                        'La talla ingresada no existe.'
+                                        "production_order_details.fabric.rows.$item.sizes",
+                                        'El detalle no cuenta con distribución por tallas.'
                                     );
                                 }
                             }
                         }
+                    } else {
+                        $supply = Supply::find($detail['model_id']);
 
-                        if (count($rows) === count($detail['rows'])) {
-                            foreach ($rows as $item) {
-                                $validator->errors()->add(
-                                    "production_order_details.fabric.rows.$item.sizes",
-                                    'El detalle no cuenta con distribución por tallas.'
+                        if (! $supply) {
+                            continue;
+                        }
+
+                        if ($quantity === null || $quantity === '') {
+                            $validator->errors()->add(
+                                "production_order_details.$index.settings.quantity",
+                                'La cantidad del rollo es obligatoria.'
+                            );
+
+                            continue;
+                        }
+
+                        if (! is_numeric($quantity) || $quantity <= 0) {
+                            $validator->errors()->add(
+                                "production_order_details.$index.settings.quantity",
+                                'La cantidad del rollo debe ser un valor numérico mayor que cero.'
+                            );
+
+                            continue;
+                        }
+
+                        $quantity = (float) $quantity;
+
+                        $supply_quantity = (float) data_get($supply, 'settings.values.meters', 0);
+
+                        $used_quantity_query = ProductionOrderDetail::query()
+                            ->where('model_type', Supply::class)
+                            ->where('model_id', $detail['model_id']);
+
+                        if ($this->route('id')) {
+                            $production_order_id = $this->route('id');
+
+                            $used_quantity_query->where(function ($query) use ($production_order_id) {
+                                $query->where('production_order_id', '!=', $production_order_id);
+                            });
+                        }
+
+                        $used_quantity = $used_quantity_query
+                            ->get()
+                            ->sum(function ($production_detail) {
+                                return (float) data_get(
+                                    $production_detail,
+                                    'settings.quantity',
+                                    0
                                 );
-                            }
+                            });
+
+                        $available_quantity = $supply_quantity - $used_quantity;
+
+                        logger()->debug('QUANTITIES', ['QUANTITY' => $quantity, 'SUPPLY_QUANTITY' => $supply_quantity, 'USED_QUANTITY' => $used_quantity, 'AVAIILABLE_QUANTITY' => $available_quantity]);
+
+                        if ($quantity > $available_quantity) {
+                            $validator->errors()->add(
+                                "production_order_details.$index.settings.quantity",
+                                "La cantidad solicitada ({$quantity}) supera la cantidad disponible del rollo ({$available_quantity})."
+                            );
                         }
                     }
+
                 }
 
                 if ($model === Color::class) {
@@ -270,6 +338,7 @@ class ProductionOrderUpdateRequest extends FormRequest
                             "production_order_details.$index.model_id",
                             'El modelo seleccionado no corresponde con el color de la tela seleccionada.'
                         );
+
                         continue;
                     }
                 }
