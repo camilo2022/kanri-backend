@@ -188,33 +188,33 @@ class ReportGenerateRequest extends FormRequest
                     }
                 }
             }
+            /*
+                        foreach ($this->input('fields', []) as $index => $field) {
 
-            foreach ($this->input('fields', []) as $index => $field) {
+                            $format = data_get($field, 'format');
 
-                $format = data_get($field, 'format');
+                            if (blank($format)) {
+                                continue;
+                            }
 
-                if (blank($format)) {
-                    continue;
-                }
+                            $valid_formats = [
+                                'd/m/Y',
+                                'm/d/Y',
+                                'Y-m-d',
+                                'd-m-Y',
+                                'Y-m-d H:i',
+                                'd/m/Y H:i',
+                                'yes_no',
+                                'true_false',
+                            ];
 
-                $valid_formats = [
-                    'd/m/Y',
-                    'm/d/Y',
-                    'Y-m-d',
-                    'd-m-Y',
-                    'Y-m-d H:i',
-                    'd/m/Y H:i',
-                    'yes_no',
-                    'true_false',
-                ];
-
-                if (! in_array($format, $valid_formats, true)) {
-                    $validator->errors()->add(
-                        "fields.$index.format",
-                        "El formato '{$format}' no es válido."
-                    );
-                }
-            }
+                            if (! in_array($format, $valid_formats, true)) {
+                                $validator->errors()->add(
+                                    "fields.$index.format",
+                                    "El formato '{$format}' no es válido."
+                                );
+                            }
+                        }*/
         });
     }
 

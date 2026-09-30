@@ -30,6 +30,16 @@ class ProductionOrder extends Model implements Auditable
 
     public const STARA = 'STARA';
 
+    public const PRIORITY_VERY_LOW = 1;
+
+    public const PRIORITY_LOW = 2;
+
+    public const PRIORITY_MEDIUM = 3;
+
+    public const PRIORITY_HIGH = 4;
+
+    public const PRIORITY_VERY_HIGH = 5;
+
     protected $fillable = [
         'technical_sheet_id',
         'model_id',
@@ -174,6 +184,17 @@ class ProductionOrder extends Model implements Auditable
             self::NACIONAL,
             self::MEDELLIN,
             self::STARA,
+        ];
+    }
+
+    public static function priorities()
+    {
+        return [
+            self::PRIORITY_VERY_LOW,
+            self::PRIORITY_LOW,
+            self::PRIORITY_MEDIUM,
+            self::PRIORITY_HIGH,
+            self::PRIORITY_VERY_HIGH,
         ];
     }
 }

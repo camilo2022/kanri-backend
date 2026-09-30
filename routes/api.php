@@ -301,6 +301,7 @@ Route::prefix('/management')->group(function () {
     });
     Route::prefix('/production')->group(function () {
         Route::controller(ManagementProductionController::class)->group(function () {
+            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:management.production.find']);
             Route::post('/save', 'save')->middleware(['auth:sanctum', 'can:management.production.save']);
         });
     });

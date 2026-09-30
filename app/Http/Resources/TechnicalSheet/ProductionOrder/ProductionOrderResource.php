@@ -70,6 +70,7 @@ class ProductionOrderResource extends JsonResource
                 'strokes' => $this->strokes,
                 'production_order_details' => $this->production_order_details,
                 'fabric' => $this->fabric,
+                'fabric_id' => $this->fabric->id,
                 'color' => $this->color,
                 'pieces' => $this->pieces,
                 'rolls' => $rolls,

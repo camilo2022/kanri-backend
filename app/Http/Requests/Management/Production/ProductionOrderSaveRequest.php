@@ -3,10 +3,11 @@
 namespace App\Http\Requests\Management\Production;
 
 use App\Models\Color;
+use App\Models\Piece;
 use App\Models\Process;
 use App\Models\Product;
 use App\Models\ProductionOrder;
-use App\Models\ProductionOrderDetail;
+use App\Models\Supplier;
 use App\Models\Supply;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -32,18 +33,22 @@ class ProductionOrderSaveRequest extends FormRequest
     {
         return [
             'id' => ['nullable', 'exists:production_orders,id'],
-            'color_id' => ['required', 'exists:subitems,id,item_id,'.Color::ITEM_ID.',deleted_at,NULL'],
             'technical_sheet_id' => ['required', 'exists:technical_sheets,id'],
             'cut' => ['required', 'string', 'uppercase', 'max:2'],
             'status' => ['required', 'in:'.implode(',', [ProductionOrder::PENDING, ProductionOrder::APPROVED, ProductionOrder::CANCELLED])],
+            'production_place' => ['required', 'string', 'in:BLESS,SATELITE'],
+            'supplier_id' => ['nullable', 'required_if:production_place,SATELITE', 'exists:subitems,id,item_id,'.Supplier::ITEM_ID],
+            'priority' => ['required', 'in:'.implode(',', ProductionOrder::priorities())],
+            'reasigned_curve' => ['boolean'],
+            'reassigned_origins' => ['nullable', 'required_if:reasigned_curve,true', 'array', 'min:1'],
+            'reassigned_origins.*.production_order_id' => ['required', 'integer', 'exists:production_orders,id'],
+            'reassigned_origins.*.selected_rows' => ['required', 'array', 'min:1'],
+            'reassigned_origins.*.selected_rows.*' => ['string', 'in:NACIONAL,MEDELLIN,STARA'],
+            'reassigned_origins.*.reassigned_details' => ['required', 'array', 'min:1'],
             'production_order_details' => ['required', 'array', 'min:1'],
-            'production_order_details.*.model_type' => ['required',  'in:'.implode(',', [Product::class, Supply::class, Color::class, Process::class])],
+            'production_order_details.*.model_type' => ['required',  'in:'.implode(',', [Product::class, Supply::class, Color::class, Process::class, Piece::class, ProductionOrder::class])],
             'production_order_details.*.model_id' => ['nullable', 'numeric'],
             'production_order_details.*.destination' => ['nullable', 'string', 'in:NACIONAL,MEDELLIN,STARA'],
-            'reasigned_curve' => ['boolean'],
-            'production_order_id' => ['required_if:reasigned_curve,true', 'exists:production_orders,id'],
-            'selected_rows' => ['required_if:reasigned_curve,true', 'array', 'min:1', 'max:3'],
-            'production_place' => ['required', 'string', 'in:BLESS,SATELITE'],
         ];
     }
 
@@ -68,7 +73,6 @@ class ProductionOrderSaveRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'date' => 'Fecha de aprobación de la orden de producción',
             'technical_sheet_id' => 'Identificador de la ficha técnica',
             'efficiency' => 'Eficiencia',
             'cut' => 'Identificador de lote',
@@ -235,6 +239,97 @@ class ProductionOrderSaveRequest extends FormRequest
                         continue;
                     }
                 }
+
+                if ($model === Process::class) {
+
+                    $process = Process::with(['before_processes', 'after_processes'])->find($detail['model_id']);
+
+                    if (! $process) {
+                        continue;
+                    }
+
+                    $current_date = data_get($detail, 'settings.date');
+
+                    if (! $current_date) {
+                        continue;
+                    }
+
+                    foreach ($details as $other_index => $other_detail) {
+
+                        if ($other_index === $index) {
+                            continue;
+                        }
+
+                        if (($other_detail['model_type'] ?? null) !== Process::class) {
+                            continue;
+                        }
+
+                        $other_date = data_get($other_detail, 'settings.date');
+
+                        if (! $other_date) {
+                            continue;
+                        }
+
+                        if ($current_date === $other_date) {
+                            $validator->errors()->add(
+                                "production_order_details.$process->id.settings.date",
+                                'La fecha de programación de este proceso ya está asignada a otro proceso.'
+                            );
+
+                            break;
+                        }
+                    }
+
+                    foreach ($process->before_processes ?? [] as $before_process) {
+
+                        $before_detail = collect($details)->first(function ($other_detail) use ($before_process) {
+                            return ($other_detail['model_type'] ?? null) === Process::class
+                                && (int) ($other_detail['model_id'] ?? 0) === (int) $before_process->id;
+                        });
+
+                        if (! $before_detail) {
+                            continue;
+                        }
+
+                        $before_date = data_get($before_detail, 'settings.date');
+
+                        if (! $before_date) {
+                            continue;
+                        }
+
+                        if ($current_date < $before_date) {
+                            $validator->errors()->add(
+                                "production_order_details.$process->id.settings.date",
+                                "La fecha de programación del proceso {$process->name} no puede ser anterior a la fecha de programación del proceso {$before_process->name}."
+                            );
+                        }
+                    }
+
+                    foreach ($process->after_processes ?? [] as $after_process) {
+
+                        $after_detail = collect($details)->first(function ($other_detail) use ($after_process) {
+                            return ($other_detail['model_type'] ?? null) === Process::class
+                                && (int) ($other_detail['model_id'] ?? 0) === (int) $after_process->id;
+                        });
+
+                        if (! $after_detail) {
+                            continue;
+                        }
+
+                        $after_date = data_get($after_detail, 'settings.date');
+
+                        if (! $after_date) {
+                            continue;
+                        }
+
+                        if ($current_date > $after_date) {
+                            $validator->errors()->add(
+                                "production_order_details.$index.settings.date",
+                                "La fecha de programación del proceso {$process->name} no puede ser posterior a la fecha de programación del proceso {$after_process->name}."
+                            );
+                        }
+                    }
+                }
             }
 
             if (count($empty) > 1) {
@@ -243,94 +338,6 @@ class ProductionOrderSaveRequest extends FormRequest
                         "production_order_details.$model.$item",
                         'Es obligatorio definir la especificación de curva por talla.'
                     );
-                }
-            }
-
-            if ($this->reasigned_curve) {
-                $production_order_origin = ProductionOrder::findOrFail($this->input('production_order_id'));
-
-                if (! $production_order_origin) {
-                    $validator->errors()->add(
-                        'production_order_id',
-                        'Es requerida una orden de origen válida para realizar la reasignación.'
-                    );
-
-                    return;
-                }
-
-                $selected_destinations = array_values(
-                    array_intersect(
-                        ['NACIONAL', 'MEDELLIN', 'STARA'],
-                        $this->input('selected_rows', [])
-                    )
-                );
-
-                if (empty($selected_destinations)) {
-                    $validator->errors()->add(
-                        'selected_rows',
-                        'Debe seleccionar al menos un destino de origen para realizar la reasignación.'
-                    );
-
-                    return;
-                }
-
-                $origin_details = ProductionOrderDetail::with('production_order_detail_quantities')
-                    ->where('production_order_id', $production_order_origin->id)
-                    ->where('model_type', Product::class)
-                    ->get();
-
-                $available_curve = [];
-
-                foreach ($origin_details as $detail) {
-                    $destination = $detail->destination;
-
-                    if (! in_array($destination, $selected_destinations)) {
-                        continue;
-                    }
-
-                    foreach ($detail->production_order_detail_quantities as $quantity) {
-                        $available_curve[$destination][$quantity->size_id] =
-                            (int) $quantity->quantity;
-                    }
-                }
-
-                foreach ($details as $detail) {
-
-                    if (($detail['model_type'] ?? null) !== Product::class) {
-                        continue;
-                    }
-
-                    foreach ($detail['sizes'] ?? [] as $size) {
-
-                        $size_id = $size['size_id'];
-                        $remaining = (int) ($size['quantity'] ?? 0);
-
-                        if ($remaining <= 0) {
-                            continue;
-                        }
-
-                        foreach ($selected_destinations as $destination) {
-                            $available = $available_curve[$destination][$size_id] ?? 0;
-
-                            if ($available <= 0) {
-                                continue;
-                            }
-
-                            $taken = min($available, $remaining);
-                            $remaining -= $taken;
-
-                            if ($remaining <= 0) {
-                                break;
-                            }
-                        }
-
-                        if ($remaining > 0) {
-                            $validator->errors()->add(
-                                "production_order_details.$size_id.quantity",
-                                "La cantidad solicitada para la talla {$size_id} supera la cantidad disponible en los destinos seleccionados de la orden de origen."
-                            );
-                        }
-                    }
                 }
             }
         });

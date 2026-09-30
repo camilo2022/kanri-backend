@@ -20,6 +20,7 @@ return new class extends Migration
             $table->decimal('width', 8, 2)->nullable();
             $table->boolean('pocket_fabric')->default(false);
             $table->text('observation')->nullable();
+            $table->enum('priority', ['1', '2', '3', '4', '5'])->default('3')->after('observation');
             $table->json('settings')->default(new Expression('(JSON_OBJECT())'))->comment('Configuraciones');
             $table->enum('status', ['Pendiente', 'Cancelado', 'Aprobado'])->default('Pendiente');
             $table->timestamps();
