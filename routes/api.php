@@ -52,6 +52,7 @@ use App\Http\Controllers\TechnicalSheetController;
 use App\Http\Controllers\ThreadTypeController;
 use App\Http\Controllers\TrademarkController;
 use App\Http\Controllers\TransformationController;
+use App\Http\Controllers\TypologyController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WaistbandTypeController;
 use App\Http\Controllers\WashToneController;
@@ -567,6 +568,17 @@ Route::prefix('/typification')->group(function () {
                 Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:typification.supplier_types.suppliers.delete']);
                 Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:typification.supplier_types.suppliers.restore']);
             });
+        });
+    });
+
+    Route::prefix('/typologies')->group(function () {
+        Route::controller(TypologyController::class)->group(function () {
+            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:typification.typologies.all']);
+            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:typification.typologies.find']);
+            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:typification.typologies.store']);
+            Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:typification.typologies.update']);
+            Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:typification.typologies.delete']);
+            Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:typification.typologies.restore']);
         });
     });
 });
