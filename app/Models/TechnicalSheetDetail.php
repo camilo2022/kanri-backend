@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
-use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
+use OwenIt\Auditing\Contracts\Auditable;
 
 class TechnicalSheetDetail extends Model implements Auditable
 {
@@ -17,7 +17,9 @@ class TechnicalSheetDetail extends Model implements Auditable
     protected $table = 'technical_sheet_details';
 
     public const PENDING = 'Pendiente';
+
     public const REVIEW = 'En revision';
+
     public const APPROVED = 'Aprobado';
 
     protected $fillable = [
@@ -25,7 +27,7 @@ class TechnicalSheetDetail extends Model implements Auditable
         'model_type',
         'technical_sheet_id',
         'status',
-        'settings'
+        'settings',
     ];
 
     protected $auditInclude = [
@@ -33,11 +35,11 @@ class TechnicalSheetDetail extends Model implements Auditable
         'model_type',
         'technical_sheet_id',
         'status',
-        'settings'
+        'settings',
     ];
 
     protected $casts = [
-        'settings' => 'object'
+        'settings' => 'object',
     ];
 
     public function technical_sheet(): BelongsTo
@@ -50,30 +52,37 @@ class TechnicalSheetDetail extends Model implements Auditable
         return $this->morphTo();
     }
 
+    public function typology(): MorphToMany
+    {
+        return $this->morphToMany(Typology::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
+    }
+
     public function scopeSearch(Builder $query, ?string $search = null): Builder
     {
         $search = trim((string) $search);
-        if ($search === '') return $query;
+        if ($search === '') {
+            return $query;
+        }
 
         $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
 
         return $query->where(function (Builder $q) use ($terms) {
             foreach ($terms as $term) {
                 $q->orWhere(function (Builder $sq) use ($term) {
-                    $sq->orWhere('name', 'LIKE', '%' . $term . '%')
-                        ->orWhere('title', 'LIKE', '%' . $term . '%')
-                        ->orWhere('description', 'LIKE', '%' . $term . '%');
+                    $sq->orWhere('name', 'LIKE', '%'.$term.'%')
+                        ->orWhere('title', 'LIKE', '%'.$term.'%')
+                        ->orWhere('description', 'LIKE', '%'.$term.'%');
                 });
             }
         });
     }
 
-    public static function statuses ()
+    public static function statuses()
     {
         return [
             self::PENDING,
             self::REVIEW,
-            self::APPROVED
+            self::APPROVED,
         ];
     }
 }

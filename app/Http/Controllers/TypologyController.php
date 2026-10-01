@@ -162,9 +162,15 @@ class TypologyController extends Controller
     public function all(TypologyAllRequest $request)
     {
         try {
-            $typologies = Typology::when($request->filled('search'), function ($query) use ($request) {
-                return $query->search($request->input('search'));
-            })
+            $typologies = Typology::with(['processes', 'technical_sheet_details'])
+                ->when($request->filled('process_id'), function ($query) use ($request) {
+                    return $query->whereHas('processes', function ($q) use ($request) {
+                        $q->where('id', $request->input('process_id'));
+                    });
+                })
+                ->when($request->filled('search'), function ($query) use ($request) {
+                    return $query->search($request->input('search'));
+                })
                 ->when($request->boolean('with_trashed'), function ($query) {
                     return $query->withTrashed();
                 })

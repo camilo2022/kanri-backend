@@ -11,6 +11,7 @@ use App\Models\SupplyType;
 use App\Models\TechnicalSheet;
 use App\Models\TechnicalSheetDetail;
 use App\Models\Trademark;
+use App\Models\Typology;
 use App\Models\WashTone;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -54,6 +55,7 @@ class TechnicalSheetSaveRequest extends FormRequest
             'technical_sheet_details.*.id' => ['sometimes', 'exists:technical_sheet_details,id'],
             'technical_sheet_details.*.model_type' => ['required'],
             'technical_sheet_details.*.model_id' => ['required', 'exists:subitems,id'],
+            'technical_sheet_details.*.typology' => ['nullable', 'exists:subitems,id,item_id,'.Typology::ITEM_ID.',deleted_at,NULL'],
             'technical_sheet_details.*.status' => ['required', 'in:'.implode(',', [TechnicalSheetDetail::PENDING, TechnicalSheetDetail::REVIEW, TechnicalSheetDetail::APPROVED])],
             'supplies' => ['required', 'array'],
             'supplies.*' => ['sometimes', 'numeric', 'exists:subitems,id,item_id,'.Supply::ITEM_ID],

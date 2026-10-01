@@ -9,8 +9,9 @@ use App\Models\Color;
 use App\Models\GarmentType;
 use App\Models\Product;
 use App\Models\Subgroup;
-use App\Models\SupplyType;
 use App\Models\Supply;
+use App\Models\SupplyType;
+use App\Models\Typology;
 use App\Models\WaistbandType;
 use App\Models\WashTone;
 use App\Models\YokeType;
@@ -62,6 +63,7 @@ class TechnicalSheetStoreRequest extends FormRequest
             'photo_t.file' => ['required', 'image', 'max:2048'],
             'technical_sheet_details' => ['nullable', 'array'],
             'technical_sheet_details.*' => ['nullable', 'array'],
+            'technical_sheet_details.*.typology' => ['required', 'exists:subitems,id,item_id,'.Typology::ITEM_ID.',deleted_at,NULL'],
             'technical_sheet_details.*.settings' => ['nullable', 'array'],
             'technical_sheet_details.*.settings.dinamic' => ['nullable', 'array'],
             'technical_sheet_details.*.settings.dinamic.values' => ['nullable', 'array'],

@@ -64,6 +64,11 @@ class Typology extends Model implements Auditable
         return $this->morphedByMany(Process::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
     }
 
+    public function technical_sheet_details(): MorphToMany
+    {
+        return $this->morphedByMany(TechnicalSheetDetail::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
+    }
+
     public function scopeSearch(Builder $query, ?string $search = null): Builder
     {
         $search = trim((string) $search);

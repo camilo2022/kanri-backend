@@ -22,7 +22,7 @@ class ManagementCollectionController extends Controller
     public function find(CollectionFindRequest $request, $id)
     {
         try {
-            $collection = Collection::with(['technical_sheets' => ['collection', 'product' => ['trademark', 'subcategory' => ['category']], 'supplies' => ['supply_type'], 'technical_sheet_details', 'garment_type', 'wash_tone', 'boot_type', 'photo_d', 'photo_t']])
+            $collection = Collection::with(['technical_sheets' => ['collection', 'product' => ['trademark', 'subcategory' => ['category']], 'supplies' => ['supply_type'], 'technical_sheet_details' => ['typology'], 'garment_type', 'wash_tone', 'boot_type', 'photo_d', 'photo_t']])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -51,22 +51,6 @@ class ManagementCollectionController extends Controller
                 'trademark_id' => $request->integer('product.trademark_id'),
             ]
         );
-
-        /*$technical_sheet = TechnicalSheet::updateOrCreate(
-            [
-                'id' => $request->integer('id')
-                'code' =>  $result[0]->code
-            ]
-            [
-                'product_id' => $product->id,
-                'collection_id' => $request->integer('collection_id'),
-                'garment_type_id' => $request->integer('garment_type_id'),
-                'wash_tone_id' => $request->integer('wash_tone_id'),
-                'boot_type_id' => $request->integer('boot_type_id'),
-                'observation' => $request->input('observation'),
-                'status' => $request->input('status')
-            ]
-        );*/
 
         $technical_sheet = TechnicalSheet::find($request->integer('id'));
 
@@ -100,7 +84,7 @@ class ManagementCollectionController extends Controller
         }
 
         foreach ($request->input('technical_sheet_details', []) as $technical_sheet_detail) {
-            TechnicalSheetDetail::updateOrCreate(
+            $detail = TechnicalSheetDetail::updateOrCreate(
                 [
                     'technical_sheet_id' => $technical_sheet->id,
                     'model_type' => $technical_sheet_detail['model_type'],
@@ -111,6 +95,10 @@ class ManagementCollectionController extends Controller
                     'settings' => $technical_sheet_detail['settings'] ?? (object) [],
                 ]
             );
+
+            if (isset($technical_sheet_detail['typology'])) {
+                $detail->auditSync('typology', $technical_sheet_detail['typology']);
+            }
         }
 
         if ($request->hasFile('photo_d')) {
@@ -137,7 +125,7 @@ class ManagementCollectionController extends Controller
 
         $technical_sheet->auditSync('supplies', $request->input('supplies', []));
 
-        $technical_sheet->load(['collection', 'product' => ['trademark', 'subcategory' => ['category']], 'supplies' => ['supply_type'], 'technical_sheet_details', 'garment_type', 'wash_tone', 'boot_type', 'photo_d', 'photo_t']);
+        $technical_sheet->load(['collection', 'product' => ['trademark', 'subcategory' => ['category']], 'supplies' => ['supply_type'], 'technical_sheet_details' => ['typology'], 'garment_type', 'wash_tone', 'boot_type', 'photo_d', 'photo_t']);
 
         return $this->successResponse(
             new TechnicalSheetResource($technical_sheet),

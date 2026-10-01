@@ -38,7 +38,7 @@ class TechnicalSheetController extends Controller
                 'boot_type',
                 'yoke_type',
                 'back_type',
-                'technical_sheet_details',
+                'technical_sheet_details' => ['typology'],
                 'technical_sheet_details_processes',
                 'pattern_maker' => ['person', 'position'],
                 'supplies' => ['supply_type'],
@@ -214,7 +214,7 @@ class TechnicalSheetController extends Controller
     {
         try {
             foreach ($technical_sheet_details as $technical_sheet_detail) {
-                TechnicalSheetDetail::updateOrCreate(
+                $detail = TechnicalSheetDetail::updateOrCreate(
                     [
                         'technical_sheet_id' => $technical_sheet_id,
                         'model_type' => $technical_sheet_detail['model_type'],
@@ -225,6 +225,10 @@ class TechnicalSheetController extends Controller
                         'settings' => $technical_sheet_detail['settings'] ?? (object) [],
                     ]
                 );
+
+                if (isset($technical_sheet_detail['typology'])) {
+                    $detail->auditSync('typology', $technical_sheet_detail['typology']);
+                }
             }
         } catch (\Throwable $e) {
             return $this->errorResponse(

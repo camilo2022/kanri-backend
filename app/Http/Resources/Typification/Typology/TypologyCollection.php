@@ -20,7 +20,8 @@ class TypologyCollection extends ResourceCollection
                     'updated_at' => $this->formatDate($typology->updated_at),
                     'deleted_at' => $this->formatDate($typology->deleted_at),
                     'settings' => $typology->settings,
-                    'processes' => $typology->supplies,
+                    'processes' => $typology->processes,
+                    'technical_sheet_details' => $typology->technical_sheet_details,
                 ];
             }),
             'meta' => [
