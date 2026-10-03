@@ -46,7 +46,8 @@
 
     <div class="section">
         <table class="info-table">
-            @if ($production_order->model || $production_order->derivatives)
+
+            @if ($production_order->reassignments || $production_order->derivatives)
                 <tr>
                     <td class="label-info-table" style="text-align:center;">-</td>
                     <td class="label-info-table" style="text-align:center;">Origen</td>
@@ -73,19 +74,25 @@
                 <tr>
                     <td class="label-info-table" style="text-align:center;">Reasignación</td>
                     <td class="label-info-table derivation-value">
-                        @if ($production_order->model)
-                            {{ ($production_order->model->technical_sheet?->product?->code ?? '-') . '-' . ($production_order->model->cut ?? '-') }}
-                        @else
+                        @forelse ($production_order->reassignments as $reassignment)
+                            <span class="derivative-item">
+                                {{ ($reassignment->model->technical_sheet?->product?->code ?? '-') . '-' . ($reassignment->model->cut ?? '-') }}
+                                @if (!$loop->last)
+                                    ,
+                                @endif
+                            </span>
+                        @empty
                             -
-                        @endif
+                        @endforelse
                     </td>
                     <td class="label-info-table derivation-value">
                         @forelse ($production_order->derivatives as $derivative)
-                            {{ ($derivative->technical_sheet?->product?->code ?? '-') . '-' . ($derivative->cut ?? '-') }}
-
-                            @if (!$loop->last)
-                                <br>
-                            @endif
+                            <span class="derivative-item">
+                                {{ ($derivative->production_order->technical_sheet?->product?->code ?? '-') . '-' . ($derivative->production_order->cut ?? '-') }}
+                                @if (!$loop->last)
+                                    ,
+                                @endif
+                            </span>
                         @empty
                             -
                         @endforelse
@@ -211,28 +218,27 @@
                 <td class="label">Lote</td>
                 <td class="value">{{ $production_order->cut ?? '-' }}</td>
 
-                <td class="label">Fecha</td>
-                <td class="value">{{ $production_order->date->format('d/m/Y') ?? '-' }}</td>
+                <td class="label">Eficiencia</td>
+                <td class="value">{{ $production_order->efficiency }} %</td>
             </tr>
 
             <tr>
                 <td class="label">Tela</td>
-                <td class="value" colspan="2">
+                <td class="value">
                     {{ ($production_order->fabric->model->name ?? '-') . ' - ' . ($production_order->fabric->model->description ?? '-') }}
                 </td>
 
                 <td class="label">Color</td>
-                <td class="value" colspan="2">
+                <td class="value">
                     {{ (optional($production_order->color->first())->settings->code ?? '-') . '-' . (optional($production_order->color->first())->name ?? '-') }}
                 </td>
+                <td class="label">Ancho Tela</td>
+                <td class="value">{{ $production_order->width }}</td>
             </tr>
 
             <tr>
-                <td class="label">Ancho Tela</td>
-                <td class="value">{{ $production_order->width }}</td>
-
-                <td class="label">Eficiencia</td>
-                <td class="value">{{ $production_order->efficiency }} %</td>
+                <td class="label">Observación</td>
+                <td class="value" colspan="3">{{ $production_order->observation ?? 'N/A' }}</td>
 
                 @php
                     $status_production_order = $production_order->status ?? null;
@@ -269,12 +275,8 @@
             </tr>
 
             <tr>
-                <td class="label">Observación</td>
-                <td class="value" colspan="5">{{ $production_order->observation }}</td>
-            </tr>
-
-            <tr>
                 @php
+
                     $metros_reales = collect($production_order->settings)->sum(
                         fn($item) => $item->large * $item->quantity,
                     );
@@ -282,6 +284,13 @@
                     $detail = $production_order->production_order_details->first(
                         fn($item) => $item->model_type === Supply::class,
                     );
+
+                    logger([
+                        '$production_order->production_order_details',
+                        $production_order->production_order_details,
+                    ]);
+                    logger(['$production_order->settings', $production_order->settings]);
+                    logger(['$detail', $detail]);
 
                     $total_unidades = $detail
                         ? $detail->production_order_detail_quantities
@@ -434,7 +443,7 @@
 
                     <td class="value-primary row-total">{{ $total }}</td>
                 @endforeach
-                <td class="value-primary grand-total">{{ $gran_total }}</td>
+                <td class="value-primary total-column">{{ $gran_total }}</td>
             </tr>
 
             @php
@@ -657,37 +666,37 @@
 
                     @php
                         $total_metros = $production_order->rolls->sum(
-                            fn($roll) => (float) ($roll->settings->values->meters ?? 0),
+                            fn($roll) => (float) ($roll->model->settings->values->meters ?? 0),
                         );
 
                         $total_utilizados = $production_order->rolls->sum(
-                            fn($roll) => (float) ($roll->pivot->quantity ?? 0),
+                            fn($roll) => (float) ($roll->settings->quantity ?? 0),
                         );
                     @endphp
 
                     @foreach ($production_order->rolls as $roll)
                         <tr>
                             @php
-                                $fabric = $roll->related(Supply::class)->first();
+                                $fabric = $roll->model->related(Supply::class)->first();
                             @endphp
                             <td class="value-primary">
                                 {{ ($fabric?->name ?? '-') . ' - ' . ($fabric?->description ?? '-') }}
                             </td>
 
                             <td class="value-primary">
-                                {{ $roll->name ?? '-' }}
+                                {{ $roll->model->name ?? '-' }}
                             </td>
 
                             <td class="value-primary">
-                                {{ $roll->settings->values->width ?? '-' }}
+                                {{ $roll->model->settings->values->width ?? '-' }}
                             </td>
 
                             <td class="value-primary">
-                                {{ $roll->settings->values->meters ?? '-' }}
+                                {{ $roll->model->settings->values->meters ?? '-' }}
                             </td>
 
                             <td class="value-primary">
-                                {{ $roll->pivot->quantity ?? '-' }}
+                                {{ $roll->settings->quantity ?? '-' }}
                             </td>
                         </tr>
                     @endforeach
@@ -719,11 +728,11 @@
                     @foreach ($production_order->pieces as $piece)
                         <tr>
                             <td class="value-primary">
-                                {{ $piece->name ?? '-' }}
+                                {{ $piece->model->name ?? '-' }}
                             </td>
 
                             <td class="value-primary">
-                                {{ $piece->pivot->quantity ?? '-' }}
+                                {{ $piece->settings->quantity ?? '-' }}
                             </td>
                         </tr>
                     @endforeach
@@ -732,7 +741,7 @@
                         <td class="label-primary">TOTAL</td>
                         @php
                             $item = $production_order->pieces
-                                ? $production_order->pieces->sum(fn($item) => $item->pivot->quantity)
+                                ? $production_order->pieces->sum(fn($item) => $item->settings->quantity)
                                 : null;
                         @endphp
                         <td class="value-primary"><strong>{{ $item }}</strong></td>

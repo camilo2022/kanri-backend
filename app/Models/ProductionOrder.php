@@ -85,9 +85,10 @@ class ProductionOrder extends Model implements Auditable
         return $this->belongsTo(TechnicalSheet::class);
     }
 
-    public function derivatives()
+    public function derivatives(): HasMany
     {
-        return $this->morphMany(ProductionOrder::class, 'model');
+        return $this->hasMany(ProductionOrderDetail::class, 'model_id')
+            ->where('model_type', ProductionOrder::class);
     }
 
     public function color(): MorphToMany

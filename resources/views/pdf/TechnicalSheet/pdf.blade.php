@@ -29,24 +29,29 @@
             </td>
 
             <td class="title-primary" style="width: 40%;">GESTIÓN DE DISEÑO</td>
-            <td class="meta-cell" style="width: 10%;">GP-FR-01 Versión 01</td>
+            <td class="meta-cell" style="width: 10%;">GP-FR-01 V.01</td>
             <td class="qr-cell" rowspan="2"><img src="{{ $qr }}" width="90"></td>
         </tr>
 
         <tr>
             <td class="title-primary" rowspan="2" style="width: 40%;">FICHA TÉCNICA</td>
-            <td class="meta-cell" style="width: 10%;">Vigente desde 13/04/2026</td>
+            <td class="meta-cell" style="width: 10%;">13/04/2026</td>
         </tr>
 
         <tr>
             <td class="meta-cell" colspan="2">Impreso: {{ now()->format('d/m/Y h:i A') }}</td>
         </tr>
-
     </table>
 
     <div class="section">
-        <table class="info-table">
-            @if ($production_order->model || $production_order->derivatives)
+        <table class="info-table-aux">
+            <colgroup>
+                <col style="width: 15%;">
+                <col style="width: 42.5%;">
+                <col style="width: 42.5%;">
+            </colgroup>
+
+            @if ($production_order->reassignments || $production_order->derivatives)
                 <tr>
                     <td class="label-info-table" style="text-align:center;">-</td>
                     <td class="label-info-table" style="text-align:center;">Origen</td>
@@ -55,15 +60,14 @@
 
                 <tr>
                     <td class="label-info-table" style="text-align:center;">Transformación</td>
+
                     <td class="label-info-table origin-value">
-                        {{ $production_order->technical_sheet->model->product->code ?? '-' }}</td>
+                        {{ $production_order->technical_sheet->model->product->code ?? '-' }}
+                    </td>
+
                     <td class="label-info-table origin-value">
                         @forelse ($production_order->technical_sheet->derivatives as $derivative)
                             {{ $derivative->product?->code ?? '-' }}
-
-                            @if (!$loop->last)
-                                <br>
-                            @endif
                         @empty
                             -
                         @endforelse
@@ -71,21 +75,31 @@
                 </tr>
 
                 <tr>
-                    <td class="label-info-table" style="text-align:center;">Reasignación</td>
-                    <td class="label-info-table derivation-value">
-                        @if ($production_order->model)
-                            {{ ($production_order->model->technical_sheet?->product?->code ?? '-') . '-' . ($production_order->model->cut ?? '-') }}
-                        @else
-                            -
-                        @endif
+                    <td class="label-info-table" style="text-align: center; vertical-align: middle;">
+                        Reasignaciones
                     </td>
+
+                    <td class="label-info-table derivation-value">
+                        @forelse ($production_order->reassignments as $reassignment)
+                            <span class="derivative-item">
+                                {{ ($reassignment->model->technical_sheet?->product?->code ?? '-') . '-' . ($reassignment->model->cut ?? '-') }}
+                                @if (!$loop->last)
+                                    ,
+                                @endif
+                            </span>
+                        @empty
+                            -
+                        @endforelse
+                    </td>
+
                     <td class="label-info-table derivation-value">
                         @forelse ($production_order->derivatives as $derivative)
-                            {{ ($derivative->technical_sheet?->product?->code ?? '-') . '-' . ($derivative->cut ?? '-') }}
-
-                            @if (!$loop->last)
-                                <br>
-                            @endif
+                            <span class="derivative-item">
+                                {{ ($derivative->production_order->technical_sheet?->product?->code ?? '-') . '-' . ($derivative->production_order->cut ?? '-') }}
+                                @if (!$loop->last)
+                                    ,
+                                @endif
+                            </span>
                         @empty
                             -
                         @endforelse
@@ -287,9 +301,13 @@
                 fn($item) => $item->model_type === Supply::class,
             );
 
+            logger()->info('Detail for production order: ' . $production_order->uuid, [
+                'detail' => $detail,
+            ]);
+
             $grouped = $detail ? $detail->production_order_detail_quantities->groupBy('size_id') : collect();
 
-            $rows = $grouped->count() ? $grouped->max(fn($items) => $items->count()) : 0;
+            $rows = $grouped->count() ? $grouped->max(fn($items) => $items->count()) : 1;
 
         @endphp
 
@@ -395,7 +413,7 @@
             <tr>
                 @php
                     $metros_reales = collect($production_order->settings)->sum(
-                        fn($item) => $item->large * $item->quantity,
+                        fn($item) => ($item->large ?? 0) * ($item->quantity ?? 0),
                     );
 
                     $detail = $production_order->production_order_details->first(
@@ -592,6 +610,7 @@
                 );
 
                 $status = $detail_process->status ?? null;
+                $typology = $detail_process->typology->first() ?? null;
 
                 switch ($status) {
                     case 'Aprobado':
@@ -624,7 +643,22 @@
                     <tr>
                         <td class="label-primary" style="color: #000;" colspan="3">{{ $process->name ?? '-' }}
                         </td>
-                        <td class="label-primary">Estado</td>
+                        <td class="label-primary">
+                            @php
+                                $code = $typology->settings->code ?? null;
+                                $name = $typology?->name ?? null;
+                            @endphp
+
+                            @if ($code && $name)
+                                {{ $code }} - {{ $name }}
+                            @elseif ($code)
+                                {{ $code }}
+                            @elseif ($name)
+                                {{ $name }}
+                            @else
+                                -
+                            @endif
+                        </td>
                         <td
                             style="background: {{ $statusBg }};color: {{ $statusColor }};text-align:center;font-weight:bold;text-transform:uppercase">
                             {{ $status }}

@@ -13,7 +13,7 @@ class TechnicalSheetExportPDFRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -25,8 +25,7 @@ class TechnicalSheetExportPDFRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'uuid' => ['required', 'string', 'exists:technical_sheets,uuid'],
-            'production_order_id' => ['required', 'numeric', 'exists:production_orders,id'],
+            'uuid' => ['required', 'string', 'exists:production_orders,uuid'],
         ];
     }
 

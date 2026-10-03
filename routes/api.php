@@ -25,6 +25,7 @@ use App\Http\Controllers\HealthEntityController;
 use App\Http\Controllers\ManagementCollectionController;
 use App\Http\Controllers\ManagementProductionController;
 use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\MovementController;
 use App\Http\Controllers\OperationController;
 use App\Http\Controllers\PensionFundController;
 use App\Http\Controllers\PermissionController;
@@ -305,6 +306,12 @@ Route::prefix('/management')->group(function () {
             Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:management.production.find']);
             Route::post('/save', 'save')->middleware(['auth:sanctum', 'can:management.production.save']);
         });
+    });
+});
+
+Route::prefix('/movements')->group(function () {
+    Route::controller(MovementController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:movements.all']);
     });
 });
 

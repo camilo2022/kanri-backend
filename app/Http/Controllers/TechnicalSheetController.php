@@ -354,57 +354,47 @@ class TechnicalSheetController extends Controller
     public function pdf(TechnicalSheetExportPDFRequest $request, string $uuid)
     {
         try {
-            $technical_sheet = TechnicalSheet::with([
-                'collection',
-                'subgroup',
-                'color',
-                'waistband_type',
-                'garment_type',
-                'wash_tone',
-                'boot_type',
-                'yoke_type',
-                'back_type',
-                'technical_sheet_details',
-                'pattern_maker' => ['person', 'position'],
-                'supplies' => ['supply_type'],
-                'product' => ['trademark' => ['group'], 'subcategory' => ['category']],
-                'products' => ['trademark'],
-            ])->where('uuid', $uuid)->firstOrFail();
-
             $production_order = ProductionOrder::with([
                 'technical_sheet' => [
-                    'product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']],
-                    'products',
-                    'photo_d',
-                    'photo_t',
-                    'garment_type',
                     'collection',
-                    'model' => ['product'],
-                    'derivatives' => ['product'],
+                    'subgroup',
+                    'color',
+                    'waistband_type',
+                    'garment_type',
+                    'wash_tone',
+                    'boot_type',
+                    'yoke_type',
+                    'back_type',
+                    'technical_sheet_details' => ['typology'],
+                    'pattern_maker' => ['person', 'position'],
+                    'supplies' => ['supply_type'],
+                    'product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']],
+                    'products' => ['trademark'],
                 ],
                 'production_order_details' => ['production_order_detail_quantities', 'model'],
                 'fabric.model',
                 'pieces',
                 'rolls',
-                'model' => ['technical_sheet' => ['product']],
-                'derivatives' => ['technical_sheet' => ['product']],
-            ])->where('id', $request->production_order_id)
-                ->where('technical_sheet_id', $technical_sheet->id)
-                ->firstOrFail();
+                'derivatives' => ['production_order' => ['technical_sheet' => ['product']]],
+                'reassignments' => ['model' => ['technical_sheet' => ['product']]],
+            ])->where('uuid', $uuid)->firstOrFail();
+
+            logger()->info('Generating PDF for production order: '.$production_order->uuid, [
+                'production_order' => $production_order,
+            ]);
 
             $pdfUrl = URL::signedRoute(
                 'technical_sheets.pdf',
                 [
-                    'uuid' => $technical_sheet->uuid,
-                    'production_order_id' => $production_order->id,
+                    'uuid' => $production_order->technical_sheet->uuid,
                 ]
             );
 
             $qr = app(QrCodeService::class)->generate($pdfUrl);
 
-            $technical_sheet->technical_sheet_details =
+            $production_order->technical_sheet->technical_sheet_details =
                 $this->formatTechnicalSheetDetails(
-                    $technical_sheet->technical_sheet_details
+                    $production_order->technical_sheet->technical_sheet_details
                 );
 
             $processes = Process::with(['subprocesses' => ['operations']])->where('settings->in_technical_sheet', true)
@@ -413,7 +403,7 @@ class TechnicalSheetController extends Controller
             $pdf = Pdf::loadView(
                 'pdf.TechnicalSheet.pdf',
                 [
-                    'technical_sheet' => $technical_sheet,
+                    'technical_sheet' => $production_order->technical_sheet,
                     'production_order' => $production_order,
                     'processes' => $processes,
                     'qr' => $qr,

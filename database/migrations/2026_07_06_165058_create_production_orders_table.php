@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Supplier;
 use App\Models\TechnicalSheet;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Query\Expression;
@@ -15,12 +16,14 @@ return new class extends Migration
             $table->id();
             $table->foreignIdFor(TechnicalSheet::class)->constrained()->cascadeOnUpdate();
             $table->string('consecutive', 11)->unique();
+            $table->enum('production_place', ['BLESS', 'SATELITE'])->default('BLESS');
+            $table->foreignIdFor(Supplier::class)->nullable()->constrained()->cascadeOnUpdate();
             $table->float('efficiency', 8.3)->nullable();
             $table->string('cut', 2);
             $table->decimal('width', 8, 2)->nullable();
             $table->boolean('pocket_fabric')->default(false);
+            $table->enum('priority', ['1', '2', '3', '4', '5'])->default('3');
             $table->text('observation')->nullable();
-            $table->enum('priority', ['1', '2', '3', '4', '5'])->default('3')->after('observation');
             $table->json('settings')->default(new Expression('(JSON_OBJECT())'))->comment('Configuraciones');
             $table->enum('status', ['Pendiente', 'Cancelado', 'Aprobado'])->default('Pendiente');
             $table->timestamps();

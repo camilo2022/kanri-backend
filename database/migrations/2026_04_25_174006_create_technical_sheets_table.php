@@ -28,6 +28,7 @@ return new class extends Migration
             $table->uuid();
             $table->nullableMorphs('model');
             $table->string('code', 11)->unique()->nullable();
+            $table->string('consecutive', 11)->unique()->nullable();
             $table->date('date')->nullable();
             $table->foreignIdFor(Product::class)->unique()->constrained()->cascadeOnUpdate();
             $table->foreignIdFor(Collection::class)->constrained()->cascadeOnUpdate();

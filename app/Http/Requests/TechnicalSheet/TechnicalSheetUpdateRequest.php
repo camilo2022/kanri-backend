@@ -66,7 +66,7 @@ class TechnicalSheetUpdateRequest extends FormRequest
             'photo_t.file' => ['sometimes', 'image', 'max:2048'],
             'technical_sheet_details' => ['required', 'array'],
             'technical_sheet_details.*' => ['sometimes', 'array'],
-            'technical_sheet_details.*.typology' => ['required', 'exists:subitems,id,item_id,'.Typology::ITEM_ID.',deleted_at,NULL'],
+            'technical_sheet_details.*.typology' => ['nullable', 'exists:subitems,id,item_id,'.Typology::ITEM_ID.',deleted_at,NULL'],
             'technical_sheet_details.*.settings' => ['sometimes', 'array'],
             'technical_sheet_details.*.settings.dinamic' => ['sometimes', 'array'],
             'technical_sheet_details.*.settings.dinamic.values' => ['sometimes', 'array'],

@@ -28,7 +28,7 @@ class ManagementProductionController extends Controller
                 'item',
                 'technical_sheets' => function ($query) {
                     $query->where('status', '!=', TechnicalSheet::PENDING)
-                        ->with(['technical_sheet_details', 'product' => ['trademark' => ['sizes'], 'subcategory' => ['category']], 'garment_type', 'wash_tone', 'boot_type', 'photo_d', 'photo_t', 'products', 'production_orders' => ['production_order_details' => ['production_order_detail_quantities', 'model'], 'fabric' => ['model'], 'color', 'supplier', 'reassignments']]);
+                        ->with(['technical_sheet_details' => ['typology'], 'product' => ['trademark' => ['sizes'], 'subcategory' => ['category']], 'garment_type', 'wash_tone', 'boot_type', 'photo_d', 'photo_t', 'products', 'production_orders' => ['production_order_details' => ['production_order_detail_quantities', 'model'], 'fabric' => ['model'], 'color', 'supplier', 'reassignments']]);
                 },
             ])->findOrFail($id);
 

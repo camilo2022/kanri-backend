@@ -118,8 +118,18 @@ table {
     padding: 7px;
 }
 
+.info-table-aux {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.info-table-aux td {
+    border: 0.25px solid rgb(0, 0, 0);
+    padding: 4px;
+}
+
 .label {
-    width: 25%;
+    width: 22%;
     font-family: "Poppins", sans-serif;
     background: #fafafa;
     font-weight: bold;
@@ -156,7 +166,7 @@ table {
 }
 
 .value {
-    width: 37%;
+    width: 45%;
     color: #111827;
     font-family: "Roboto", sans-serif;
 }
@@ -359,4 +369,15 @@ table {
     color: #c2410c;
     font-weight: bold;
     text-align: center;
+    display: table-cell !important;
+    vertical-align: middle !important;
+    line-height: 1.4;
+}
+
+.derivative-item {
+    white-space: nowrap;
+}
+
+.derivative-item:not(:last-child)::after {
+    content: ", ";
 }

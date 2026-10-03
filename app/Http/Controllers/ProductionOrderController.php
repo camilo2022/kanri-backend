@@ -98,7 +98,7 @@ class ProductionOrderController extends Controller
     public function find(ProductionOrderFindRequest $request, $id)
     {
         try {
-            $production_order = ProductionOrder::with(['technical_sheet' => ['product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']], 'products', 'garment_type', 'subgroup', 'collection', 'photo_d', 'photo_t'], 'production_order_details' => ['production_order_detail_quantities', 'model'], 'fabric' => ['model'], 'pieces', 'rolls' => ['model' => ['supply_type', 'production_order_details']], 'reassignments'])
+            $production_order = ProductionOrder::with(['technical_sheet' => ['product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']], 'products', 'garment_type', 'subgroup', 'collection', 'photo_d', 'photo_t'], 'production_order_details' => ['production_order_detail_quantities', 'model'], 'fabric' => ['model'], 'pieces', 'rolls' => ['model' => ['supply_type', 'production_order_details']], 'reassignments' => ['model' => ['technical_sheet' => ['product']]], 'derivatives' => ['model' => ['technical_sheet' => ['product']]]])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -459,21 +459,27 @@ class ProductionOrderController extends Controller
         try {
             $production_order = ProductionOrder::with([
                 'technical_sheet' => [
-                    'product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']],
-                    'products',
-                    'photo_d',
-                    'photo_t',
-                    'garment_type',
                     'collection',
-                    'model' => ['product'],
-                    'derivatives' => ['product'],
+                    'subgroup',
+                    'color',
+                    'waistband_type',
+                    'garment_type',
+                    'wash_tone',
+                    'boot_type',
+                    'yoke_type',
+                    'back_type',
+                    'technical_sheet_details' => ['typology'],
+                    'pattern_maker' => ['person', 'position'],
+                    'supplies' => ['supply_type'],
+                    'product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']],
+                    'products' => ['trademark'],
                 ],
                 'production_order_details' => ['production_order_detail_quantities', 'model'],
                 'fabric.model',
                 'pieces',
-                'rolls',
-                'model' => ['technical_sheet' => ['product']],
-                'derivatives' => ['technical_sheet' => ['product']],
+                'rolls' => ['model' => ['supply_type', 'production_order_details']],
+                'derivatives' => ['production_order' => ['technical_sheet' => ['product']]],
+                'reassignments' => ['model' => ['technical_sheet' => ['product']]],
             ])->where('uuid', $uuid)->firstOrFail();
 
             $pdfUrl = URL::signedRoute(
@@ -606,6 +612,8 @@ class ProductionOrderController extends Controller
                 [
                     'message' => $this->getMessage(class_basename($e)),
                     'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
                 ],
                 $this->getCode(class_basename($e))
             );
