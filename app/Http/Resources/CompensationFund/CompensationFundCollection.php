@@ -13,12 +13,13 @@ class CompensationFundCollection extends ResourceCollection
             'compensation_funds' => $this->collection->map(function ($compensation_fund) {
                 return [
                     'id' => $compensation_fund->id,
-                    'item' => $compensation_fund->item,
+                    'item_id' => $compensation_fund->item_id,
                     'name' => $compensation_fund->name,
                     'description' => $compensation_fund->description,
                     'created_at' => $this->formatDate($compensation_fund->created_at),
                     'updated_at' => $this->formatDate($compensation_fund->updated_at),
-                    'deleted_at' => $this->formatDate($compensation_fund->deleted_at)
+                    'deleted_at' => $this->formatDate($compensation_fund->deleted_at),
+                    'item' => $compensation_fund->item,
                 ];
             }),
             'meta' => [

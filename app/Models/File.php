@@ -4,13 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
 
 class File extends Model implements Auditable
 {
-    use Auditing, SoftDeletes;
+    use Auditing;
 
     protected $table = 'files';
 
@@ -48,6 +47,11 @@ class File extends Model implements Auditable
     public function getPathAttribute($value): ?string
     {
         return $value ? url('storage/' . $value) : null;
+    }
+
+    public function getPdfPathAttribute()
+    {
+        return public_path('storage/' . $this->attributes['path']);
     }
 
     public function model(): MorphTo

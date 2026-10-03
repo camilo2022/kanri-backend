@@ -7,6 +7,7 @@ use App\Http\Requests\Authorization\Permission\PermissionFindRequest;
 use App\Http\Requests\Authorization\Permission\PermissionStoreRequest;
 use App\Http\Requests\Authorization\Permission\PermissionUpdateRequest;
 use App\Http\Resources\Authorization\Permission\PermissionCollection;
+use App\Http\Resources\Authorization\Permission\PermissionResource;
 use App\Models\Permission;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -21,6 +22,35 @@ use App\Traits\ApiResponser;
  *     path="/permission",
  *     description="Rutas de Gestión de Permisos"
  * )
+ *
+ * @OA\Schema(
+ *     schema="PermissionWithRole",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="name", type="string", example="users"),
+ *     @OA\Property(property="title", type="string", example="Usuarios."),
+ *     @OA\Property(property="description", type="string", example="Gestión de usuarios."),
+ *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *     @OA\Property(
+ *         property="role",
+ *         type="object",
+ *         @OA\Property(property="id", type="integer", example=1),
+ *         @OA\Property(property="name", type="string", example="users"),
+ *         @OA\Property(property="guard_name", type="string", example="api"),
+ *         @OA\Property(property="title", type="string", example="Usuarios."),
+ *         @OA\Property(property="description", type="string", example="Gestión de usuarios."),
+ *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
+ *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *         @OA\Property(
+ *             property="pivot",
+ *             type="object",
+ *             @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
+ *             @OA\Property(property="model_id", type="integer", example=1),
+ *             @OA\Property(property="role_id", type="integer", example=1)
+ *         )
+ *     )
+ * )
  */
 class PermissionController extends Controller
 {
@@ -33,61 +63,51 @@ class PermissionController extends Controller
      *     summary="Listar los permisos",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
+     *         name="role_id",
+     *         in="query",
+     *         description="Identificador del Rol.",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Texto de búsqueda en los permisos",
+     *         description="Filtro de Busqueda.",
      *         required=false,
-     *         @OA\Schema(type="string", example="authorization")
+     *         @OA\Schema(type="string", example="juan")
      *     ),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
-     *         description="Columna por la que se ordena",
+     *         description="Columna a ordenar.",
      *         required=false,
-     *         @OA\Schema(type="string", example="name")
+     *         @OA\Schema(type="string", enum={"id","name","title", "description","created_at", "updated_at"}, example="name")
      *     ),
      *     @OA\Parameter(
      *         name="dir",
      *         in="query",
-     *         description="Dirección de ordenamiento",
+     *         description="Dirección de ordenamiento.",
      *         required=false,
-     *         @OA\Schema(type="string", example="asc")
+     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
      *     ),
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
-     *         description="Cantidad de registros por página",
+     *         description="Registros por página.",
      *         required=false,
      *         @OA\Schema(type="integer", example=10)
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Lista de permisos cargada con éxito",
+     *         description="Lista de permisos cargada correctamente",
      *         @OA\JsonContent(
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
-     *                     property="permisos",
+     *                     property="permissions",
      *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example="id_example"),
-     *                         @OA\Property(property="name", type="string", example="name_permission_example"),
-     *                         @OA\Property(property="title", type="string", example="title_permission_example"),
-     *                         @OA\Property(property="description", type="string", example="description_permission_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                     ),
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example="id_example"),
-     *                         @OA\Property(property="name", type="string", example="name_permission_example"),
-     *                         @OA\Property(property="title", type="string", example="title_permission_example"),
-     *                         @OA\Property(property="description", type="string", example="description_permission_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                     )
+     *                     @OA\Items(ref="#/components/schemas/PermissionWithRole")
      *                 ),
      *                 @OA\Property(
      *                     property="meta",
@@ -111,17 +131,14 @@ class PermissionController extends Controller
      *         response=401,
      *         description="No autenticado",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
+     *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -177,16 +194,9 @@ class PermissionController extends Controller
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
-     *                     property="permission",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example="id_example"),
-     *                     @OA\Property(property="name", type="string", example="name_permission_example"),
-     *                     @OA\Property(property="guard_name", type="string", example="guard_name_permission_example"),
-     *                     @OA\Property(property="title", type="string", example="title_permission_example"),
-     *                     @OA\Property(property="description", type="string", example="description_permission_example"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                 ),
+     *                   property="permission",
+     *                   ref="#/components/schemas/PermissionWithRole"
+     *                 )
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
      *             @OA\Property(property="error", type="boolean", example=false)
@@ -217,17 +227,14 @@ class PermissionController extends Controller
      *         response=401,
      *         description="No autenticado",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
+     *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -239,9 +246,7 @@ class PermissionController extends Controller
                 ->findOrFail($id);
 
             return $this->successResponse(
-                [
-                    'permission' => $permission
-                ],
+                new PermissionResource($permission),
                 $this->getMessage('Success'),
                 200
             );
@@ -255,43 +260,46 @@ class PermissionController extends Controller
             );
         }
     }
+
     /**
      * @OA\Post(
      *     path="/authorization/permissions/store",
      *     tags={"Authorization"},
      *     summary="Crear un permiso",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="role_id",
-     *         in="query",
-     *         description="Identificador del rol",
+     *     @OA\RequestBody(
      *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *     @OA\Parameter(
-     *         name="name",
-     *         in="query",
-     *         description="Nombre del permiso",
-     *         required=true,
-     *         @OA\Schema(type="string", example="authorization")
-     *     ),
-     *     @OA\Parameter(
-     *         name="title",
-     *         in="query",
-     *         description="Título del permiso",
-     *         required=true,
-     *         @OA\Schema(type="string", example="authorization create")
-     *     ),
-     *     @OA\Parameter(
-     *         name="description",
-     *         in="query",
-     *         description="Descripción del permiso",
-     *         required=true,
-     *         @OA\Schema(type="text", example="It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. ")
+     *         @OA\JsonContent(
+     *             required={"role_id","name","tittle","description"},
+     *             @OA\Property(
+     *                 property="role_id",
+     *                 type="integer",
+     *                 example=1,
+     *                 description="Identificador del Rol"
+     *             ),
+     *             @OA\Property(
+     *                 property="name",
+     *                 type="string",
+     *                 example="user.all",
+     *                 description="Nombre del permiso"
+     *             ),
+     *             @OA\Property(
+     *                 property="tittle",
+     *                 type="string",
+     *                 example="Listar Usuarios",
+     *                 description="Título del permiso"
+     *              ),
+     *              @OA\Property(
+     *                  property="description",
+     *                  type="string",
+     *                  example="Permite listar los usuarios",
+     *                  description="Descripción del permiso"
+     *              )
+     *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Rol creado con éxito",
+     *         description="Permiso creado correctamente",
      *         @OA\JsonContent(
      *             @OA\Property(
      *                 property="data",
@@ -299,18 +307,16 @@ class PermissionController extends Controller
      *                 @OA\Property(
      *                     property="permission",
      *                     type="object",
-     *                     @OA\Property(property="guard_name", type="string", example="guard_name"),
-     *                     @OA\Property(property="name", type="string", example="name_rol_example"),
-     *                     @OA\Property(property="title", type="string", example="title_rol_example"),
-     *                     @OA\Property(property="description", type="string", example="description_rol_example"),
+     *                     @OA\Property(property="name", type="string", example="name_permission_example"),
+     *                     @OA\Property(property="title", type="string", example="title_permission_example"),
+     *                     @OA\Property(property="description", type="string", example="description_permission_example"),
      *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
      *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="id", type="integer", example="id_example")
+     *                     @OA\Property(property="id", type="integer", example=1)
      *                 ),
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false),
-     *             @OA\Property(property="status", type="integer", example=201)
+     *             @OA\Property(property="error", type="boolean", example=false)
      *         ),
      *     ),
      *     @OA\Response(
@@ -356,22 +362,18 @@ class PermissionController extends Controller
      *         response=401,
      *         description="No autenticado",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
+     *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
      */
-
     public function store(PermissionStoreRequest $request)
     {
         try {
@@ -384,9 +386,7 @@ class PermissionController extends Controller
             $permission->syncRoles($request->integer('role_id'));
 
             return $this->successResponse(
-                [
-                    'permission' => $permission
-                ],
+                new PermissionResource($permission),
                 $this->getMessage('Success'),
                 201
             );
@@ -412,35 +412,37 @@ class PermissionController extends Controller
      *         in="path",
      *         description="Identificador del permiso",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     @OA\Parameter(
-     *         name="role_id",
-     *         in="query",
-     *         description="Identificador del rol",
+     *     @OA\RequestBody(
      *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Parameter(
-     *         name="name",
-     *         in="query",
-     *         description="Nombre del permiso",
-     *         required=true,
-     *         @OA\Schema(type="string", example="authorization")
-     *     ),
-     *     @OA\Parameter(
-     *         name="title",
-     *         in="query",
-     *         description="Titulo del permiso",
-     *         required=true,
-     *         @OA\Schema(type="string", example="authorization create")
-     *     ),
-     *     @OA\Parameter(
-     *         name="description",
-     *         in="query",
-     *         description="Descripcion del permiso",
-     *         required=true,
-     *         @OA\Schema(type="string", example="It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. ")
+     *         @OA\JsonContent(
+     *             required={"role_id","name","tittle","description"},
+     *             @OA\Property(
+     *                 property="role_id",
+     *                 type="integer",
+     *                 example=1,
+     *                 description="Identificador del Rol"
+     *             ),
+     *             @OA\Property(
+     *                 property="name",
+     *                 type="string",
+     *                 example="user.all",
+     *                 description="Nombre del permiso"
+     *             ),
+     *             @OA\Property(
+     *                 property="tittle",
+     *                 type="string",
+     *                 example="Listar Usuarios",
+     *                 description="Título del permiso"
+     *              ),
+     *              @OA\Property(
+     *                  property="description",
+     *                  type="string",
+     *                  example="Permite listar los usuarios",
+     *                  description="Descripción del permiso"
+     *              )
+     *         )
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -452,13 +454,12 @@ class PermissionController extends Controller
      *                 @OA\Property(
      *                     property="permission",
      *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example="id_example"),
+     *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="name", type="string", example="name_permission_example"),
-     *                     @OA\Property(property="guard_name", type="string", example="guard_name"),
      *                     @OA\Property(property="title", type="string", example="title_permission_example"),
      *                     @OA\Property(property="description", type="string", example="description_permission_example"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03")
+     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03")
      *                 ),
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
@@ -509,17 +510,14 @@ class PermissionController extends Controller
      *         response=401,
      *         description="No autenticado",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
+     *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -536,9 +534,7 @@ class PermissionController extends Controller
             $permission->syncRoles($request->integer('role_id'));
 
             return $this->successResponse(
-                [
-                    'permission' => $permission
-                ],
+                new PermissionResource($permission),
                 $this->getMessage('Success'),
                 200
             );

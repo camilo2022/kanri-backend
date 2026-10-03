@@ -13,12 +13,13 @@ class GenderCollection extends ResourceCollection
             'genders' => $this->collection->map(function ($gender) {
                 return [
                     'id' => $gender->id,
-                    'item' => $gender->item,
+                    'item_id' => $gender->item_id,
                     'name' => $gender->name,
                     'description' => $gender->description,
                     'created_at' => $this->formatDate($gender->created_at),
                     'updated_at' => $this->formatDate($gender->updated_at),
-                    'deleted_at' => $this->formatDate($gender->deleted_at)
+                    'deleted_at' => $this->formatDate($gender->deleted_at),
+                    'item' => $gender->item,
                 ];
             }),
             'meta' => [

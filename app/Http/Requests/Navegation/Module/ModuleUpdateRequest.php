@@ -26,7 +26,7 @@ class ModuleUpdateRequest extends FormRequest
     {
         return [
             'id' => ['required', 'exists:modules,id'],
-            'name' => ['required', 'string', 'max:20', 'unique:modules,name,' . $this->route('id') . ',id', 'regex:/^[A-Z][a-z]+$/'],
+            'name' => ['required', 'string', 'max:18', 'unique:modules,name,' . $this->route('id') . ',id', 'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ]+(?:\.?\s[A-Za-zÁÉÍÓÚáéíóúÑñ]+)*$/'],
             'icon' => ['required', 'string', 'max:40', 'regex:/^Fa([A-Z][a-zA-Z0-9]*|[0-9][a-zA-Z0-9]*)$/']
         ];
     }

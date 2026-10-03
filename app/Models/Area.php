@@ -9,14 +9,17 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
+use Spatie\Permission\Traits\HasRoles;
 
 class Area extends Model implements Auditable
 {
-    use Auditing, SoftDeletes;
+    use Auditing, HasRoles, SoftDeletes;
 
     public const ITEM_ID = 3;
 
     protected $table = 'subitems';
+
+    protected $guard_name = 'api';
 
     protected $fillable = [
         'item_id',
@@ -71,10 +74,9 @@ class Area extends Model implements Auditable
         return $query->where(function (Builder $q) use ($terms) {
             foreach ($terms as $term) {
                 $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $term) . '%';
-
                 $q->where(function (Builder $sq) use ($like) {
-                    $sq->orWhere('name', 'ILIKE', $like)
-                       ->orWhere('description', 'ILIKE', $like);
+                    $sq->orWhere('name', 'LIKE', $like)
+                        ->orWhere('description', 'LIKE', $like);
                 });
             }
         });

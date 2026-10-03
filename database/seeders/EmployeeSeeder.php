@@ -4,11 +4,11 @@ namespace Database\Seeders;
 
 use Carbon\Carbon;
 use App\Models\Area;
-use App\Models\Arl;
+use App\Models\RiskManager;
 use App\Models\BloodType;
 use App\Models\CompensationFund;
 use App\Models\Employee;
-use App\Models\Eps;
+use App\Models\HealthEntity;
 use App\Models\Gender;
 use App\Models\PensionFund;
 use App\Models\Person;
@@ -28,20 +28,20 @@ class EmployeeSeeder extends Seeder
 
         $username = config('services.siesa.username');
         $password = config('services.siesa.password');
-    
+
         $token = Http::asForm()->post("$baseUrl/login/authenticate", [
-                'Username' => $username,
-                'Password' => $password
-            ])
+            'Username' => $username,
+            'Password' => $password
+        ])
             ->throw()
             ->body();
-    
-        $token = trim($token,'"');
-    
+
+        $token = trim($token, '"');
+
         $response = Http::withToken($token)->get("$baseUrl/orgBless/getEmpleados")->throw();
 
         $items = $response->json('detail');
-        
+
         foreach ($items as $item) {
             $area = Area::firstOrCreate(
                 ['name' => $item['Area']],
@@ -57,7 +57,7 @@ class EmployeeSeeder extends Seeder
 
             $gender = Gender::firstOrCreate(
                 ['name' => $item['Genero']],
-                ['description' => $item['Genero']]
+                ['description' => $item['Genero'] == 'F' ? 'Femenino' : 'Masculino']
             );
 
             $blood_type = BloodType::firstOrCreate(
@@ -65,12 +65,12 @@ class EmployeeSeeder extends Seeder
                 ['description' => $item['TipoSangre']]
             );
 
-            $arl = Arl::firstOrCreate(
+            $risk_manager = RiskManager::firstOrCreate(
                 ['name' => $item['ARL']],
                 ['description' => $item['ARL']]
             );
 
-            $eps = Eps::firstOrCreate(
+            $health_entity = HealthEntity::firstOrCreate(
                 ['name' => $item['EPS']],
                 ['description' => $item['EPS']]
             );
@@ -100,8 +100,8 @@ class EmployeeSeeder extends Seeder
             $employee->person_id = $person->id;
             $employee->operation_center = $item['CentroOperacion'];
             $employee->position_id = $position->id;
-            $employee->arl_id = $arl->id;
-            $employee->eps_id = $eps->id;
+            $employee->risk_manager_id = $risk_manager->id;
+            $employee->health_entity_id = $health_entity->id;
             $employee->pension_fund_id = $pension_fund->id;
             $employee->compensation_fund_id = $compensation_fund->id;
             $employee->start_date = !empty($item['FechaIngreso']) ? Carbon::createFromFormat('d/m/Y h:i:s A', $item['FechaIngreso'])->format('Y-m-d H:i:s') : null;

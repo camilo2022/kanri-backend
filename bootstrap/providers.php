@@ -2,4 +2,7 @@
 
 return [
     App\Providers\AppServiceProvider::class,
+    App\Providers\EventServiceProvider::class,
+
+    Laravel\Pulse\PulseServiceProvider::class,
 ];

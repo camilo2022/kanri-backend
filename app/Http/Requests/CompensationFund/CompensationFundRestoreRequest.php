@@ -27,7 +27,7 @@ class CompensationFundRestoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', Rule::exists('subitems', 'id')->where('subitem_id', CompensationFund::ITEM_ID)->whereNotNull('deleted_at')]
+            'id' => ['required', Rule::exists('subitems', 'id')->where('item_id', CompensationFund::ITEM_ID)->whereNotNull('deleted_at')]
         ];
     }
 
@@ -42,7 +42,7 @@ class CompensationFundRestoreRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador de la eps'
+            'id' => 'Identificador de la caja de compensación'
         ];
     }
 

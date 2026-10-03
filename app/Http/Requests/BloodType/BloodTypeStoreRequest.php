@@ -26,8 +26,8 @@ class BloodTypeStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.BloodType::ITEM_ID],
-            'description' => ['nullable', 'string', 'max:255']
+            'name' => ['required', 'regex:/^(A|B|AB|O)[+-]$/', 'string', 'min:2', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . BloodType::ITEM_ID],
+            'description' => ['required', 'uppercase', 'string', 'max:255']
         ];
     }
 
@@ -38,7 +38,9 @@ class BloodTypeStoreRequest extends FormRequest
             'string' => 'Debe ser una cadena de texto.',
             'max' => 'Se permite máximo :max caracteres.',
             'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.'
+            'unique' => 'Ya está registrado.',
+            'uppercase' => 'El campo debe estar en mayúsculas.',
+            'regex' => 'Formato Inválido. Es un tipo de sangre no válido.'
         ];
     }
 

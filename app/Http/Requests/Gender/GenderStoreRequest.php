@@ -26,8 +26,8 @@ class GenderStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'min:5', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.Gender::ITEM_ID],
-            'description' => ['nullable', 'string', 'max:255']
+            'name' => ['required', 'string', 'min:1', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Gender::ITEM_ID],
+            'description' => ['required', 'string', 'max:255']
         ];
     }
 

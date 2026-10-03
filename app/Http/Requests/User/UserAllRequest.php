@@ -52,8 +52,8 @@ class UserAllRequest extends FormRequest
             'page' => 'N° de pagina.',
             'search' => 'Filtro de Busqueda.',
             'column' => 'Columna a ordenar.',
-            'dir' => 'Sentido del orden.',
-            'with_trashed' => 'Registros inactivos'
+            'dir' => 'Dirección de ordenamiento.',
+            'with_trashed' => 'Registros inactivos.'
         ];
     }
 

@@ -13,11 +13,12 @@ class UserCollection extends ResourceCollection
             'users' => $this->collection->map(function ($user) {
                 return [
                     'id' => $user->id,
-                    'employee' => $user->employee,
+                    'employee_id' => $user->employee_id,
                     'email' => $user->email,
                     'created_at' => $this->formatDate($user->created_at),
                     'updated_at' => $this->formatDate($user->updated_at),
                     'deleted_at' => $this->formatDate($user->deleted_at),
+                    'employee' => $user->employee,
                     'roles' => $user->roles,
                     'permissions' => $user->permissions,
                 ];

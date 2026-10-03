@@ -67,8 +67,8 @@ class CompensationFund extends Model implements Auditable
                 $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $term) . '%';
 
                 $q->where(function (Builder $sq) use ($like) {
-                    $sq->orWhere('name', 'ILIKE', $like)
-                       ->orWhere('description', 'ILIKE', $like);
+                    $sq->orWhere('name', 'LIKE', $like)
+                        ->orWhere('description', 'LIKE', $like);
                 });
             }
         });

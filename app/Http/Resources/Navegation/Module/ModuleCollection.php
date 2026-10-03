@@ -19,6 +19,7 @@ class ModuleCollection extends ResourceCollection
                     'created_at' => $this->formatDate($module->created_at),
                     'updated_at' => $this->formatDate($module->updated_at),
                     'deleted_at' => $this->formatDate($module->deleted_at),
+                    'submodules' => $module->submodules,
                 ];
             }),
             'meta' => [

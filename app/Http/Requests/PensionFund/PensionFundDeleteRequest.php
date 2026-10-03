@@ -41,7 +41,7 @@ class PensionFundDeleteRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador de la eps'
+            'id' => 'Identificador de la entidad de salud'
         ];
     }
 

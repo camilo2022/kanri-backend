@@ -9,6 +9,7 @@ use App\Http\Requests\Navegation\Module\ModuleRestoreRequest;
 use App\Http\Requests\Navegation\Module\ModuleStoreRequest;
 use App\Http\Requests\Navegation\Module\ModuleUpdateRequest;
 use App\Http\Resources\Navegation\Module\ModuleCollection;
+use App\Http\Resources\Navegation\Module\ModuleResource;
 use App\Models\Module;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -24,6 +25,31 @@ use Illuminate\Http\Request;
  *     path="/modules",
  *     description="Rutas de Gestion de Módulos"
  * )
+ *
+ * @OA\Schema(
+ *     schema="Module",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="name", type="string", example="users"),
+ *     @OA\Property(property="icon", type="string", example="FaUser"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *     @OA\Property(
+ *         property="submodules",
+ *         type="array",
+ *         @OA\Items(
+ *             type="object",
+ *             @OA\Property(property="id", type="integer", example=1),
+ *             @OA\Property(property="name", type="string", example="users"),
+ *             @OA\Property(property="url", type="string", example="/users"),
+ *             @OA\Property(property="icon", type="string", example="FaUser"),
+ *             @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
+ *             @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *             @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
+ *         )
+ *     )
+ * )
  */
 class ModuleController extends Controller
 {
@@ -38,34 +64,41 @@ class ModuleController extends Controller
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Texto de búsqueda en los módulos",
+     *         description="Filtro de Busqueda.",
      *         required=false,
-     *         @OA\Schema(type="string", example="navegation")
+     *         @OA\Schema(type="string", example="juan")
      *     ),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
-     *         description="Columna por la que se ordena",
+     *         description="Columna a ordenar.",
      *         required=false,
-     *         @OA\Schema(type="string", example="name")
+     *         @OA\Schema(type="string", enum={"id","name","title", "description","created_at", "updated_at"}, example="name")
      *     ),
      *     @OA\Parameter(
      *         name="dir",
      *         in="query",
-     *         description="Dirección de ordenamiento",
+     *         description="Dirección de ordenamiento.",
      *         required=false,
-     *         @OA\Schema(type="string", example="asc")
+     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
      *     ),
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
-     *         description="Cantidad de registros por página",
+     *         description="Registros por página.",
      *         required=false,
      *         @OA\Schema(type="integer", example=10)
      *     ),
+     *     @OA\Parameter(
+     *         name="with_trashed",
+     *         in="query",
+     *         description="Registros inactivos.",
+     *         required=false,
+     *         @OA\Schema(type="boolean", example=true)
+     *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Lista de módulos cargada con éxito",
+     *         description="Lista de módulos cargada correctamente",
      *         @OA\JsonContent(
      *             @OA\Property(
      *                 property="data",
@@ -73,15 +106,7 @@ class ModuleController extends Controller
      *                 @OA\Property(
      *                     property="modules",
      *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=0),
-     *                         @OA\Property(property="name", type="string", example="name_module_example"),
-     *                         @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="delete_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     )
+     *                     @OA\Items(ref="#/components/schemas/Module")
      *                 ),
      *                 @OA\Property(
      *                     property="meta",
@@ -105,17 +130,14 @@ class ModuleController extends Controller
      *         response=401,
      *         description="No autenticado",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
+     *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -123,10 +145,13 @@ class ModuleController extends Controller
     public function all(ModuleAllRequest $request)
     {
         try {
-            $modules = Module::when($request->input('search'), function ($query) use ($request) {
-                return $query->search($request->input('search'));
-            })
-                ->withTrashed()
+            $modules = Module::with(['submodules'])
+                ->when($request->input('search'), function ($query) use ($request) {
+                    return $query->search($request->input('search'));
+                })
+                ->when($request->boolean('with_trashed'), function ($query) use ($request) {
+                    return $query->withTrashed();
+                })
                 ->when($request->input('column') && $request->input('dir'), function ($query) use ($request) {
                     return $query->orderBy($request->input('column'), $request->input('dir'));
                 });
@@ -160,7 +185,7 @@ class ModuleController extends Controller
      *         in="path",
      *         description="Identificador del módulo",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -170,43 +195,12 @@ class ModuleController extends Controller
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
-     *                     property="modules",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=0),
-     *                         @OA\Property(property="name", type="string", example="name_module_example"),
-     *                         @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="delete_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(
-     *                             property="submodules",
-     *                             type="array",
-     *                             @OA\Items(
-     *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=0),
-     *                                 @OA\Property(property="name", type="string", example="name_module_example"),
-     *                                 @OA\Property(property="url", type="string", example="url_module_example"),
-     *                                 @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                                 @OA\Property(property="delete_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                             )
-     *                         )
-     *                     )
-     *                 )
+     *                     property="role",
+     *                     ref="#/components/schemas/Module"
+     *                 ),
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
      *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
      *         )
      *     ),
      *     @OA\Response(
@@ -231,12 +225,17 @@ class ModuleController extends Controller
      *         )
      *     ),
      *     @OA\Response(
+     *         response=401,
+     *         description="No autenticado",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/UnauthorizedResponse"
+     *         )
+     *     ),
+     *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -249,9 +248,7 @@ class ModuleController extends Controller
             $module->load(['submodules']);
 
             return $this->successResponse(
-                [
-                    'module' => $module
-                ],
+                new ModuleResource($module),
                 $this->getMessage('Success'),
                 200
             );
@@ -270,21 +267,25 @@ class ModuleController extends Controller
      * @OA\Post(
      *     path="/navegation/modules/store",
      *     tags={"Navegation"},
-     *     summary="Obtener un módulo específico",
+     *     summary="Crear un módulo",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="name",
-     *         in="query",
-     *         description="Nombre del módulo",
+     *     @OA\RequestBody(
      *         required=true,
-     *         @OA\Schema(type="string", example="name_module")
-     *     ),
-     *     @OA\Parameter(
-     *         name="icon",
-     *         in="query",
-     *         description="Icono del módulo",
-     *         required=true,
-     *         @OA\Schema(type="string", example="icon_module")
+     *         @OA\JsonContent(
+     *             required={"name","icon"},
+     *             @OA\Property(
+     *                 property="name",
+     *                 type="string",
+     *                 example="Usuarios",
+     *                 description="Nombre del módulo"
+     *             ),
+     *             @OA\Property(
+     *                 property="icon",
+     *                 type="string",
+     *                 example="FaUser",
+     *                 description="Icono del módulo"
+     *              )
+     *         )
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -300,22 +301,14 @@ class ModuleController extends Controller
      *                         type="object",
      *                         @OA\Property(property="name", type="string", example="name_module_example"),
      *                         @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
      *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
+     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
      *                         @OA\Property(property="id", type="integer", example=0)
      *                     )
      *                 )
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
      *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
      *         )
      *     ),
      *     @OA\Response(
@@ -341,12 +334,17 @@ class ModuleController extends Controller
      *         )
      *     ),
      *     @OA\Response(
+     *         response=401,
+     *         description="No autenticado",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/UnauthorizedResponse"
+     *         )
+     *     ),
+     *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -362,9 +360,7 @@ class ModuleController extends Controller
             $module->save();
 
             return $this->successResponse(
-                [
-                    'module' => $module
-                ],
+                new ModuleResource($module),
                 $this->getMessage('Success'),
                 200
             );
@@ -390,21 +386,25 @@ class ModuleController extends Controller
      *         in="path",
      *         description="Identificador del módulo",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     @OA\Parameter(
-     *         name="name",
-     *         in="query",
-     *         description="Nombre del módulo",
+     *     @OA\RequestBody(
      *         required=true,
-     *         @OA\Schema(type="string", example="name_module")
-     *     ),
-     *     @OA\Parameter(
-     *         name="icon",
-     *         in="query",
-     *         description="Icono del módulo",
-     *         required=true,
-     *         @OA\Schema(type="string", example="icon_module")
+     *         @OA\JsonContent(
+     *             required={"name","icon"},
+     *             @OA\Property(
+     *                 property="name",
+     *                 type="string",
+     *                 example="Usuarios",
+     *                 description="Nombre del módulo"
+     *             ),
+     *             @OA\Property(
+     *                 property="icon",
+     *                 type="string",
+     *                 example="FaUser",
+     *                 description="Icono del módulo"
+     *              )
+     *         )
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -423,20 +423,12 @@ class ModuleController extends Controller
      *                         @OA\Property(property="icon", type="string", example="icon_module_example"),
      *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
      *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="delete_at", type="string", format="date-time", example="2026-03-12 20:01:03")
+     *                         @OA\Property(property="delete_at", type="string", format="date-time", nullable=true, example=null)
      *                     )
      *                 )
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
      *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
      *         )
      *     ),
      *     @OA\Response(
@@ -462,12 +454,17 @@ class ModuleController extends Controller
      *         )
      *     ),
      *     @OA\Response(
+     *         response=401,
+     *         description="No autenticado",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/UnauthorizedResponse"
+     *         )
+     *     ),
+     *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -483,9 +480,7 @@ class ModuleController extends Controller
             $module->save();
 
             return $this->successResponse(
-                [
-                    'module' => $module
-                ],
+                new ModuleResource($module),
                 $this->getMessage('Success'),
                 200
             );
@@ -511,7 +506,7 @@ class ModuleController extends Controller
      *         in="path",
      *         description="Identificador del módulo",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -539,14 +534,6 @@ class ModuleController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
-     *         )
-     *     ),
-     *     @OA\Response(
      *         response=422,
      *         description="Identificador del módulo no registrado.",
      *         @OA\JsonContent(
@@ -568,12 +555,17 @@ class ModuleController extends Controller
      *         )
      *     ),
      *     @OA\Response(
+     *         response=401,
+     *         description="No autenticado",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/UnauthorizedResponse"
+     *         )
+     *     ),
+     *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -585,9 +577,7 @@ class ModuleController extends Controller
             $module->delete();
 
             return $this->successResponse(
-                [
-                    'module' => $module
-                ],
+                new ModuleResource($module),
                 $this->getMessage('Success'),
                 200
             );
@@ -613,7 +603,7 @@ class ModuleController extends Controller
      *         in="path",
      *         description="Identificador del módulo",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -632,20 +622,12 @@ class ModuleController extends Controller
      *                         @OA\Property(property="icon", type="string", example="icon_module_example"),
      *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
      *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="delete_at", type="string", format="date-time", example="2026-03-12 20:01:03")
+     *                         @OA\Property(property="delete_at", type="string", format="date-time", nullable=true, example=null)
      *                     )
      *                 )
      *             ),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
      *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
      *         )
      *     ),
      *     @OA\Response(
@@ -670,12 +652,17 @@ class ModuleController extends Controller
      *         )
      *     ),
      *     @OA\Response(
+     *         response=401,
+     *         description="No autenticado",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/UnauthorizedResponse"
+     *         )
+     *     ),
+     *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             ref="#/components/schemas/ServerErrorResponse"
      *         )
      *     )
      * )
@@ -687,9 +674,7 @@ class ModuleController extends Controller
             $module->restore();
 
             return $this->successResponse(
-                [
-                    'module' => $module
-                ],
+                new ModuleResource($module),
                 $this->getMessage('Success'),
                 200
             );

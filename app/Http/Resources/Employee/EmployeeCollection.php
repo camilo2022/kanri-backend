@@ -13,18 +13,25 @@ class EmployeeCollection extends ResourceCollection
             'employees' => $this->collection->map(function ($employee) {
                 return [
                     'id' => $employee->id,
-                    'person' => $employee->person,
+                    'person_id' => $employee->person_id,
                     'operation_center' => $employee->operation_center,
-                    'position' => $employee->position,
-                    'arl' => $employee->arl,
-                    'eps' => $employee->eps,
-                    'pension_fund' => $employee->pension_fund,
-                    'compensation_fund' => $employee->compensation_fund,
+                    'position_id' => $employee->position_id,
+                    'risk_manager_id' => $employee->risk_manager_id,
+                    'health_entity_id' => $employee->health_entity_id,
+                    'pension_fund_id' => $employee->pension_fund_id,
+                    'compensation_fund_id' => $employee->compensation_fund_id,
                     'start_date' => $employee->start_date,
                     'end_date' => $employee->end_date,
                     'created_at' => $this->formatDate($employee->created_at),
                     'updated_at' => $this->formatDate($employee->updated_at),
-                    'deleted_at' => $this->formatDate($employee->deleted_at)
+                    'deleted_at' => $this->formatDate($employee->deleted_at),
+                    'person' => $employee->person,
+                    'position' => $employee->position,
+                    'user' => $employee->user,
+                    'risk_manager' => $employee->risk_manager,
+                    'health_entity' => $employee->health_entity,
+                    'pension_fund' => $employee->pension_fund,
+                    'compensation_fund' => $employee->compensation_fund,
                 ];
             }),
             'meta' => [

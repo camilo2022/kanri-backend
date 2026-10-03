@@ -27,7 +27,7 @@ class GenderRestoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', Rule::exists('subitems', 'id')->where('subitem_id', Gender::ITEM_ID)->whereNotNull('deleted_at')]
+            'id' => ['required', Rule::exists('subitems', 'id')->where('item_id', Gender::ITEM_ID)->whereNotNull('deleted_at')]
         ];
     }
 

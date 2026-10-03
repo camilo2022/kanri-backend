@@ -2,9 +2,10 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
+use App\Models\Report;
+use App\Policies\ReportPolicy;
 use Illuminate\Support\Facades\Gate;
-use Spatie\Permission\Models\Permission;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,11 +17,8 @@ class AppServiceProvider extends ServiceProvider
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-
+        Gate::policy(Report::class, ReportPolicy::class);
     }
 }
