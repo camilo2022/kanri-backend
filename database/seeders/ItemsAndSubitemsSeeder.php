@@ -2,15 +2,17 @@
 
 namespace Database\Seeders;
 
+use App\Models\AccountType;
 use App\Models\Area;
 use App\Models\BackType;
+use App\Models\Bank;
 use App\Models\BloodType;
 use App\Models\BootType;
 use App\Models\Category;
 use App\Models\Collection;
 use App\Models\Color;
 use App\Models\CompensationFund;
-use App\Models\FabricType;
+use App\Models\DocumentType;
 use App\Models\FileSubtype;
 use App\Models\FileType;
 use App\Models\GarmentType;
@@ -20,20 +22,22 @@ use App\Models\HealthEntity;
 use App\Models\Item;
 use App\Models\Operation;
 use App\Models\PensionFund;
+use App\Models\PersonType;
 use App\Models\Piece;
 use App\Models\Position;
 use App\Models\Process;
+use App\Models\Report;
 use App\Models\RiskManager;
-use App\Models\Silhouette;
 use App\Models\Size;
 use App\Models\Subcategory;
 use App\Models\Subgroup;
 use App\Models\Subprocess;
 use App\Models\Supplier;
+use App\Models\SupplierType;
 use App\Models\Supply;
 use App\Models\SupplyType;
-use App\Models\ThreadType;
 use App\Models\Trademark;
+use App\Models\Typology;
 use App\Models\WaistbandType;
 use App\Models\WashTone;
 use App\Models\YokeType;
@@ -73,6 +77,7 @@ class ItemsAndSubitemsSeeder extends Seeder
             ['item_id' => FileSubtype::ITEM_ID, 'name' => 'Documento digital', 'description' => 'Archivo digital como PDF, Word o Excel.'],
         ]);
 
+        // Áreas
         $item = new Item;
         $item->name = 'Áreas';
         $item->description = 'Listado de áreas disponibles en la organización.';
@@ -83,6 +88,7 @@ class ItemsAndSubitemsSeeder extends Seeder
         $area->description = 'No aplica';
         $area->save();
 
+        // Cargos
         $item = new Item;
         $item->name = 'Cargos';
         $item->description = 'Listado de cargos disponibles en la organización.';
@@ -93,8 +99,10 @@ class ItemsAndSubitemsSeeder extends Seeder
         $position->description = 'No aplica';
         $position->save();
 
+        // Asociado el cargo con el área
         $position->area()->sync([$area->id]);
 
+        // Géneros
         $item = new Item;
         $item->name = 'Géneros';
         $item->description = 'Listado de géneros disponibles.';
@@ -105,6 +113,7 @@ class ItemsAndSubitemsSeeder extends Seeder
         $gender->description = 'No aplica';
         $gender->save();
 
+        // Tipos de Sangre
         $item = new Item;
         $item->name = 'Tipos de sangre';
         $item->description = 'Listado de tipos de sangre.';
@@ -115,6 +124,7 @@ class ItemsAndSubitemsSeeder extends Seeder
         $blood_type->description = 'No aplica';
         $blood_type->save();
 
+        // Administradoras de Riesgos
         $item = new Item;
         $item->name = 'Administradora de Riesgos';
         $item->description = 'Listado de administradoras de riesgos laborales.';
@@ -125,6 +135,7 @@ class ItemsAndSubitemsSeeder extends Seeder
         $risk_manager->description = 'No aplica';
         $risk_manager->save();
 
+        // Entidades de Salud
         $item = new Item;
         $item->name = 'Entidades de Salud';
         $item->description = 'Listado de entidades promotoras de salud.';
@@ -135,6 +146,7 @@ class ItemsAndSubitemsSeeder extends Seeder
         $health_entity->description = 'No aplica';
         $health_entity->save();
 
+        // Fondos de Pensión
         $item = new Item;
         $item->name = 'Fondos de pensión';
         $item->description = 'Listado de fondos de pensión.';
@@ -145,6 +157,7 @@ class ItemsAndSubitemsSeeder extends Seeder
         $pension_fund->description = 'No aplica';
         $pension_fund->save();
 
+        // Cajas de Compensación
         $item = new Item;
         $item->name = 'Cajas de compensación';
         $item->description = 'Listado de cajas de compensación.';
@@ -155,6 +168,7 @@ class ItemsAndSubitemsSeeder extends Seeder
         $compensation_fund->description = 'No aplica';
         $compensation_fund->save();
 
+        // Categorías
         $item = new Item;
         $item->name = 'Categorías';
         $item->description = 'Listado de categorías.';
@@ -169,6 +183,7 @@ class ItemsAndSubitemsSeeder extends Seeder
         $categories['MODA'] = Category::create(['name' => 'MODA', 'description' => 'MODA']);
         $categories['MONOLOOK'] = Category::create(['name' => 'MONOLOOK', 'description' => 'MONOLOOK']);
 
+        // Subcategorías
         $item = new Item;
         $item->name = 'Subcategorías';
         $item->description = 'Listado de subcategorías.';
@@ -211,8 +226,10 @@ class ItemsAndSubitemsSeeder extends Seeder
             ['name' => 'JUMPER LARGA', 'category' => 'MONOLOOK'],
         ];
 
+        // Asociar las subcategorías con las categorías
         foreach ($subcategories as $data) {
 
+            // Aca creo cada subcategoría y luego la asocio con la categoría correspondiente si existe en el array de categorías
             $subcategory = Subcategory::create([
                 'name' => $data['name'],
                 'description' => $data['name'],
@@ -225,6 +242,7 @@ class ItemsAndSubitemsSeeder extends Seeder
             }
         }
 
+        // Grupos
         $item = new Item;
         $item->name = 'Grupos';
         $item->description = 'Listado de grupos.';
@@ -240,6 +258,7 @@ class ItemsAndSubitemsSeeder extends Seeder
         $groups['NIÑA'] = Group::create(['name' => 'NIÑA', 'description' => 'NIÑA']);
         $groups['NIÑO'] = Group::create(['name' => 'NIÑO', 'description' => 'NIÑO']);
 
+        // Subgrupos
         $item = new Item;
         $item->name = 'Subgrupos';
         $item->description = 'Listado de subgrupos.';
@@ -250,6 +269,7 @@ class ItemsAndSubitemsSeeder extends Seeder
         $subcategory->description = 'No aplica';
         $subcategory->save();
 
+        // Marcas
         $item = new Item;
         $item->name = 'Marcas';
         $item->description = 'Listado de marcas.';
@@ -262,8 +282,16 @@ class ItemsAndSubitemsSeeder extends Seeder
                 'validations' => [
                     [
                         'id' => 1,
-                        'regex' => '/^(05[0-9]{6}|BO[0-9]{6})$/',
-                        'message' => 'Debe iniciar con 05 o BO y tener 6 números',
+                        'regex' => '/^05[0-9]{6}$/',
+                        'message' => 'Debe iniciar con 05 y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
+                    [
+                        'id' => 2,
+                        'regex' => '/^BO[0-9]{6}$/',
+                        'message' => 'Debe iniciar con BO y tener 6 números',
                         'created_at' => now(),
                         'updated_at' => null,
                         'deleted_at' => null,
@@ -276,286 +304,515 @@ class ItemsAndSubitemsSeeder extends Seeder
                 'validations' => [
                     [
                         'id' => 1,
-                        'regex' => '/^(5[0-9]{6}|BL[0-9]{6})$/',
-                        'message' => 'Debe iniciar con 5 o BL y tener 6 números',
+                        'regex' => '/^5[0-9]{6}$/',
+                        'message' => 'Debe iniciar con 5 y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
+                    [
+                        'id' => 2,
+                        'regex' => '/^BL[0-9]{6}$/',
+                        'message' => 'Debe iniciar con BL y tener 6 números',
                         'created_at' => now(),
                         'updated_at' => null,
                         'deleted_at' => null,
                     ],
                 ],
             ],
-            ['name' => 'BLESS 23', 'group' => 'CABALLERO', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(8[0-9]{6}|BS[0-9]{6})$/',
-                    'message' => 'Debe iniciar con 8 o BS y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            [
+                'name' => 'BLESS 23',
+                'group' => 'CABALLERO',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^8[0-9]{6}$/',
+                        'message' => 'Debe iniciar con 8 y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
+                    [
+                        'id' => 2,
+                        'regex' => '/^BS[0-9]{6}$/',
+                        'message' => 'Debe iniciar con BS y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'BLESS JUNIOR', 'group' => 'JUVENIL DAMA', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(BJ[0-9]{6})$/',
-                    'message' => 'Debe iniciar con BJ y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'BLESS JUNIOR',
+                'group' => 'JUVENIL DAMA',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^BJ[0-9]{6}$/',
+                        'message' => 'Debe iniciar con BJ y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'ZARETH', 'group' => 'DAMA', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(7[0-9]{6}|ZA[0-9]{6})$/',
-                    'message' => 'Debe iniciar con 7 o ZA y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'ZARETH',
+                'group' => 'DAMA',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^7[0-9]{6}$/',
+                        'message' => 'Debe iniciar con 7 y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
+                    [
+                        'id' => 2,
+                        'regex' => '/^ZA[0-9]{6}$/',
+                        'message' => 'Debe iniciar con ZA y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'ZARETH PREMIUM', 'group' => 'DAMA', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(P7[0-9]{6}|ZP[0-9]{6})$/',
-                    'message' => 'Debe iniciar con P7 o ZP y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'ZARETH PREMIUM',
+                'group' => 'DAMA',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^P7[0-9]{6}$/',
+                        'message' => 'Debe iniciar con P7 y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
+                    [
+                        'id' => 2,
+                        'regex' => '/^ZP[0-9]{6}$/',
+                        'message' => 'Debe iniciar con ZP y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'ZARETH CURVI', 'group' => 'DAMA', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(BJ[0-9]{6}|ZC[0-9]{6})$/',
-                    'message' => 'Debe iniciar con BJ o ZC y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'ZARETH CURVI',
+                'group' => 'DAMA',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^BJ[0-9]{6}$/',
+                        'message' => 'Debe iniciar con BJ y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
+                    [
+                        'id' => 2,
+                        'regex' => '/^ZC[0-9]{6}$/',
+                        'message' => 'Debe iniciar con ZC y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'ZARETH TEENS', 'group' => 'JUVENIL DAMA', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(4[0-9]{6}|ZT[0-9]{6})$/',
-                    'message' => 'Debe iniciar con 4 o ZT y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'ZARETH TEENS',
+                'group' => 'JUVENIL DAMA',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^4[0-9]{6}$/',
+                        'message' => 'Debe iniciar con 4 y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
+                    [
+                        'id' => 2,
+                        'regex' => '/^ZT[0-9]{6}$/',
+                        'message' => 'Debe iniciar con ZT y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'ZARETH REBELS', 'group' => 'CABALLERO', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(R4[0-9]{6}|ZR[0-9]{6})$/',
-                    'message' => 'Debe iniciar con R4 o ZR y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'ZARETH REBELS',
+                'group' => 'CABALLERO',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^R4[0-9]{6}$/',
+                        'message' => 'Debe iniciar con R4 y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
+                    [
+                        'id' => 2,
+                        'regex' => '/^ZR[0-9]{6}$/',
+                        'message' => 'Debe iniciar con ZR y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'CALIFORNIA DAMA', 'group' => 'DAMA', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(CC[0-9]{6}|CD[0-9]{6})$/',
-                    'message' => 'Debe iniciar con CC o CD y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'CALIFORNIA DAMA',
+                'group' => 'DAMA',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^CC[0-9]{6}$/',
+                        'message' => 'Debe iniciar con CC y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
+                    [
+                        'id' => 2,
+                        'regex' => '/^CD[0-9]{6}$/',
+                        'message' => 'Debe iniciar con CD y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'CALIFORNIA CABALLERO', 'group' => 'CABALLERO', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(CRC[0-9]{6}|CC[0-9]{6})$/',
-                    'message' => 'Debe iniciar con CRC o CC y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'CALIFORNIA CABALLERO',
+                'group' => 'CABALLERO',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^CRC[0-9]{6}$/',
+                        'message' => 'Debe iniciar con CRC y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
+                    [
+                        'id' => 2,
+                        'regex' => '/^CC[0-9]{6}$/',
+                        'message' => 'Debe iniciar con CC y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'CALIFORNIA KIDS', 'group' => 'NIÑO', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(CK[0-9]{6})$/',
-                    'message' => 'Debe iniciar con CK y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'CALIFORNIA KIDS',
+                'group' => 'NIÑO',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^CK[0-9]{6}$/',
+                        'message' => 'Debe iniciar con CK y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'MICHELL VILLAMIZAR', 'group' => 'DAMA', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(MV[0-9]{6})$/',
-                    'message' => 'Debe iniciar con MV y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'MICHELL VILLAMIZAR',
+                'group' => 'DAMA',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^MV[0-9]{6}$/',
+                        'message' => 'Debe iniciar con MV y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'MICHELL PLUS', 'group' => 'DAMA', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(MPV[0-9]{6}|MP[0-9]{6})$/',
-                    'message' => 'Debe iniciar con MPV oMP y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'MICHELL PLUS',
+                'group' => 'DAMA',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^MPV[0-9]{6}$/',
+                        'message' => 'Debe iniciar con MPV y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
+                    [
+                        'id' => 2,
+                        'regex' => '/^MP[0-9]{6}$/',
+                        'message' => 'Debe iniciar con MP y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'NEW YORK DAMA', 'group' => 'DAMA', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(YD[0-9]{6})$/',
-                    'message' => 'Debe iniciar con YD y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'NEW YORK DAMA',
+                'group' => 'DAMA',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^YD[0-9]{6}$/',
+                        'message' => 'Debe iniciar con YD y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'NEW YORK KIDS', 'group' => 'NIÑO', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(YK[0-9]{6})$/',
-                    'message' => 'Debe iniciar con YK y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'NEW YORK KIDS',
+                'group' => 'NIÑO',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^YK[0-9]{6}$/',
+                        'message' => 'Debe iniciar con YK y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'NEW YORK CABALLERO', 'group' => 'CABALLERO', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(YC[0-9]{6})$/',
-                    'message' => 'Debe iniciar con YC y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'NEW YORK CABALLERO',
+                'group' => 'CABALLERO',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^YC[0-9]{6}$/',
+                        'message' => 'Debe iniciar con YC y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'SHIREL CLASSIC', 'group' => 'DAMA', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(C9[0-9]{6}|SC[0-9]{6})$/',
-                    'message' => 'Debe iniciar con C9 o SC y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'SHIREL CLASSIC',
+                'group' => 'DAMA',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^C9[0-9]{6}$/',
+                        'message' => 'Debe iniciar con C9 y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
+                    [
+                        'id' => 2,
+                        'regex' => '/^SC[0-9]{6}$/',
+                        'message' => 'Debe iniciar con SC y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'SHIREL', 'group' => 'DAMA', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(9[0-9]{6}|SH[0-9]{6})$/',
-                    'message' => 'Debe iniciar con 9 o SH y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'SHIREL',
+                'group' => 'DAMA',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^9[0-9]{6}$/',
+                        'message' => 'Debe iniciar con 9 y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
+                    [
+                        'id' => 2,
+                        'regex' => '/^SH[0-9]{6}$/',
+                        'message' => 'Debe iniciar con SH y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'SHIREL PLUS', 'group' => 'DAMA', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(SP[0-9]{6})$/',
-                    'message' => 'Debe iniciar con SP y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'SHIREL PLUS',
+                'group' => 'DAMA',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^SP[0-9]{6}$/',
+                        'message' => 'Debe iniciar con SP y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'DHARA', 'group' => 'DAMA', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(DH[0-9]{6})$/',
-                    'message' => 'Debe iniciar con DH y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'DHARA',
+                'group' => 'DAMA',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^DH[0-9]{6}$/',
+                        'message' => 'Debe iniciar con DH y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'STARA DENIM', 'group' => 'DAMA', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(STDM[0-9]{6}|SD[0-9]{6})$/',
-                    'message' => 'Debe iniciar con STDM o SD y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'STARA DENIM',
+                'group' => 'DAMA',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^STDM[0-9]{6}$/',
+                        'message' => 'Debe iniciar con STDM y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
+                    [
+                        'id' => 2,
+                        'regex' => '/^SD[0-9]{6}$/',
+                        'message' => 'Debe iniciar con SD y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'STARA MEN', 'group' => 'CABALLERO', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(SM[0-9]{6})$/',
-                    'message' => 'Debe iniciar con SM y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'STARA MEN',
+                'group' => 'CABALLERO',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^SM[0-9]{6}$/',
+                        'message' => 'Debe iniciar con SM y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'STARA', 'group' => 'CABALLERO', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(STA[0-9]{6}|ST[0-9]{6})$/',
-                    'message' => 'Debe iniciar con STA o ST y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'STARA',
+                'group' => 'CABALLERO',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^STA[0-9]{6}$/',
+                        'message' => 'Debe iniciar con STA y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
+                    [
+                        'id' => 2,
+                        'regex' => '/^ST[0-9]{6}$/',
+                        'message' => 'Debe iniciar con ST y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'NEON', 'group' => 'JUVENIL CABALLERO', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(N[0-9]{6}|NE[0-9]{6})$/',
-                    'message' => 'Debe iniciar con N o NE y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'NEON',
+                'group' => 'JUVENIL CABALLERO',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^N[0-9]{6}$/',
+                        'message' => 'Debe iniciar con N y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
+                    [
+                        'id' => 2,
+                        'regex' => '/^NE[0-9]{6}$/',
+                        'message' => 'Debe iniciar con NE y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'NEON KIDS', 'group' => 'NIÑO', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(NK[0-9]{6})$/',
-                    'message' => 'Debe iniciar con NK y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'NEON KIDS',
+                'group' => 'NIÑO',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^NK[0-9]{6}$/',
+                        'message' => 'Debe iniciar con NK y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'LOA CABALLERO', 'group' => 'CABALLERO', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(LC[0-9]{6})$/',
-                    'message' => 'Debe iniciar con LC y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'LOA CABALLERO',
+                'group' => 'CABALLERO',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^LC[0-9]{6}$/',
+                        'message' => 'Debe iniciar con LC y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'LOA DAMA', 'group' => 'DAMA', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(LD[0-9]{6})$/',
-                    'message' => 'Debe iniciar con LD y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'LOA DAMA',
+                'group' => 'DAMA',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^LD[0-9]{6}$/',
+                        'message' => 'Debe iniciar con LD y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
-            ['name' => 'LOA KIDS', 'group' => 'NIÑO', 'validations' => [
-                [
-                    'id' => 1,
-                    'regex' => '/^(LK[0-9]{6})$/',
-                    'message' => 'Debe iniciar con LK y tener 6 números',
-                    'created_at' => now(),
-                    'updated_at' => null,
-                    'deleted_at' => null,
+            ],
+            [
+                'name' => 'LOA KIDS',
+                'group' => 'NIÑO',
+                'validations' => [
+                    [
+                        'id' => 1,
+                        'regex' => '/^LK[0-9]{6}$/',
+                        'message' => 'Debe iniciar con LK y tener 6 números',
+                        'created_at' => now(),
+                        'updated_at' => null,
+                        'deleted_at' => null,
+                    ],
                 ],
-            ]],
+            ],
         ];
 
+        // Creo cada marca y luego la asocio con el grupo correspondiente si existe en el array de grupos
         foreach ($trademarks as $data) {
 
             $trademark = Trademark::create([
@@ -574,6 +831,7 @@ class ItemsAndSubitemsSeeder extends Seeder
             }
         }
 
+        // Tallas
         $item = new Item;
         $item->name = 'Tallas';
         $item->description = 'Listado de tallas.';
@@ -583,6 +841,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                 'description' => 'regex:/^T\d{2,}$/',
             ],
         ];
+
         $item->save();
 
         $size = new Size;
@@ -590,6 +849,7 @@ class ItemsAndSubitemsSeeder extends Seeder
         $size->description = 'No aplica';
         $size->save();
 
+        // Tipos de Prenda
         $item = new Item;
         $item->name = 'Tipos de Prenda';
         $item->description = 'Listado de tipos de prenda.';
@@ -613,6 +873,7 @@ class ItemsAndSubitemsSeeder extends Seeder
             ]);
         }
 
+        // Tipos de Bota
         $item = new Item;
         $item->name = 'Tipos de Bota';
         $item->description = 'Listado de tipos de bota.';
@@ -646,6 +907,7 @@ class ItemsAndSubitemsSeeder extends Seeder
             ]);
         }
 
+        // Tipos de Cotilla
         $item = new Item;
         $item->name = 'Tipos de Cotilla';
         $item->description = 'Listado de tipos de cotilla.';
@@ -666,6 +928,7 @@ class ItemsAndSubitemsSeeder extends Seeder
             ]);
         }
 
+        // Tipos de Trasero
         $item = new Item;
         $item->name = 'Tipos de Trasero';
         $item->description = 'Listado de tipos de trasero.';
@@ -686,6 +949,7 @@ class ItemsAndSubitemsSeeder extends Seeder
             ]);
         }
 
+        // Tipos de Pretina
         $item = new Item;
         $item->name = 'Tipos de Pretina';
         $item->description = 'Listado de tipos de pretina.';
@@ -706,99 +970,108 @@ class ItemsAndSubitemsSeeder extends Seeder
             ]);
         }
 
+        // Colores
         $item = new Item;
         $item->name = 'Colores';
         $item->description = 'Listado de colores.';
         $item->save();
 
         $colors = [
-            'SIN COLOR',
-            'AZUL PANTONE',
-            'SALMON',
-            'ANIMAL PRINT',
-            'UVA',
-            'MANDARINA',
-            'ESTAMPADO',
-            'CAMEL',
-            'MILITAR',
-            'AZUL REY',
-            'VERDE MILITAR',
-            'VINOTINTO',
-            'PALOROSA',
-            'AZUL',
-            'AZUL CIELO',
-            'VERDE OLIVA',
-            'CAFE LECHE',
-            'BLANCO',
-            'NEGRO',
-            'GRIS',
-            'AZUL PETROLEO',
-            'CREMA',
-            'CAQUI OSCURO',
-            'MOSTAZA',
-            'VERDE OSCURO',
-            'HUESO',
-            'BEIGE',
-            'LILA',
-            'VIOLETA',
-            'FUCSIA',
-            'CLARO',
-            'MEDIO OSUCRO',
-            'MEDIO',
-            'MEDIO CLARO',
-            'OSCURO',
-            'OSCURO FIJACIÓN',
-            'COLOR',
-            'GRIS OSCURO',
-            'GRIS CLARO',
-            'CLARO DIRTY',
-            'MEDIO DIRTY',
-            'MEDIO OSCURO DIRTY',
-            'OSCURO DIRTY',
-            'OSCURO RESINA',
+            ['name' => 'SIN COLOR', 'code' => '1001'],
+            ['name' => 'AZUL PANTONE', 'code' => '1002'],
+            ['name' => 'SALMON', 'code' => '1003'],
+            ['name' => 'ANIMAL PRINT', 'code' => '1004'],
+            ['name' => 'UVA', 'code' => '1005'],
+            ['name' => 'MANDARINA', 'code' => '1006'],
+            ['name' => 'ESTAMPADO', 'code' => '1007'],
+            ['name' => 'CAMEL', 'code' => '1008'],
+            ['name' => 'MILITAR', 'code' => '1009'],
+            ['name' => 'AZUL REY', 'code' => '1010'],
+            ['name' => 'VERDE MILITAR', 'code' => '1011'],
+            ['name' => 'VINOTINTO', 'code' => '1012'],
+            ['name' => 'PALOROSA', 'code' => '1013'],
+            ['name' => 'AZUL', 'code' => '1014'],
+            ['name' => 'AZUL CIELO', 'code' => '1015'],
+            ['name' => 'VERDE OLIVA', 'code' => '1016'],
+            ['name' => 'CAFE LECHE', 'code' => '1017'],
+            ['name' => 'BLANCO', 'code' => '1018'],
+            ['name' => 'NEGRO', 'code' => '1019'],
+            ['name' => 'GRIS', 'code' => '1020'],
+            ['name' => 'AZUL PETROLEO', 'code' => '1021'],
+            ['name' => 'CREMA', 'code' => '1022'],
+            ['name' => 'CAQUI OSCURO', 'code' => '1023'],
+            ['name' => 'MOSTAZA', 'code' => '1024'],
+            ['name' => 'VERDE OSCURO', 'code' => '1025'],
+            ['name' => 'HUESO', 'code' => '1026'],
+            ['name' => 'BEIGE', 'code' => '1027'],
+            ['name' => 'LILA', 'code' => '1028'],
+            ['name' => 'VIOLETA', 'code' => '1029'],
+            ['name' => 'FUCSIA', 'code' => '1030'],
+            ['name' => 'CLARO', 'code' => '1031'],
+            ['name' => 'MEDIO OSUCRO', 'code' => '1032'],
+            ['name' => 'MEDIO', 'code' => '1033'],
+            ['name' => 'MEDIO CLARO', 'code' => '1034'],
+            ['name' => 'OSCURO', 'code' => '1035'],
+            ['name' => 'OSCURO FIJACIÓN', 'code' => '1036'],
+            ['name' => 'COLOR', 'code' => '1037'],
+            ['name' => 'GRIS OSCURO', 'code' => '1038'],
+            ['name' => 'GRIS CLARO', 'code' => '1039'],
+            ['name' => 'CLARO DIRTY', 'code' => '1040'],
+            ['name' => 'MEDIO DIRTY', 'code' => '1041'],
+            ['name' => 'MEDIO OSCURO DIRTY', 'code' => '1042'],
+            ['name' => 'OSCURO DIRTY', 'code' => '1043'],
+            ['name' => 'OSCURO RESINA', 'code' => '1044'],
         ];
 
-        foreach ($colors as $name) {
+        foreach ($colors as $color) {
             Color::create([
-                'name' => $name,
-                'description' => $name,
+                'name' => $color['name'],
+                'description' => $color['name'],
+                'settings' => [
+                    'code' => $color['code'],
+                ],
             ]);
         }
 
+        // Tonos de Lavado
         $item = new Item;
         $item->name = 'Tonos de Lavado';
         $item->description = 'Listado de tonos de lavado.';
         $item->save();
 
         $wash_tones = [
-            'HIELO',
-            'BLANCO',
-            'COLOR',
-            'CLARO',
-            'MEDIO',
-            'GRIS',
-            'OSCURO PD',
-            'NEGRO',
-            'MEDIO CLARO',
-            'MEDIO OSCURO',
-            'CLARO DIRTY',
-            'MEDIO DIRTY',
-            'OSCURO JEAN',
-            'OSCURO DIRTY',
-            'FIJACION',
-            'GRIS OSCURO',
-            'GRIS CLARO',
-            'MEDIO OSCURO DIRTY',
-            'OSCURO RESINA',
+            ['name' => 'HIELO', 'code' => '1001'],
+            ['name' => 'BLANCO', 'code' => '1002'],
+            ['name' => 'COLOR', 'code' => '1003'],
+            ['name' => 'CLARO', 'code' => '1004'],
+            ['name' => 'MEDIO', 'code' => '1005'],
+            ['name' => 'GRIS', 'code' => '1006'],
+            ['name' => 'OSCURO PD', 'code' => '1007'],
+            ['name' => 'NEGRO', 'code' => '1008'],
+            ['name' => 'MEDIO CLARO', 'code' => '1009'],
+            ['name' => 'MEDIO OSCURO', 'code' => '1010'],
+            ['name' => 'CLARO DIRTY', 'code' => '1011'],
+            ['name' => 'MEDIO DIRTY', 'code' => '1012'],
+            ['name' => 'OSCURO JEAN', 'code' => '1013'],
+            ['name' => 'OSCURO DIRTY', 'code' => '1014'],
+            ['name' => 'FIJACION', 'code' => '1015'],
+            ['name' => 'GRIS OSCURO', 'code' => '1016'],
+            ['name' => 'GRIS CLARO', 'code' => '1017'],
+            ['name' => 'MEDIO OSCURO DIRTY', 'code' => '1018'],
+            ['name' => 'OSCURO RESINA', 'code' => '1019'],
         ];
 
-        foreach ($wash_tones as $name) {
+        foreach ($wash_tones as $wash_tone) {
             WashTone::create([
-                'name' => $name,
-                'description' => $name,
+                'name' => $wash_tone['name'],
+                'description' => $wash_tone['name'],
+                'settings' => [
+                    'code' => $wash_tone['code'],
+                ],
             ]);
         }
 
+        // Procesos
         $item = new Item;
         $item->name = 'Procesos';
         $item->description = 'Listado de procesos.';
@@ -829,6 +1102,7 @@ class ItemsAndSubitemsSeeder extends Seeder
             ]);
         }
 
+        // Subprocesos
         $item = new Item;
         $item->name = 'Subprocesos';
         $item->description = 'Listado de subprocesos.';
@@ -839,6 +1113,7 @@ class ItemsAndSubitemsSeeder extends Seeder
         $subprocess->description = 'No aplica';
         $subprocess->save();
 
+        // Operaciones
         $item = new Item;
         $item->name = 'Operaciones';
         $item->description = 'Listado de operaciones.';
@@ -849,16 +1124,21 @@ class ItemsAndSubitemsSeeder extends Seeder
         $operation->description = 'No aplica';
         $operation->save();
 
+        // Tipos de Proveedores
         $item = new Item;
-        $item->name = 'Proveedores';
-        $item->description = 'Listado de proveedores.';
+        $item->name = 'Tipos de Proveedores';
+        $item->description = 'Listado de tipos de proveedores.';
         $item->save();
 
-        $supplier = new Supplier;
-        $supplier->name = 'No aplica';
-        $supplier->description = 'No aplica';
-        $supplier->save();
+        $supplier_types = [];
 
+        $supplier_types['NO APLICA'] = SupplierType::create(['name' => 'NO APLICA', 'description' => 'NO APLICA']);
+
+        $supplier_types['SERVICIO'] = SupplierType::create(['name' => 'SERVICIO', 'description' => 'SERVICIO']);
+
+        $supplier_types['MATERIA PRIMA'] = SupplierType::create(['name' => 'MATERIA PRIMA', 'description' => 'MATERIA PRIMA']);
+
+        // Tipos de Insumo
         $item = new Item;
         $item->name = 'Tipos de Insumo';
         $item->description = 'Listado de tipos de insumo.';
@@ -869,15 +1149,18 @@ class ItemsAndSubitemsSeeder extends Seeder
         $supply_types['NO APLICA'] = SupplyType::create(['name' => 'NO APLICA', 'description' => 'NO APLICA', 'settings' => [
             'in_technical_sheet' => false,
         ]]);
+
         $supply_types['TELA'] = SupplyType::create(['name' => 'TELA', 'description' => 'TELA', 'settings' => [
             'in_technical_sheet' => true,
             'has_supplies' => true,
         ]]);
+
         $supply_types['HILO'] = SupplyType::create(['name' => 'HILO', 'description' => 'HILO', 'settings' => [
             'in_technical_sheet' => true,
             'has_supplies' => true,
         ]]);
 
+        // Insumos
         $item = new Item;
         $item->name = 'Insumos';
         $item->description = 'Listado de insumos.';
@@ -905,6 +1188,33 @@ class ItemsAndSubitemsSeeder extends Seeder
             }
         }
 
+        // Proveedores
+        $item = new Item;
+        $item->name = 'Proveedores';
+        $item->description = 'Listado de proveedores.';
+        $item->save();
+
+        $suppliers = [
+            ['name' => 'TEXTILES Y CONFECCIONES DEL NORTE S.A.S.', 'description' => 'PROVEEDOR DE INSUMOS Y SERVICIOS TEXTILES', 'supplier_type' => 'SERVICIO'],
+            ['name' => 'POLYTEXTILES S.A.S.', 'description' => 'PROVEEDOR DE MATERIA PRIMA', 'supplier_type' => 'MATERIA PRIMA'],
+            ['name' => 'TEXTILES ANDINOS S.A.S.', 'description' => 'PROVEEDOR DE MATERIAS PRIMAS TEXTILES', 'supplier_type' => 'MATERIA PRIMA'],
+        ];
+
+        foreach ($suppliers as $data) {
+
+            $supplier = Supplier::create([
+                'name' => $data['name'],
+                'description' => $data['description'],
+            ]);
+
+            if (isset($supply_types[$data['supplier_type']])) {
+                $supplier->supplier_type()->sync(
+                    [$supply_types[$data['supplier_type']]->id]
+                );
+            }
+        }
+
+        // Colecciones
         $item = new Item;
         $item->name = 'Colección';
         $item->description = 'Listado de colecciones.';
@@ -966,44 +1276,81 @@ class ItemsAndSubitemsSeeder extends Seeder
             ]);
         }
 
+        // Piezas
         $item = new Item;
         $item->name = 'Piezas';
         $item->description = 'Listado de piezas.';
         $item->save();
 
-        $clothing_line = new Piece;
-        $clothing_line->name = 'No aplica';
-        $clothing_line->description = 'No aplica';
-        $clothing_line->save();
+        $piece = new Piece;
+        $piece->name = 'No aplica';
+        $piece->description = 'No aplica';
+        $piece->save();
 
+        // Tipos de Personas
         $item = new Item;
-        $item->name = 'Siluetas';
-        $item->description = 'Listado de siluetas.';
+        $item->name = 'Tipos de Personas';
+        $item->description = 'Listado de tipos de personas.';
         $item->save();
 
-        $silhouette = new Silhouette;
-        $silhouette->name = 'No aplica';
-        $silhouette->description = 'No aplica';
-        $silhouette->save();
+        $person_type = new PersonType;
+        $person_type->name = 'No aplica';
+        $person_type->description = 'No aplica';
+        $person_type->save();
 
+        // Tipos de Documentos
         $item = new Item;
-        $item->name = 'Tipos de Tela';
-        $item->description = 'Listado de tipos de tela.';
+        $item->name = 'Tipos de Documentos';
+        $item->description = 'Listado de tipos de documentos.';
         $item->save();
 
-        $fabric_type = new FabricType;
-        $fabric_type->name = 'No aplica';
-        $fabric_type->description = 'No aplica';
-        $fabric_type->save();
+        $document_type = new DocumentType;
+        $document_type->name = 'No aplica';
+        $document_type->description = 'No aplica';
+        $document_type->save();
 
+        // Bancos
         $item = new Item;
-        $item->name = 'Tipos de Hilo';
-        $item->description = 'Listado de tipos de hilo.';
+        $item->name = 'Bancos';
+        $item->description = 'Listado de bancos.';
         $item->save();
 
-        $thread_type = new ThreadType;
-        $thread_type->name = 'No aplica';
-        $thread_type->description = 'No aplica';
-        $thread_type->save();
+        $bank = new Bank;
+        $bank->name = 'No aplica';
+        $bank->description = 'No aplica';
+        $bank->save();
+
+        // Tipos de Cuenta
+        $item = new Item;
+        $item->name = 'Tipos de Cuenta';
+        $item->description = 'Listado de tipos de cuenta.';
+        $item->save();
+
+        $account_type = new AccountType;
+        $account_type->name = 'No aplica';
+        $account_type->description = 'No aplica';
+        $account_type->save();
+
+        // Reportes
+        $item = new Item;
+        $item->name = 'Reportes';
+        $item->description = 'Listado de reportes.';
+        $item->save();
+
+        $report = new Report;
+        $report->name = 'No aplica';
+        $report->description = 'No aplica';
+        $report->save();
+
+        // Tipologías
+        $item = new Item;
+        $item->name = 'Tipologías';
+        $item->description = 'Listado de tipologías.';
+        $item->save();
+
+        $typology = new Typology;
+        $typology->name = 'No aplica';
+        $typology->description = 'No aplica';
+        $typology->save();
     }
 }
