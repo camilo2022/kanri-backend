@@ -51,6 +51,8 @@ return new class extends Migration
             $table->softDeletes();
         });
 
+        DB::unprepared('DROP PROCEDURE IF EXISTS generate_technical_sheet_consecutive');
+
         DB::unprepared("
             CREATE PROCEDURE generate_technical_sheet_consecutive()
             BEGIN
@@ -70,11 +72,7 @@ return new class extends Migration
 
                 IF last_consecutive IS NULL THEN
 
-                    SELECT CONCAT(
-                        'TS',
-                        date_consecutive,
-                        '001'
-                    ) AS consecutive;
+                    SELECT CONCAT( 'TS', date_consecutive, '001') AS consecutive;
 
                 ELSE
 

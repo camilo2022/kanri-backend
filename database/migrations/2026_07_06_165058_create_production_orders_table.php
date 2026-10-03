@@ -30,25 +30,27 @@ return new class extends Migration
             $table->softDeletes();
         });
 
+        DB::unprepared('DROP PROCEDURE IF EXISTS generate_production_order_consecutive');
+
         DB::unprepared("
-            CREATE PROCEDURE generate_production_order_code()
+            CREATE PROCEDURE generate_production_order_consecutive()
                 BEGIN
 
-                    DECLARE date_code  CHAR(6);
+                    DECLARE date_consecutive CHAR(6);
                     DECLARE last_consecutive VARCHAR(11);
                     DECLARE next_consecutive INT;
 
-                    SET date_code  = DATE_FORMAT(CURDATE(), '%y%m%d');
+                    SET date_consecutive = DATE_FORMAT(CURDATE(), '%y%m%d');
 
                     SELECT consecutive INTO last_consecutive FROM production_orders
-                    WHERE consecutive LIKE CONCAT('PO', date_code , '%') ORDER BY consecutive DESC LIMIT 1;
+                    WHERE consecutive LIKE CONCAT('PO', date_consecutive , '%') ORDER BY consecutive DESC LIMIT 1;
 
                     IF last_consecutive IS NULL THEN
-                        SELECT CONCAT('PO', date_code , '001') AS consecutive;
+                        SELECT CONCAT('PO', date_consecutive , '001') AS consecutive;
                     ELSE
                         SET next_consecutive = CAST(RIGHT(last_consecutive, 3) AS UNSIGNED) + 1;
 
-                        SELECT CONCAT('PO', date_code , LPAD(next_consecutive, 3, '0')) AS consecutive;
+                        SELECT CONCAT('PO', date_consecutive , LPAD(next_consecutive, 3, '0')) AS consecutive;
                     END IF;
 
                 END
@@ -60,7 +62,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::unprepared('DROP PROCEDURE IF EXISTS generate_production_order_code');
+        DB::unprepared('DROP PROCEDURE IF EXISTS generate_production_order_consecutive');
 
         Schema::dropIfExists('production_orders');
     }
