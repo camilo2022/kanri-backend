@@ -18,8 +18,11 @@ return new class extends Migration
             $table->foreignIdFor(Movement::class)->constrained()->cascadeOnUpdate();
             $table->nullableMorphs('model');
             $table->enum('status', ['Pendiente', 'Aprobado'])->default('Pendiente');
+            $table->text('observation')->nullable();
             $table->json('settings')->default(new Expression('(JSON_OBJECT())'))->comment('Configuraciones');
             $table->timestamps();
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->nullable()->default(null)->useCurrentOnUpdate();
         });
     }
 

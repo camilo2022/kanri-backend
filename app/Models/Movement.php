@@ -5,14 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable as Auditing;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class Movement extends Model implements Auditable
 {
-    use Auditing, SoftDeletes;
+    use Auditing;
 
     protected $table = 'movements';
 
@@ -51,6 +51,17 @@ class Movement extends Model implements Auditable
         return $this->belongsTo(Item::class);
     }
 
+    public function movement_details_input(): HasMany
+    {
+        return $this->hasMany(MovementDetail::class);
+    }
+
+    public function movement_details_output(): HasMany
+    {
+        return $this->hasMany(MovementDetail::class, 'model_id')
+            ->where('model_type', Movement::class);
+    }
+
     public function scopeSearch(Builder $query, ?string $search = null): Builder
     {
         $search = trim((string) $search);
@@ -59,6 +70,74 @@ class Movement extends Model implements Auditable
             return $query;
         }
 
+        // BÚSQUEDAS COMBINADAS CON GUION
+        if (str_contains($search, '-')) {
+
+            [$code, $value] = array_pad(explode('-', $search, 2), 2, null);
+
+            $code = trim($code);
+            $value = trim($value);
+
+            if ($code !== '' && $value !== '') {
+
+                return $query->where(function (Builder $q) use ($code, $value) {
+
+                    // REFERENCIA + CORTE
+                    $q->whereHas('production_order_detail', function (Builder $detail) use ($code, $value) {
+                        $detail->whereHasMorph('model', [Product::class], function (Builder $product) use ($code) {
+                            $product->where('code', 'LIKE', "%{$code}%");
+                        });
+                        $detail->whereHas('production_order', function (Builder $order) use ($value) {
+                            $order->where('cut', 'LIKE', "%{$value}%");
+                        });
+                    })
+
+                    // CÓDIGO + NOMBRE DE COLECCIÓN
+                        ->orWhereHas('production_order_detail', function (Builder $detail) use ($code, $value) {
+
+                            $detail->whereHas('production_order', function (Builder $order) use ($code, $value) {
+
+                                $order->whereHas('technical_sheet', function (Builder $sheet) use ($code, $value) {
+
+                                    $sheet->whereHas('collection', function (Builder $collection) use ($code, $value) {
+
+                                        $collection->where('settings->code', 'LIKE', "%{$code}%")
+                                            ->where('name', 'LIKE', "%{$value}%");
+
+                                    });
+                                });
+                            });
+                        })
+
+                    // CÓDIGO + NOMBRE DE TIPO DE PRENDA
+                        ->orWhereHas('production_order_detail', function (Builder $detail) use ($code, $value) {
+                            $detail->whereHas('production_order', function (Builder $order) use ($code, $value) {
+                                $order->whereHas('technical_sheet', function (Builder $sheet) use ($code, $value) {
+                                    $sheet->whereHas('garment_type', function (Builder $type) use ($code, $value) {
+                                        $type->where('settings->code', 'LIKE', "%{$code}%")
+                                            ->where('name', 'LIKE', "%{$value}%");
+                                    });
+                                });
+                            });
+                        })
+
+                    // CÓDIGO + NOMBRE DE COLOR
+                        ->orWhereHas('production_order_detail', function (Builder $detail) use ($code, $value) {
+                            $detail->whereHas('production_order', function (Builder $order) use ($code, $value) {
+                                $order->whereHas('technical_sheet', function (Builder $sheet) use ($code, $value) {
+                                    $sheet->whereHas('color', function (Builder $color) use ($code, $value) {
+                                        $color->where('settings->code', 'LIKE', "%{$code}%")
+                                            ->where('name', 'LIKE', "%{$value}%");
+                                    });
+                                });
+                            });
+                        });
+
+                });
+            }
+        }
+
+        // BÚSQUEDA NORMAL POR TÉRMINOS
         $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
 
         return $query->where(function (Builder $q) use ($terms) {
@@ -67,36 +146,84 @@ class Movement extends Model implements Auditable
 
                 $q->where(function (Builder $sq) use ($term) {
 
-                    $sq->where('consecutive', 'LIKE', "%{$term}%")
-                        ->orWhere('cut', 'LIKE', "%{$term}%")
+                    // REFERENCIA
+                    $sq->whereHas('production_order_detail', function (Builder $detail) use ($term) {
+                        $detail->whereHasMorph('model', [Product::class], function (Builder $product) use ($term) {
+                            $product->where('code', 'LIKE', "%{$term}%");
+                        });
+                    })
 
-                        // MARCA
-                        ->orWhereHas('model', function (Builder $query) use ($term) {
-                            $query->where('name', 'LIKE', "%{$term}%");
+                    // CORTE
+                        ->orWhereHas('production_order_detail', function (Builder $detail) use ($term) {
+                            $detail->whereHas('production_order', function (Builder $order) use ($term) {
+                                $order->where('cut', 'LIKE', "%{$term}%");
+                            });
                         })
 
-
-                        // MARCA
-                        ->orWhereHas('model.trademark', function (Builder $query) use ($term) {
-                            $query->where('name', 'LIKE', "%{$term}%");
-                        })
-
-                        // COLECCIÓN
-                        ->orWhereHas('model.technical_sheet.collection', function (Builder $query) use ($term) {
-                            $query->where('name', 'LIKE', "%{$term}%");
-                        })
-
-                        // TIPO DE PRENDA
-                        ->orWhereHas('model.technical_sheet.product.subcategory', function (Builder $query) use ($term) {
-                            $query->where('name', 'LIKE', "%{$term}%");
-                        })
-
-                        // POSICIÓN
-                        ->orWhereHas('position', function (Builder $query) use ($term) {
-                            $query->where('name', 'LIKE', "%{$term}%")
-                                ->orWhereHas('area', function (Builder $areaQuery) use ($term) {
-                                    $areaQuery->where('name', 'LIKE', "%{$term}%");
+                    // MARCA
+                        ->orWhereHas('production_order_detail', function (Builder $detail) use ($term) {
+                            $detail->whereHasMorph('model', [Product::class], function (Builder $product) use ($term) {
+                                $product->whereHas('trademark', function (Builder $trademark) use ($term) {
+                                    $trademark->where('name', 'LIKE', "%{$term}%");
                                 });
+                            });
+                        })
+
+                    // COLECCIÓN
+                        ->orWhereHas('production_order_detail', function (Builder $detail) use ($term) {
+                            $detail->whereHas('production_order', function (Builder $order) use ($term) {
+                                $order->whereHas('technical_sheet', function (Builder $sheet) use ($term) {
+                                    $sheet->whereHas('collection', function (Builder $collection) use ($term) {
+                                        $collection->where('name', 'LIKE', "%{$term}%")
+                                            ->orWhere('settings->code', 'LIKE', "%{$term}%");
+                                    });
+                                });
+                            });
+                        })
+
+                    // TIPO DE PRENDA
+                        ->orWhereHas('production_order_detail', function (Builder $detail) use ($term) {
+                            $detail->whereHas('production_order', function (Builder $order) use ($term) {
+                                $order->whereHas('technical_sheet', function (Builder $sheet) use ($term) {
+                                    $sheet->whereHas('garment_type', function (Builder $type) use ($term) {
+                                        $type->where('name', 'LIKE', "%{$term}%")
+                                            ->orWhere('settings->code', 'LIKE', "%{$term}%");
+                                    });
+                                });
+                            });
+                        })
+
+                    // COLOR
+                        ->orWhereHas('production_order_detail', function (Builder $detail) use ($term) {
+                            $detail->whereHas('production_order', function (Builder $order) use ($term) {
+                                $order->whereHas('technical_sheet', function (Builder $sheet) use ($term) {
+                                    $sheet->whereHas('color', function (Builder $color) use ($term) {
+                                        $color->where('name', 'LIKE', "%{$term}%")
+                                            ->orWhere('settings->code', 'LIKE', "%{$term}%");
+                                    });
+                                });
+                            });
+                        })
+
+                    // CATEGORÍA
+                        ->orWhereHas('production_order_detail', function (Builder $detail) use ($term) {
+                            $detail->whereHasMorph('model', [Product::class], function (Builder $product) use ($term) {
+                                $product->whereHas('subcategory', function (Builder $subcategory) use ($term) {
+                                    $subcategory->whereHas('category', function (Builder $category) use ($term) {
+                                        $category->where('name', 'LIKE', "%{$term}%");
+                                    });
+                                });
+                            });
+                        })
+
+                    // DESTINO
+                        ->orWhereHas('production_order_detail', function (Builder $detail) use ($term) {
+                            $detail->where('destination', 'LIKE', "%{$term}%");
+                        })
+
+                    // PROCESO
+                        ->orWhereHasMorph('model', [Process::class], function (Builder $detail) use ($term) {
+                            $detail->where('name', 'LIKE', "%{$term}%");
                         });
                 });
             }

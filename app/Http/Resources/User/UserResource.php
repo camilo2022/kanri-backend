@@ -20,7 +20,10 @@ class UserResource extends JsonResource
                 'employee' => $this->employee,
                 'roles' => $this->roles,
                 'permissions' => $this->permissions,
-            ]
+                'processes' => $this->processes,
+                'subprocesses' => $this->subprocesses,
+                'operations' => $this->operations,
+            ],
         ];
     }
 

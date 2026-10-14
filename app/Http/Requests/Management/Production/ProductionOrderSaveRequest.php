@@ -185,9 +185,9 @@ class ProductionOrderSaveRequest extends FormRequest
                         );
                     }
 
-                    if (array_sum(array_column($detail['sizes'], 'quantity')) === 0) {
+                    if ((array_sum(array_column($detail['sizes'], 'quantity')) === 0) && $detail['id'] === null) {
                         $validator->errors()->add(
-                            "production_order_details.$model.$destination.model_id",
+                            "curve.$destination",
                             'Es obligatorio ingresar curva.'
                         );
 

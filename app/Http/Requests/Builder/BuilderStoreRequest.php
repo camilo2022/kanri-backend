@@ -18,7 +18,7 @@ class BuilderStoreRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -31,11 +31,11 @@ class BuilderStoreRequest extends FormRequest
     {
         return [
             'trademark_id' => ['required', 'array', 'min:1'],
-            'trademark_id.*' => ['exists:subitems,id,item_id,' . Trademark::ITEM_ID . ',deleted_at,NULL'],
+            'trademark_id.*' => ['exists:subitems,id,item_id,'.Trademark::ITEM_ID.',deleted_at,NULL'],
             'category_id' => ['nullable', 'array'],
-            'category_id.*' => ['exists:subitems,id,item_id,' . Category::ITEM_ID . ',deleted_at,NULL'],
+            'category_id.*' => ['exists:subitems,id,item_id,'.Category::ITEM_ID.',deleted_at,NULL'],
             'subcategory_id' => ['nullable', 'array'],
-            'subcategory_id.*' => ['exists:subitems,id,item_id,' . Subcategory::ITEM_ID . ',deleted_at,NULL'],
+            'subcategory_id.*' => ['exists:subitems,id,item_id,'.Subcategory::ITEM_ID.',deleted_at,NULL'],
             'percentages' => ['required', 'array'],
             'percentages.*' => ['required', 'numeric', 'min:0', 'max:100'],
         ];
@@ -48,7 +48,7 @@ class BuilderStoreRequest extends FormRequest
             'array' => 'Debe ser um array',
             'numeric' => 'Debe ser un dato numerico',
             'min' => 'Debe ser minimo :min',
-            'max' => 'Debe ser minimo :max'
+            'max' => 'Debe ser minimo :max',
         ];
     }
 
@@ -58,7 +58,7 @@ class BuilderStoreRequest extends FormRequest
             'trademark_id' => 'Marcas',
             'category_id' => 'Categorías',
             'subcategory_id' => 'Subcategorías',
-            'percentages' => 'Porcentajes'
+            'percentages' => 'Porcentajes',
         ];
     }
 
@@ -71,7 +71,7 @@ class BuilderStoreRequest extends FormRequest
             $subcategory_ids = $this->input('subcategory_id', []);
 
             $total = collect($percentages)
-                ->sum(fn($percentage) => (float) $percentage);
+                ->sum(fn ($percentage) => (float) $percentage);
 
             if ($total != 100) {
                 $validator->errors()->add(
@@ -80,18 +80,17 @@ class BuilderStoreRequest extends FormRequest
                 );
             }
 
-
-            if (!empty($subcategory_ids) && empty($category_ids)) {
+            if (! empty($subcategory_ids) && empty($category_ids)) {
                 $validator->errors()->add(
                     'subcategory_ids',
                     'No puedes seleccionar subcategorías sin seleccionar al menos una categoría.'
                 );
             }
 
-            if (!empty($subcategory_ids) && !empty($category_ids)) {
+            if (! empty($subcategory_ids) && ! empty($category_ids)) {
                 foreach ($subcategory_ids as $subcategory_id) {
                     $subcategory = Subcategory::with('category')->find($subcategory_id);
-                    if (!in_array($subcategory->category->first()->id, $category_ids)) {
+                    if (! in_array($subcategory->category->first()->id, $category_ids)) {
                         $validator->errors()->add(
                             'subcategory_ids',
                             'Una o más subcategorías no pertenecen a las categorías seleccionadas.'
@@ -105,7 +104,7 @@ class BuilderStoreRequest extends FormRequest
 
             foreach ($percentages as $key => $value) {
                 $size = $sizes->get($key);
-                if (!$size) {
+                if (! $size) {
                     $validator->errors()->add(
                         'percentages',
                         "La talla con ID {$key} no existe."
@@ -116,7 +115,7 @@ class BuilderStoreRequest extends FormRequest
 
                 $size_trademark_ids = $size->trademark
                     ->pluck('id')
-                    ->map(fn($id) => (string) $id)
+                    ->map(fn ($id) => (string) $id)
                     ->toArray();
 
                 $selected_trademark_ids = array_map(
@@ -124,12 +123,12 @@ class BuilderStoreRequest extends FormRequest
                     $trademark_ids
                 );
 
-                $has_valid_trademark = !empty(array_intersect(
+                $has_valid_trademark = ! empty(array_intersect(
                     $size_trademark_ids,
                     $selected_trademark_ids
                 ));
 
-                if (!$has_valid_trademark) {
+                if (! $has_valid_trademark) {
                     $validator->errors()->add(
                         'percentages',
                         'Una o más tallas no pertenecen a las marcas seleccionadas.'
@@ -138,9 +137,6 @@ class BuilderStoreRequest extends FormRequest
                     break;
                 }
             }
-
-
-
 
             if (empty($category_ids)) {
 
@@ -158,12 +154,10 @@ class BuilderStoreRequest extends FormRequest
                     }
                 }
             } elseif (empty($subcategory_ids)) {
-
                 foreach ($trademark_ids as $trademark_id) {
-
                     foreach ($category_ids as $category_id) {
 
-                        $cache_key = "curve_builder:index:" . "{$trademark_id}:" . "{$category_id}";
+                        $cache_key = 'curve_builder:index:'."{$trademark_id}:"."{$category_id}";
 
                         if (Cache::has($cache_key)) {
                             $validator->errors()->add(
@@ -180,15 +174,27 @@ class BuilderStoreRequest extends FormRequest
                     ->whereIn('id', $subcategory_ids)
                     ->get();
 
+                $builder_ids = Cache::get('curve_builder:ids', []);
+
+                $builders = collect($builder_ids)
+                    ->map(fn ($builder_id) => Cache::get("curve_builder:{$builder_id}"))
+                    ->filter();
+
                 foreach ($trademark_ids as $trademark_id) {
-
                     foreach ($subcategories as $subcategory) {
-
                         $category_id = $subcategory->category->first()->id;
-                        $cache_key = "curve_builder:index:" . "{$trademark_id}:" . "{$category_id}:" . "{$subcategory->id}";
 
+                        $exists = $builders->contains(function ($builder) use (
+                            $trademark_id,
+                            $category_id,
+                            $subcategory
+                        ) {
+                            return in_array($trademark_id, $builder['trademark_ids'])
+                                && in_array($category_id, $builder['category_ids'])
+                                && in_array($subcategory->id, $builder['subcategory_ids']);
+                        });
 
-                        if (Cache::has($cache_key)) {
+                        if ($exists) {
                             $validator->errors()->add(
                                 'subcategory_ids',
                                 'Ya existe un constructor para una de las combinaciones seleccionadas.'

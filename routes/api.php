@@ -36,6 +36,7 @@ use App\Http\Controllers\PositionController;
 use App\Http\Controllers\ProcessController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductionOrderController;
+use App\Http\Controllers\ProductionOrderDetailController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RiskManagerController;
 use App\Http\Controllers\RoleController;
@@ -153,7 +154,7 @@ Route::prefix('/boot_types')->group(function () {
 });
 
 Route::prefix('/cache')->group(function () {
-    Route::prefix('/builder')->group(function () {
+    Route::prefix('/builders')->group(function () {
         Route::controller(BuilderController::class)->group(function () {
             Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:cache.builders.all']);
             Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:cache.builders.find']);
@@ -312,6 +313,13 @@ Route::prefix('/management')->group(function () {
 Route::prefix('/movements')->group(function () {
     Route::controller(MovementController::class)->group(function () {
         Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:movements.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:movements.find']);
+        Route::post('/save', 'save')->middleware(['auth:sanctum', 'can:movements.save']);
+    });
+    Route::prefix('/production_order_details')->group(function () {
+        Route::controller(ProductionOrderDetailController::class)->group(function () {
+            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:movements.production_order_details.all|movements.find|movements.save']);
+        });
     });
 });
 
@@ -601,6 +609,10 @@ Route::prefix('/users')->group(function () {
         Route::prefix('/authorization')->group(function () {
             Route::post('/assign/{id}', 'assign')->middleware(['auth:sanctum', 'can:users.authorization.assign']);
             Route::post('/remove/{id}', 'remove')->middleware(['auth:sanctum', 'can:users.authorization.remove']);
+        });
+        Route::prefix('/workflow')->group(function () {
+            Route::post('/assign/{id}', 'assign_workflow')->middleware(['auth:sanctum', 'can:users.workflow.assign']);
+            Route::post('/remove/{id}', 'remove_workflow')->middleware(['auth:sanctum', 'can:users.workflow.remove']);
         });
     });
 });

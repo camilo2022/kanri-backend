@@ -19,6 +19,8 @@ class MovementCollection extends ResourceCollection
                     'created_at' => $this->formatDate($movement->created_at),
                     'updated_at' => $this->formatDate($movement->updated_at),
                     'deleted_at' => $this->formatDate($movement->deleted_at),
+                    'movement_details_input' => $movement->movement_details_input,
+                    'movement_details_output' => $movement->movement_details_output,
                 ];
             }),
             'meta' => [

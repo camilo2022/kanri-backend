@@ -282,7 +282,7 @@ class ItemsAndSubitemsSeeder extends Seeder
                 'validations' => [
                     [
                         'id' => 1,
-                        'regex' => '/^05[0-9]{6}$/',
+                        'regex' => '/^O5[0-9]{6}$/',
                         'message' => 'Debe iniciar con 05 y tener 6 números',
                         'created_at' => now(),
                         'updated_at' => null,

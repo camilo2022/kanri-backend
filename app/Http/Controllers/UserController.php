@@ -4,15 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\User\UserAllRequest;
 use App\Http\Requests\User\UserAuthorizationAssignRequest;
+use App\Http\Requests\User\UserAuthorizationRemoveRequest;
 use App\Http\Requests\User\UserDeleteRequest;
 use App\Http\Requests\User\UserFindRequest;
-use App\Http\Requests\User\UserAuthorizationRemoveRequest;
 use App\Http\Requests\User\UserRestoreRequest;
 use App\Http\Requests\User\UserStoreRequest;
 use App\Http\Requests\User\UserUpdateRequest;
+use App\Http\Requests\User\UserWorkflowAssignRequest;
+use App\Http\Requests\User\UserWorkflowRemoveRequest;
 use App\Http\Resources\User\UserCollection;
 use App\Http\Resources\User\UserResource;
+use App\Models\Operation;
 use App\Models\Permission;
+use App\Models\Process;
+use App\Models\Subprocess;
 use App\Models\User;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -32,6 +37,7 @@ use Illuminate\Support\Facades\Hash;
  * @OA\Schema(
  *     schema="User",
  *     type="object",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="email", type="string", example="email_user_example"),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
@@ -78,10 +84,13 @@ use Illuminate\Support\Facades\Hash;
  *     @OA\Property(
  *         property="roles",
  *         type="array",
+ *
  *         @OA\Items(
  *             allOf={
+ *
  *                  @OA\Schema(ref="#/components/schemas/Role"),
  *                  @OA\Schema(
+ *
  *                      @OA\Property(
  *                          property="pivot",
  *                          type="object",
@@ -96,10 +105,13 @@ use Illuminate\Support\Facades\Hash;
  *     @OA\Property(
  *         property="permissions",
  *         type="array",
+ *
  *         @OA\Items(
  *             allOf={
+ *
  *                  @OA\Schema(ref="#/components/schemas/Permission"),
  *                  @OA\Schema(
+ *
  *                      @OA\Property(
  *                          property="pivot",
  *                          type="object",
@@ -113,8 +125,6 @@ use Illuminate\Support\Facades\Hash;
  *     )
  * )
  */
-
-
 class UserController extends Controller
 {
     use ApiMessage, ApiResponser;
@@ -125,53 +135,68 @@ class UserController extends Controller
      *     tags={"Users"},
      *     summary="Listar los usuarios",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Filtro de Busqueda.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="juan")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
      *         description="Columna a ordenar.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"id","email","created_at", "updated_at"}, example="email")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="dir",
      *         in="query",
      *         description="Dirección de ordenamiento.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Registros por página.",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=10)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="with_trashed",
      *         in="query",
      *         description="Registros inactivos.",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Lista de usuarios cargada con éxito",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
      *                     property= "users",
      *                     type="array",
+     *
      *                     @OA\Items(ref="#/components/schemas/User")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="meta",
      *                     type="object",
@@ -190,16 +215,20 @@ class UserController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -213,7 +242,7 @@ class UserController extends Controller
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
-                ->when($request->boolean('with_trashed'), function ($query) use ($request) {
+                ->when($request->boolean('with_trashed'), function ($query) {
                     return $query->withTrashed();
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
@@ -232,7 +261,7 @@ class UserController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -245,17 +274,22 @@ class UserController extends Controller
      *     tags={"Users"},
      *     summary="Obtener un usuario específico",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador del usuario",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Usuario obtenido correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -268,10 +302,13 @@ class UserController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Identificador de usuario no registrado.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -284,21 +321,26 @@ class UserController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -308,7 +350,7 @@ class UserController extends Controller
     public function find(UserFindRequest $request, $id)
     {
         try {
-            $user = User::with(['employee' => ['person', 'position' => ['area']], 'roles', 'permissions'])
+            $user = User::with(['employee' => ['person', 'position' => ['area']], 'roles', 'permissions', 'processes', 'subprocesses', 'operations'])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -320,7 +362,7 @@ class UserController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -333,10 +375,13 @@ class UserController extends Controller
      *     tags={"Users"},
      *     summary="Crear un usuario",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"employee_id","email","password","password_confirmation"},
+     *
      *             @OA\Property(
      *                 property="employee_id",
      *                 type="string",
@@ -366,10 +411,13 @@ class UserController extends Controller
      *              )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Usuario creado correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -408,10 +456,13 @@ class UserController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -427,21 +478,26 @@ class UserController extends Controller
      *                 @OA\Property(
      *                     property="email",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Ya está registrado.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -451,7 +507,7 @@ class UserController extends Controller
     public function store(UserStoreRequest $request)
     {
         try {
-            $user = new User();
+            $user = new User;
             $user->employee_id = $request->input('employee_id');
             $user->email = $request->input('email');
             $user->password = Hash::make($request->input('password'));
@@ -470,7 +526,7 @@ class UserController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -483,17 +539,22 @@ class UserController extends Controller
      *     tags={"Users"},
      *     summary="Editar un usuario específico",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador del usuario",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"employee_id","email","password","password_confirmation"},
+     *
      *             @OA\Property(
      *                 property="employee_id",
      *                 type="string",
@@ -523,18 +584,23 @@ class UserController extends Controller
      *              )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Información del usuario actualizada correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
      *                     property= "user",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="employee_id", type="integer", example=4),
      *                         @OA\Property(property="email", type="string", example="email_user_example"),
@@ -548,10 +614,13 @@ class UserController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *      @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -567,21 +636,26 @@ class UserController extends Controller
      *                 @OA\Property(
      *                     property="email",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Ya está registrado.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -606,7 +680,7 @@ class UserController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -619,25 +693,32 @@ class UserController extends Controller
      *     tags={"Users"},
      *     summary="Desactivar un usuario específico",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador del usuario",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Usuario eliminado correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
      *                     property= "user",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=14),
      *                         @OA\Property(property="employee_id", type="integer", example=1),
      *                         @OA\Property(property="email", type="string", example="email_user_example"),
@@ -651,10 +732,13 @@ class UserController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Identificador de usuario no registrado.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -667,21 +751,26 @@ class UserController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -708,7 +797,7 @@ class UserController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -721,17 +810,22 @@ class UserController extends Controller
      *     tags={"Users"},
      *     summary="Activar un usuario específico",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Identificador del usuario",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *    @OA\Response(
      *         response=200,
      *         description="Usuario creado correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -770,10 +864,13 @@ class UserController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Identificador de usuario no registrado.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -786,21 +883,26 @@ class UserController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -812,7 +914,6 @@ class UserController extends Controller
         try {
             $user = User::withTrashed()->findOrFail($id);
             $user->restore();
-
 
             $user->load(['employee' => ['position' => ['area', 'roles', 'permissions']]]);
             $user->syncRoles($user->employee->position->roles);
@@ -827,7 +928,7 @@ class UserController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -840,17 +941,22 @@ class UserController extends Controller
      *     tags={"Users"},
      *     summary="Asignar un permiso a un usuario específio",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="query",
      *         description="Identificador del usuario",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"permission_id"},
+     *
      *             @OA\Property(
      *                 property="permission_id",
      *                 type="integer",
@@ -859,10 +965,13 @@ class UserController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Permiso asignado correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -875,10 +984,13 @@ class UserController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -892,26 +1004,33 @@ class UserController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example= "No hay ningún registro.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="permission_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example= "No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -926,7 +1045,7 @@ class UserController extends Controller
 
             $user->givePermissionTo($permission);
 
-            if (!$user->hasRole($permission->roles)) {
+            if (! $user->hasRole($permission->roles)) {
                 $user->assignRole($permission->roles);
             }
 
@@ -941,7 +1060,7 @@ class UserController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -954,17 +1073,22 @@ class UserController extends Controller
      *     tags={"Users"},
      *     summary="Remover un permiso a un usuario específico",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="query",
      *         description="Identificador del usuario",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"permission_id"},
+     *
      *             @OA\Property(
      *                 property="permission_id",
      *                 type="integer",
@@ -973,10 +1097,13 @@ class UserController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Permiso removido correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -988,10 +1115,13 @@ class UserController extends Controller
      *                 @OA\Property(
      *                     property="roles",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         allOf={
+     *
      *                              @OA\Schema(ref="#/components/schemas/Role"),
      *                              @OA\Schema(
+     *
      *                                  @OA\Property(
      *                                      property="pivot",
      *                                      type="object",
@@ -1006,10 +1136,13 @@ class UserController extends Controller
      *                 @OA\Property(
      *                     property="permissions",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         allOf={
+     *
      *                              @OA\Schema(ref="#/components/schemas/Permission"),
      *                              @OA\Schema(
+     *
      *                                  @OA\Property(
      *                                      property="pivot",
      *                                      type="object",
@@ -1065,10 +1198,13 @@ class UserController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -1082,26 +1218,33 @@ class UserController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example= "No hay ningún registro.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="permission_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example= "No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/UnauthorizedResponse"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse"
      *         )
@@ -1133,7 +1276,433 @@ class UserController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/users/authorization/assign/{id}",
+     *     tags={"Users"},
+     *     summary="Asignar un permiso a un usuario específio",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="query",
+     *         description="Identificador del usuario",
+     *         required=true,
+     *
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *
+     *         @OA\JsonContent(
+     *             required={"permission_id"},
+     *
+     *             @OA\Property(
+     *                 property="permission_id",
+     *                 type="integer",
+     *                 example=1,
+     *                 description="Identificador del Permiso"
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Permiso asignado correctamente",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                   property="user",
+     *                   ref="#/components/schemas/User"
+     *                 )
+     *             ),
+     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+     *             @OA\Property(property="error", type="boolean", example=false)
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Contenido inválido.",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="Error de validación."),
+     *             @OA\Property(
+     *                 property="attributes",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="string", example="Identificador del usuario"),
+     *                 @OA\Property(property="permission_id", type="string", example="Identificador del permiso"),
+     *             ),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="id",
+     *                     type="array",
+     *
+     *                     @OA\Items(type="string", example= "No hay ningún registro.")
+     *                 ),
+     *
+     *                 @OA\Property(
+     *                     property="permission_id",
+     *                     type="array",
+     *
+     *                     @OA\Items(type="string", example= "No hay ningún registro.")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="No autenticado",
+     *
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/UnauthorizedResponse"
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=500,
+     *         description="Error del servidor",
+     *
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/ServerErrorResponse"
+     *         )
+     *     )
+     * )
+     */
+    public function assign_workflow(UserWorkflowAssignRequest $request)
+    {
+        try {
+            $user = User::findOrFail($request->integer('id'));
+
+            if ($request->input('model_type') === Process::class) {
+
+                $process = Process::findOrFail($request->integer('model_id'));
+
+                $user->processes()->syncWithoutDetaching([$process->id]);
+
+                if ($process->subprocesses) {
+                    foreach ($process->subprocesses as $subprocess) {
+                        $user->subprocesses()->syncWithoutDetaching([$subprocess->id]);
+                        if ($subprocess->operations) {
+                            foreach ($subprocess->operations as $operation) {
+                                $user->operations()->syncWithoutDetaching([$operation->id]);
+                            }
+                        }
+                    }
+                }
+
+            } elseif ($request->input('model_type') === Subprocess::class) {
+
+                $subprocess = Subprocess::with('process', 'operations')->findOrFail($request->integer('model_id'));
+
+                if ($subprocess->process) {
+                    $user->processes()->syncWithoutDetaching([$subprocess->process->first()->id]);
+                }
+
+                $user->subprocesses()->syncWithoutDetaching([$subprocess->id]);
+
+                if ($subprocess->operations) {
+                    foreach ($subprocess->operations as $operation) {
+                        $user->operations()->syncWithoutDetaching([$operation->id]);
+                    }
+                }
+
+            } elseif ($request->input('model_type') === Operation::class) {
+
+                $operation = Operation::with(['subprocess'])->findOrFail($request->integer('model_id'));
+
+                if ($operation->subprocess->first()->process) {
+                    $user->processes()->syncWithoutDetaching([$operation->subprocess->first()->process->first()->id]);
+                } if ($operation->subprocess) {
+                    $user->subprocesses()->syncWithoutDetaching([$operation->subprocess->first()->id]);
+                }
+
+                $user->operations()->syncWithoutDetaching([$operation->id]);
+            }
+
+            $user->load(['employee' => ['person', 'position' => ['area']], 'roles', 'permissions', 'processes', 'subprocesses', 'operations']);
+
+            return $this->successResponse(new UserResource($user), $this->getMessage('Success'), 200);
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage(),
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/users/authorization/remove/{id}",
+     *     tags={"Users"},
+     *     summary="Remover un permiso a un usuario específico",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="query",
+     *         description="Identificador del usuario",
+     *         required=true,
+     *
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *
+     *         @OA\JsonContent(
+     *             required={"permission_id"},
+     *
+     *             @OA\Property(
+     *                 property="permission_id",
+     *                 type="integer",
+     *                 example=1,
+     *                 description="Identificador del Permiso"
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Permiso removido correctamente",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="email", type="string", example="email_user_example"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time"),
+     *                 @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true),
+     *                 @OA\Property(
+     *                     property="roles",
+     *                     type="array",
+     *
+     *                     @OA\Items(
+     *                         allOf={
+     *
+     *                              @OA\Schema(ref="#/components/schemas/Role"),
+     *                              @OA\Schema(
+     *
+     *                                  @OA\Property(
+     *                                      property="pivot",
+     *                                      type="object",
+     *                                      @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
+     *                                      @OA\Property(property="model_id", type="integer", example=1),
+     *                                      @OA\Property(property="role_id", type="integer", example=1)
+     *                                  )
+     *                              )
+     *                         }
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="permissions",
+     *                     type="array",
+     *
+     *                     @OA\Items(
+     *                         allOf={
+     *
+     *                              @OA\Schema(ref="#/components/schemas/Permission"),
+     *                              @OA\Schema(
+     *
+     *                                  @OA\Property(
+     *                                      property="pivot",
+     *                                      type="object",
+     *                                      @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
+     *                                      @OA\Property(property="model_id", type="integer", example=1),
+     *                                      @OA\Property(property="role_id", type="integer", example=1)
+     *                                  )
+     *                              )
+     *                         }
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="employee",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="employee_id", type="integer", example=1),
+     *                     @OA\Property(property="person_id", type="integer", example=1),
+     *                     @OA\Property(property="operation_center", type="string", example="Principal"),
+     *                     @OA\Property(property="position_id", type="integer", example=2),
+     *                     @OA\Property(property="risk_manager_id", type="integer", example=5),
+     *                     @OA\Property(property="health_entity_id", type="integer", example=6),
+     *                     @OA\Property(property="pension_fund_id", type="integer", example=7),
+     *                     @OA\Property(property="compensation_fund_id", type="integer", example=8),
+     *                     @OA\Property(property="start_date", type="string", format="date-time", example="2026-03-30 00:00:00"),
+     *                     @OA\Property(property="end_date", type="string", format="date-time", nullable=true, example=null),
+     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
+     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+     *                     @OA\Property(
+     *                         property="position",
+     *                         ref="#/components/schemas/Position"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="person",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="document", type="string", example="0000000000"),
+     *                         @OA\Property(property="names", type="string", example="Super"),
+     *                         @OA\Property(property="last_names", type="string", example="Admin"),
+     *                         @OA\Property(property="gender_id", type="integer", example=15),
+     *                         @OA\Property(property="birth_date", type="string", format="date", example="1990-01-01"),
+     *                         @OA\Property(property="blood_type_id", type="integer", example=16),
+     *                         @OA\Property(property="address", type="string", example="Dirección principal"),
+     *                         @OA\Property(property="phone", type="string", example="0000000000"),
+     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
+     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-31T15:37:40.000000Z"),
+     *                         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
+     *                     )
+     *                 ),
+     *
+     *             ),
+     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+     *             @OA\Property(property="error", type="boolean", example=false)
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Contenido inválido.",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="Error de validación."),
+     *             @OA\Property(
+     *                 property="attributes",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="string", example="Identificador del usuario"),
+     *                 @OA\Property(property="permission_id", type="string", example="Identificador del permiso"),
+     *             ),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="id",
+     *                     type="array",
+     *
+     *                     @OA\Items(type="string", example= "No hay ningún registro.")
+     *                 ),
+     *
+     *                 @OA\Property(
+     *                     property="permission_id",
+     *                     type="array",
+     *
+     *                     @OA\Items(type="string", example= "No hay ningún registro.")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="No autenticado",
+     *
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/UnauthorizedResponse"
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=500,
+     *         description="Error del servidor",
+     *
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/ServerErrorResponse"
+     *         )
+     *     )
+     * )
+     */
+    public function remove_workflow(UserWorkflowRemoveRequest $request)
+    {
+        try {
+            $user = User::findOrFail($request->integer('id'));
+
+            if ($request->input('model_type') === Process::class) {
+
+                $process = Process::with(['subprocesses' => ['operations']])
+                    ->findOrFail($request->integer('model_id'));
+
+                foreach ($process->subprocesses as $subprocess) {
+                    if ($subprocess->operations->isNotEmpty()) {
+                        $user->operations()->detach(
+                            $subprocess->operations->pluck('id')->all()
+                        );
+                    }
+                }
+
+                if ($process->subprocesses->isNotEmpty()) {
+                    $user->subprocesses()->detach(
+                        $process->subprocesses->pluck('id')->all()
+                    );
+                }
+
+                $user->processes()->detach($process->id);
+
+            } elseif ($request->input('model_type') === Subprocess::class) {
+
+                $subprocess = Subprocess::with('operations')
+                    ->findOrFail($request->integer('model_id'));
+
+                if ($subprocess->operations->isNotEmpty()) {
+                    $user->operations()->detach($subprocess->operations->pluck('id')->all());
+                }
+
+                $user->subprocesses()->detach($subprocess->id);
+
+            } elseif ($request->input('model_type') === Operation::class) {
+
+                $operation = Operation::findOrFail($request->integer('model_id'));
+
+                $user->operations()->detach($operation->id);
+
+            } else {
+                return $this->errorResponse([
+                    'message' => 'El tipo de modelo no es válido.',
+                ], 422);
+            }
+
+            $user->load([
+                'employee' => ['person', 'position' => ['area']],
+                'roles',
+                'permissions',
+                'processes',
+                'subprocesses',
+                'operations',
+            ]);
+
+            return $this->successResponse(
+                new UserResource($user),
+                $this->getMessage('Success'),
+                200
+            );
+
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
