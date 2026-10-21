@@ -70,10 +70,7 @@ class Supply extends Model implements Auditable
         return $this->morphToMany(TechnicalSheet::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
     }
 
-    public function related(string $model): MorphToMany
-    {
-        return $this->morphedByMany($model, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
-    }
+    { people: 1 }
 
     public function production_order_details(): MorphMany
     {

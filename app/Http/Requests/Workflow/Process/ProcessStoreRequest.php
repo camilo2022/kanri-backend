@@ -25,6 +25,8 @@ class ProcessStoreRequest extends FormRequest
 
     public function rules(): array
     {
+        logger($this);
+
         return [
             'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.Process::ITEM_ID],
             'description' => ['required', 'string', 'max:255', 'uppercase'],
@@ -34,6 +36,8 @@ class ProcessStoreRequest extends FormRequest
             'settings.subprocesses' => ['required', 'boolean'],
             'settings.in_technical_sheet' => ['required', 'boolean'],
             'settings.in_production_order' => ['required', 'boolean'],
+            'settings.paragraph' => ['sometimes'],
+            'settings.productivity_measurement' => ['required_if:settings.in_production_order,true'],
         ];
     }
 
@@ -49,12 +53,14 @@ class ProcessStoreRequest extends FormRequest
             'unique' => 'Ya está registrado.',
             'uppercase' => 'El campo debe estar en mayúsculas.',
             'exists' => 'No está registrado.',
+            'required_if' => 'Es obligatorio.',
         ];
     }
 
     public function attributes(): array
     {
         return [
+            'id' => 'Identificador del proceso',
             'name' => 'Nombre',
             'description' => 'Descripción',
             'after_processes' => 'Procesos Posteriores',
@@ -62,6 +68,35 @@ class ProcessStoreRequest extends FormRequest
             'settings.subprocesses' => 'Subprocesos',
             'settings.in_technical_sheet' => 'Aplica a Ficha Técnica',
             'settings.in_production_order' => 'Aplica a Orden de Producción',
+            'settings.paragraph' => 'Lugar de producción',
+            'settings.productivity_measurement' => 'Medición de la productividad',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            $settings = $this->input('settings');
+
+            if (! ($settings['in_production_order'] ?? false) || ($settings['paragraph'] ?? null) !== 'production_place') {
+                return;
+            }
+
+            $exists = Process::query()->where('item_id', Process::ITEM_ID)
+                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(settings, '$.in_production_order')) = 'true'")
+                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(settings, '$.paragraph')) = ?", ['production_place'])
+                ->exists();
+
+            if ($exists) {
+                $validator->errors()->add(
+                    'settings.paragraph',
+                    'Ya existe un proceso asignado al lugar de producción de la orden de producción.'
+                );
+            }
+        });
     }
 }

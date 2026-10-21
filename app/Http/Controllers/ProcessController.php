@@ -176,6 +176,9 @@ class ProcessController extends Controller
                 ->when($request->boolean('in_production_order'), function ($query) {
                     return $query->where('settings->in_production_order', true);
                 })
+                ->when($request->boolean('in_productivity'), function ($query) {
+                    return $query->where('settings->in_productivity', true);
+                })
                 ->when($request->filled('Process_id'), function ($query) use ($request) {
                     return $query->where('id', '<>', $request->integer('Process_id'));
                 })

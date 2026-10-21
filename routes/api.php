@@ -40,8 +40,11 @@ use App\Http\Controllers\ProductionOrderDetailController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RiskManagerController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\RuleController;
 use App\Http\Controllers\SilhouetteController;
 use App\Http\Controllers\SizeController;
+use App\Http\Controllers\StopController;
+use App\Http\Controllers\StopTypeController;
 use App\Http\Controllers\SubcategoryController;
 use App\Http\Controllers\SubgroupController;
 use App\Http\Controllers\SubmoduleController;
@@ -315,6 +318,9 @@ Route::prefix('/movements')->group(function () {
         Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:movements.all']);
         Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:movements.find']);
         Route::post('/save', 'save')->middleware(['auth:sanctum', 'can:movements.save']);
+        Route::post('/approve', 'approve')->middleware(['auth:sanctum', 'can:movements.approve']);
+        Route::post('/decline', 'decline')->middleware(['auth:sanctum', 'can:movements.decline']);
+        Route::post('/cancel', 'cancel')->middleware(['auth:sanctum', 'can:movements.cancel']);
     });
     Route::prefix('/production_order_details')->group(function () {
         Route::controller(ProductionOrderDetailController::class)->group(function () {
@@ -438,6 +444,18 @@ Route::prefix('/risk_managers')->group(function () {
     });
 });
 
+Route::prefix('/rules')->group(function () {
+    Route::controller(RuleController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:rules.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:rules.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:rules.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:rules.update']);
+        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:rules.setting']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:rules.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:rules.restore']);
+    });
+});
+
 Route::prefix('/sizes')->group(function () {
     Route::controller(SizeController::class)->group(function () {
         Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:sizes.all|workflow.processes.settings|workflow.processes.subprocesses.settings|workflow.processes.subprocesses.operations.settings|trademarks.find']);
@@ -447,6 +465,28 @@ Route::prefix('/sizes')->group(function () {
         Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:sizes.setting']);
         Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:sizes.delete']);
         Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:sizes.restore']);
+    });
+});
+
+Route::prefix('/stop_types')->group(function () {
+    Route::controller(StopTypeController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:stop_types.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:stop_types.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:stop_types.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:stop_types.update']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:stop_types.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:stop_types.restore']);
+    });
+
+    Route::prefix('/stops')->group(function () {
+        Route::controller(StopController::class)->group(function () {
+            Route::get('/all/{file_type_id}', 'all')->middleware(['auth:sanctum', 'can:stop_types.stops.all']);
+            Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:stop_types.stops.find']);
+            Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:stop_types.stops.store']);
+            Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:stop_types.stops.update']);
+            Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:stop_types.stops.delete']);
+            Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:stop_types.stops.restore']);
+        });
     });
 });
 

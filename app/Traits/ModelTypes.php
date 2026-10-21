@@ -10,12 +10,14 @@ use App\Models\Color;
 use App\Models\Employee;
 use App\Models\GarmentType;
 use App\Models\Group;
+use App\Models\Operation;
 use App\Models\Piece;
 use App\Models\Process;
 use App\Models\Silhouette;
 use App\Models\Size;
 use App\Models\Subcategory;
 use App\Models\Subgroup;
+use App\Models\Subprocess;
 use App\Models\Supplier;
 use App\Models\SupplierType;
 use App\Models\Supply;
@@ -433,6 +435,149 @@ trait ModelTypes
                 'url' => '/workflow/processes/all',
                 'value' => 'id',
                 'option' => 'name',
+            ],
+        ];
+    }
+
+    public function getModelTypesFromRules()
+    {
+        return [
+            'trademark' => [
+                'label' => 'Marca',
+                'short' => 'MA',
+                'model' => Trademark::class,
+                'url' => '/trademarks/all',
+                'value' => 'id',
+                'option' => 'name',
+                'show' => true,
+            ],
+            'subgroup' => [
+                'label' => 'Subgrupo',
+                'short' => 'SG',
+                'model' => Subgroup::class,
+                'url' => '/classification/subgroups/all',
+                'option' => 'name',
+                'show' => true,
+            ],
+            'group' => [
+                'label' => 'Grupo',
+                'short' => 'GR',
+                'model' => Group::class,
+                'url' => '/classification/groups/all',
+                'option' => 'name',
+                'show' => true,
+            ],
+            'garment_type' => [
+                'label' => 'Tipo de Prenda',
+                'short' => 'TP',
+                'model' => GarmentType::class,
+                'url' => '/garment_types/all',
+                'option' => 'name',
+                'show' => true,
+            ],
+            'boot_type' => [
+                'label' => 'Tipo de Bota',
+                'short' => 'TB',
+                'model' => BootType::class,
+                'url' => '/boot_types/all',
+                'option' => 'name',
+                'show' => true,
+            ],
+            'back_type' => [
+                'label' => 'Tipo de Trasero',
+                'short' => 'TT',
+                'model' => BackType::class,
+                'url' => '/back_types/all',
+                'option' => 'name',
+                'show' => true,
+            ],
+            'waistband_type' => [
+                'label' => 'Tipo de Pretina',
+                'short' => 'PR',
+                'model' => WaistbandType::class,
+                'url' => '/waistband_types/all',
+                'option' => 'name',
+                'show' => true,
+            ],
+            'category' => [
+                'label' => 'Categoría',
+                'short' => 'CA',
+                'model' => Category::class,
+                'url' => '/categorization/categories/all',
+                'option' => 'name',
+                'show' => true,
+            ],
+            'subcategory' => [
+                'label' => 'Subcategoría',
+                'short' => 'SC',
+                'model' => Subcategory::class,
+                'url' => '/categorization/categories/subcategories/all/{category_id}',
+                'option' => 'name',
+                'field' => 'subcategory_id',
+                'param' => 'category',
+                'show' => true,
+            ],
+            'wash_tone' => [
+                'label' => 'Tono de Lavado',
+                'short' => 'TL',
+                'model' => WashTone::class,
+                'url' => '/wash_tones/all',
+                'option' => 'name',
+                'show' => true,
+            ],
+            'color' => [
+                'label' => 'Color',
+                'short' => 'CO',
+                'model' => Color::class,
+                'url' => '/colors/all',
+                'field' => 'color_id',
+                'option' => ['settings.code', 'name'],
+                'show' => true,
+            ],
+            'collection' => [
+                'label' => 'Colección',
+                'short' => 'CL',
+                'model' => Collection::class,
+                'url' => '/collections/all',
+                'option' => 'name',
+                'show' => true,
+            ],
+            'yoke_type' => [
+                'label' => 'Tipo de Cotilla',
+                'short' => 'TC',
+                'model' => YokeType::class,
+                'url' => '/yoke_types/all',
+                'option' => 'name',
+                'show' => true,
+            ],
+            'process' => [
+                'label' => 'Proceso',
+                'short' => 'PC',
+                'model' => Process::class,
+                'url' => '/workflow/processes/all',
+                'value' => 'id',
+                'option' => 'name',
+                'show' => false,
+            ],
+            'subprocess' => [
+                'label' => 'Subproceso',
+                'short' => 'SP',
+                'model' => Subprocess::class,
+                'url' => '/workflow/processes/subprocess/all',
+                'value' => 'id',
+                'option' => 'name',
+                'show' => false,
+                'nested' => 'subprocesses',
+            ],
+            'operation' => [
+                'label' => 'Operación',
+                'short' => 'OP',
+                'model' => Operation::class,
+                'url' => '/workflow/processes/subprocesses/operations/all',
+                'value' => 'id',
+                'option' => 'name',
+                'show' => false,
+                'nested' => 'operations',
             ],
         ];
     }

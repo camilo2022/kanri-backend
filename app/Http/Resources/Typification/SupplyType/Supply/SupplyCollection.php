@@ -32,9 +32,7 @@ class SupplyCollection extends ResourceCollection
                                 ? $query->first()
                                 : $query->get()->modelKeys(),
                             */
-                            $field->field => $field->cardinality === 'single'
-                                                            ? $query->first()
-                                                            : $query->get(),
+                            $field->field => $field->cardinality === 'single' ? $query->first() : $query->get(),
                         ];
                     })
                     ->all();

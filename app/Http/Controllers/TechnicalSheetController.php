@@ -378,11 +378,7 @@ class TechnicalSheetController extends Controller
                 'derivatives' => ['production_order' => ['technical_sheet' => ['product']]],
                 'reassignments' => ['model' => ['technical_sheet' => ['product']]],
             ])->where('uuid', $uuid)->firstOrFail();
-
-            logger()->info('Generating PDF for production order: '.$production_order->uuid, [
-                'production_order' => $production_order,
-            ]);
-
+            
             $pdfUrl = URL::signedRoute(
                 'technical_sheets.pdf',
                 [

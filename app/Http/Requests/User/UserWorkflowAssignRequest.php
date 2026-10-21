@@ -27,12 +27,11 @@ class UserWorkflowAssignRequest extends FormRequest
 
     public function rules(): array
     {
-        logger($this);
 
         return [
             'id' => ['required', 'numeric', 'exists:users,id'],
             'model_type' => ['required', 'string', 'in:'.implode(',', [Process::class, Subprocess::class, Operation::class])],
-            'model_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.$this->input('model_type')::ITEM_ID, 'unique:model_has_subitems,model_id,NULL,NULL,subitem_id,'.$this->route('id').',model_type,'.$this->input('model_type')],
+            'model_id' => ['required', 'numeric'],
         ];
     }
 

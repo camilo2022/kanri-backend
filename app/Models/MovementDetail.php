@@ -17,11 +17,8 @@ class MovementDetail extends Model implements Auditable
     use Auditing;
 
     public const PENDING = 'Pendiente';
-
     public const DECLINED = 'Rechazado';
-
     public const APPROVED = 'Aprobado';
-
     public const CANCELLED = 'Cancelado';
 
     protected $table = 'movement_details';

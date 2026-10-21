@@ -419,7 +419,6 @@ class SupplyController extends Controller
             collect($supply->supply_type->first()?->settings?->form ?? [])
                 ->where('type', 'selectdinamic')
                 ->each(function ($relationship) use ($supply, $request) {
-
                     if ($request->has("class.$relationship->field")) {
                         $supply->related($relationship->model)
                             ->sync(Arr::wrap($request->input("class.$relationship->field")));

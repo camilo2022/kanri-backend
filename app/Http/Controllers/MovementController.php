@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Movement\MovementAllRequest;
+use App\Http\Requests\Movement\MovementApproveRequest;
+use App\Http\Requests\Movement\MovementCancelRequest;
+use App\Http\Requests\Movement\MovementDeclineRequest;
 use App\Http\Requests\Movement\MovementFindRequest;
 use App\Http\Requests\Movement\MovementSaveRequest;
 use App\Http\Resources\Movement\MovementCollection;
@@ -74,43 +77,26 @@ class MovementController extends Controller
     public function save(MovementSaveRequest $request)
     {
         try {
-            $origin_movement = Movement::where('production_order_detail_id', $request->input('origin.production_order_detail_id'))
-                ->whereHasMorph('model', [Process::class], function (Builder $query) use ($request) {
-                    $query->where('id', $request->input('origin.process.model_id'));
-                })
-                ->firstOrFail();
-
-            $destination_movement = Movement::firstOrCreate(
-                [
-                    'production_order_detail_id' => $request->input('destination.production_order_detail_id'),
-                    'model_type' => $request->input('destination.process.model_type'),
-                    'model_id' => $request->input('destination.process.model_id'),
-                ],
-                [
-                    'status' => 'Ingreso',
-                ]
-            );
-
             if ($request->filled('movement_detail_id')) {
-
                 $movement_detail = MovementDetail::findOrFail($request->input('movement_detail_id'));
 
                 $movement_detail->update([
-                    'status' => $request->input('status'),
                     'observation' => $request->input('observation'),
                 ]);
 
-                $requested_quantities = collect($request->input('quantities'));
+                $requested_quantities = collect(
+                    $request->input('quantities', [])
+                );
 
                 foreach ($movement_detail->movement_detail_quantities as $quantity) {
-                    $movement_detail_quantity = $requested_quantities
+                    $requested_quantity = $requested_quantities
                         ->firstWhere('id', $quantity->id);
 
-                    if (! $movement_detail_quantity) {
+                    if (! $requested_quantity) {
                         continue;
                     }
 
-                    $difference = max(0, (int) $quantity->quantity - (int) $movement_detail_quantity['quantity']);
+                    $difference = max(0, (int) $quantity->quantity - (int) $requested_quantity['quantity']);
 
                     if ($difference === 0) {
                         continue;
@@ -138,7 +124,7 @@ class MovementController extends Controller
                     }
                 }
 
-                foreach ($request->input('quantities') as $quantity) {
+                foreach ($request->input('quantities', []) as $quantity) {
                     MovementDetailQuantity::updateOrCreate(
                         [
                             'id' => $quantity['id'] ?? null,
@@ -152,6 +138,36 @@ class MovementController extends Controller
                 }
 
             } else {
+                $origin_movement = Movement::where('production_order_detail_id', $request->input('origin.production_order_detail_id'))
+                    ->whereHasMorph(
+                        'model',
+                        [Process::class],
+                        function (Builder $query) use ($request) {
+                            $query->where(
+                                'id',
+                                $request->input('origin.process.model_id')
+                            );
+                        }
+                    )
+                    ->firstOrFail();
+
+                $destination_movement = Movement::firstOrCreate(
+                    [
+                        'production_order_detail_id' => $request->input(
+                            'destination.production_order_detail_id'
+                        ),
+                        'model_type' => $request->input(
+                            'destination.process.model_type'
+                        ),
+                        'model_id' => $request->input(
+                            'destination.process.model_id'
+                        ),
+                    ],
+                    [
+                        'status' => 'Ingreso',
+                    ]
+                );
+
                 $movement_detail = MovementDetail::create([
                     'movement_id' => $destination_movement->id,
                     'model_type' => Movement::class,
@@ -160,7 +176,7 @@ class MovementController extends Controller
                     'observation' => $request->input('observation'),
                 ]);
 
-                foreach ($request->input('quantities') as $quantity) {
+                foreach ($request->input('quantities', []) as $quantity) {
                     MovementDetailQuantity::create([
                         'movement_detail_id' => $movement_detail->id,
                         'size_id' => $quantity['size_id'],
@@ -177,6 +193,188 @@ class MovementController extends Controller
                     ]);
                 }
             }
+
+            $movement_detail->load([
+                'movement' => ['model'],
+                'model' => [
+                    'model',
+                    'production_order_detail' => [
+                        'model',
+                        'production_order' => [
+                            'technical_sheet' => ['collection'],
+                        ],
+                    ],
+                ],
+                'movement_detail_quantities',
+                'movement_detail_redistributions',
+                'user_created' => ['employee' => ['person']],
+            ]);
+
+            return $this->successResponse(
+                new MovementResource($movement_detail),
+                $this->getMessage('Success'),
+                200
+            );
+
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage(),
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    public function approve(MovementApproveRequest $request)
+    {
+        try {
+            $movement_detail = MovementDetail::findOrFail($request->input('movement_detail_id'));
+
+            $requested_quantities = collect($request->input('quantities', []));
+
+            foreach ($movement_detail->movement_detail_quantities as $movement_detail_quantity) {
+                $requested_quantity = $requested_quantities
+                    ->firstWhere('id', $movement_detail_quantity->id);
+
+                if (! $requested_quantity) continue;
+
+                $difference = max(0, (int) $movement_detail_quantity->quantity - (int) $requested_quantity['quantity']);
+
+                if ($difference === 0) continue;
+
+                $redistributions = MovementDetailRedistribution::where('movement_detail_id', $movement_detail->id)
+                    ->where('input_size_id', $movement_detail_quantity->size_id)
+                    ->orderBy('id')
+                    ->get();
+
+                foreach ($redistributions as $redistribution) {
+                    if ($difference <= 0) break;
+
+                    $aux = max(0, (int) $redistribution->quantity - $difference);
+
+                    $returned = (int) $redistribution->quantity - $aux;
+
+                    $redistribution->update([
+                        'quantity' => $aux,
+                    ]);
+
+                    $difference -= $returned;
+                }
+            }
+
+            foreach ($request->input('quantities', []) as $quantity) {
+                MovementDetailQuantity::updateOrCreate(
+                    [
+                        'id' => $quantity['id'] ?? null,
+                        'movement_detail_id' => $movement_detail->id,
+                        'size_id' => $quantity['size_id'],
+                    ],
+                    [
+                        'quantity' => $quantity['quantity'],
+                    ]
+                );
+            }
+
+            $movement_detail->update([
+                'status' => 'Aprobado',
+                'observation' => $request->input('observation'),
+            ]);
+
+            $movement_detail->load([
+                'movement' => ['model'],
+                'model' => [
+                    'model',
+                    'production_order_detail' => [
+                        'production_order_detail_quantities',
+                        'model',
+                        'production_order' => [
+                            'technical_sheet' => ['collection'],
+                        ],
+                    ],
+                    'movement_details_input' => ['movement_detail_quantities'],
+                    'movement_details_output' => ['movement_detail_quantities']
+                ],
+                'movement_detail_quantities',
+                'movement_detail_redistributions',
+                'user_created' => ['employee' => ['person']],
+            ]);
+
+
+            return $this->successResponse(
+                new MovementResource($movement_detail),
+                $this->getMessage('Success'),
+                200
+            );
+
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage(),
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    public function decline(MovementDeclineRequest $request)
+    {
+        try {
+            $movement_detail = MovementDetail::findOrFail(
+                $request->input('movement_detail_id')
+            );
+
+            $movement_detail->update([
+                'status' => 'Rechazado',
+                'observation' => $request->input('observation'),
+            ]);
+
+            $movement_detail->load([
+                'movement' => ['model'],
+                'model' => [
+                    'model',
+                    'production_order_detail' => [
+                        'model',
+                        'production_order' => [
+                            'technical_sheet' => ['collection'],
+                        ],
+                    ],
+                ],
+                'movement_detail_quantities',
+                'movement_detail_redistributions',
+                'user_created' => ['employee' => ['person']],
+            ]);
+
+            return $this->successResponse(
+                new MovementResource($movement_detail),
+                $this->getMessage('Success'),
+                200
+            );
+
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage(),
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    public function cancel(MovementCancelRequest $request)
+    {
+        try {
+            $movement_detail = MovementDetail::findOrFail(
+                $request->input('movement_detail_id')
+            );
+
+            $movement_detail->update([
+                'status' => 'Cancelado',
+                'observation' => $request->input('observation'),
+            ]);
 
             $movement_detail->load([
                 'movement' => ['model'],

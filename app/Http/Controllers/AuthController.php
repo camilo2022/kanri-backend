@@ -4,14 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\Module;
-use App\Models\Submodule;
-use App\Traits\ApiResponser;
-use App\Traits\ApiMessage;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
+use App\Traits\ApiMessage;
+use App\Traits\ApiResponser;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use OpenApi\Annotations as OA;
-use Symfony\Component\HttpFoundation\Request;
 
 /**
  * @OA\Tag(
@@ -26,39 +24,48 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class AuthController extends Controller
 {
-    use ApiResponser, ApiMessage;
+    use ApiMessage, ApiResponser;
 
     /**
      * @OA\Post(
      *     path="/auth/login",
      *     tags={"Auth"},
      *     summary="Iniciar sesión de un usuario",
+     *
      *     @OA\Parameter(
      *         name="email",
      *         in="query",
      *         description="Email del usuario",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="email", example="superadmin@kanri.com")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="password",
      *         in="query",
      *         description="Contraseña del usuario",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="password", example="P4ssw0rd.")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Autenticación exitosa",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
      *                     property= "user",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="employee_id", type="integer", example=1),
      *                         @OA\Property(property="email", type="string", example="email_user_example"),
@@ -101,8 +108,10 @@ class AuthController extends Controller
      *                         @OA\Property(
      *                             property="roles",
      *                             type="array",
+     *
      *                             @OA\Items(
      *                                 type="object",
+     *
      *                                 @OA\Property(property="id", type="integer", example=1),
      *                                 @OA\Property(property="name", type="string", example="users"),
      *                                 @OA\Property(property="guard_name", type="string", example="api"),
@@ -118,8 +127,10 @@ class AuthController extends Controller
      *                                     @OA\Property(property="subitem_id", type="integer", example=1)
      *                                 )
      *                             ),
+     *
      *                             @OA\Items(
      *                                 type="object",
+     *
      *                                 @OA\Property(property="id", type="integer", example=2),
      *                                 @OA\Property(property="name", type="string", example="users"),
      *                                 @OA\Property(property="guard_name", type="string", example="api"),
@@ -139,8 +150,10 @@ class AuthController extends Controller
      *                         @OA\Property(
      *                             property="permissions",
      *                             type="array",
+     *
      *                             @OA\Items(
      *                                 type="object",
+     *
      *                                 @OA\Property(property="id", type="integer", example=1),
      *                                 @OA\Property(property="name", type="string", example="users.all"),
      *                                 @OA\Property(property="guard_name", type="string", example="api"),
@@ -165,10 +178,13 @@ class AuthController extends Controller
      *             @OA\Property(property="error", type="boolean", example="false")
      *         ),
      *      ),
+     *
      *      @OA\Response(
      *         response=404,
      *         description="Correo electrónico no registrado en la base de datos",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="error",
      *                 type="object",
@@ -176,10 +192,13 @@ class AuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contraseña inválida",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="error",
      *                 type="object",
@@ -188,10 +207,13 @@ class AuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="data", type="object", example={}),
      *             @OA\Property(property="message", type="string", example="Error del servidor"),
      *             @OA\Property(property="error", type="string", example="Detalles internos del error")
@@ -204,11 +226,11 @@ class AuthController extends Controller
         try {
             $user = User::with(['employee' => ['person']])->where('email', $request->input('email'))->firstOrFail();
 
-            if (!Hash::check($request->input('password'), $user->password)) {
+            if (! Hash::check($request->input('password'), $user->password)) {
                 return $this->errorResponse(
                     [
                         'message' => $this->getMessage('UnauthorizedException'),
-                        'error' => 'Credenciales incorrectas.'
+                        'error' => 'Credenciales incorrectas.',
                     ],
                     422
                 );
@@ -216,12 +238,12 @@ class AuthController extends Controller
 
             $user->tokens()->delete();
             $token = $user->createToken('auth_token')->plainTextToken;
-            $user->load(['roles', 'permissions']);
+            $user->load(['roles', 'permissions', 'processes', 'subprocesses', 'operations']);
 
             return $this->successResponse(
                 [
                     'user' => $user,
-                    'token' => $token
+                    'token' => $token,
                 ],
                 'Autenticación exitosa',
                 200
@@ -230,7 +252,7 @@ class AuthController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -243,10 +265,13 @@ class AuthController extends Controller
      *     tags={"Auth"},
      *     summary="Obtener el usuario con sesión activa",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Usuario obtenido correctamente",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -330,8 +355,10 @@ class AuthController extends Controller
      *                             @OA\Property(
      *                                 property="area",
      *                                 type="array",
+     *
      *                                 @OA\Items(
      *                                     type="object",
+     *
      *                                     @OA\Property(property="id", type="integer", example=1),
      *                                     @OA\Property(property="item_id", type="integer", example=4),
      *                                     @OA\Property(property="name", type="string", example="Super"),
@@ -354,8 +381,10 @@ class AuthController extends Controller
      *                     @OA\Property(
      *                         property="roles",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="name", type="string", example="users"),
      *                             @OA\Property(property="guard_name", type="string", example="api"),
@@ -375,8 +404,10 @@ class AuthController extends Controller
      *                     @OA\Property(
      *                         property="permissions",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="name", type="string", example="users"),
      *                             @OA\Property(property="guard_name", type="string", example="api"),
@@ -397,8 +428,10 @@ class AuthController extends Controller
      *                 @OA\Property(
      *                     property="navegation",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="name", type="string", example="users"),
      *                         @OA\Property(property="guard_name", type="string", example="api"),
@@ -409,8 +442,10 @@ class AuthController extends Controller
      *                         @OA\Property(
      *                             property="submodules",
      *                             type="array",
+     *
      *                             @OA\Items(
      *                                 type="object",
+     *
      *                                 @OA\Property(property="id", type="integer", example=1),
      *                                 @OA\Property(property="name", type="string", example="users"),
      *                                 @OA\Property(property="guard_name", type="string", example="api"),
@@ -427,10 +462,13 @@ class AuthController extends Controller
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Contenido inválido.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Error de validación."),
      *             @OA\Property(
      *                 property="attributes",
@@ -444,28 +482,37 @@ class AuthController extends Controller
      *                 @OA\Property(
      *                     property="id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example= "No hay ningún registro.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="permission_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example= "No hay ningún registro.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="No autenticado",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="No autenticado."),
      *             @OA\Property(property="error", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string", example="Error del servidor"),
      *             @OA\Property(property="error", type="string", example="Detalles internos del error")
@@ -478,16 +525,16 @@ class AuthController extends Controller
         try {
             $user = Auth::user();
 
-            $user->load(['employee' => ['person' => ['gender', 'blood_type'], 'position' => ['area'], 'risk_manager', 'health_entity', 'pension_fund', 'compensation_fund'], 'roles', 'permissions']);
+            $user->load(['employee' => ['person' => ['gender', 'blood_type'], 'position' => ['area'], 'risk_manager', 'health_entity', 'pension_fund', 'compensation_fund'], 'roles', 'permissions', 'processes', 'subprocesses', 'operations']);
 
-            $navegation = Module::with(['submodules' => fn($query) => $query->whereIn('permission_id', Auth::user()->permissions->modelKeys())])
-                ->whereHas('submodules', fn($query) => $query->whereIn('permission_id', Auth::user()->permissions->modelKeys()))
+            $navegation = Module::with(['submodules' => fn ($query) => $query->whereIn('permission_id', Auth::user()->permissions->modelKeys())])
+                ->whereHas('submodules', fn ($query) => $query->whereIn('permission_id', Auth::user()->permissions->modelKeys()))
                 ->get();
 
             return $this->successResponse(
                 [
                     'user' => $user,
-                    'navegation' => $navegation
+                    'navegation' => $navegation,
                 ],
                 'Usuario obtenido',
                 200
@@ -496,7 +543,7 @@ class AuthController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -509,10 +556,13 @@ class AuthController extends Controller
      *     tags={"Auth"},
      *     summary="Cerrar sesión",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Cierre de sesión exitoso",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -532,10 +582,13 @@ class AuthController extends Controller
      *             @OA\Property(property="error", type="boolean", example="false")
      *         ),
      *      ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error del servidor",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="data", type="object", example={}),
      *             @OA\Property(property="message", type="string", example="Error del servidor"),
      *             @OA\Property(property="error", type="string", example="Detalles internos del error")
@@ -551,7 +604,7 @@ class AuthController extends Controller
 
             return $this->successResponse(
                 [
-                    'user' => $user
+                    'user' => $user,
                 ],
                 'Cierre de sesión exitoso',
                 200
@@ -560,7 +613,7 @@ class AuthController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
