@@ -356,23 +356,6 @@ class RolesAndPermissionsSeeder extends Seeder
 
             [
                 'role' => [
-                    'name' => 'silhouettes',
-                    'title' => 'Siluetas',
-                    'description' => 'Gestión de siluetas de la empresa.',
-                ],
-                'permissions' => [
-                    ['name' => 'silhouettes.all', 'title' => 'Listar siluetas.', 'description' => 'Permite listar siluetas.'],
-                    ['name' => 'silhouettes.find', 'title' => 'Consultar siluetas.', 'description' => 'Permite consultar siluetas.'],
-                    ['name' => 'silhouettes.store', 'title' => 'Crear siluetas.', 'description' => 'Permite crear siluetas.'],
-                    ['name' => 'silhouettes.update', 'title' => 'Actualizar siluetas.', 'description' => 'Permite actualizar siluetas.'],
-                    ['name' => 'silhouettes.delete', 'title' => 'Eliminar siluetas.', 'description' => 'Permite eliminar siluetas.'],
-                    ['name' => 'silhouettes.restore', 'title' => 'Restaurar siluetas.', 'description' => 'Permite restaurar siluetas.'],
-                    ['name' => 'silhouettes.settings', 'title' => 'Configurar siluetas.', 'description' => 'Permite configurar siluetas.'],
-                ]
-            ],
-
-            [
-                'role' => [
                     'name' => 'sizes',
                     'title' => 'Tallas',
                     'description' => 'Gestión de tallas de la empresa.',
@@ -641,40 +624,6 @@ class RolesAndPermissionsSeeder extends Seeder
                     ['name' => 'suppliers.update', 'title' => 'Actualizar proveedores', 'description' => 'Permite actualizar proveedores.'],
                     ['name' => 'suppliers.delete', 'title' => 'Eliminar proveedores', 'description' => 'Permite eliminar proveedores.'],
                     ['name' => 'suppliers.restore', 'title' => 'Restaurar proveedores', 'description' => 'Permite restaurar proveedores.'],
-                ]
-            ],
-
-            [
-                'role' => [
-                    'name' => 'fabric_types',
-                    'title' => 'Tipos de Tela',
-                    'description' => 'Gestión de tipos de tela.',
-                ],
-                'permissions' => [
-                    ['name' => 'fabric_types.all', 'title' => 'Listar tipos de tela', 'description' => 'Permite listar tipos de tela.'],
-                    ['name' => 'fabric_types.find', 'title' => 'Consultar tipos de tela', 'description' => 'Permite consultar tipos de tela'],
-                    ['name' => 'fabric_types.store', 'title' => 'Crear tipos de tela', 'description' => 'Permite crear tipos de tela.'],
-                    ['name' => 'fabric_types.update', 'title' => 'Actualizar tipos de tela', 'description' => 'Permite actualizar tipos de tela.'],
-                    ['name' => 'fabric_types.delete', 'title' => 'Eliminar tipos de tela', 'description' => 'Permite eliminar tipos de tela.'],
-                    ['name' => 'fabric_types.restore', 'title' => 'Restaurar tipos de tela', 'description' => 'Permite restaurar tipos de tela.'],
-                    ['name' => 'fabric_types.settings', 'title' => 'Configurar tipos de tela', 'description' => 'Permite configurar tipos de tela.'],
-                ]
-            ],
-
-            [
-                'role' => [
-                    'name' => 'thread_types',
-                    'title' => 'Tipos de Hilo',
-                    'description' => 'Gestión de tipos de hilo.',
-                ],
-                'permissions' => [
-                    ['name' => 'thread_types.all', 'title' => 'Listar tipos de hilo', 'description' => 'Permite listar tipos de hilo.'],
-                    ['name' => 'thread_types.find', 'title' => 'Consultar tipos de hilo', 'description' => 'Permite consultar tipos de hilo'],
-                    ['name' => 'thread_types.store', 'title' => 'Crear tipos de hilo', 'description' => 'Permite crear tipos de hilo.'],
-                    ['name' => 'thread_types.update', 'title' => 'Actualizar tipos de hilo', 'description' => 'Permite actualizar tipos de hilo.'],
-                    ['name' => 'thread_types.delete', 'title' => 'Eliminar tipos de hilo', 'description' => 'Permite eliminar tipos de hilo.'],
-                    ['name' => 'thread_types.restore', 'title' => 'Restaurar tipos de hilo', 'description' => 'Permite restaurar tipos de hilo.'],
-                    ['name' => 'thread_types.settings', 'title' => 'Configurar tipos de hilo', 'description' => 'Permite configurar tipos de hilo.'],
                 ]
             ],
 
