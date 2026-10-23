@@ -16,11 +16,6 @@ use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 
 /**
- * @OA\Tag(
- *     name="Process",
- *     description="Endpoints para gestionar procesos"
- * )
- *
  * @OA\PathItem(
  *     path="/Processes",
  *     description="Rutas de gestión de procesos"
@@ -57,7 +52,7 @@ class ProcessController extends Controller
     /**
      * @OA\Get(
      *     path="/processes/all",
-     *     tags={"Process"},
+     *     tags={"Workflow › Processes"},
      *     summary="Listar procesos",
      *     security={{"sanctum":{}}},
      *
@@ -207,7 +202,7 @@ class ProcessController extends Controller
     /**
      * @OA\Get(
      *     path="/processes/find/{id}",
-     *     tags={"Process"},
+     *     tags={"Workflow › Processes"},
      *     summary="Obtener un proceso específico",
      *     security={{"sanctum":{}}},
      *
@@ -308,7 +303,7 @@ class ProcessController extends Controller
     /**
      * @OA\Post(
      *     path="/processes/store",
-     *     tags={"Process"},
+     *     tags={"Workflow › Processes"},
      *     summary="Crear un proceso",
      *     security={{"sanctum":{}}},
      *
@@ -437,7 +432,7 @@ class ProcessController extends Controller
     /**
      * @OA\Put(
      *     path="/processes/update/{id}",
-     *     tags={"Process"},
+     *     tags={"Workflow › Processes"},
      *     summary="Editar un proceso específico",
      *     security={{"sanctum":{}}},
      *
@@ -576,7 +571,7 @@ class ProcessController extends Controller
     /**
      * @OA\Delete(
      *     path="/processes/delete/{id}",
-     *     tags={"Process"},
+     *     tags={"Workflow › Processes"},
      *     summary="Desactivar un proceso específico",
      *     security={{"sanctum":{}}},
      *
@@ -687,7 +682,7 @@ class ProcessController extends Controller
     /**
      * @OA\Patch(
      *     path="/processes/restore/{id}",
-     *     tags={"Process"},
+     *     tags={"Workflow › Processes"},
      *     summary="Activar un proceso específico",
      *     security={{"sanctum":{}}},
      *

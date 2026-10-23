@@ -14,12 +14,63 @@ use OpenApi\Annotations as OA;
 /**
  * @OA\Tag(
  *     name="Auth",
- *     description="Endpoints de autenticación"
+ *     description="Endpoints para gestionar la autenticación (inicio y cierre de sesión)"
  * )
  *
- * @OA\PathItem(
- *     path="/auth",
- *     description="Rutas de autenticación"
+ * @OA\Schema(
+ *     schema="AuthUser",
+ *     description="Usuario autenticado: el de `User` más los procesos, subprocesos y operaciones que tiene asignados.",
+ *     allOf={
+ *         @OA\Schema(ref="#/components/schemas/User"),
+ *         @OA\Schema(
+ *             @OA\Property(property="processes", type="array", description="Procesos asignados (con `pivot`).", @OA\Items(ref="#/components/schemas/Subitem")),
+ *             @OA\Property(property="subprocesses", type="array", description="Subprocesos asignados (con `pivot`).", @OA\Items(ref="#/components/schemas/Subitem")),
+ *             @OA\Property(property="operations", type="array", description="Operaciones asignadas (con `pivot`).", @OA\Items(ref="#/components/schemas/Subitem"))
+ *         )
+ *     }
+ * )
+ *
+ * @OA\Schema(
+ *     schema="LoginRequest",
+ *     type="object",
+ *     required={"email", "password"},
+ *     @OA\Property(property="email", type="string", format="email", example="laura.gomez@kanri.test"),
+ *     @OA\Property(property="password", type="string", format="password", example="Calidad2026*")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="LoginResponse",
+ *     type="object",
+ *     @OA\Property(
+ *         property="data",
+ *         type="object",
+ *         @OA\Property(property="user", ref="#/components/schemas/AuthUser"),
+ *         @OA\Property(property="token", type="string", description="Token de Sanctum en texto plano. Se muestra una sola vez y no caduca.", example="15|Xk9pQ2vR7mT4wL8nB3cY6hJ1dF5gS0aZ2eU7iO9p")
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Autenticación exitosa"),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="AuthProfileResponse",
+ *     type="object",
+ *     @OA\Property(
+ *         property="data",
+ *         type="object",
+ *         @OA\Property(
+ *             property="user",
+ *             description="Además de lo de `AuthUser`, el empleado trae `person.gender`, `person.blood_type`, `position.area`, `risk_manager`, `health_entity`, `pension_fund` y `compensation_fund`.",
+ *             allOf={@OA\Schema(ref="#/components/schemas/AuthUser")}
+ *         ),
+ *         @OA\Property(
+ *             property="navegation",
+ *             type="array",
+ *             description="Menú del usuario: módulos con solo los submódulos cuyo permiso tiene asignado directamente.",
+ *             @OA\Items(ref="#/components/schemas/Module")
+ *         )
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Usuario obtenido"),
+ *     @OA\Property(property="error", type="boolean", example=false)
  * )
  */
 class AuthController extends Controller
@@ -30,195 +81,46 @@ class AuthController extends Controller
      * @OA\Post(
      *     path="/auth/login",
      *     tags={"Auth"},
-     *     summary="Iniciar sesión de un usuario",
-     *
-     *     @OA\Parameter(
-     *         name="email",
-     *         in="query",
-     *         description="Email del usuario",
+     *     summary="Iniciar sesión",
+     *     description="Devuelve el usuario y un token nuevo, que se envía en `Authorization: Bearer <token>` (botón Authorize). **Cierra las demás sesiones**: borra todos los tokens anteriores del usuario. No requiere token.",
+     *     @OA\RequestBody(
      *         required=true,
-     *
-     *         @OA\Schema(type="string", format="email", example="superadmin@kanri.com")
+     *         @OA\JsonContent(ref="#/components/schemas/LoginRequest")
      *     ),
-     *
-     *     @OA\Parameter(
-     *         name="password",
-     *         in="query",
-     *         description="Contraseña del usuario",
-     *         required=true,
-     *
-     *         @OA\Schema(type="string", format="password", example="P4ssw0rd.")
-     *     ),
-     *
      *     @OA\Response(
      *         response=200,
      *         description="Autenticación exitosa",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property= "user",
-     *                     type="array",
-     *
-     *                     @OA\Items(
-     *                         type="object",
-     *
-     *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="employee_id", type="integer", example=1),
-     *                         @OA\Property(property="email", type="string", example="email_user_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="deleted_at", type="string", format="date-time", example=null),
-     *                         @OA\Property(
-     *                             property="employee",
-     *                             type="object",
-     *                             @OA\Property(property="id", type="integer", example=1),
-     *                             @OA\Property(property="person_id", type="integer", example=1),
-     *                             @OA\Property(property="operation_center", type="string", example="Principal"),
-     *                             @OA\Property(property="position_id", type="integer", example=2),
-     *                             @OA\Property(property="risk_manager_id", type="integer", example=5),
-     *                             @OA\Property(property="health_entity_id", type="integer", example=6),
-     *                             @OA\Property(property="pension_fund_id", type="integer", example=7),
-     *                             @OA\Property(property="compensation_fund_id", type="integer", example=8),
-     *                             @OA\Property(property="start_date", type="string", format="date-time", example="2026-03-30 00:00:00"),
-     *                             @OA\Property(property="end_date", type="string", format="date-time", nullable=true, example=null),
-     *                             @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
-     *                             @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
-     *                             @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
-     *                             @OA\Property(
-     *                                 property="person",
-     *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=1),
-     *                                 @OA\Property(property="document", type="string", example="0000000000"),
-     *                                 @OA\Property(property="names", type="string", example="Super"),
-     *                                 @OA\Property(property="last_names", type="string", example="Admin"),
-     *                                 @OA\Property(property="gender_id", type="integer", example=15),
-     *                                 @OA\Property(property="birth_date", type="string", format="date", example="1990-01-01"),
-     *                                 @OA\Property(property="blood_type_id", type="integer", example=16),
-     *                                 @OA\Property(property="address", type="string", example="Dirección principal"),
-     *                                 @OA\Property(property="phone", type="string", example="0000000000"),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-31T15:37:40.000000Z"),
-     *                                 @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                             )
-     *                         ),
-     *                         @OA\Property(
-     *                             property="roles",
-     *                             type="array",
-     *
-     *                             @OA\Items(
-     *                                 type="object",
-     *
-     *                                 @OA\Property(property="id", type="integer", example=1),
-     *                                 @OA\Property(property="name", type="string", example="users"),
-     *                                 @OA\Property(property="guard_name", type="string", example="api"),
-     *                                 @OA\Property(property="title", type="string", example="Usuarios."),
-     *                                 @OA\Property(property="description", type="string", example="Gestión de usuarios."),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
-     *                                 @OA\Property(
-     *                                     property="pivot",
-     *                                     type="object",
-     *                                     @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
-     *                                     @OA\Property(property="model_id", type="integer", example=1),
-     *                                     @OA\Property(property="subitem_id", type="integer", example=1)
-     *                                 )
-     *                             ),
-     *
-     *                             @OA\Items(
-     *                                 type="object",
-     *
-     *                                 @OA\Property(property="id", type="integer", example=2),
-     *                                 @OA\Property(property="name", type="string", example="users"),
-     *                                 @OA\Property(property="guard_name", type="string", example="api"),
-     *                                 @OA\Property(property="title", type="string", example="Usuarios."),
-     *                                 @OA\Property(property="description", type="string", example="Gestión de usuarios."),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
-     *                                 @OA\Property(
-     *                                     property="pivot",
-     *                                     type="object",
-     *                                     @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
-     *                                     @OA\Property(property="model_id", type="integer", example=1),
-     *                                     @OA\Property(property="role_id", type="integer", example=1)
-     *                                 )
-     *                             )
-     *                         ),
-     *                         @OA\Property(
-     *                             property="permissions",
-     *                             type="array",
-     *
-     *                             @OA\Items(
-     *                                 type="object",
-     *
-     *                                 @OA\Property(property="id", type="integer", example=1),
-     *                                 @OA\Property(property="name", type="string", example="users.all"),
-     *                                 @OA\Property(property="guard_name", type="string", example="api"),
-     *                                 @OA\Property(property="title", type="string", example="Usuarios."),
-     *                                 @OA\Property(property="description", type="string", example="Gestión de usuarios."),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
-     *                                 @OA\Property(
-     *                                     property="pivot",
-     *                                     type="object",
-     *                                     @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
-     *                                     @OA\Property(property="model_id", type="integer", example=1),
-     *                                     @OA\Property(property="role_id", type="integer", example=1)
-     *                                 )
-     *                             )
-     *                         )
-     *                     )
-     *                 ),
-     *                 @OA\Property(property="token", type="string", example="1|tokenexampletokenexampletokenexample")
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Autenticación exitosa"),
-     *             @OA\Property(property="error", type="boolean", example="false")
-     *         ),
-     *      ),
-     *
-     *      @OA\Response(
+     *         @OA\JsonContent(ref="#/components/schemas/LoginResponse")
+     *     ),
+     *     @OA\Response(
      *         response=404,
-     *         description="Correo electrónico no registrado en la base de datos",
-     *
+     *         description="No existe un usuario con ese correo.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="message", type="string", example="No se encontraron resultados para la búsqueda."),
-     *             )
+     *             ref="#/components/schemas/ServerErrorResponse",
+     *             example={"error": {"message": "No se encontraron resultados para la búsqueda.", "error": "No query results for model [App\Models\User]."}}
      *         )
      *     ),
-     *
      *     @OA\Response(
      *         response=422,
-     *         description="Contraseña inválida",
-     *
+     *         description="Datos inválidos (formato de error de validación) o contraseña incorrecta (formato `error`).",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="message", type="string", example="Contraseña inválida. Asegúrate de escribirla correctamente."),
-     *                 @OA\Property(property="error", type="string", example="Credenciales incorrectas."),
+     *             oneOf={
+     *                 @OA\Schema(ref="#/components/schemas/ValidationErrorResponse"),
+     *                 @OA\Schema(ref="#/components/schemas/ServerErrorResponse")
+     *             },
+     *             @OA\Examples(
+     *                 example="validacion",
+     *                 summary="Datos inválidos",
+     *                 value={"message": "Error de validación.", "attributes": {"email": "Correo electrónico", "password": "Contraseña"}, "errors": {"email": {"Debe ser una dirección de correo electrónico válida."}}}
+     *             ),
+     *             @OA\Examples(
+     *                 example="contrasena",
+     *                 summary="Contraseña incorrecta",
+     *                 value={"error": {"message": "Contraseña inválida. Asegúrate de escribirla correctamente.", "error": "Credenciales incorrectas."}}
      *             )
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="data", type="object", example={}),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
-     *         )
-     *     )
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function login(LoginRequest $request)
@@ -263,261 +165,16 @@ class AuthController extends Controller
      * @OA\Get(
      *     path="/auth/user",
      *     tags={"Auth"},
-     *     summary="Obtener el usuario con sesión activa",
+     *     summary="Obtener el usuario autenticado y su menú",
+     *     description="Perfil completo del dueño del token y los módulos/submódulos que puede ver.",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\Response(
      *         response=200,
-     *         description="Usuario obtenido correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="user",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="employee_id", type="integer", example=1),
-     *                     @OA\Property(property="email", type="string", example="email_user_example"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true),
-     *                     @OA\Property(
-     *                         property="employee",
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="employee_id", type="integer", example=1),
-     *                         @OA\Property(property="person_id", type="integer", example=1),
-     *                         @OA\Property(property="operation_center", type="string", example="Principal"),
-     *                         @OA\Property(property="position_id", type="integer", example=2),
-     *                         @OA\Property(property="risk_manager_id", type="integer", example=5),
-     *                         @OA\Property(property="health_entity_id", type="integer", example=6),
-     *                         @OA\Property(property="pension_fund_id", type="integer", example=7),
-     *                         @OA\Property(property="compensation_fund_id", type="integer", example=8),
-     *                         @OA\Property(property="start_date", type="string", format="date-time", example="2026-03-30 00:00:00"),
-     *                         @OA\Property(property="end_date", type="string", format="date-time", nullable=true, example=null),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
-     *                         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
-     *                         @OA\Property(
-     *                             property="person",
-     *                             type="object",
-     *                             @OA\Property(property="id", type="integer", example=1),
-     *                             @OA\Property(property="document", type="string", example="0000000000"),
-     *                             @OA\Property(property="names", type="string", example="Super"),
-     *                             @OA\Property(property="last_names", type="string", example="Admin"),
-     *                             @OA\Property(property="gender_id", type="integer", example=15),
-     *                             @OA\Property(property="birth_date", type="string", format="date", example="1990-01-01"),
-     *                             @OA\Property(property="blood_type_id", type="integer", example=16),
-     *                             @OA\Property(property="address", type="string", example="Dirección principal"),
-     *                             @OA\Property(property="phone", type="string", example="0000000000"),
-     *                             @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
-     *                             @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-31T15:37:40.000000Z"),
-     *                             @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
-     *                             @OA\Property(
-     *                                 property="gender",
-     *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=1),
-     *                                 @OA\Property(property="item_id", type="integer", example=4),
-     *                                 @OA\Property(property="name", type="string", example="Super"),
-     *                                 @OA\Property(property="description", type="string", example="Admin"),
-     *                                 @OA\Property(property="settings", type="object", nullable=true),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-31T15:37:40.000000Z"),
-     *                                 @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                             ),
-     *                             @OA\Property(
-     *                                 property="blood_type",
-     *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=1),
-     *                                 @OA\Property(property="item_id", type="integer", example=4),
-     *                                 @OA\Property(property="name", type="string", example="Super"),
-     *                                 @OA\Property(property="description", type="string", example="Admin"),
-     *                                 @OA\Property(property="settings", type="object", nullable=true),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-31T15:37:40.000000Z"),
-     *                                 @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                             )
-     *                         ),
-     *                         @OA\Property(
-     *                             property="position",
-     *                             type="object",
-     *                             @OA\Property(property="id", type="integer", example=1),
-     *                             @OA\Property(property="item_id", type="integer", example=4),
-     *                             @OA\Property(property="name", type="string", example="Super"),
-     *                             @OA\Property(property="description", type="string", example="Admin"),
-     *                             @OA\Property(property="settings", type="object", nullable=true),
-     *                             @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
-     *                             @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-31T15:37:40.000000Z"),
-     *                             @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
-     *                             @OA\Property(
-     *                                 property="area",
-     *                                 type="array",
-     *
-     *                                 @OA\Items(
-     *                                     type="object",
-     *
-     *                                     @OA\Property(property="id", type="integer", example=1),
-     *                                     @OA\Property(property="item_id", type="integer", example=4),
-     *                                     @OA\Property(property="name", type="string", example="Super"),
-     *                                     @OA\Property(property="description", type="string", example="Admin"),
-     *                                     @OA\Property(property="settings", type="object", nullable=true),
-     *                                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
-     *                                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
-     *                                     @OA\Property(
-     *                                         property="pivot",
-     *                                         type="object",
-     *                                         @OA\Property(property="model_type", type="string", example="App\\Models\\Position"),
-     *                                         @OA\Property(property="model_id", type="integer", example=1),
-     *                                         @OA\Property(property="subitem_id", type="integer", example=1)
-     *                                     )
-     *                                 )
-     *                             )
-     *                         )
-     *                     ),
-     *                     @OA\Property(
-     *                         property="roles",
-     *                         type="array",
-     *
-     *                         @OA\Items(
-     *                             type="object",
-     *
-     *                             @OA\Property(property="id", type="integer", example=1),
-     *                             @OA\Property(property="name", type="string", example="users"),
-     *                             @OA\Property(property="guard_name", type="string", example="api"),
-     *                             @OA\Property(property="title", type="string", example="Usuarios."),
-     *                             @OA\Property(property="description", type="string", example="Gestión de usuarios."),
-     *                             @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                             @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
-     *                             @OA\Property(
-     *                                 property="pivot",
-     *                                 type="object",
-     *                                 @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
-     *                                 @OA\Property(property="model_id", type="integer", example=1),
-     *                                 @OA\Property(property="role_id", type="integer", example=1)
-     *                             )
-     *                         )
-     *                     ),
-     *                     @OA\Property(
-     *                         property="permissions",
-     *                         type="array",
-     *
-     *                         @OA\Items(
-     *                             type="object",
-     *
-     *                             @OA\Property(property="id", type="integer", example=1),
-     *                             @OA\Property(property="name", type="string", example="users"),
-     *                             @OA\Property(property="guard_name", type="string", example="api"),
-     *                             @OA\Property(property="title", type="string", example="Usuarios."),
-     *                             @OA\Property(property="description", type="string", example="Gestión de usuarios."),
-     *                             @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                             @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
-     *                             @OA\Property(
-     *                                 property="pivot",
-     *                                 type="object",
-     *                                 @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
-     *                                 @OA\Property(property="model_id", type="integer", example=1),
-     *                                 @OA\Property(property="permission_id", type="integer", example=1)
-     *                             )
-     *                         )
-     *                     )
-     *                 ),
-     *                 @OA\Property(
-     *                     property="navegation",
-     *                     type="array",
-     *
-     *                     @OA\Items(
-     *                         type="object",
-     *
-     *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="name", type="string", example="users"),
-     *                         @OA\Property(property="guard_name", type="string", example="api"),
-     *                         @OA\Property(property="title", type="string", example="Usuarios."),
-     *                         @OA\Property(property="description", type="string", example="Gestión de usuarios."),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
-     *                         @OA\Property(
-     *                             property="submodules",
-     *                             type="array",
-     *
-     *                             @OA\Items(
-     *                                 type="object",
-     *
-     *                                 @OA\Property(property="id", type="integer", example=1),
-     *                                 @OA\Property(property="name", type="string", example="users"),
-     *                                 @OA\Property(property="guard_name", type="string", example="api"),
-     *                                 @OA\Property(property="title", type="string", example="Usuarios."),
-     *                                 @OA\Property(property="description", type="string", example="Gestión de usuarios."),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z")
-     *                             )
-     *                         )
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Usuario obtenido."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Usuario obtenido",
+     *         @OA\JsonContent(ref="#/components/schemas/AuthProfileResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del usuario"),
-     *                 @OA\Property(property="permission_id", type="string", example="Identificador del permiso"),
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example= "No hay ningún registro.")
-     *                 ),
-     *
-     *                 @OA\Property(
-     *                     property="permission_id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example= "No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="No autenticado."),
-     *             @OA\Property(property="error", type="string", example="Unauthenticated.")
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function user()
@@ -555,45 +212,32 @@ class AuthController extends Controller
      *     path="/auth/logout",
      *     tags={"Auth"},
      *     summary="Cerrar sesión",
+     *     description="Borra **todos** los tokens del usuario: cierra la sesión en todos los dispositivos.",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\Response(
      *         response=200,
-     *         description="Cierre de sesión exitoso",
-     *
+     *         description="Cierre de sesión exitoso. `user` llega sin relaciones.",
      *         @OA\JsonContent(
-     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
      *                     property="user",
      *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example="id_example"),
-     *                     @OA\Property(property="name", type="string", example="name_example"),
-     *                     @OA\Property(property="email", type="string", format="email", example="email_example"),
-     *                     @OA\Property(property="email_verified_at", type="string", format="date-time", nullable=true),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12T20:01:04.000000Z"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12T20:01:04.000000Z"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true)
-     *                 ),
+     *                     @OA\Property(property="id", type="integer", example=15),
+     *                     @OA\Property(property="employee_id", type="integer", example=42),
+     *                     @OA\Property(property="email", type="string", example="laura.gomez@kanri.test"),
+     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-05-14T09:50:00.000000Z"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-05-14T09:50:00.000000Z"),
+     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
+     *                 )
      *             ),
      *             @OA\Property(property="message", type="string", example="Cierre de sesión exitoso"),
-     *             @OA\Property(property="error", type="boolean", example="false")
-     *         ),
-     *      ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="data", type="object", example={}),
-     *             @OA\Property(property="message", type="string", example="Error del servidor"),
-     *             @OA\Property(property="error", type="string", example="Detalles internos del error")
+     *             @OA\Property(property="error", type="boolean", example=false)
      *         )
-     *     )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function logout()

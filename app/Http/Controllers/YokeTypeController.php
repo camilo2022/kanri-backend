@@ -2,50 +2,80 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\YokeType\YokeTypeAllRequest;
-use App\Http\Requests\YokeType\YokeTypeDeleteRequest;
-use App\Http\Requests\YokeType\YokeTypeFindRequest;
-use App\Http\Requests\YokeType\YokeTypeRestoreRequest;
-use App\Http\Requests\YokeType\YokeTypeStoreRequest;
-use App\Http\Requests\YokeType\YokeTypeUpdateRequest;
-use App\Http\Resources\YokeType\YokeTypeCollection;
-use App\Http\Resources\YokeType\YokeTypeResource;
+use App\Http\Requests\Typification\YokeType\YokeTypeAllRequest;
+use App\Http\Requests\Typification\YokeType\YokeTypeDeleteRequest;
+use App\Http\Requests\Typification\YokeType\YokeTypeFindRequest;
+use App\Http\Requests\Typification\YokeType\YokeTypeRestoreRequest;
+use App\Http\Requests\Typification\YokeType\YokeTypeStoreRequest;
+use App\Http\Requests\Typification\YokeType\YokeTypeUpdateRequest;
+use App\Http\Resources\Typification\YokeType\YokeTypeCollection;
+use App\Http\Resources\Typification\YokeType\YokeTypeResource;
 use App\Models\YokeType;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 
 /**
- * @OA\Tag(
- *     name="Yoke Types",
- *     description="Endpoints para gestionar tipos de cotilla"
- * )
- *
- * @OA\PathItem(
- *     path="/YokeTypes",
- *     description="Rutas de gestión de tipos de cotilla"
+ * @OA\Schema(
+ *     schema="YokeTypeSettings",
+ *     type="object",
+ *     required={"code"},
+ *     description="Configuración del tipo de cotilla. Se guarda tal cual llega (reemplaza la anterior).",
+ *     @OA\Property(property="code", type="string", pattern="^[0-9]{2,5}$", description="Código numérico de 2 a 5 dígitos.", example="1003")
  * )
  *
  * @OA\Schema(
  *     schema="YokeType",
  *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="item_id", type="integer", example=1),
- *     @OA\Property(property="name", type="string", example="users"),
- *     @OA\Property(property="description", type="string", example="tipo_cotilla"),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *     description="Tipo de cotilla del jean (CERRADORA, DOBLE COTILLA, SOBREPUESTA…).",
+ *     @OA\Property(property="id", type="integer", example=503),
+ *     @OA\Property(property="item_id", type="integer", example=19),
+ *     @OA\Property(property="name", type="string", example="COTILLA EN V"),
+ *     @OA\Property(property="description", type="string", example="COTILLA CON CORTE EN FORMA DE V"),
+ *     @OA\Property(property="settings", nullable=true, allOf={@OA\Schema(ref="#/components/schemas/YokeTypeSettings")}),
+ *     @OA\Property(property="created_at", type="string", example="2026-05-14 10:35:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-05-14 10:35:00"),
+ *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
  *     @OA\Property(
  *         property="item",
  *         type="object",
- *         @OA\Property(property="id", type="integer", example=1),
+ *         @OA\Property(property="id", type="integer", example=19),
  *         @OA\Property(property="name", type="string", example="Tipos de Cotilla"),
  *         @OA\Property(property="description", type="string", example="Listado de tipos de cotilla."),
- *         @OA\Property(property="settings", type="string", example="{}"),
+ *         @OA\Property(property="settings", type="object", nullable=true, example=null),
  *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
  *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
  *     )
+ * )
+ *
+ * @OA\Schema(
+ *     schema="YokeTypeResponse",
+ *     type="object",
+ *     @OA\Property(property="data", type="object", @OA\Property(property="yoke_type", ref="#/components/schemas/YokeType")),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="YokeTypeListResponse",
+ *     type="object",
+ *     @OA\Property(
+ *         property="data",
+ *         type="object",
+ *         @OA\Property(property="yoke_types", type="array", @OA\Items(ref="#/components/schemas/YokeType")),
+ *         @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="YokeTypeRequest",
+ *     type="object",
+ *     required={"name", "description", "settings"},
+ *     @OA\Property(property="name", type="string", minLength=4, maxLength=50, description="Nombre en MAYÚSCULAS. Único entre los tipos de cotilla.", example="COTILLA EN V"),
+ *     @OA\Property(property="description", type="string", maxLength=255, description="Descripción en MAYÚSCULAS.", example="COTILLA CON CORTE EN FORMA DE V"),
+ *     @OA\Property(property="settings", ref="#/components/schemas/YokeTypeSettings")
  * )
  */
 class YokeTypeController extends Controller
@@ -54,89 +84,43 @@ class YokeTypeController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/yoke_types/all",
-     *     tags={"Yoke Types"},
-     *     summary="Listar tipos de cotilla",
+     *     path="/typification/yoke_types/all",
+     *     tags={"Typification › Yoke Types"},
+     *     summary="Listar los tipos de cotilla",
+     *     description="También la pueden consultar quienes configuran procesos, subprocesos u operaciones.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Filtro de Busqueda.",
-     *         required=false,
-     *         @OA\Schema(type="string", example="juan")
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/Search"),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
-     *         description="Columna a ordenar.",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"id","name","description","created_at", "updated_at"}, example="name")
+     *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *         @OA\Schema(type="string", enum={"id", "name", "description", "created_at", "updated_at", "deleted_at"}, example="name")
      *     ),
-     *     @OA\Parameter(
-     *         name="dir",
-     *         in="query",
-     *         description="Dirección de ordenamiento.",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
-     *     ),
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Registros por página.",
-     *         required=false,
-     *         @OA\Schema(type="integer", example=10)
-     *     ),
-     *     @OA\Parameter(
-     *         name="with_trashed",
-     *         in="query",
-     *         description="Registros inactivos.",
-     *         required=false,
-     *         @OA\Schema(type="boolean", example=true)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/Dir"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
      *     @OA\Response(
      *         response=200,
      *         description="Lista de tipos de cotilla cargada correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="yoke_types",
-     *                     type="array",
-     *                     @OA\Items(ref="#/components/schemas/YokeType")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="meta",
-     *                     type="object",
-     *                     @OA\Property(
-     *                         property="pagination",
-     *                         type="object",
-     *                         @OA\Property(property="total", type="integer", example=1),
-     *                         @OA\Property(property="count", type="integer", example=1),
-     *                         @OA\Property(property="per_page", type="integer", example=1),
-     *                         @OA\Property(property="current_page", type="integer", example=1),
-     *                         @OA\Property(property="total_pages", type="integer", example=1)
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/YokeTypeListResponse")
      *     ),
      *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
+     *         response=422,
+     *         description="Parámetros de consulta inválidos.",
      *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"per_page": "Registros por pagina.", "page": "N° de pagina.", "search": "Filtro de Busqueda.", "column": "Columna a ordenar.", "dir": "Sentido del orden.", "with_trashed": "Registros inactivos"},
+     *                 "errors": {"dir": {"Valor inválido. Permitidos: asc, desc."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function all(YokeTypeAllRequest $request)
@@ -173,68 +157,20 @@ class YokeTypeController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/yoke_types/find/{id}",
-     *     tags={"Yoke Types"},
-     *     summary="Obtener un tipo de cotilla específica",
+     *     path="/typification/yoke_types/find/{id}",
+     *     tags={"Typification › Yoke Types"},
+     *     summary="Obtener un tipo de cotilla",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del tipo de cotilla",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Tipo de cotilla cargado con éxito",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="yoke_type",
-     *                     ref="#/components/schemas/YokeType"
-     *                 ),
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Tipo de cotilla cargado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/YokeTypeResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Identificador del tipo de cotilla no registrado.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example=1)
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function find(YokeTypeFindRequest $request, $id)
@@ -261,86 +197,34 @@ class YokeTypeController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/yoke_types/store",
-     *     tags={"Yoke Types"},
+     *     path="/typification/yoke_types/store",
+     *     tags={"Typification › Yoke Types"},
      *     summary="Crear un tipo de cotilla",
      *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             required={"name","description"},
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="MEDIO",
-     *                 description="Nombre del tipo de cotilla"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="MEDIO",
-     *                 description="Descripción del tipo de cotilla"
-     *              )
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/YokeTypeRequest")
      *     ),
      *     @OA\Response(
-     *         response=200,
-     *         description="Tipo de Pretina creado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="yoke_type",
-     *                     type="object",
-     *                     @OA\Property(property="name", type="string", example="NAME_YOKE_TYPE"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_YOKE_TYPE"),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="id", type="integer", example=1)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         response=201,
+     *         description="Tipo de cotilla creado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/YokeTypeResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="Datos inválidos.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del tipo de cotilla"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del tipo de cotilla")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"name": "Nombre", "description": "Descripción", "settings": "Configuraciones", "settings.code": "Código"},
+     *                 "errors": {"name": {"Debe de ingresar mayúsculas."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function store(YokeTypeStoreRequest $request)
@@ -371,95 +255,39 @@ class YokeTypeController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/yoke_types/update/{id}",
-     *     tags={"Yoke Types"},
-     *     summary="Editar un tipo de cotilla específica",
+     *     path="/typification/yoke_types/update/{id}",
+     *     tags={"Typification › Yoke Types"},
+     *     summary="Editar un tipo de cotilla",
+     *     description="Reemplaza nombre, descripción y `settings` completo.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del tipo de cotilla",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name","description"},
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="Medio",
-     *                 description="Nombre del tipo de cotilla"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="Medio",
-     *                 description="Descripción del tipo de cotilla"
-     *              )
+     *             ref="#/components/schemas/YokeTypeRequest",
+     *             example={"name": "COTILLA EN V", "description": "COTILLA EN V CON DOBLE PESPUNTE", "settings": {"code": "1003"}}
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Tipo de cotilla editado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="yoke_type",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_YOKE_TYPE"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_YOKE_TYPE"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/YokeTypeResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="Datos inválidos o tipo de cotilla no registrado.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del tipo de cotilla"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del tipo de cotilla")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"id": "Identificador del tipo de cotilla", "name": "Nombre", "description": "Descripción", "settings": "Configuraciones", "settings.code": "Código"},
+     *                 "errors": {"name": {"Ya está registrado."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function update(YokeTypeUpdateRequest $request, $id)
@@ -490,76 +318,21 @@ class YokeTypeController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/yoke_types/delete/{id}",
-     *     tags={"Yoke Types"},
-     *     summary="Desactivar un tipo de cotilla específica",
+     *     path="/typification/yoke_types/delete/{id}",
+     *     tags={"Typification › Yoke Types"},
+     *     summary="Desactivar un tipo de cotilla",
+     *     description="Desactivación lógica (soft delete): el registro se conserva y puede restaurarse.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del tipo de cotilla",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Tipo de cotilla desactivado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="yoke_type",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_YOKE_TYPE"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_YOKE_TYPE"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Tipo de cotilla desactivado correctamente. `deleted_at` queda con la fecha de desactivación.",
+     *         @OA\JsonContent(ref="#/components/schemas/YokeTypeResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador de la tipos de cotilla")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function delete(YokeTypeDeleteRequest $request, $id)
@@ -586,76 +359,21 @@ class YokeTypeController extends Controller
 
     /**
      * @OA\Patch(
-     *     path="/yoke_types/restore/{id}",
-     *     tags={"Yoke Types"},
-     *     summary="Activar un tipo de cotilla específica",
+     *     path="/typification/yoke_types/restore/{id}",
+     *     tags={"Typification › Yoke Types"},
+     *     summary="Restaurar un tipo de cotilla desactivado",
+     *     description="Solo acepta registros desactivados.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del tipo de cotilla",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Tipo de cotilla activado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="yoke_type",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_YOKE_TYPE"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_YOKE_TYPE"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Tipo de cotilla restaurado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/YokeTypeResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador de la tipos de cotilla")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function restore(YokeTypeRestoreRequest $request, $id)

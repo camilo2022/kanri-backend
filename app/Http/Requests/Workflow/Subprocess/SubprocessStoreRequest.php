@@ -15,7 +15,7 @@ class SubprocessStoreRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -24,16 +24,16 @@ class SubprocessStoreRequest extends FormRequest
         return true;
     }
 
-
-
     public function rules(): array
     {
         return [
-            'process_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Process::ITEM_ID],
-            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Subprocess::ITEM_ID],
+            'process_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.Process::ITEM_ID],
+            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.Subprocess::ITEM_ID],
             'description' => ['required', 'string', 'max:255', 'uppercase'],
             'settings' => ['required', 'array'],
             'settings.operations' => ['required', 'boolean'],
+            'settings.in_technical_sheet' => ['required', 'boolean'],
+            'settings.in_production_order' => ['required', 'boolean'],
         ];
     }
 
@@ -47,7 +47,7 @@ class SubprocessStoreRequest extends FormRequest
             'min' => 'Se permite mínimo :min caracteres.',
             'unique' => 'Ya está registrado.',
             'uppercase' => 'El campo debe estar en mayúsculas.',
-            'exists' => 'No está registrado.'
+            'exists' => 'No está registrado.',
         ];
     }
 
@@ -58,7 +58,9 @@ class SubprocessStoreRequest extends FormRequest
             'name' => 'Nombre',
             'description' => 'Descripción',
             'settings' => 'Configuraciones',
-            'settings.subprocesses' => 'Subprocesos'
+            'settings.operations' => 'Operaciones',
+            'settings.in_technical_sheet' => 'Aplica a Ficha Técnica',
+            'settings.in_production_order' => 'Aplica a Orden de Producción',
         ];
     }
 }

@@ -18,24 +18,55 @@ use App\Traits\ApiResponser;
  * @OA\Schema(
  *     schema="Subgroup",
  *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="item_id", type="integer", example=1),
- *     @OA\Property(property="name", type="string", example="NAME_EXAMPLE"),
- *     @OA\Property(property="description", type="string", example="DESCRIPTION_EXAMPLE"),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *     description="Subgrupo de clasificación del producto (TIRO ALTO, PRETINA ALTA…). No depende de un grupo.",
+ *     @OA\Property(property="id", type="integer", example=340),
+ *     @OA\Property(property="item_id", type="integer", description="No viene en la respuesta de `all`.", example=14),
+ *     @OA\Property(property="name", type="string", example="TIRO BAJO"),
+ *     @OA\Property(property="description", type="string", example="JEAN DE TIRO BAJO"),
+ *     @OA\Property(property="settings", type="object", nullable=true, description="No viene en la respuesta de `all`.", example=null),
+ *     @OA\Property(property="created_at", type="string", example="2026-05-14 15:05:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-05-14 15:05:00"),
+ *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
  *     @OA\Property(
  *         property="item",
  *         type="object",
- *         @OA\Property(property="id", type="integer", example=16),
+ *         @OA\Property(property="id", type="integer", example=14),
  *         @OA\Property(property="name", type="string", example="Subgrupos"),
  *         @OA\Property(property="description", type="string", example="Listado de subgrupos."),
- *         @OA\Property(property="settings", type="string", example="{}"),
+ *         @OA\Property(property="settings", type="object", nullable=true, example=null),
  *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
  *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
  *     )
+ * )
+ *
+ * @OA\Schema(
+ *     schema="SubgroupResponse",
+ *     type="object",
+ *     @OA\Property(property="data", type="object", @OA\Property(property="subgroup", ref="#/components/schemas/Subgroup")),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="SubgroupListResponse",
+ *     type="object",
+ *     @OA\Property(
+ *         property="data",
+ *         type="object",
+ *         @OA\Property(property="subgroups", type="array", @OA\Items(ref="#/components/schemas/Subgroup")),
+ *         @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="SubgroupRequest",
+ *     type="object",
+ *     required={"name", "description"},
+ *     @OA\Property(property="name", type="string", minLength=4, maxLength=50, description="Nombre en MAYÚSCULAS. Único entre los subgrupos.", example="TIRO BAJO"),
+ *     @OA\Property(property="description", type="string", maxLength=255, description="Descripción en MAYÚSCULAS.", example="JEAN DE TIRO BAJO")
  * )
  */
 class SubgroupController extends Controller
@@ -45,88 +76,42 @@ class SubgroupController extends Controller
     /**
      * @OA\Get(
      *     path="/classification/subgroups/all",
-     *     tags={"Classification"},
-     *     summary="Listar grupos",
+     *     tags={"Classification › Subgroups"},
+     *     summary="Listar los subgrupos",
+     *     description="También la pueden consultar quienes configuran procesos, subprocesos u operaciones. En esta lista no vienen `item_id` ni `settings`.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Filtro de Busqueda.",
-     *         required=false,
-     *         @OA\Schema(type="string", example="juan")
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/Search"),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
-     *         description="Columna a ordenar.",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"id","name","description","created_at", "updated_at"}, example="name")
+     *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *         @OA\Schema(type="string", enum={"id", "name", "description", "created_at", "updated_at", "deleted_at"}, example="name")
      *     ),
-     *     @OA\Parameter(
-     *         name="dir",
-     *         in="query",
-     *         description="Dirección de ordenamiento.",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
-     *     ),
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Registros por página.",
-     *         required=false,
-     *         @OA\Schema(type="integer", example=10)
-     *     ),
-     *     @OA\Parameter(
-     *         name="with_trashed",
-     *         in="query",
-     *         description="Registros inactivos.",
-     *         required=false,
-     *         @OA\Schema(type="boolean", example=true)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/Dir"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
      *     @OA\Response(
      *         response=200,
      *         description="Lista de subgrupos cargada correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="subgroups",
-     *                     type="array",
-     *                     @OA\Items(ref="#/components/schemas/Subgroup")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="meta",
-     *                     type="object",
-     *                     @OA\Property(
-     *                         property="pagination",
-     *                         type="object",
-     *                         @OA\Property(property="total", type="integer", example=1),
-     *                         @OA\Property(property="count", type="integer", example=1),
-     *                         @OA\Property(property="per_page", type="integer", example=1),
-     *                         @OA\Property(property="current_page", type="integer", example=1),
-     *                         @OA\Property(property="total_pages", type="integer", example=1)
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/SubgroupListResponse")
      *     ),
      *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
+     *         response=422,
+     *         description="Parámetros de consulta inválidos.",
      *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"per_page": "Registros por pagina.", "page": "N° de pagina.", "search": "Filtro de Busqueda.", "column": "Columna a ordenar.", "dir": "Sentido del orden.", "with_trashed": "Registros inactivos"},
+     *                 "errors": {"dir": {"Valor inválido. Permitidos: asc, desc."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function all(SubgroupAllRequest $request)
@@ -163,67 +148,19 @@ class SubgroupController extends Controller
     /**
      * @OA\Get(
      *     path="/classification/subgroups/find/{id}",
-     *     tags={"Classification"},
-     *     summary="Obtener un subgrupo especifico",
+     *     tags={"Classification › Subgroups"},
+     *     summary="Obtener un subgrupo",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del subgrupo",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Subgrupo cargado con éxito",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="subgroup",
-     *                     ref="#/components/schemas/Subgroup"
-     *                 ),
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Subgrupo cargado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/SubgroupResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Identificador del subgrupo no registrado.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example=1)
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function find(SubgroupFindRequest $request, $id)
@@ -250,85 +187,33 @@ class SubgroupController extends Controller
     /**
      * @OA\Post(
      *     path="/classification/subgroups/store",
-     *     tags={"Classification"},
+     *     tags={"Classification › Subgroups"},
      *     summary="Crear un subgrupo",
      *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             required={"name"},
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="ADMINISTRACION",
-     *                 description="Nombre del subgrupo"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="LISTA",
-     *                 description="Descripción del subgrupo"
-     *              )
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/SubgroupRequest")
      *     ),
      *     @OA\Response(
-     *         response=200,
+     *         response=201,
      *         description="Subgrupo creado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="subgroup",
-     *                     type="object",
-     *                     @OA\Property(property="name", type="string", example="NAME_SUBGROUP"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_SUBGROUP"),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="id", type="integer", example=1)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/SubgroupResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="Datos inválidos.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del subgrupo"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del subgrupo")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"name": "Nombre", "description": "Descripción"},
+     *                 "errors": {"name": {"Se permite mínimo 4 caracteres."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function store(SubgroupStoreRequest $request)
@@ -358,94 +243,38 @@ class SubgroupController extends Controller
     /**
      * @OA\Put(
      *     path="/classification/subgroups/update/{id}",
-     *     tags={"Classification"},
-     *     summary="Editar un subgrupo específico",
+     *     tags={"Classification › Subgroups"},
+     *     summary="Editar un subgrupo",
+     *     description="Reemplaza nombre y descripción.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del subgrupo",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name"},
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="Usuarios",
-     *                 description="Nombre del subgrupo"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="Lista de Usuarios",
-     *                 description="Descripción del subgrupo"
-     *              )
+     *             ref="#/components/schemas/SubgroupRequest",
+     *             example={"name": "PRETINA MEDIA", "description": "PRETINA DE ALTURA MEDIA"}
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Subgrupo editado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="subgroup",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_SUBGROUP"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_SUBGROUP"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/SubgroupResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="Datos inválidos o subgrupo no registrado.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del subgrupo"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del subgrupo")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"id": "Identificador del subgrupo", "name": "Nombre", "description": "Descripción"},
+     *                 "errors": {"name": {"Ya está registrado."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function update(SubgroupUpdateRequest $request, $id)
@@ -475,75 +304,20 @@ class SubgroupController extends Controller
     /**
      * @OA\Delete(
      *     path="/classification/subgroups/delete/{id}",
-     *     tags={"Classification"},
-     *     summary="Desactivar un subgrupo específico",
+     *     tags={"Classification › Subgroups"},
+     *     summary="Desactivar un subgrupo",
+     *     description="Desactivación lógica (soft delete): el registro se conserva y puede restaurarse.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del subgrupo",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Grupo desactivado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="subgroup",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_SUBGROUP"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_SUBGROUP"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Subgrupo desactivado correctamente. `deleted_at` queda con la fecha de desactivación.",
+     *         @OA\JsonContent(ref="#/components/schemas/SubgroupResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del subgrupo")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function delete(SubgroupDeleteRequest $request, $id)
@@ -571,75 +345,20 @@ class SubgroupController extends Controller
     /**
      * @OA\Patch(
      *     path="/classification/subgroups/restore/{id}",
-     *     tags={"Classification"},
-     *     summary="Activar un subgrupo específico",
+     *     tags={"Classification › Subgroups"},
+     *     summary="Restaurar un subgrupo desactivado",
+     *     description="Solo acepta registros desactivados.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del subgrupo",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Subgrupo activado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="subgroup",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_SUBGROUP"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_SUBGROUP"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Subgrupo restaurado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/SubgroupResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del subgrupo")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function restore(SubgroupRestoreRequest $request, $id)

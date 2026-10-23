@@ -20,32 +20,57 @@ use App\Traits\ApiResponser;
  *     description="Endpoints para gestionar fondos de pensión"
  * )
  *
- * @OA\PathItem(
- *     path="/pension_funds",
- *     description="Rutas de gestión de fondos de pensión"
- * )
- *
  * @OA\Schema(
  *     schema="PensionFund",
  *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="item_id", type="integer", example=10),
- *     @OA\Property(property="name", type="string", example="No Aplica"),
- *     @OA\Property(property="description", type="string", example="No Aplica"),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *     @OA\Property(property="id", type="integer", example=118),
+ *     @OA\Property(property="item_id", type="integer", description="No viene en la respuesta de `all`.", example=9),
+ *     @OA\Property(property="name", type="string", example="SKANDIA"),
+ *     @OA\Property(property="description", type="string", example="SKANDIA PENSIONES Y CESANTÍAS S.A."),
+ *     @OA\Property(property="settings", type="object", nullable=true, description="No viene en la respuesta de `all`.", example=null),
+ *     @OA\Property(property="created_at", type="string", example="2026-05-14 17:20:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-05-14 17:20:00"),
+ *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
  *     @OA\Property(
  *         property="item",
  *         type="object",
  *         @OA\Property(property="id", type="integer", example=9),
- *         @OA\Property(property="name", type="string", example="Fondos de Pensión"),
+ *         @OA\Property(property="name", type="string", example="Fondos de pensión"),
  *         @OA\Property(property="description", type="string", example="Listado de fondos de pensión."),
- *         @OA\Property(property="settings", type="string", example="{}"),
+ *         @OA\Property(property="settings", type="object", nullable=true, example=null),
  *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
  *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
+ *     )
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PensionFundResponse",
+ *     type="object",
+ *     @OA\Property(property="data", type="object", @OA\Property(property="pension_fund", ref="#/components/schemas/PensionFund")),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PensionFundListResponse",
+ *     type="object",
+ *     @OA\Property(
+ *         property="data",
+ *         type="object",
+ *         @OA\Property(property="pension_funds", type="array", @OA\Items(ref="#/components/schemas/PensionFund")),
+ *         @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
  *     ),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PensionFundRequest",
+ *     type="object",
+ *     required={"name", "description"},
+ *     @OA\Property(property="name", type="string", minLength=4, maxLength=50, description="Único entre los fondos de pensión. A diferencia de otros catálogos, no exige mayúsculas.", example="SKANDIA"),
+ *     @OA\Property(property="description", type="string", maxLength=255, description="Descripción en MAYÚSCULAS.", example="SKANDIA PENSIONES Y CESANTÍAS S.A.")
  * )
  */
 class PensionFundController extends Controller
@@ -56,87 +81,41 @@ class PensionFundController extends Controller
      * @OA\Get(
      *     path="/pension_funds/all",
      *     tags={"Pension Funds"},
-     *     summary="Listar fondos de pensión",
+     *     summary="Listar los fondos de pensión",
+     *     description="En esta lista no vienen `item_id` ni `settings`.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Filtro de Busqueda.",
-     *         required=false,
-     *         @OA\Schema(type="string", example="juan")
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/Search"),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
-     *         description="Columna a ordenar.",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"id","name","description","created_at", "updated_at"}, example="name")
+     *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *         @OA\Schema(type="string", enum={"id", "name", "description", "created_at", "updated_at", "deleted_at"}, example="name")
      *     ),
-     *     @OA\Parameter(
-     *         name="dir",
-     *         in="query",
-     *         description="Dirección de ordenamiento.",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
-     *     ),
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Registros por página.",
-     *         required=false,
-     *         @OA\Schema(type="integer", example=10)
-     *     ),
-     *     @OA\Parameter(
-     *         name="with_trashed",
-     *         in="query",
-     *         description="Registros inactivos.",
-     *         required=false,
-     *         @OA\Schema(type="boolean", example=true)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/Dir"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
      *     @OA\Response(
      *         response=200,
      *         description="Lista de fondos de pensión cargada correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="pension_funds",
-     *                     type="array",
-     *                     @OA\Items(ref="#/components/schemas/PensionFund")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="meta",
-     *                     type="object",
-     *                     @OA\Property(
-     *                         property="pagination",
-     *                         type="object",
-     *                         @OA\Property(property="total", type="integer", example=1),
-     *                         @OA\Property(property="count", type="integer", example=1),
-     *                         @OA\Property(property="per_page", type="integer", example=1),
-     *                         @OA\Property(property="current_page", type="integer", example=1),
-     *                         @OA\Property(property="total_pages", type="integer", example=1)
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/PensionFundListResponse")
      *     ),
      *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
+     *         response=422,
+     *         description="Parámetros de consulta inválidos.",
      *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"per_page": "Registros por pagina.", "page": "N° de pagina.", "search": "Filtro de Busqueda.", "column": "Columna a ordenar.", "dir": "Sentido del orden.", "with_trashed": "Registros inactivos"},
+     *                 "errors": {"per_page": {"Debe ser un valor numérico."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function all(PensionFundAllRequest $request)
@@ -174,66 +153,18 @@ class PensionFundController extends Controller
      * @OA\Get(
      *     path="/pension_funds/find/{id}",
      *     tags={"Pension Funds"},
-     *     summary="Obtener un fondo de pension específico",
+     *     summary="Obtener un fondo de pensión",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del fondo de pensión",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Fondo de pensión cargado con éxito",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="pension_fund",
-     *                     ref="#/components/schemas/PensionFund"
-     *                 ),
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Fondo de pensión cargado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/PensionFundResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Identificador del fondo de pensión no registrado.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example=1)
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function find(PensionFundFindRequest $request, $id)
@@ -265,80 +196,28 @@ class PensionFundController extends Controller
      *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             required={"name"},
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="H",
-     *                 description="Nombre del fondo de pensión"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="LISTA",
-     *                 description="Descripción del fondo de pensión"
-     *              )
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/PensionFundRequest")
      *     ),
      *     @OA\Response(
-     *         response=200,
+     *         response=201,
      *         description="Fondo de pensión creado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="pension_fund",
-     *                     type="object",
-     *                     @OA\Property(property="name", type="string", example="NAME_PENSION_FOUND"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_PENSION_FOUND"),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="id", type="integer", example=1)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/PensionFundResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="Datos inválidos.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del fondo de pensión"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del fondo de pensión")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"name": "Nombre", "description": "Descripción"},
+     *                 "errors": {"name": {"Ya está registrado."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function store(PensionFundStoreRequest $request)
@@ -369,93 +248,36 @@ class PensionFundController extends Controller
      * @OA\Put(
      *     path="/pension_funds/update/{id}",
      *     tags={"Pension Funds"},
-     *     summary="Editar un fondo de pension específico",
+     *     summary="Editar un fondo de pensión",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del fondo de pensión",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name"},
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="SANARTE",
-     *                 description="Nombre del fondo de pensión"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="LISTA DE USUARIOS",
-     *                 description="Descripción del fondo de pensión"
-     *              )
+     *             ref="#/components/schemas/PensionFundRequest",
+     *             example={"name": "SKANDIA PENSIONES", "description": "SKANDIA PENSIONES Y CESANTÍAS S.A."}
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Fondo de pensión editado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="pension_fund",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_PENSION_FOUND"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_PENSION_FOUND"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/PensionFundResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="Datos inválidos o fondo de pensión no registrado.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del fondo de pensión"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del fondo de pensión")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"id": "Identificador del fondo de pensión", "name": "Nombre", "description": "Descripción"},
+     *                 "errors": {"description": {"Debe de ingresar mayúsculas."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function update(PensionFundUpdateRequest $request, $id)
@@ -486,74 +308,19 @@ class PensionFundController extends Controller
      * @OA\Delete(
      *     path="/pension_funds/delete/{id}",
      *     tags={"Pension Funds"},
-     *     summary="Desactivar un fondo de pension específico",
+     *     summary="Desactivar un fondo de pensión",
+     *     description="Desactivación lógica (soft delete): el registro se conserva y puede restaurarse.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del fondo de pensión",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Fondo de pensión desactivado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="pension_fund",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_PENSION_FOUND"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_PENSION_FOUND"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Fondo de pensión desactivado correctamente. `deleted_at` queda con la fecha de desactivación.",
+     *         @OA\JsonContent(ref="#/components/schemas/PensionFundResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del fondo de pensión")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function delete(PensionFundDeleteRequest $request, $id)
@@ -582,74 +349,18 @@ class PensionFundController extends Controller
      * @OA\Patch(
      *     path="/pension_funds/restore/{id}",
      *     tags={"Pension Funds"},
-     *     summary="Activar un fondo de pension específico",
+     *     summary="Restaurar un fondo de pensión desactivado",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del fondo de pensión",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Fondo de pensión activado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="pension_fund",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_PENSION_FOUND"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_PENSION_FOUND"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Fondo de pensión restaurado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/PensionFundResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del fondo de pensión")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function restore(PensionFundRestoreRequest $request, $id)

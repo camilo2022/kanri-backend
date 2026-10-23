@@ -15,38 +15,76 @@ use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 
 /**
- * @OA\Tag(
- *     name="Person Types",
- *     description="Endpoints para gestionar tipos de personas"
- * )
- *
- * @OA\PathItem(
- *     path="/PersonTypes",
- *     description="Rutas de gestión de tipos de personas"
+ * @OA\Schema(
+ *     schema="PersonTypeDocumentType",
+ *     description="Tipo de documento del tipo de persona, con el pivote de `model_has_subitems`. Su `settings` trae las reglas del número de documento.",
+ *     allOf={
+ *         @OA\Schema(ref="#/components/schemas/Subitem"),
+ *         @OA\Schema(
+ *             @OA\Property(
+ *                 property="pivot",
+ *                 type="object",
+ *                 @OA\Property(property="model_type", type="string", example="App\Models\DocumentType"),
+ *                 @OA\Property(property="subitem_id", type="integer", description="Id del tipo de persona.", example=530),
+ *                 @OA\Property(property="model_id", type="integer", description="Id del tipo de documento.", example=531)
+ *             )
+ *         )
+ *     },
+ *     example={"id": 531, "item_id": 36, "name": "NÚMERO DE IDENTIFICACIÓN TRIBUTARIA", "description": "NIT DE LA EMPRESA", "settings": null, "created_at": "2026-05-14T14:05:00.000000Z", "updated_at": "2026-05-14T14:05:00.000000Z", "deleted_at": null, "pivot": {"model_type": "App\Models\DocumentType", "subitem_id": 530, "model_id": 531}}
  * )
  *
  * @OA\Schema(
  *     schema="PersonType",
  *     type="object",
- *
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="item_id", type="integer", example=10),
- *     @OA\Property(property="name", type="string", example="No Aplica"),
- *     @OA\Property(property="description", type="string", example="No Aplica"),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *     @OA\Property(property="id", type="integer", example=530),
+ *     @OA\Property(property="item_id", type="integer", description="No viene en la respuesta de `all`.", example=35),
+ *     @OA\Property(property="name", type="string", example="JURÍDICA"),
+ *     @OA\Property(property="description", type="string", example="PERSONA JURÍDICA"),
+ *     @OA\Property(property="settings", type="object", nullable=true, example=null),
+ *     @OA\Property(property="created_at", type="string", example="2026-05-14 14:00:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-05-14 14:00:00"),
+ *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
  *     @OA\Property(
  *         property="item",
  *         type="object",
- *         @OA\Property(property="id", type="integer", example=31),
- *         @OA\Property(property="name", type="string", example="Tipos de personas"),
+ *         @OA\Property(property="id", type="integer", example=35),
+ *         @OA\Property(property="name", type="string", example="Tipos de Personas"),
  *         @OA\Property(property="description", type="string", example="Listado de tipos de personas."),
- *         @OA\Property(property="settings", type="string", example="{}"),
+ *         @OA\Property(property="settings", type="object", nullable=true, example=null),
  *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
  *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
  *     ),
+ *     @OA\Property(property="document_types", type="array", description="Tipos de documento del tipo de persona.", @OA\Items(ref="#/components/schemas/PersonTypeDocumentType"))
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PersonTypeResponse",
+ *     type="object",
+ *     @OA\Property(property="data", type="object", @OA\Property(property="person_type", ref="#/components/schemas/PersonType")),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PersonTypeListResponse",
+ *     type="object",
+ *     @OA\Property(
+ *         property="data",
+ *         type="object",
+ *         @OA\Property(property="person_types", type="array", @OA\Items(ref="#/components/schemas/PersonType")),
+ *         @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PersonTypeRequest",
+ *     type="object",
+ *     required={"name", "description"},
+ *     @OA\Property(property="name", type="string", minLength=4, maxLength=50, description="Nombre en MAYÚSCULAS. Único entre los tipos de persona.", example="JURÍDICA"),
+ *     @OA\Property(property="description", type="string", maxLength=255, description="Descripción en MAYÚSCULAS.", example="PERSONA JURÍDICA")
  * )
  */
 class PersonTypeController extends Controller
@@ -55,108 +93,43 @@ class PersonTypeController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/person_types/all",
-     *     tags={"Person Types"},
-     *     summary="Listar tipos de personas",
+     *     path="/typification/person_types/all",
+     *     tags={"Typification › Person Types"},
+     *     summary="Listar los tipos de persona",
+     *     description="Cada tipo de persona trae sus tipos de documento. En esta lista no viene `item_id`.",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Filtro de Busqueda.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="string", example="juan")
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/Search"),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
-     *         description="Columna a ordenar.",
      *         required=false,
-     *
-     *         @OA\Schema(type="string", enum={"id","name","description","created_at", "updated_at"}, example="name")
+     *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *         @OA\Schema(type="string", enum={"id", "name", "description", "created_at", "updated_at", "deleted_at"}, example="name")
      *     ),
-     *
-     *     @OA\Parameter(
-     *         name="dir",
-     *         in="query",
-     *         description="Dirección de ordenamiento.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
-     *     ),
-     *
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Registros por página.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="integer", example=10)
-     *     ),
-     *
-     *     @OA\Parameter(
-     *         name="with_trashed",
-     *         in="query",
-     *         description="Registros inactivos.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="boolean", example=true)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/Dir"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
      *     @OA\Response(
      *         response=200,
-     *         description="Lista de tipos de personas cargada correctamente",
-     *
+     *         description="Lista de tipos de persona cargada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/PersonTypeListResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Parámetros de consulta inválidos.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="person_types",
-     *                     type="array",
-     *
-     *                     @OA\Items(ref="#/components/schemas/PersonType")
-     *                 ),
-     *
-     *                 @OA\Property(
-     *                     property="meta",
-     *                     type="object",
-     *                     @OA\Property(
-     *                         property="pagination",
-     *                         type="object",
-     *                         @OA\Property(property="total", type="integer", example=1),
-     *                         @OA\Property(property="count", type="integer", example=1),
-     *                         @OA\Property(property="per_page", type="integer", example=1),
-     *                         @OA\Property(property="current_page", type="integer", example=1),
-     *                         @OA\Property(property="total_pages", type="integer", example=1)
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"per_page": "Registros por pagina.", "page": "N° de pagina.", "search": "Filtro de Busqueda.", "column": "Columna a ordenar.", "dir": "Sentido del orden.", "with_trashed": "Registros inactivos", "in_technical_sheet": "Aplica a Ficha Técnica"},
+     *                 "errors": {"dir": {"Valor inválido. Permitidos: asc, desc."}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function all(PersonTypeAllRequest $request)
@@ -193,81 +166,20 @@ class PersonTypeController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/person_types/find/{id}",
-     *     tags={"Person Types"},
-     *     summary="Obtener un tipo de archivo específico",
+     *     path="/typification/person_types/find/{id}",
+     *     tags={"Typification › Person Types"},
+     *     summary="Obtener un tipo de persona",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del tipo de archivo",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Tipo de personas cargado con éxito",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="person_type",
-     *                     ref="#/components/schemas/PersonType"
-     *                 ),
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Tipo de persona cargado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/PersonTypeResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Identificador del tipo de personas no registrado.",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example=1)
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function find(PersonTypeFindRequest $request, $id)
@@ -294,100 +206,34 @@ class PersonTypeController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/person_types/store",
-     *     tags={"Person Types"},
-     *     summary="Crear un tipo de archivo",
+     *     path="/typification/person_types/store",
+     *     tags={"Typification › Person Types"},
+     *     summary="Crear un tipo de persona",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\RequestBody(
      *         required=true,
-     *
-     *         @OA\JsonContent(
-     *             required={"name"},
-     *
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="Personal",
-     *                 description="Nombre del tipo de personas"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="Personal",
-     *                 description="Descripción del tipo de personas"
-     *              )
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/PersonTypeRequest")
      *     ),
-     *
      *     @OA\Response(
-     *         response=200,
-     *         description="Tipo de archivo creado correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="person_type",
-     *                     type="object",
-     *                     @OA\Property(property="name", type="string", example="NAME_FILE_TYPE"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_FILE_TYPE"),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="id", type="integer", example=1)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         response=201,
+     *         description="Tipo de persona creado correctamente. `document_types` llega vacío.",
+     *         @OA\JsonContent(ref="#/components/schemas/PersonTypeResponse")
      *     ),
-     *
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
-     *
+     *         description="Datos inválidos.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del tipo de personas"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del tipo de personas")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"name": "Nombre", "description": "Descripción"},
+     *                 "errors": {"name": {"Debe de ingresar mayúsculas."}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function store(PersonTypeStoreRequest $request)
@@ -417,111 +263,38 @@ class PersonTypeController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/person_types/update/{id}",
-     *     tags={"Person Types"},
-     *     summary="Editar un tipo de personas específico",
+     *     path="/typification/person_types/update/{id}",
+     *     tags={"Typification › Person Types"},
+     *     summary="Editar un tipo de persona",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del tipo de persona",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
      *         required=true,
-     *
      *         @OA\JsonContent(
-     *             required={"name"},
-     *
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="NATURAL",
-     *                 description="Nombre del tipo de persona"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="LISTA DE USUARIOS",
-     *                 description="Descripción del tipo de persona"
-     *              )
+     *             ref="#/components/schemas/PersonTypeRequest",
+     *             example={"name": "EXTRANJERA", "description": "PERSONA NATURAL EXTRANJERA"}
      *         )
      *     ),
-     *
      *     @OA\Response(
      *         response=200,
      *         description="Tipo de persona editado correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="person_type",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_FILE_TYPE"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_FILE_TYPE"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/PersonTypeResponse")
      *     ),
-     *
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
-     *
+     *         description="Datos inválidos o tipo de persona no registrado.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del tipo de personas"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del tipo de personas")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"id": "Identificador del tipo de persona", "name": "Nombre", "description": "Descripción"},
+     *                 "errors": {"name": {"Ya está registrado."}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function update(PersonTypeUpdateRequest $request, $id)
@@ -550,89 +323,21 @@ class PersonTypeController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/person_types/delete/{id}",
-     *     tags={"Person Types"},
-     *     summary="Desactivar un tipo de personas específica",
+     *     path="/typification/person_types/delete/{id}",
+     *     tags={"Typification › Person Types"},
+     *     summary="Desactivar un tipo de persona",
+     *     description="Desactivación lógica (soft delete): el registro se conserva y puede restaurarse.",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del tipo de personas",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Tipo de personas desactivado correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="person_type",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_FILE_TYPE"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_FILE_TYPE"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Tipo de persona desactivado correctamente. `deleted_at` queda con la fecha de desactivación.",
+     *         @OA\JsonContent(ref="#/components/schemas/PersonTypeResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador de la tipos de personas")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function delete(PersonTypeDeleteRequest $request, $id)
@@ -659,89 +364,20 @@ class PersonTypeController extends Controller
 
     /**
      * @OA\Patch(
-     *     path="/person_types/restore/{id}",
-     *     tags={"Person Types"},
-     *     summary="Activar un tipo de personas específica",
+     *     path="/typification/person_types/restore/{id}",
+     *     tags={"Typification › Person Types"},
+     *     summary="Restaurar un tipo de persona desactivado",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del tipo de personas",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Tipo de personas activado correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="person_type",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_FILE_TYPE"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_FILE_TYPE"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Tipo de persona restaurado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/PersonTypeResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador de la tipos de personas")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function restore(PersonTypeRestoreRequest $request, $id)

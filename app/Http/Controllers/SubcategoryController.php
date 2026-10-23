@@ -18,45 +18,62 @@ use App\Traits\ApiResponser;
  * @OA\Schema(
  *     schema="Subcategory",
  *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="item_id", type="integer", example=1),
- *     @OA\Property(property="name", type="string", example="users"),
- *     @OA\Property(property="description", type="string", example="Categorias"),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *     description="Subcategoría de producto (JEAN SKINNY, FALDA MIDI…). Se asocia a una o varias categorías por `model_has_subitems`.",
+ *     @OA\Property(property="id", type="integer", example=211),
+ *     @OA\Property(property="item_id", type="integer", description="No viene en la respuesta de `all`.", example=12),
+ *     @OA\Property(property="name", type="string", example="JEAN MOM FIT"),
+ *     @OA\Property(property="description", type="string", example="JEAN DE TIRO ALTO Y PIERNA HOLGADA"),
+ *     @OA\Property(property="settings", type="object", nullable=true, description="No viene en la respuesta de `all`.", example=null),
+ *     @OA\Property(property="created_at", type="string", example="2026-05-14 12:20:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-05-14 12:20:00"),
+ *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
  *     @OA\Property(
  *         property="item",
  *         type="object",
- *         @OA\Property(property="id", type="integer", example=14),
+ *         @OA\Property(property="id", type="integer", example=12),
  *         @OA\Property(property="name", type="string", example="Subcategorías"),
  *         @OA\Property(property="description", type="string", example="Listado de subcategorías."),
- *         @OA\Property(property="settings", type="string", example="{}"),
+ *         @OA\Property(property="settings", type="object", nullable=true, example=null),
  *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
  *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
- *     ),
- *     @OA\Property(
- *         property="categories",
- *         type="array",
- *         @OA\Items(
- *             type="object",
- *             @OA\Property(property="id", type="integer", example=1),
- *             @OA\Property(property="item_id", type="integer", example=10),
- *             @OA\Property(property="name", type="string", example="No Aplica"),
- *             @OA\Property(property="description", type="string", example="No Aplica"),
- *             @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *             @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *             @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
- *             @OA\Property(
- *                 property="pivot",
- *                 type="object",
- *                 @OA\Property(property="model_type", type="string", example="App\\Models\\Subcategory"),
- *                 @OA\Property(property="model_id", type="integer", example=1),
- *                 @OA\Property(property="subitem_id", type="integer", example=1)
- *             )
- *         )
  *     )
+ * )
+ *
+ * @OA\Schema(
+ *     schema="SubcategoryResponse",
+ *     type="object",
+ *     @OA\Property(property="data", type="object", @OA\Property(property="subcategory", allOf={
+ *         @OA\Schema(ref="#/components/schemas/Subcategory"),
+ *         @OA\Schema(@OA\Property(property="categories", nullable=true, example=null, description="Siempre `null`: el Resource lee `categories`, pero la relación se llama `category` (ver pendientes)."))
+ *     })),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="SubcategoryListResponse",
+ *     type="object",
+ *     @OA\Property(
+ *         property="data",
+ *         type="object",
+ *         @OA\Property(property="subcategories", type="array", @OA\Items(allOf={
+ *             @OA\Schema(ref="#/components/schemas/Subcategory"),
+ *             @OA\Schema(@OA\Property(property="category", type="array", description="Categorías de la subcategoría (con su pivote).", @OA\Items(ref="#/components/schemas/Subitem")))
+ *         })),
+ *         @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="SubcategoryRequest",
+ *     type="object",
+ *     required={"category_id", "name", "description"},
+ *     @OA\Property(property="category_id", type="integer", description="Categoría a la que se asocia. Solo se usa al crear y **no se valida** (ver pendientes).", example=64),
+ *     @OA\Property(property="name", type="string", minLength=4, maxLength=50, description="Nombre en MAYÚSCULAS. Único entre las subcategorías.", example="JEAN MOM FIT"),
+ *     @OA\Property(property="description", type="string", maxLength=255, description="Descripción en MAYÚSCULAS.", example="JEAN DE TIRO ALTO Y PIERNA HOLGADA")
  * )
  */
 class SubcategoryController extends Controller
@@ -65,89 +82,50 @@ class SubcategoryController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/categorization/subcategories/all",
-     *     tags={"Categorization"},
-     *     summary="Listar subcategorías",
+     *     path="/categorization/categories/subcategories/all/{category_id}",
+     *     tags={"Categorization › Subcategories"},
+     *     summary="Listar las subcategorías de una categoría",
+     *     description="Cada subcategoría trae `item` y sus categorías en `category`; no trae `item_id` ni `settings`. También la pueden consultar quienes ven categorías o configuran procesos, subprocesos u operaciones.",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Filtro de Busqueda.",
-     *         required=false,
-     *         @OA\Schema(type="string", example="juan")
+     *         name="category_id",
+     *         in="path",
+     *         required=true,
+     *         description="Categoría. No se valida: un id que no existe devuelve la lista vacía.",
+     *         @OA\Schema(type="integer", example=64)
      *     ),
+     *     @OA\Parameter(ref="#/components/parameters/Search"),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
-     *         description="Columna a ordenar.",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"id","name","description","created_at", "updated_at"}, example="name")
+     *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *         @OA\Schema(type="string", enum={"id", "name", "description", "created_at", "updated_at", "deleted_at"}, example="name")
      *     ),
-     *     @OA\Parameter(
-     *         name="dir",
-     *         in="query",
-     *         description="Dirección de ordenamiento.",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
-     *     ),
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Registros por página.",
-     *         required=false,
-     *         @OA\Schema(type="integer", example=10)
-     *     ),
-     *     @OA\Parameter(
-     *         name="with_trashed",
-     *         in="query",
-     *         description="Registros inactivos.",
-     *         required=false,
-     *         @OA\Schema(type="boolean", example=true)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/Dir"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
      *     @OA\Response(
      *         response=200,
-     *         description="Lista de categorías cargada correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="subcategories",
-     *                     type="array",
-     *                     @OA\Items(ref="#/components/schemas/Subcategory")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="meta",
-     *                     type="object",
-     *                     @OA\Property(
-     *                         property="pagination",
-     *                         type="object",
-     *                         @OA\Property(property="total", type="integer", example=1),
-     *                         @OA\Property(property="count", type="integer", example=1),
-     *                         @OA\Property(property="per_page", type="integer", example=1),
-     *                         @OA\Property(property="current_page", type="integer", example=1),
-     *                         @OA\Property(property="total_pages", type="integer", example=1)
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Lista de subcategorías cargada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/SubcategoryListResponse")
      *     ),
      *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
+     *         response=422,
+     *         description="Parámetros de consulta inválidos.",
      *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"per_page": "Registros por pagina.", "page": "N° de pagina.", "search": "Filtro de Busqueda.", "column": "Columna a ordenar.", "dir": "Sentido del orden.", "with_trashed": "Registros inactivos"},
+     *                 "errors": {"dir": {"Valor inválido. Permitidos: asc, desc."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function all(SubcategoryAllRequest $request, $category_id)
@@ -185,68 +163,20 @@ class SubcategoryController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/categorization/subcategories/find/{id}",
-     *     tags={"Categorization"},
-     *     summary="Obtener una subcategoría especifica",
+     *     path="/categorization/categories/subcategories/find/{id}",
+     *     tags={"Categorization › Subcategories"},
+     *     summary="Obtener una subcategoría",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador de la subcategoría",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Subcategoría cargada con éxito",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="subcategory",
-     *                     ref="#/components/schemas/Subcategory"
-     *                 ),
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Subcategoría cargada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/SubcategoryResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Identificador de la subcategoría no registrado.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example=1)
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function find(SubcategoryFindRequest $request, $id)
@@ -273,85 +203,35 @@ class SubcategoryController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/categorization/subcategories/store",
-     *     tags={"Categorization"},
+     *     path="/categorization/categories/subcategories/store",
+     *     tags={"Categorization › Subcategories"},
      *     summary="Crear una subcategoría",
+     *     description="Crea la subcategoría y la asocia a la categoría `category_id`.",
      *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="ADMINISTRACION",
-     *                 description="Nombre de la subcategoría"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="LISTA",
-     *                 description="Descripción de la subcategoría"
-     *              )
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/SubcategoryRequest")
      *     ),
      *     @OA\Response(
-     *         response=200,
+     *         response=201,
      *         description="Subcategoría creada correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="category",
-     *                     type="object",
-     *                     @OA\Property(property="name", type="string", example="NAME_SUBCATEGORY"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_SUBCATEGORY"),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="id", type="integer", example=1)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/SubcategoryResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="Datos inválidos.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre de la subcategoría"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del subcategoría")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"name": "Nombre", "description": "Descripción"},
+     *                 "errors": {"name": {"Ya está registrado."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function store(SubcategoryStoreRequest $request)
@@ -382,101 +262,39 @@ class SubcategoryController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/categorization/subcategories/update/{id}",
-     *     tags={"Categorization"},
-     *     summary="Editar una subcategoría específica",
+     *     path="/categorization/categories/subcategories/update/{id}",
+     *     tags={"Categorization › Subcategories"},
+     *     summary="Editar una subcategoría",
+     *     description="Reemplaza nombre y descripción; no cambia las categorías.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador de la subcategoría",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *    @OA\RequestBody(
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"category_id","name"},
-     *             @OA\Property(
-     *                 property="category_id",
-     *                 type="integer",
-     *                 example=1,
-     *                 description="Identificador de la categoría"
-     *             ),
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="ADMINISTRACION",
-     *                 description="Nombre de la subcategoría"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="LISTA",
-     *                 description="Descripción de la subcategoría"
-     *              )
+     *             ref="#/components/schemas/SubcategoryRequest",
+     *             example={"name": "JEAN MOM FIT", "description": "JEAN DE TIRO ALTO, PIERNA HOLGADA Y BOTA RECTA"}
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Subcategoría editada correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="subcategory",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_SUBCATEGORY"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_SUBCATEGORY"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/SubcategoryResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="Datos inválidos o subcategoría no registrada.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre de la subcategoría"),
-     *                 @OA\Property(property="description", type="string", example="Descripción de la subcategoría")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"id": "Identificador de la subcategoría", "name": "Nombre", "description": "Descripción"},
+     *                 "errors": {"name": {"Ya está registrado."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function update(SubcategoryUpdateRequest $request, $id)
@@ -507,76 +325,21 @@ class SubcategoryController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/categorization/subcategories/delete/{id}",
-     *     tags={"Categorization"},
-     *     summary="Desactivar una subcategoría específica",
+     *     path="/categorization/categories/subcategories/delete/{id}",
+     *     tags={"Categorization › Subcategories"},
+     *     summary="Desactivar una subcategoría",
+     *     description="Desactivación lógica (soft delete): el registro se conserva y puede restaurarse.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador de la subcategoría",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Subcategoría desactivada correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="subcategory",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_SUBCATEGORY"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_SUBCATEGORY"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Subcategoría desactivada correctamente. `deleted_at` queda con la fecha de desactivación.",
+     *         @OA\JsonContent(ref="#/components/schemas/SubcategoryResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador de la subcategoría")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function delete(SubcategoryDeleteRequest $request, $id)
@@ -605,76 +368,21 @@ class SubcategoryController extends Controller
 
     /**
      * @OA\Patch(
-     *     path="/categorization/subcategories/restore/{id}",
-     *     tags={"Categorization"},
-     *     summary="Activar una subcategoría específica",
+     *     path="/categorization/categories/subcategories/restore/{id}",
+     *     tags={"Categorization › Subcategories"},
+     *     summary="Restaurar una subcategoría desactivada",
+     *     description="Solo acepta registros desactivados.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador de la subcategoría",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Subcategoría activada correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="subcategory",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_SUBCATEGORY"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_SUBCATEGORY"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Subcategoría restaurada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/SubcategoryResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador de la subcategoría")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function restore(SubcategoryRestoreRequest $request, $id)

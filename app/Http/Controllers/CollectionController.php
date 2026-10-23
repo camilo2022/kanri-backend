@@ -20,33 +20,110 @@ use App\Traits\ApiResponser;
  *     description="Endpoints para gestionar colecciones"
  * )
  *
- * @OA\PathItem(
- *     path="/collections",
- *     description="Rutas de gestión de colecciones"
+ * @OA\Schema(
+ *     schema="CollectionSettings",
+ *     type="object",
+ *     required={"code", "start_date", "end_date"},
+ *     description="Código y vigencia de la colección. El código es único y el rango de fechas no puede cruzarse con el de otra colección activa.",
+ *     @OA\Property(property="code", type="string", pattern="^[0-9]{2,5}$", description="Código numérico de 2 a 5 dígitos.", example="32026"),
+ *     @OA\Property(property="start_date", type="string", format="date", description="Formato Y-m-d.", example="2027-01-15"),
+ *     @OA\Property(property="end_date", type="string", format="date", description="Formato Y-m-d. Debe ser posterior a `start_date` (ver pendientes: hoy no se comprueba).", example="2027-03-31")
  * )
  *
  * @OA\Schema(
  *     schema="Collection",
  *     type="object",
- *
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="item_id", type="integer", example=20),
- *     @OA\Property(property="name", type="string", example="No Aplica"),
- *     @OA\Property(property="description", type="string", example="No Aplica"),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *     @OA\Property(property="id", type="integer", example=118),
+ *     @OA\Property(property="item_id", type="integer", example=30),
+ *     @OA\Property(property="name", type="string", example="C32026"),
+ *     @OA\Property(property="description", type="string", example="COLECCIÓN PRIMAVERA DENIM"),
+ *     @OA\Property(property="settings", nullable=true, allOf={@OA\Schema(ref="#/components/schemas/CollectionSettings")}),
+ *     @OA\Property(property="created_at", type="string", example="2026-05-14 12:30:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-05-14 12:30:00"),
+ *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
  *     @OA\Property(
  *         property="item",
  *         type="object",
- *         @OA\Property(property="id", type="integer", example=20),
- *         @OA\Property(property="name", type="string", example="Colecciones"),
+ *         @OA\Property(property="id", type="integer", example=30),
+ *         @OA\Property(property="name", type="string", example="Colección"),
  *         @OA\Property(property="description", type="string", example="Listado de colecciones."),
- *         @OA\Property(property="settings", type="string", example="{}"),
+ *         @OA\Property(property="settings", type="object", nullable=true, example=null),
  *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
  *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
+ *     )
+ * )
+ *
+ * @OA\Schema(
+ *     schema="CollectionDetail",
+ *     description="Colección como la entrega `CollectionResource`: incluye sus fichas técnicas.",
+ *     allOf={
+ *         @OA\Schema(ref="#/components/schemas/Collection"),
+ *         @OA\Schema(
+ *             @OA\Property(
+ *                 property="technical_sheets",
+ *                 type="array",
+ *                 description="Fichas técnicas de la colección. En `find` cada ficha trae además `technical_sheet_details`, `product` (con `trademark.sizes` y `subcategory.category`), `garment_type`, `wash_tone`, `boot_type`, `photo_d`, `photo_t`, `products` y `production_orders` (con detalles, cantidades, tela, color, proveedor y reasignaciones). En store/update/delete/restore vienen sin relaciones.",
+ *                 @OA\Items(
+ *                     type="object",
+ *                     additionalProperties=true,
+ *                     @OA\Property(property="id", type="integer", example=905),
+ *                     @OA\Property(property="uuid", type="string", format="uuid", example="3f6d2a1c-8b4e-4c7a-9e21-6a5b0d4c2f18"),
+ *                     @OA\Property(property="code", type="string", example="CU85"),
+ *                     @OA\Property(property="collection_id", type="integer", example=118),
+ *                     @OA\Property(property="product_id", type="integer", example=1460),
+ *                     @OA\Property(property="status", type="string", enum={"Pendiente", "En revision", "Aprobado", "Cancelado"}, example="En revision")
+ *                 )
+ *             )
+ *         )
+ *     }
+ * )
+ *
+ * @OA\Schema(
+ *     schema="CollectionResponse",
+ *     type="object",
+ *     @OA\Property(
+ *         property="data",
+ *         type="object",
+ *         @OA\Property(property="collection", ref="#/components/schemas/CollectionDetail"),
+ *         @OA\Property(
+ *             property="status_production_order",
+ *             type="array",
+ *             description="Catálogo fijo de estados de una orden de producción.",
+ *             @OA\Items(type="string"),
+ *             example={"Pendiente", "Cancelado", "Aprobado"}
+ *         )
  *     ),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="CollectionListResponse",
+ *     type="object",
+ *     @OA\Property(
+ *         property="data",
+ *         type="object",
+ *         @OA\Property(property="collections", type="array", @OA\Items(ref="#/components/schemas/Collection")),
+ *         @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="CollectionRequest",
+ *     type="object",
+ *     required={"name", "description", "settings"},
+ *     @OA\Property(
+ *         property="name",
+ *         type="string",
+ *         pattern="^C\d(19\d{2}|20([0-1]\d|2[0-6]))$",
+ *         description="`C`, un dígito y el año (de 1900 a 2026; ver pendientes). Único entre las colecciones.",
+ *         example="C32026"
+ *     ),
+ *     @OA\Property(property="description", type="string", maxLength=255, description="Descripción en MAYÚSCULAS.", example="COLECCIÓN PRIMAVERA DENIM"),
+ *     @OA\Property(property="settings", ref="#/components/schemas/CollectionSettings")
  * )
  */
 class CollectionController extends Controller
@@ -57,106 +134,40 @@ class CollectionController extends Controller
      * @OA\Get(
      *     path="/collections/all",
      *     tags={"Collections"},
-     *     summary="Listar coleccións de ropa",
+     *     summary="Listar las colecciones",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Filtro de Busqueda.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="string", example="juan")
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/Search"),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
-     *         description="Columna a ordenar.",
      *         required=false,
-     *
-     *         @OA\Schema(type="string", enum={"id","name","description","created_at", "updated_at"}, example="name")
+     *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *         @OA\Schema(type="string", enum={"id", "name", "description", "created_at", "updated_at", "deleted_at"}, example="name")
      *     ),
-     *
-     *     @OA\Parameter(
-     *         name="dir",
-     *         in="query",
-     *         description="Dirección de ordenamiento.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
-     *     ),
-     *
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Registros por página.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="integer", example=10)
-     *     ),
-     *
-     *     @OA\Parameter(
-     *         name="with_trashed",
-     *         in="query",
-     *         description="Registros inactivos.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="boolean", example=true)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/Dir"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
      *     @OA\Response(
      *         response=200,
-     *         description="Lista de coleccións de ropa cargada correctamente",
-     *
+     *         description="Lista de colecciones cargada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/CollectionListResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Parámetros de consulta inválidos.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="collections",
-     *                     type="array",
-     *
-     *                     @OA\Items(ref="#/components/schemas/Collection")
-     *                 ),
-     *
-     *                 @OA\Property(
-     *                     property="meta",
-     *                     type="object",
-     *                     @OA\Property(
-     *                         property="pagination",
-     *                         type="object",
-     *                         @OA\Property(property="total", type="integer", example=1),
-     *                         @OA\Property(property="count", type="integer", example=1),
-     *                         @OA\Property(property="per_page", type="integer", example=1),
-     *                         @OA\Property(property="current_page", type="integer", example=1),
-     *                         @OA\Property(property="total_pages", type="integer", example=1)
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"per_page": "Registros por pagina.", "page": "N° de pagina.", "search": "Filtro de Busqueda.", "column": "Columna a ordenar.", "dir": "Sentido del orden.", "with_trashed": "Registros inactivos"},
+     *                 "errors": {"page": {"Debe ser un valor numérico."}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function all(CollectionAllRequest $request)
@@ -195,79 +206,19 @@ class CollectionController extends Controller
      * @OA\Get(
      *     path="/collections/find/{id}",
      *     tags={"Collections"},
-     *     summary="Obtener una colección de ropa específica",
+     *     summary="Obtener una colección con sus fichas técnicas",
+     *     description="Devuelve la colección con sus fichas técnicas, productos y órdenes de producción, y el catálogo de estados de orden.",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador de la colección",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Colección cargada con éxito",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="clothing",
-     *                     ref="#/components/schemas/Collection"
-     *                 ),
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Colección cargada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/CollectionResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Identificador de la colección no registrado.",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example=1)
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function find(CollectionFindRequest $request, $id)
@@ -298,96 +249,30 @@ class CollectionController extends Controller
      *     tags={"Collections"},
      *     summary="Crear una colección",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\RequestBody(
      *         required=true,
-     *
-     *         @OA\JsonContent(
-     *             required={"name"},
-     *
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="ADMINISTRACION",
-     *                 description="Nombre de la Colección"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="LISTA",
-     *                 description="Descripción de la Colección"
-     *              )
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/CollectionRequest")
      *     ),
-     *
      *     @OA\Response(
-     *         response=200,
-     *         description="Colección creada correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="collection",
-     *                     type="object",
-     *                     @OA\Property(property="name", type="string", example="NAME_COLLECTION"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_COLLECTION"),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="id", type="integer", example=1)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         response=201,
+     *         description="Colección creada correctamente. `technical_sheets` llega vacío.",
+     *         @OA\JsonContent(ref="#/components/schemas/CollectionResponse")
      *     ),
-     *
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
-     *
+     *         description="Datos inválidos, código repetido o rango de fechas cruzado con otra colección.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre de la Colección"),
-     *                 @OA\Property(property="description", type="string", example="Descripción de la Colección")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"name": "Nombre", "description": "Descripción", "settings.code": "Código", "settings.start_date": "Fecha de Inicio", "settings.end_date": "Fecha de Fin"},
+     *                 "errors": {"name": {"Formato inválido. Debe iniciar con C y contener 5 números (los últimos 4 corresponden al año)."}, "settings.start_date": {"Ya existe una colección en ese rango de fechas."}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function store(CollectionStoreRequest $request)
@@ -420,109 +305,37 @@ class CollectionController extends Controller
      * @OA\Put(
      *     path="/collections/update/{id}",
      *     tags={"Collections"},
-     *     summary="Editar una colección específica",
+     *     summary="Editar una colección",
+     *     description="**Hoy solo guarda `name` y `description`.** `settings` se valida (código único, fechas sin cruce) pero no se guarda (ver pendientes). Responde 201, no 200.",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador de la colección",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
      *         required=true,
-     *
      *         @OA\JsonContent(
-     *             required={"name"},
-     *
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="Usuarios",
-     *                 description="Nombre de la Colección"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="Lista de Usuarios",
-     *                 description="Descripción de la Colección"
-     *              )
+     *             ref="#/components/schemas/CollectionRequest",
+     *             example={"name": "C42026", "description": "COLECCIÓN INVIERNO DENIM", "settings": {"code": "42026", "start_date": "2027-04-01", "end_date": "2027-06-30"}}
      *         )
      *     ),
-     *
      *     @OA\Response(
-     *         response=200,
+     *         response=201,
      *         description="Colección editada correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="collection",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_COLLECTION"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_COLLECTION"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/CollectionResponse")
      *     ),
-     *
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
-     *
+     *         description="Datos inválidos, colección no registrada, código repetido o rango de fechas cruzado.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre de la Colección"),
-     *                 @OA\Property(property="description", type="string", example="Descripción de la Colección")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"id": "Identificador de la colección", "name": "Nombre", "description": "Descripción", "settings.code": "Código", "settings.start_date": "Fecha de Inicio", "settings.end_date": "Fecha de Fin"},
+     *                 "errors": {"settings.code": {"El código ya está registrado."}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function update(CollectionUpdateRequest $request, $id)
@@ -554,87 +367,19 @@ class CollectionController extends Controller
      * @OA\Delete(
      *     path="/collections/delete/{id}",
      *     tags={"Collections"},
-     *     summary="Desactivar una colección específica",
+     *     summary="Desactivar una colección",
+     *     description="Desactivación lógica (soft delete): el registro se conserva y puede restaurarse.",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador de la colección",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Colección desactivada correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="collection",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_COLLECTION"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_COLLECTION"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Colección desactivada correctamente. `deleted_at` queda con la fecha de desactivación.",
+     *         @OA\JsonContent(ref="#/components/schemas/CollectionResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador de la colección")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function delete(CollectionDeleteRequest $request, $id)
@@ -663,87 +408,18 @@ class CollectionController extends Controller
      * @OA\Patch(
      *     path="/collections/restore/{id}",
      *     tags={"Collections"},
-     *     summary="Activar una colección específica",
+     *     summary="Restaurar una colección desactivada",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador de la colección",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Colección activada correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="collection",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_COLLECTION"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_COLLECTION"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Colección restaurada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/CollectionResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador de la colección")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function restore(CollectionRestoreRequest $request, $id)

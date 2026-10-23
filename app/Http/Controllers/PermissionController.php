@@ -13,43 +13,74 @@ use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 
 /**
- * @OA\Tag(
- *     name="Permission",
- *     description="Endpoints de Gestión de Permisos"
- * )
- *
- * @OA\PathItem(
- *     path="/permission",
- *     description="Rutas de Gestión de Permisos"
+ * @OA\Schema(
+ *     schema="PermissionRole",
+ *     description="Rol al que pertenece el permiso, con el pivote de `role_has_permissions`.",
+ *     allOf={
+ *         @OA\Schema(ref="#/components/schemas/Role"),
+ *         @OA\Schema(@OA\Property(property="pivot", type="object", @OA\Property(property="permission_id", type="integer", example=371), @OA\Property(property="role_id", type="integer", example=52)))
+ *     }
  * )
  *
  * @OA\Schema(
- *     schema="PermissionWithRole",
+ *     schema="PermissionListItem",
  *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="name", type="string", example="users"),
- *     @OA\Property(property="title", type="string", example="Usuarios."),
- *     @OA\Property(property="description", type="string", example="Gestión de usuarios."),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *     description="Permiso como lo entrega `PermissionCollection` (all): con su rol en `role` (solo el primero).",
+ *     @OA\Property(property="id", type="integer", example=371),
+ *     @OA\Property(property="name", type="string", example="dispatches.all"),
+ *     @OA\Property(property="title", type="string", example="Listar despachos."),
+ *     @OA\Property(property="description", type="string", example="Permite listar despachos."),
+ *     @OA\Property(property="created_at", type="string", example="2026-05-14 17:30:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-05-14 17:30:00"),
+ *     @OA\Property(property="role", nullable=true, allOf={@OA\Schema(ref="#/components/schemas/PermissionRole")})
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PermissionDetail",
+ *     type="object",
+ *     description="Permiso como lo entrega `PermissionResource` (find, store, update): con `roles` (lista). Trae `item_id`, `settings`, `deleted_at` e `item` siempre en `null`, porque el Resource está copiado de los catálogos (ver pendientes).",
+ *     @OA\Property(property="id", type="integer", example=371),
+ *     @OA\Property(property="item_id", nullable=true, example=null),
+ *     @OA\Property(property="name", type="string", example="dispatches.all"),
+ *     @OA\Property(property="title", type="string", example="Listar despachos."),
+ *     @OA\Property(property="description", type="string", example="Permite listar despachos."),
+ *     @OA\Property(property="settings", nullable=true, example=null),
+ *     @OA\Property(property="created_at", type="string", example="2026-05-14 17:30:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-05-14 17:30:00"),
+ *     @OA\Property(property="deleted_at", nullable=true, example=null),
+ *     @OA\Property(property="item", nullable=true, example=null),
+ *     @OA\Property(property="roles", type="array", @OA\Items(ref="#/components/schemas/PermissionRole"))
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PermissionResponse",
+ *     type="object",
+ *     @OA\Property(property="data", type="object", @OA\Property(property="permission", ref="#/components/schemas/PermissionDetail")),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PermissionListResponse",
+ *     type="object",
  *     @OA\Property(
- *         property="role",
+ *         property="data",
  *         type="object",
- *         @OA\Property(property="id", type="integer", example=1),
- *         @OA\Property(property="name", type="string", example="users"),
- *         @OA\Property(property="guard_name", type="string", example="api"),
- *         @OA\Property(property="title", type="string", example="Usuarios."),
- *         @OA\Property(property="description", type="string", example="Gestión de usuarios."),
- *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *         @OA\Property(
- *             property="pivot",
- *             type="object",
- *             @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
- *             @OA\Property(property="model_id", type="integer", example=1),
- *             @OA\Property(property="role_id", type="integer", example=1)
- *         )
- *     )
+ *         @OA\Property(property="permissions", type="array", @OA\Items(ref="#/components/schemas/PermissionListItem")),
+ *         @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PermissionRequest",
+ *     type="object",
+ *     required={"role_id", "name", "title", "description"},
+ *     @OA\Property(property="role_id", type="integer", description="Rol al que pertenece el permiso. Al guardar, el permiso queda solo en este rol (reemplaza los anteriores).", example=52),
+ *     @OA\Property(property="name", type="string", maxLength=80, pattern="^[a-z._]+$", description="Solo minúsculas, puntos y guiones bajos: `<prefijo.de.la.ruta>.<acción>`. Único. Debe coincidir con el `can:` de la ruta que protege.", example="dispatches.all"),
+ *     @OA\Property(property="title", type="string", maxLength=100, description="Único.", example="Listar despachos."),
+ *     @OA\Property(property="description", type="string", maxLength=255, description="Única.", example="Permite listar despachos.")
  * )
  */
 class PermissionController extends Controller
@@ -59,88 +90,44 @@ class PermissionController extends Controller
     /**
      * @OA\Get(
      *     path="/authorization/permissions/all",
-     *     tags={"Authorization"},
+     *     tags={"Authorization › Permissions"},
      *     summary="Listar los permisos",
+     *     description="La búsqueda mira nombre, título y descripción del permiso y de su rol. Sin borrado lógico: no hay `with_trashed`.",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
      *         name="role_id",
      *         in="query",
-     *         description="Identificador del Rol.",
      *         required=false,
-     *         @OA\Schema(type="integer", example=1)
+     *         description="Solo los permisos de este rol.",
+     *         @OA\Schema(type="integer", example=52)
      *     ),
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Filtro de Busqueda.",
-     *         required=false,
-     *         @OA\Schema(type="string", example="juan")
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/Search"),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
-     *         description="Columna a ordenar.",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"id","name","title", "description","created_at", "updated_at"}, example="name")
+     *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *         @OA\Schema(type="string", enum={"id", "name", "title", "description", "created_at", "updated_at"}, example="name")
      *     ),
-     *     @OA\Parameter(
-     *         name="dir",
-     *         in="query",
-     *         description="Dirección de ordenamiento.",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
-     *     ),
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Registros por página.",
-     *         required=false,
-     *         @OA\Schema(type="integer", example=10)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/Dir"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
      *     @OA\Response(
      *         response=200,
      *         description="Lista de permisos cargada correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="permissions",
-     *                     type="array",
-     *                     @OA\Items(ref="#/components/schemas/PermissionWithRole")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="meta",
-     *                     type="object",
-     *                     @OA\Property(
-     *                         property="pagination",
-     *                         type="object",
-     *                         @OA\Property(property="total", type="integer", example=1),
-     *                         @OA\Property(property="count", type="integer", example=1),
-     *                         @OA\Property(property="per_page", type="integer", example=1),
-     *                         @OA\Property(property="current_page", type="integer", example=1),
-     *                         @OA\Property(property="total_pages", type="integer", example=1)
-     *                     )
-     *                 ),
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/PermissionListResponse")
      *     ),
      *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
+     *         response=422,
+     *         description="Parámetros de consulta inválidos.",
      *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={"message": "Error de validación.", "attributes": {"role_id": "", "column": "Columna a ordenar."}, "errors": {"column": {"El valor de la columna no es válido. "}}}
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function all(PermissionAllRequest $request)
@@ -176,67 +163,19 @@ class PermissionController extends Controller
     /**
      * @OA\Get(
      *     path="/authorization/permissions/find/{id}",
-     *     tags={"Authorization"},
-     *     summary="Obtener un permiso específico",
+     *     tags={"Authorization › Permissions"},
+     *     summary="Obtener un permiso",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del permiso",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Permiso obtenido correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                   property="permission",
-     *                   ref="#/components/schemas/PermissionWithRole"
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Permiso cargado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/PermissionResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Identificador de permiso no registrado.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del permiso")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function find(PermissionFindRequest $request, $id)
@@ -264,114 +203,34 @@ class PermissionController extends Controller
     /**
      * @OA\Post(
      *     path="/authorization/permissions/store",
-     *     tags={"Authorization"},
+     *     tags={"Authorization › Permissions"},
      *     summary="Crear un permiso",
+     *     description="Crea el permiso y lo asigna al rol indicado.",
      *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             required={"role_id","name","tittle","description"},
-     *             @OA\Property(
-     *                 property="role_id",
-     *                 type="integer",
-     *                 example=1,
-     *                 description="Identificador del Rol"
-     *             ),
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="user.all",
-     *                 description="Nombre del permiso"
-     *             ),
-     *             @OA\Property(
-     *                 property="tittle",
-     *                 type="string",
-     *                 example="Listar Usuarios",
-     *                 description="Título del permiso"
-     *              ),
-     *              @OA\Property(
-     *                  property="description",
-     *                  type="string",
-     *                  example="Permite listar los usuarios",
-     *                  description="Descripción del permiso"
-     *              )
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/PermissionRequest")
      *     ),
      *     @OA\Response(
-     *         response=200,
+     *         response=201,
      *         description="Permiso creado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="permission",
-     *                     type="object",
-     *                     @OA\Property(property="name", type="string", example="name_permission_example"),
-     *                     @OA\Property(property="title", type="string", example="title_permission_example"),
-     *                     @OA\Property(property="description", type="string", example="description_permission_example"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="id", type="integer", example=1)
-     *                 ),
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         ),
+     *         @OA\JsonContent(ref="#/components/schemas/PermissionResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="Datos inválidos.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="role_id", type="integer", example="Identificador del rol"),
-     *                 @OA\Property(property="name", type="string", example="Nombre del permiso"),
-     *                 @OA\Property(property="title", type="string", example="Título del permiso"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del permiso")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="role_id",
-     *                     type="array",
-     *                     @OA\Items(type="numeric", example="El identificador del rol no existe.")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Es obligatorio.")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="title",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Es obligatorio.")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="description",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Es obligatorio.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"role_id": "Identificador del rol.", "name": "Nombre del permiso", "title": "Título del permiso", "description": "Descripción del permiso"},
+     *                 "errors": {"name": {"Formato inválido. Solo permite letras minúsculas y punto."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function store(PermissionStoreRequest $request)
@@ -404,122 +263,38 @@ class PermissionController extends Controller
     /**
      * @OA\Put(
      *     path="/authorization/permissions/update/{id}",
-     *     tags={"Authorization"},
-     *     summary="Editar un permiso específico",
+     *     tags={"Authorization › Permissions"},
+     *     summary="Editar un permiso",
+     *     description="Cambia nombre, título y descripción, y deja el permiso solo en el rol indicado. Cambiar el nombre afecta a las rutas que lo exigen en `can:`.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del permiso",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"role_id","name","tittle","description"},
-     *             @OA\Property(
-     *                 property="role_id",
-     *                 type="integer",
-     *                 example=1,
-     *                 description="Identificador del Rol"
-     *             ),
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="user.all",
-     *                 description="Nombre del permiso"
-     *             ),
-     *             @OA\Property(
-     *                 property="tittle",
-     *                 type="string",
-     *                 example="Listar Usuarios",
-     *                 description="Título del permiso"
-     *              ),
-     *              @OA\Property(
-     *                  property="description",
-     *                  type="string",
-     *                  example="Permite listar los usuarios",
-     *                  description="Descripción del permiso"
-     *              )
+     *             ref="#/components/schemas/PermissionRequest",
+     *             example={"role_id": 52, "name": "dispatches.export", "title": "Exportar despachos.", "description": "Permite exportar despachos."}
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Permiso editado con éxito",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="permission",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="name_permission_example"),
-     *                     @OA\Property(property="title", type="string", example="title_permission_example"),
-     *                     @OA\Property(property="description", type="string", example="description_permission_example"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                 ),
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false),
-     *         ),
+     *         description="Permiso editado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/PermissionResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="Datos inválidos o permiso no registrado.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="role_id", type="integer", example="role_id_example"),
-     *                 @OA\Property(property="id", type="string", example="Identificador del permiso"),
-     *                 @OA\Property(property="name", type="string", example="Nombre del permiso"),
-     *                 @OA\Property(property="title", type="string", example="Título del permiso"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del permiso")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="role_id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Es obligatorio.")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="title",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Es obligatorio.")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="description",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Es obligatorio.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"role_id": "Identificador del rol", "id": "Identificador del permiso", "name": "Nombre del permiso", "title": "Título del permiso", "description": "Descripción del permiso"},
+     *                 "errors": {"title": {"Ya está registrado."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function update(PermissionUpdateRequest $request, $id)

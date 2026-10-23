@@ -26,38 +26,88 @@ use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 
 /**
- * @OA\Tag(
- *     name="Supplies",
- *     description="Endpoints para gestionar insumos"
- * )
- *
- * @OA\PathItem(
- *     path="/Supplies",
- *     description="Rutas de gestión de insumos"
+ * @OA\Schema(
+ *     schema="SupplySettings",
+ *     type="object",
+ *     description="Configuración del insumo. Se guarda tal cual llega. El frontend guarda en `values` los campos simples del formulario de su tipo (los `selectdinamic` van como relaciones, no aquí).",
+ *     @OA\Property(property="values", type="object", additionalProperties=true, example={"width": 150, "heigth": 1200})
  * )
  *
  * @OA\Schema(
  *     schema="Supply",
  *     type="object",
- *
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="item_id", type="integer", example=10),
- *     @OA\Property(property="name", type="string", example="No Aplica"),
- *     @OA\Property(property="description", type="string", example="No Aplica"),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *     description="Insumo como lo entrega `SupplyCollection` (all). Además de estos campos, por cada campo `selectdinamic` del formulario de su tipo trae una clave con el nombre del campo (por ejemplo `supplier_id`) con el registro relacionado, o la lista si es `multiple`.",
+ *     @OA\Property(property="id", type="integer", example=488),
  *     @OA\Property(
  *         property="item",
  *         type="object",
- *         @OA\Property(property="id", type="integer", example=34),
- *         @OA\Property(property="name", type="string", example="Supplyes"),
- *         @OA\Property(property="description", type="string", example="Listado de insumos."),
- *         @OA\Property(property="settings", type="string", example="{}"),
- *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
+ *         @OA\Property(property="id", type="integer", example=29),
+ *         @OA\Property(property="name", type="string", example="Insumos")
  *     ),
+ *     @OA\Property(property="name", type="string", example="DENIM STRETCH 12 OZ"),
+ *     @OA\Property(property="description", type="string", example="DENIM AZUL ÍNDIGO CON ELASTANO"),
+ *     @OA\Property(property="created_at", type="string", example="2026-05-14 10:15:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-05-14 10:15:00"),
+ *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
+ *     @OA\Property(property="settings", ref="#/components/schemas/SupplySettings"),
+ *     @OA\Property(property="production_order_details", type="array", description="Detalles de órdenes de producción donde se usa el insumo.", @OA\Items(type="object", additionalProperties=true))
+ * )
+ *
+ * @OA\Schema(
+ *     schema="SupplyDetail",
+ *     type="object",
+ *     description="Insumo como lo entrega `SupplyResource` (find, store, update, delete, restore). Por cada campo `selectdinamic` del formulario de su tipo trae dos claves: el modelo en minúsculas (`supplier`, o en plural si es `multiple`, como `colors`) con el registro, y el nombre del campo (`supplier_id`) con el id o la lista de ids.",
+ *     @OA\Property(property="id", type="integer", example=488),
+ *     @OA\Property(property="item_id", type="integer", example=29),
+ *     @OA\Property(property="name", type="string", example="DENIM STRETCH 12 OZ"),
+ *     @OA\Property(property="description", type="string", example="DENIM AZUL ÍNDIGO CON ELASTANO"),
+ *     @OA\Property(property="settings", ref="#/components/schemas/SupplySettings"),
+ *     @OA\Property(property="created_at", type="string", example="2026-05-14 10:15:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-05-14 10:15:00"),
+ *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
+ *     @OA\Property(property="item", type="object", additionalProperties=true),
+ *     @OA\Property(property="supply_type", description="Su tipo de insumo, con el formulario en `settings.form`.", allOf={@OA\Schema(ref="#/components/schemas/Subitem")}),
+ *     @OA\Property(property="supplier", type="object", additionalProperties=true, description="Ejemplo de relación dinámica (tipo TELA, campo `supplier_id`)."),
+ *     @OA\Property(property="supplier_id", type="integer", description="Ejemplo de relación dinámica: id del proveedor.", example=470)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="SupplyResponse",
+ *     type="object",
+ *     @OA\Property(
+ *         property="data",
+ *         type="object",
+ *         @OA\Property(property="supply", ref="#/components/schemas/SupplyDetail"),
+ *         @OA\Property(property="model_types", type="object", description="Modelos que se pueden usar en los campos `selectdinamic` (igual que en tipos de insumo).", additionalProperties=true)
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="SupplyListResponse",
+ *     type="object",
+ *     @OA\Property(
+ *         property="data",
+ *         type="object",
+ *         @OA\Property(property="supplies", type="array", @OA\Items(ref="#/components/schemas/Supply")),
+ *         @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="SupplyRequest",
+ *     type="object",
+ *     required={"supply_type_id", "name", "description"},
+ *     description="Además de los campos fijos, se validan los del formulario del tipo de insumo (`settings.form`) con sus propias reglas: los campos simples en `values.<campo>` y los `selectdinamic` en `class.<campo>` (un id, o una lista si son `multiple`).",
+ *     @OA\Property(property="supply_type_id", type="integer", description="Tipo de insumo. Al crear se asocia; al editar no es obligatorio, pero sin él no se validan los campos del formulario.", example=218),
+ *     @OA\Property(property="name", type="string", minLength=4, maxLength=50, description="Nombre en MAYÚSCULAS. Único entre los insumos.", example="DENIM STRETCH 12 OZ"),
+ *     @OA\Property(property="description", type="string", maxLength=255, description="Descripción en MAYÚSCULAS.", example="DENIM AZUL ÍNDIGO CON ELASTANO"),
+ *     @OA\Property(property="values", type="object", additionalProperties=true, description="Campos simples del formulario (se validan, pero no se guardan por sí solos: el frontend los copia a `settings.values`).", example={"width": 150, "heigth": 1200}),
+ *     @OA\Property(property="class", type="object", additionalProperties=true, description="Campos `selectdinamic`: se guardan como relaciones del insumo.", example={"supplier_id": 470, "color_id": {512, 515}}),
+ *     @OA\Property(property="settings", ref="#/components/schemas/SupplySettings")
  * )
  */
 class SupplyController extends Controller
@@ -66,108 +116,46 @@ class SupplyController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/supplies/all",
-     *     tags={"Supplies"},
-     *     summary="Listar Insumos",
+     *     path="/typification/supply_types/supplies/all/{supply_type_id}",
+     *     tags={"Typification › Supplies"},
+     *     summary="Listar los insumos de un tipo de insumo",
+     *     description="Cada insumo trae `item`, `settings`, sus detalles de órdenes de producción y sus relaciones dinámicas. También la pueden consultar quienes configuran procesos, subprocesos u operaciones. Hoy responde **500** si el tipo de insumo tiene campos `selectdinamic` (TELA, ROLLO…), porque el modelo `Supply` no tiene el método `related()` (ver pendientes).",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Filtro de Busqueda.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="string", example="juan")
+     *         name="supply_type_id",
+     *         in="path",
+     *         required=true,
+     *         description="Tipo de insumo.",
+     *         @OA\Schema(type="integer", example=218)
      *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/Search"),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
-     *         description="Columna a ordenar.",
      *         required=false,
-     *
-     *         @OA\Schema(type="string", enum={"id","name","description","created_at", "updated_at"}, example="name")
+     *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *         @OA\Schema(type="string", enum={"id", "name", "description", "created_at", "updated_at", "deleted_at"}, example="name")
      *     ),
-     *
-     *     @OA\Parameter(
-     *         name="dir",
-     *         in="query",
-     *         description="Dirección de ordenamiento.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
-     *     ),
-     *
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Registros por página.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="integer", example=10)
-     *     ),
-     *
-     *     @OA\Parameter(
-     *         name="with_trashed",
-     *         in="query",
-     *         description="Registros inactivos.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="boolean", example=true)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/Dir"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
      *     @OA\Response(
      *         response=200,
      *         description="Lista de insumos cargada correctamente",
-     *
+     *         @OA\JsonContent(ref="#/components/schemas/SupplyListResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Parámetros de consulta inválidos.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="supplies",
-     *                     type="array",
-     *
-     *                     @OA\Items(ref="#/components/schemas/Supply")
-     *                 ),
-     *
-     *                 @OA\Property(
-     *                     property="meta",
-     *                     type="object",
-     *                     @OA\Property(
-     *                         property="pagination",
-     *                         type="object",
-     *                         @OA\Property(property="total", type="integer", example=1),
-     *                         @OA\Property(property="count", type="integer", example=1),
-     *                         @OA\Property(property="per_page", type="integer", example=1),
-     *                         @OA\Property(property="current_page", type="integer", example=1),
-     *                         @OA\Property(property="total_pages", type="integer", example=1)
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={"message": "Error de validación.", "attributes": {"per_page": "Registros por pagina.", "page": "N° de pagina.", "search": "Filtro de Busqueda.", "column": "Columna a ordenar.", "dir": "Sentido del orden.", "with_trashed": "Registros inactivos"}, "errors": {"column": {"Valor inválido. Permitidos: id, name, description, created_at, updated_at, deleted_at."}}}
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function all(SupplyAllRequest $request, $supply_type_id)
@@ -207,81 +195,21 @@ class SupplyController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/supplies/find/{id}",
-     *     tags={"Supplies"},
-     *     summary="Obtener un insumo específico",
+     *     path="/typification/supply_types/supplies/find/{id}",
+     *     tags={"Typification › Supplies"},
+     *     summary="Obtener un insumo",
+     *     description="Trae el insumo con su tipo, sus relaciones dinámicas y `model_types`. Hoy responde **500** si el tipo de insumo tiene campos `selectdinamic` (TELA, ROLLO…), porque el modelo `Supply` no tiene el método `related()` (ver pendientes).",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del insumo",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Insumo cargado con éxito",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="supply",
-     *                     ref="#/components/schemas/Supply"
-     *                 ),
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Insumo cargado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/SupplyResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Identificador del insumo no registrado.",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example=1)
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function find(SupplyFindRequest $request, $id)
@@ -307,100 +235,38 @@ class SupplyController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/supplies/store",
-     *     tags={"Supplies"},
+     *     path="/typification/supply_types/supplies/store",
+     *     tags={"Typification › Supplies"},
      *     summary="Crear un insumo",
+     *     description="Crea el insumo, lo asocia a su tipo y guarda como relaciones los campos `selectdinamic` que lleguen en `class`. Hoy responde **500** si el tipo de insumo tiene campos `selectdinamic` (TELA, ROLLO…), porque el modelo `Supply` no tiene el método `related()` (ver pendientes).",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\RequestBody(
      *         required=true,
-     *
      *         @OA\JsonContent(
-     *             required={"name"},
-     *
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="ROLLO",
-     *                 description="Nombre del insumo"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="ROLLO",
-     *                 description="Descripción del insumo"
-     *              )
+     *             ref="#/components/schemas/SupplyRequest",
+     *             example={"supply_type_id": 218, "name": "DENIM STRETCH 12 OZ", "description": "DENIM AZUL ÍNDIGO CON ELASTANO", "values": {"width": 150, "heigth": 1200}, "class": {"supplier_id": 470, "color_id": {512, 515}}, "settings": {"values": {"width": 150, "heigth": 1200}}}
      *         )
      *     ),
-     *
      *     @OA\Response(
-     *         response=200,
+     *         response=201,
      *         description="Insumo creado correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="supply",
-     *                     type="object",
-     *                     @OA\Property(property="name", type="string", example="NAME_SUPPLY"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_SUPPLY"),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="id", type="integer", example=1)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/SupplyResponse")
      *     ),
-     *
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
-     *
+     *         description="Datos inválidos (campos fijos o del formulario del tipo).",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del insumo"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del insumo")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"supply_type_id": "Identificador del tipo de insumo", "name": "Nombre", "description": "Descripción"},
+     *                 "errors": {"values.width": {"Es obligatorio."}, "class.supplier_id": {"Es obligatorio."}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function store(SupplyStoreRequest $request)
@@ -443,111 +309,39 @@ class SupplyController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/supplies/update/{id}",
-     *     tags={"Supplies"},
-     *     summary="Editar un insumo específico",
+     *     path="/typification/supply_types/supplies/update/{id}",
+     *     tags={"Typification › Supplies"},
+     *     summary="Editar un insumo",
+     *     description="Reemplaza nombre, descripción y `settings`, y sincroniza las relaciones de `class` que lleguen. No cambia el tipo de insumo. Hoy responde **500** si el tipo de insumo tiene campos `selectdinamic` (TELA, ROLLO…), porque el modelo `Supply` no tiene el método `related()` (ver pendientes).",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del insumo",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
      *         required=true,
-     *
      *         @OA\JsonContent(
-     *             required={"name"},
-     *
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="ROLLO",
-     *                 description="Nombre del insumo"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="INSUMOS ROLLOS",
-     *                 description="Descripción del insumo"
-     *              )
+     *             ref="#/components/schemas/SupplyRequest",
+     *             example={"supply_type_id": 218, "name": "DENIM STRETCH 12 OZ", "description": "DENIM AZUL ÍNDIGO CON ELASTANO Y LAVADO OSCURO", "values": {"width": 150, "heigth": 1000}, "class": {"supplier_id": 470, "color_id": {512}}, "settings": {"values": {"width": 150, "heigth": 1000}}}
      *         )
      *     ),
-     *
      *     @OA\Response(
      *         response=200,
      *         description="Insumo editado correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="supply",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_SUPPLY"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_SUPPLY"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/SupplyResponse")
      *     ),
-     *
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
-     *
+     *         description="Datos inválidos o insumo no registrado.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del insumo"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del insumo")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"id": "Identificador del insumo", "name": "Nombre", "description": "Descripción"},
+     *                 "errors": {"name": {"Ya está registrado."}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function update(SupplyUpdateRequest $request, $id)
@@ -589,89 +383,21 @@ class SupplyController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/supplies/delete/{id}",
-     *     tags={"Supplies"},
-     *     summary="Desactivar un insumo específico",
+     *     path="/typification/supply_types/supplies/delete/{id}",
+     *     tags={"Typification › Supplies"},
+     *     summary="Desactivar un insumo",
+     *     description="Desactivación lógica (soft delete): el registro se conserva y puede restaurarse. Hoy responde **500** si el tipo de insumo tiene campos `selectdinamic` (TELA, ROLLO…), porque el modelo `Supply` no tiene el método `related()` (ver pendientes).",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del insumo",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Insumo desactivado correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="supply",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_SUPPLY"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_SUPPLY"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Insumo desactivado correctamente. `deleted_at` queda con la fecha de desactivación.",
+     *         @OA\JsonContent(ref="#/components/schemas/SupplyResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del insumo")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function delete(SupplyDeleteRequest $request, $id)
@@ -698,89 +424,21 @@ class SupplyController extends Controller
 
     /**
      * @OA\Patch(
-     *     path="/supplies/restore/{id}",
-     *     tags={"Supplies"},
-     *     summary="Activar un insumo específico",
+     *     path="/typification/supply_types/supplies/restore/{id}",
+     *     tags={"Typification › Supplies"},
+     *     summary="Restaurar un insumo desactivado",
+     *     description="Solo acepta insumos desactivados. Hoy responde **500** si el tipo de insumo tiene campos `selectdinamic` (TELA, ROLLO…), porque el modelo `Supply` no tiene el método `related()` (ver pendientes).",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del insumo",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Insumo activado correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="supply",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_SUPPLY"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_SUPPLY"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Insumo restaurado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/SupplyResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del insumo")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function restore(SupplyRestoreRequest $request, $id)
@@ -805,11 +463,89 @@ class SupplyController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/typification/supply_types/supplies/export/{supply_type_id}",
+     *     tags={"Typification › Supplies"},
+     *     summary="Exportar a Excel los insumos de un tipo",
+     *     description="Descarga `supplys.xlsx`: una hoja con los insumos del tipo y, por cada campo `selectdinamic` múltiple del formulario, una hoja con sus relaciones. Sirve también como plantilla para importar.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="supply_type_id",
+     *         in="path",
+     *         required=true,
+     *         description="Tipo de insumo.",
+     *         @OA\Schema(type="integer", example=218)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Archivo de Excel.",
+     *         @OA\MediaType(mediaType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", @OA\Schema(type="string", format="binary"))
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Tipo de insumo no registrado.",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={"message": "Error de validación.", "attributes": {"supply_type_id": "Identificador del tipo de insumo"}, "errors": {"supply_type_id": {"No hay ningún registro."}}}
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     */
     public function export(SupplyExcelRequest $request, $supply_type_id)
     {
         return Excel::download(new SupplyExport($supply_type_id), 'supplys.xlsx');
     }
 
+    /**
+     * @OA\Post(
+     *     path="/typification/supply_types/supplies/import/{supply_type_id}",
+     *     tags={"Typification › Supplies"},
+     *     summary="Importar insumos desde Excel",
+     *     description="Lee el archivo (mismo formato que la exportación), valida todas las filas y, si no hay errores, crea o actualiza cada insumo por su nombre dentro de una transacción. Si hay errores, responde 422 con un reporte en texto (`file`, ruta en el disco `public`). **Hoy siempre responde 422**: el controlador valida la lista con la clave `supplys` y las reglas esperan `supplies` (ver pendientes). El archivo no se valida y el `{supply_type_id}` inexistente responde 404.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="supply_type_id",
+     *         in="path",
+     *         required=true,
+     *         description="Tipo de insumo.",
+     *         @OA\Schema(type="integer", example=218)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(type="object", required={"file"}, @OA\Property(property="file", type="string", format="binary", description="Archivo .xlsx."))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Insumos importados. `data` es la lista de filas leídas.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object", additionalProperties=true)),
+     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+     *             @OA\Property(property="error", type="boolean", example=false)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="La importación tiene errores.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="message", type="string", example="La importación contiene errores."),
+     *             @OA\Property(property="errors", type="object", additionalProperties=@OA\AdditionalProperties(type="array", @OA\Items(type="string")), example={"supplies": {"Es obligatorio."}}),
+     *             @OA\Property(property="file", type="string", description="Reporte de errores en el disco `public`.", example="imports/errors_20260514_101500.txt")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     */
     public function import(Request $request, $supply_type_id)
     {
         try {

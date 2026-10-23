@@ -2,51 +2,80 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StopType\StopTypeAllRequest;
-use App\Http\Requests\StopType\StopTypeDeleteRequest;
-use App\Http\Requests\StopType\StopTypeFindRequest;
-use App\Http\Requests\StopType\StopTypeRestoreRequest;
-use App\Http\Requests\StopType\StopTypeStoreRequest;
-use App\Http\Requests\StopType\StopTypeUpdateRequest;
-use App\Http\Resources\StopType\StopTypeCollection;
-use App\Http\Resources\StopType\StopTypeResource;
+use App\Http\Requests\Typification\StopType\StopTypeAllRequest;
+use App\Http\Requests\Typification\StopType\StopTypeDeleteRequest;
+use App\Http\Requests\Typification\StopType\StopTypeFindRequest;
+use App\Http\Requests\Typification\StopType\StopTypeRestoreRequest;
+use App\Http\Requests\Typification\StopType\StopTypeStoreRequest;
+use App\Http\Requests\Typification\StopType\StopTypeUpdateRequest;
+use App\Http\Resources\Typification\StopType\StopTypeCollection;
+use App\Http\Resources\Typification\StopType\StopTypeResource;
 use App\Models\StopType;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 
 /**
- * @OA\Tag(
- *     name="Stop Types",
- *     description="Endpoints para gestionar tipos de parada"
- * )
- *
- * @OA\PathItem(
- *     path="/stop_types",
- *     description="Rutas de gestión de tipos de parada"
+ * @OA\Schema(
+ *     schema="StopTypeSettings",
+ *     type="object",
+ *     required={"has_defined_time_range"},
+ *     description="Configuración del tipo de parada. Se guarda tal cual llega (reemplaza la anterior).",
+ *     @OA\Property(property="has_defined_time_range", type="boolean", description="Sus paradas tienen una duración definida (`settings.range_time` de la parada).", example=true)
  * )
  *
  * @OA\Schema(
  *     schema="StopType",
  *     type="object",
- *
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="item_id", type="integer", example=21),
- *     @OA\Property(property="name", type="string", example="No Aplica"),
- *     @OA\Property(property="description", type="string", example="No Aplica"),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *     description="Tipo de parada de producción. Hoy: PROGRAMADA (paradas con duración fija, como el almuerzo) y NO PROGRAMADA (imprevistos, como un paro mecánico).",
+ *     @OA\Property(property="id", type="integer", example=482),
+ *     @OA\Property(property="item_id", type="integer", example=42),
+ *     @OA\Property(property="name", type="string", example="MANTENIMIENTO"),
+ *     @OA\Property(property="description", type="string", example="PARADAS POR MANTENIMIENTO PREVENTIVO DE MÁQUINAS"),
+ *     @OA\Property(property="settings", nullable=true, allOf={@OA\Schema(ref="#/components/schemas/StopTypeSettings")}),
+ *     @OA\Property(property="created_at", type="string", example="2026-05-14 14:10:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-05-14 14:10:00"),
+ *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
  *     @OA\Property(
  *         property="item",
  *         type="object",
- *         @OA\Property(property="id", type="integer", example=1),
+ *         @OA\Property(property="id", type="integer", example=42),
  *         @OA\Property(property="name", type="string", example="Tipos de Parada"),
- *         @OA\Property(property="description", type="string", example="Listado de tipos de parada."),
- *         @OA\Property(property="settings", type="string", example="{}"),
+ *         @OA\Property(property="description", type="string", example="Listado de tipos de parada"),
+ *         @OA\Property(property="settings", type="object", nullable=true, example=null),
  *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
  *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
  *     )
+ * )
+ *
+ * @OA\Schema(
+ *     schema="StopTypeResponse",
+ *     type="object",
+ *     @OA\Property(property="data", type="object", @OA\Property(property="stop_type", ref="#/components/schemas/StopType")),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="StopTypeListResponse",
+ *     type="object",
+ *     @OA\Property(
+ *         property="data",
+ *         type="object",
+ *         @OA\Property(property="stop_types", type="array", @OA\Items(ref="#/components/schemas/StopType")),
+ *         @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="StopTypeRequest",
+ *     type="object",
+ *     required={"name", "description", "settings"},
+ *     @OA\Property(property="name", type="string", minLength=4, maxLength=50, description="Nombre en MAYÚSCULAS. Único entre los tipos de parada.", example="MANTENIMIENTO"),
+ *     @OA\Property(property="description", type="string", maxLength=255, description="Descripción en MAYÚSCULAS.", example="PARADAS POR MANTENIMIENTO PREVENTIVO DE MÁQUINAS"),
+ *     @OA\Property(property="settings", ref="#/components/schemas/StopTypeSettings")
  * )
  */
 class StopTypeController extends Controller
@@ -55,108 +84,42 @@ class StopTypeController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/stop_types/all",
-     *     tags={"Stop Types"},
+     *     path="/typification/stop_types/all",
+     *     tags={"Typification › Stop Types"},
      *     summary="Listar los tipos de parada",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Filtro de Busqueda.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="string", example="juan")
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/Search"),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
-     *         description="Columna a ordenar.",
      *         required=false,
-     *
-     *         @OA\Schema(type="string", enum={"id","name","description","created_at", "updated_at"}, example="name")
+     *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *         @OA\Schema(type="string", enum={"id", "name", "description", "created_at", "updated_at", "deleted_at"}, example="name")
      *     ),
-     *
-     *     @OA\Parameter(
-     *         name="dir",
-     *         in="query",
-     *         description="Dirección de ordenamiento.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
-     *     ),
-     *
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Registros por página.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="integer", example=10)
-     *     ),
-     *
-     *     @OA\Parameter(
-     *         name="with_trashed",
-     *         in="query",
-     *         description="Registros inactivos.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="boolean", example=true)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/Dir"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
      *     @OA\Response(
      *         response=200,
      *         description="Lista de tipos de parada cargada correctamente",
-     *
+     *         @OA\JsonContent(ref="#/components/schemas/StopTypeListResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Parámetros de consulta inválidos.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="stop_types",
-     *                     type="array",
-     *
-     *                     @OA\Items(ref="#/components/schemas/StopType")
-     *                 ),
-     *
-     *                 @OA\Property(
-     *                     property="meta",
-     *                     type="object",
-     *                     @OA\Property(
-     *                         property="pagination",
-     *                         type="object",
-     *                         @OA\Property(property="total", type="integer", example=1),
-     *                         @OA\Property(property="count", type="integer", example=1),
-     *                         @OA\Property(property="per_page", type="integer", example=1),
-     *                         @OA\Property(property="current_page", type="integer", example=1),
-     *                         @OA\Property(property="total_pages", type="integer", example=1)
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"per_page": "Registros por pagina.", "page": "N° de pagina.", "search": "Filtro de Busqueda.", "column": "Columna a ordenar.", "dir": "Sentido del orden.", "with_trashed": "Registros inactivos"},
+     *                 "errors": {"dir": {"Valor inválido. Permitidos: asc, desc."}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function all(StopTypeAllRequest $request)
@@ -192,84 +155,20 @@ class StopTypeController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/stop_types/find/{id}",
-     *     tags={"Stop Types"},
-     *     summary="Obtener un tipo de parada específico",
+     *     path="/typification/stop_types/find/{id}",
+     *     tags={"Typification › Stop Types"},
+     *     summary="Obtener un tipo de parada",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del tipo de parada",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
      *         description="Tipo de parada cargado correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="stop_type",
-     *                     type="array",
-     *
-     *                     @OA\Items(ref="#/components/schemas/StopType")
-     *                 )
-     *             ),
-     *
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/StopTypeResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Identificador del tipo de parada no registrado.",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example=1)
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function find(StopTypeFindRequest $request, $id)
@@ -296,100 +195,34 @@ class StopTypeController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/stop_types/store",
-     *     tags={"Stop Types"},
+     *     path="/typification/stop_types/store",
+     *     tags={"Typification › Stop Types"},
      *     summary="Crear un tipo de parada",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\RequestBody(
      *         required=true,
-     *
-     *         @OA\JsonContent(
-     *             required={"name","description"},
-     *
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="BOLSILLO",
-     *                 description="Nombre del Tipo de Parada"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="BOLSILLO",
-     *                 description="Descripción del Tipo de Parada"
-     *              )
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/StopTypeRequest")
      *     ),
-     *
      *     @OA\Response(
-     *         response=200,
+     *         response=201,
      *         description="Tipo de parada creado correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="stop_type",
-     *                     type="object",
-     *                     @OA\Property(property="name", type="string", example="NAME_STOP_TYPE"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_STOP_TYPE"),
-     *                     @OA\Property(property="item_id", type="integer", example=21),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="id", type="integer", example=1)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/StopTypeResponse")
      *     ),
-     *
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
-     *
+     *         description="Datos inválidos.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del Área"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del Área")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"name": "Nombre", "description": "Descripción", "settings.has_defined_time_range": "Tiene rango de tiempo definido"},
+     *                 "errors": {"settings.has_defined_time_range": {"Es obligatorio."}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function store(StopTypeStoreRequest $request)
@@ -420,111 +253,39 @@ class StopTypeController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/stop_types/update/{id}",
-     *     tags={"Stop Types"},
-     *     summary="Editar un tipo de parada específica",
+     *     path="/typification/stop_types/update/{id}",
+     *     tags={"Typification › Stop Types"},
+     *     summary="Editar un tipo de parada",
+     *     description="Reemplaza nombre, descripción y `settings` completo.",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del tipo de parada",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
      *         required=true,
-     *
      *         @OA\JsonContent(
-     *             required={"name"},
-     *
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="BOLSILLO",
-     *                 description="Nombre del Tipo de Parada"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="BOLSILLO CORAZON",
-     *                 description="Descripción del Tipo de Parada"
-     *              )
+     *             ref="#/components/schemas/StopTypeRequest",
+     *             example={"name": "MANTENIMIENTO CORRECTIVO", "description": "PARADAS PARA REPARAR UNA MÁQUINA", "settings": {"has_defined_time_range": false}}
      *         )
      *     ),
-     *
      *     @OA\Response(
      *         response=200,
      *         description="Tipo de parada editado correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="stop_type",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_STOP_EXAMPLE"),
-     *                     @OA\Property(property="description", type="string", example="NAME_DESCRIPTION_EXAMPLE"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/StopTypeResponse")
      *     ),
-     *
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
-     *
+     *         description="Datos inválidos o tipo de parada no registrado.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del Tipo de Parada"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del Tipo de Parada")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"id": "Identificador del tipo de parada", "name": "Nombre", "description": "Descripción", "settings.has_defined_time_range": "Tiene rango de tiempo definido"},
+     *                 "errors": {"name": {"Ya está registrado."}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function update(StopTypeUpdateRequest $request, $id)
@@ -555,89 +316,21 @@ class StopTypeController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/stop_types/delete/{id}",
-     *     tags={"Stop Types"},
-     *     summary="Desactivar un tipo de parada específica",
+     *     path="/typification/stop_types/delete/{id}",
+     *     tags={"Typification › Stop Types"},
+     *     summary="Desactivar un tipo de parada",
+     *     description="Desactivación lógica (soft delete): el registro se conserva y puede restaurarse.",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del tipo de parada",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Tipo de parada desactivado correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="stop_type",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=21),
-     *                     @OA\Property(property="name", type="string", example="NAME_STOP_EXAMPLE"),
-     *                     @OA\Property(property="description", type="string", example="NAME_DESCRIPTION_EXAMPLE"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Tipo de parada desactivado correctamente. `deleted_at` queda con la fecha de desactivación.",
+     *         @OA\JsonContent(ref="#/components/schemas/StopTypeResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del tipo de parada")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function delete(StopTypeDeleteRequest $request, $id)
@@ -664,89 +357,21 @@ class StopTypeController extends Controller
 
     /**
      * @OA\Patch(
-     *     path="/stop_types/restore/{id}",
-     *     tags={"Stop Types"},
-     *     summary="Restaurar un tipo de parada específica",
+     *     path="/typification/stop_types/restore/{id}",
+     *     tags={"Typification › Stop Types"},
+     *     summary="Restaurar un tipo de parada desactivado",
+     *     description="Solo acepta registros desactivados.",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del tipo de parada",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
      *         description="Tipo de parada restaurado correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="stop_type",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=21),
-     *                     @OA\Property(property="name", type="string", example="NAME_STOP_EXAMPLE"),
-     *                     @OA\Property(property="description", type="string", example="NAME_DESCRIPTION_EXAMPLE"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/StopTypeResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del tipo de parada")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function restore(StopTypeRestoreRequest $request, $id)

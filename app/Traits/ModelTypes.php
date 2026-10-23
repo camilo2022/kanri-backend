@@ -13,7 +13,6 @@ use App\Models\Group;
 use App\Models\Operation;
 use App\Models\Piece;
 use App\Models\Process;
-use App\Models\Silhouette;
 use App\Models\Size;
 use App\Models\Subcategory;
 use App\Models\Subgroup;
@@ -39,12 +38,6 @@ trait ModelTypes
                 'value' => 'id',
                 'option' => 'name',
             ],
-            'silhouettes' => [
-                'label' => 'Siluetas',
-                'model' => Silhouette::class,
-                'url' => '/silhouettes/all',
-                'option' => 'name',
-            ],
             'sizes' => [
                 'label' => 'Tallas',
                 'model' => Size::class,
@@ -66,25 +59,25 @@ trait ModelTypes
             'garment_types' => [
                 'label' => 'Tipos de Prenda',
                 'model' => GarmentType::class,
-                'url' => '/garment_types/all',
+                'url' => '/typification/garment_types/all',
                 'option' => 'name',
             ],
             'boot_types' => [
                 'label' => 'Tipos de Bota',
                 'model' => BootType::class,
-                'url' => '/boot_types/all',
+                'url' => '/typification/boot_types/all',
                 'option' => 'name',
             ],
             'back_types' => [
                 'label' => 'Tipos de Trasero',
                 'model' => BackType::class,
-                'url' => '/back_types/all',
+                'url' => '/typification/back_types/all',
                 'option' => 'name',
             ],
             'waistband_types' => [
                 'label' => 'Tipos de Pretina',
                 'model' => WaistbandType::class,
-                'url' => '/waistband_types/all',
+                'url' => '/typification/waistband_types/all',
                 'option' => 'name',
             ],
             'categories' => [
@@ -123,7 +116,7 @@ trait ModelTypes
             'yoke_types' => [
                 'label' => 'Tipos de Cotilla',
                 'model' => YokeType::class,
-                'url' => '/yoke_types/all',
+                'url' => '/typification/yoke_types/all',
                 'option' => 'name',
             ],
             'pieces' => [
@@ -191,12 +184,6 @@ trait ModelTypes
                 'value' => 'id',
                 'option' => 'name',
             ],
-            'silhouettes' => [
-                'label' => 'Siluetas',
-                'model' => Silhouette::class,
-                'url' => '/silhouettes/all',
-                'option' => 'name',
-            ],
             'sizes' => [
                 'label' => 'Tallas',
                 'model' => Size::class,
@@ -218,25 +205,25 @@ trait ModelTypes
             'garment_types' => [
                 'label' => 'Tipos de Prenda',
                 'model' => GarmentType::class,
-                'url' => '/garment_types/all',
+                'url' => '/typification/garment_types/all',
                 'option' => 'name',
             ],
             'boot_types' => [
                 'label' => 'Tipos de Bota',
                 'model' => BootType::class,
-                'url' => '/boot_types/all',
+                'url' => '/typification/boot_types/all',
                 'option' => 'name',
             ],
             'back_types' => [
                 'label' => 'Tipos de Trasero',
                 'model' => BackType::class,
-                'url' => '/back_types/all',
+                'url' => '/typification/back_types/all',
                 'option' => 'name',
             ],
             'waistband_types' => [
                 'label' => 'Tipos de Pretina',
                 'model' => WaistbandType::class,
-                'url' => '/waistband_types/all',
+                'url' => '/typification/waistband_types/all',
                 'option' => 'name',
             ],
             'categories' => [
@@ -273,7 +260,7 @@ trait ModelTypes
             'yoke_types' => [
                 'label' => 'Tipos de Cotilla',
                 'model' => YokeType::class,
-                'url' => '/yoke_types/all',
+                'url' => '/typification/yoke_types/all',
                 'option' => 'name',
             ],
             'pieces' => [
@@ -325,25 +312,25 @@ trait ModelTypes
             'garment_types' => [
                 'label' => 'Tipos de Prenda',
                 'model' => GarmentType::class,
-                'url' => '/garment_types/all',
+                'url' => '/typification/garment_types/all',
                 'option' => 'name',
             ],
             'boot_types' => [
                 'label' => 'Tipos de Bota',
                 'model' => BootType::class,
-                'url' => '/boot_types/all',
+                'url' => '/typification/boot_types/all',
                 'option' => 'name',
             ],
             'back_types' => [
                 'label' => 'Tipos de Trasero',
                 'model' => BackType::class,
-                'url' => '/back_types/all',
+                'url' => '/typification/back_types/all',
                 'option' => 'name',
             ],
             'waistband_types' => [
                 'label' => 'Tipos de Pretina',
                 'model' => WaistbandType::class,
-                'url' => '/waistband_types/all',
+                'url' => '/typification/waistband_types/all',
                 'option' => 'name',
             ],
             'categories' => [
@@ -382,7 +369,7 @@ trait ModelTypes
             'yoke_types' => [
                 'label' => 'Tipos de Cotilla',
                 'model' => YokeType::class,
-                'url' => '/yoke_types/all',
+                'url' => '/typification/yoke_types/all',
                 'option' => 'name',
             ],
             'pieces' => [
@@ -471,7 +458,7 @@ trait ModelTypes
                 'label' => 'Tipo de Prenda',
                 'short' => 'TP',
                 'model' => GarmentType::class,
-                'url' => '/garment_types/all',
+                'url' => '/typification/garment_types/all',
                 'option' => 'name',
                 'show' => true,
             ],
@@ -479,7 +466,7 @@ trait ModelTypes
                 'label' => 'Tipo de Bota',
                 'short' => 'TB',
                 'model' => BootType::class,
-                'url' => '/boot_types/all',
+                'url' => '/typification/boot_types/all',
                 'option' => 'name',
                 'show' => true,
             ],
@@ -487,7 +474,7 @@ trait ModelTypes
                 'label' => 'Tipo de Trasero',
                 'short' => 'TT',
                 'model' => BackType::class,
-                'url' => '/back_types/all',
+                'url' => '/typification/back_types/all',
                 'option' => 'name',
                 'show' => true,
             ],
@@ -495,7 +482,7 @@ trait ModelTypes
                 'label' => 'Tipo de Pretina',
                 'short' => 'PR',
                 'model' => WaistbandType::class,
-                'url' => '/waistband_types/all',
+                'url' => '/typification/waistband_types/all',
                 'option' => 'name',
                 'show' => true,
             ],
@@ -546,7 +533,7 @@ trait ModelTypes
                 'label' => 'Tipo de Cotilla',
                 'short' => 'TC',
                 'model' => YokeType::class,
-                'url' => '/yoke_types/all',
+                'url' => '/typification/yoke_types/all',
                 'option' => 'name',
                 'show' => true,
             ],

@@ -1285,104 +1285,50 @@ class UserController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/users/authorization/assign/{id}",
+     *     path="/users/workflow/assign/{id}",
      *     tags={"Users"},
-     *     summary="Asignar un permiso a un usuario específio",
+     *     summary="Asignar un proceso, subproceso u operación a un usuario",
+     *     description="`model_type` indica el nivel del flujo. Al asignar un proceso se asignan también sus subprocesos y operaciones; al remover, se quitan en cascada.",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="query",
-     *         description="Identificador del usuario",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
      *         required=true,
-     *
      *         @OA\JsonContent(
-     *             required={"permission_id"},
-     *
+     *             required={"model_type", "model_id"},
      *             @OA\Property(
-     *                 property="permission_id",
-     *                 type="integer",
-     *                 example=1,
-     *                 description="Identificador del Permiso"
-     *             )
+     *                 property="model_type",
+     *                 type="string",
+     *                 enum={"App\Models\Process", "App\Models\Subprocess", "App\Models\Operation"},
+     *                 description="Nivel del flujo de trabajo.",
+     *                 example="App\Models\Process"
+     *             ),
+     *             @OA\Property(property="model_id", type="integer", description="Identificador del proceso, subproceso u operación.", example=4)
      *         )
      *     ),
-     *
      *     @OA\Response(
      *         response=200,
-     *         description="Permiso asignado correctamente",
-     *
+     *         description="Flujo de trabajo asignado correctamente",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                   property="user",
-     *                   ref="#/components/schemas/User"
-     *                 )
-     *             ),
+     *             @OA\Property(property="data", type="object", @OA\Property(property="user", ref="#/components/schemas/User")),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
-     *
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
-     *
+     *         description="Datos inválidos o usuario no registrado.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del usuario"),
-     *                 @OA\Property(property="permission_id", type="string", example="Identificador del permiso"),
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example= "No hay ningún registro.")
-     *                 ),
-     *
-     *                 @OA\Property(
-     *                     property="permission_id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example= "No hay ningún registro.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"id": "Identificador del usuario", "model_type": "Tipo de modelo", "model_id": "Identificador del elemento"},
+     *                 "errors": {"model_id": {"Es obligatorio."}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function assign_workflow(UserWorkflowAssignRequest $request)
@@ -1452,186 +1398,50 @@ class UserController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/users/authorization/remove/{id}",
+     *     path="/users/workflow/remove/{id}",
      *     tags={"Users"},
-     *     summary="Remover un permiso a un usuario específico",
+     *     summary="Remover un proceso, subproceso u operación de un usuario",
+     *     description="`model_type` indica el nivel del flujo. Al asignar un proceso se asignan también sus subprocesos y operaciones; al remover, se quitan en cascada.",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="query",
-     *         description="Identificador del usuario",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
      *         required=true,
-     *
      *         @OA\JsonContent(
-     *             required={"permission_id"},
-     *
+     *             required={"model_type", "model_id"},
      *             @OA\Property(
-     *                 property="permission_id",
-     *                 type="integer",
-     *                 example=1,
-     *                 description="Identificador del Permiso"
-     *             )
+     *                 property="model_type",
+     *                 type="string",
+     *                 enum={"App\Models\Process", "App\Models\Subprocess", "App\Models\Operation"},
+     *                 description="Nivel del flujo de trabajo.",
+     *                 example="App\Models\Subprocess"
+     *             ),
+     *             @OA\Property(property="model_id", type="integer", description="Identificador del proceso, subproceso u operación.", example=12)
      *         )
      *     ),
-     *
      *     @OA\Response(
      *         response=200,
-     *         description="Permiso removido correctamente",
-     *
+     *         description="Flujo de trabajo removido correctamente",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="email", type="string", example="email_user_example"),
-     *                 @OA\Property(property="created_at", type="string", format="date-time"),
-     *                 @OA\Property(property="updated_at", type="string", format="date-time"),
-     *                 @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true),
-     *                 @OA\Property(
-     *                     property="roles",
-     *                     type="array",
-     *
-     *                     @OA\Items(
-     *                         allOf={
-     *
-     *                              @OA\Schema(ref="#/components/schemas/Role"),
-     *                              @OA\Schema(
-     *
-     *                                  @OA\Property(
-     *                                      property="pivot",
-     *                                      type="object",
-     *                                      @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
-     *                                      @OA\Property(property="model_id", type="integer", example=1),
-     *                                      @OA\Property(property="role_id", type="integer", example=1)
-     *                                  )
-     *                              )
-     *                         }
-     *                     )
-     *                 ),
-     *                 @OA\Property(
-     *                     property="permissions",
-     *                     type="array",
-     *
-     *                     @OA\Items(
-     *                         allOf={
-     *
-     *                              @OA\Schema(ref="#/components/schemas/Permission"),
-     *                              @OA\Schema(
-     *
-     *                                  @OA\Property(
-     *                                      property="pivot",
-     *                                      type="object",
-     *                                      @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
-     *                                      @OA\Property(property="model_id", type="integer", example=1),
-     *                                      @OA\Property(property="role_id", type="integer", example=1)
-     *                                  )
-     *                              )
-     *                         }
-     *                     )
-     *                 ),
-     *                 @OA\Property(
-     *                     property="employee",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="employee_id", type="integer", example=1),
-     *                     @OA\Property(property="person_id", type="integer", example=1),
-     *                     @OA\Property(property="operation_center", type="string", example="Principal"),
-     *                     @OA\Property(property="position_id", type="integer", example=2),
-     *                     @OA\Property(property="risk_manager_id", type="integer", example=5),
-     *                     @OA\Property(property="health_entity_id", type="integer", example=6),
-     *                     @OA\Property(property="pension_fund_id", type="integer", example=7),
-     *                     @OA\Property(property="compensation_fund_id", type="integer", example=8),
-     *                     @OA\Property(property="start_date", type="string", format="date-time", example="2026-03-30 00:00:00"),
-     *                     @OA\Property(property="end_date", type="string", format="date-time", nullable=true, example=null),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
-     *                     @OA\Property(
-     *                         property="position",
-     *                         ref="#/components/schemas/Position"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="person",
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="document", type="string", example="0000000000"),
-     *                         @OA\Property(property="names", type="string", example="Super"),
-     *                         @OA\Property(property="last_names", type="string", example="Admin"),
-     *                         @OA\Property(property="gender_id", type="integer", example=15),
-     *                         @OA\Property(property="birth_date", type="string", format="date", example="1990-01-01"),
-     *                         @OA\Property(property="blood_type_id", type="integer", example=16),
-     *                         @OA\Property(property="address", type="string", example="Dirección principal"),
-     *                         @OA\Property(property="phone", type="string", example="0000000000"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-31T15:37:40.000000Z"),
-     *                         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                     )
-     *                 ),
-     *
-     *             ),
+     *             @OA\Property(property="data", type="object", @OA\Property(property="user", ref="#/components/schemas/User")),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
-     *
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
-     *
+     *         description="Datos inválidos o usuario no registrado.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del usuario"),
-     *                 @OA\Property(property="permission_id", type="string", example="Identificador del permiso"),
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example= "No hay ningún registro.")
-     *                 ),
-     *
-     *                 @OA\Property(
-     *                     property="permission_id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example= "No hay ningún registro.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"id": "Identificador del usuario", "model_type": "Tipo de modelo", "model_id": "Identificador del elemento"},
+     *                 "errors": {"model_id": {"Es obligatorio."}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function remove_workflow(UserWorkflowRemoveRequest $request)

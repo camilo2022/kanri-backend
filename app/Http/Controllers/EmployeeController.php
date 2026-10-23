@@ -20,177 +20,79 @@ use App\Traits\ApiResponser;
  *     description="Endpoints para gestionar empleados"
  * )
  *
- * @OA\PathItem(
- *     path="/employees",
- *     description="Rutas de gestión de empleados"
+ * @OA\Schema(
+ *     schema="EmployeeUser",
+ *     type="object",
+ *     description="Usuario del empleado (incluye usuarios desactivados), con sus roles y permisos directos. `null` si el empleado no tiene usuario.",
+ *     @OA\Property(property="id", type="integer", example=15),
+ *     @OA\Property(property="employee_id", type="integer", example=42),
+ *     @OA\Property(property="email", type="string", example="laura.gomez@kanri.test"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-05-14T09:50:00.000000Z"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-05-14T09:50:00.000000Z"),
+ *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *     @OA\Property(property="roles", type="array", @OA\Items(ref="#/components/schemas/Role")),
+ *     @OA\Property(property="permissions", type="array", @OA\Items(ref="#/components/schemas/Permission"))
  * )
  *
  * @OA\Schema(
  *     schema="Employee",
  *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="person_id", type="integer", example=1),
- *     @OA\Property(property="operation_center", type="string", example="001"),
- *     @OA\Property(property="position_id", type="integer", example=1),
- *     @OA\Property(property="risk_manager_id", type="integer", example=1),
- *     @OA\Property(property="health_entity_id", type="integer", example=1),
- *     @OA\Property(property="pension_fund_id", type="integer", example=1),
- *     @OA\Property(property="compensation_fund_id", type="integer", example=1),
- *     @OA\Property(property="start_date", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *     @OA\Property(property="end_date", type="string", format="date-time", nullable=true, example=null),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *     @OA\Property(property="id", type="integer", example=42),
+ *     @OA\Property(property="person_id", type="integer", example=57),
+ *     @OA\Property(property="operation_center", type="string", nullable=true, description="Código del centro de operaciones (texto libre).", example="050"),
+ *     @OA\Property(property="position_id", type="integer", example=58),
+ *     @OA\Property(property="risk_manager_id", type="integer", example=94),
+ *     @OA\Property(property="health_entity_id", type="integer", example=101),
+ *     @OA\Property(property="pension_fund_id", type="integer", example=152),
+ *     @OA\Property(property="compensation_fund_id", type="integer", example=163),
+ *     @OA\Property(property="start_date", type="string", description="`Y-m-d` en el detalle; en la lista (`all`) sale en ISO/UTC, por ejemplo `2026-06-02T05:00:00.000000Z`.", example="2026-06-02"),
+ *     @OA\Property(property="end_date", type="string", nullable=true, description="Mismo formato que `start_date`. `null` si sigue activo.", example=null),
+ *     @OA\Property(property="created_at", type="string", example="2026-06-02 08:15:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-06-02 08:15:00"),
+ *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
+ *     @OA\Property(property="person", ref="#/components/schemas/Person"),
+ *     @OA\Property(property="position", ref="#/components/schemas/Position"),
+ *     @OA\Property(property="user", nullable=true, allOf={@OA\Schema(ref="#/components/schemas/EmployeeUser")}),
+ *     @OA\Property(property="risk_manager", description="Administradora de riesgos laborales (ARL).", allOf={@OA\Schema(ref="#/components/schemas/Subitem")}),
+ *     @OA\Property(property="health_entity", description="Entidad de salud (EPS).", allOf={@OA\Schema(ref="#/components/schemas/Subitem")}),
+ *     @OA\Property(property="pension_fund", description="Fondo de pensión.", allOf={@OA\Schema(ref="#/components/schemas/Subitem")}),
+ *     @OA\Property(property="compensation_fund", description="Caja de compensación.", allOf={@OA\Schema(ref="#/components/schemas/Subitem")})
+ * )
+ *
+ * @OA\Schema(
+ *     schema="EmployeeResponse",
+ *     type="object",
+ *     @OA\Property(property="data", type="object", @OA\Property(property="employee", ref="#/components/schemas/Employee")),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="EmployeeListResponse",
+ *     type="object",
  *     @OA\Property(
- *         property="person",
+ *         property="data",
  *         type="object",
- *         @OA\Property(property="id", type="integer", example=1),
- *         @OA\Property(property="document", type="string", example="0000000000"),
- *         @OA\Property(property="names", type="string", example="Super"),
- *         @OA\Property(property="last_names", type="string", example="Admin"),
- *         @OA\Property(property="gender_id", type="integer", example=15),
- *         @OA\Property(property="birth_date", type="string", format="date", example="1990-01-01"),
- *         @OA\Property(property="blood_type_id", type="integer", example=16),
- *         @OA\Property(property="address", type="string", example="Dirección principal"),
- *         @OA\Property(property="phone", type="string", example="0000000000"),
- *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-31T15:37:40.000000Z"),
- *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
- *         @OA\Property(
- *             property="photo",
- *             type="object",
- *             @OA\Property(property="id", type="integer", example=2),
- *             @OA\Property(property="model_type", type="string", example="App\\Models\\Person"),
- *             @OA\Property(property="model_id", type="integer", example=2),
- *             @OA\Property(property="name", type="string", example="2"),
- *             @OA\Property(property="file_type_id", type="integer", example=1),
- *             @OA\Property(property="file_subtype_id", type="integer", example=8),
- *             @OA\Property(property="path", type="string", format="uri", example="person/file.jpg"),
- *             @OA\Property(property="mime", type="string", example="image/jpeg"),
- *             @OA\Property(property="extension", type="string", example="jpg"),
- *             @OA\Property(property="size", type="integer", example=12870),
- *             @OA\Property(
- *                 property="metadata",
- *                 type="object",
- *                 @OA\Property(property="mime", type="string", example="image/jpeg"),
- *                 @OA\Property(property="size", type="integer", example=12870),
- *                 @OA\Property(
- *                     property="image",
- *                     type="object",
- *                     @OA\Property(property="width", type="integer", example=128),
- *                     @OA\Property(property="height", type="integer", example=128)
- *                 ),
- *                 @OA\Property(property="hash_md5", type="string", example="eea1251373716a2da44ec80919fc4a33"),
- *                 @OA\Property(property="extension", type="string", example="jpg"),
- *                 @OA\Property(property="client_mime", type="string", example="image/jpeg"),
- *                 @OA\Property(property="hash_sha256", type="string", example="913be661c7387b1c60f9c5eed3c0a37c1ab9dff5625ea6c7a39fe7909b0a86b8"),
- *                 @OA\Property(property="uploaded_at", type="string", format="date-time", example="2026-03-31 18:58:06"),
- *                 @OA\Property(property="original_name", type="string", example="2.jpg"),
- *                 @OA\Property(property="original_extension", type="string", example="jpg")
- *             ),
- *             @OA\Property(property="settings", type="object", example={}),
- *             @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T19:19:35.000000Z"),
- *             @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-31T18:58:06.000000Z")
- *         )
+ *         @OA\Property(property="employees", type="array", @OA\Items(ref="#/components/schemas/Employee")),
+ *         @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
  *     ),
- *     @OA\Property(
- *         property="position",
- *         ref="#/components/schemas/Position"
- *     ),
- *     @OA\Property(
- *         property="user",
- *         type="object",
- *         @OA\Property(property="id", type="integer", example=1),
- *         @OA\Property(property="employee_id", type="integer", example=1),
- *         @OA\Property(property="email", type="string", example="email_user_example"),
- *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:31.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-31T15:37:40.000000Z"),
- *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
- *         @OA\Property(
- *             property="roles",
- *             type="array",
- *             @OA\Items(
- *                 allOf={
- *                     @OA\Schema(ref="#/components/schemas/Role"),
- *                     @OA\Schema(
- *                         @OA\Property(
- *                             property="pivot",
- *                             type="object",
- *                             @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
- *                             @OA\Property(property="model_id", type="integer", example=1),
- *                             @OA\Property(property="role_id", type="integer", example=1)
- *                         )
- *                     )
- *                 }
- *             )
- *         ),
- *         @OA\Property(
- *             property="permissions",
- *             type="array",
- *             @OA\Items(
- *                 allOf={
- *                     @OA\Schema(ref="#/components/schemas/Permission"),
- *                     @OA\Schema(
- *                         @OA\Property(
- *                             property="pivot",
- *                             type="object",
- *                             @OA\Property(property="model_type", type="string", example="App\\Models\\User"),
- *                             @OA\Property(property="model_id", type="integer", example=1),
- *                             @OA\Property(property="role_id", type="integer", example=1)
- *                         )
- *                     )
- *                 }
- *             )
- *         )
- *     ),
- *     @OA\Property(
- *         property="risk_manager",
- *         type="object",
- *         @OA\Property(property="id", type="integer", example=25),
- *         @OA\Property(property="item_id", type="integer", example=7),
- *         @OA\Property(property="name", type="string", example="NAME_EXAMPLE"),
- *         @OA\Property(property="description", type="string", example="DESCRIPTION_EXAMPLE"),
- *         @OA\Property(property="settings", type="object", example={}),
- *         @OA\Property(property="created_at",type="string",format="date-time",example="2026-03-30T13:17:34.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:34.000000Z"),
- *         @OA\Property(property="deleted_at",type="string",format="date-time",nullable=true,example=null)
- *     ),
- *     @OA\Property(
- *         property="health_entity",
- *         type="object",
- *         @OA\Property(property="id", type="integer", example=25),
- *         @OA\Property(property="item_id", type="integer", example=7),
- *         @OA\Property(property="name", type="string", example="NAME_EXAMPLE"),
- *         @OA\Property(property="description", type="string", example="DESCRIPTION_EXAMPLE"),
- *         @OA\Property(property="settings", type="object", example={}),
- *         @OA\Property(property="created_at",type="string",format="date-time",example="2026-03-30T13:17:34.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:34.000000Z"),
- *         @OA\Property(property="deleted_at",type="string",format="date-time",nullable=true,example=null)
- *     ),
- *     @OA\Property(
- *         property="pension_fund",
- *         type="object",
- *         @OA\Property(property="id", type="integer", example=25),
- *         @OA\Property(property="item_id", type="integer", example=7),
- *         @OA\Property(property="name", type="string", example="NAME_EXAMPLE"),
- *         @OA\Property(property="description", type="string", example="DESCRIPTION_EXAMPLE"),
- *         @OA\Property(property="settings", type="object", example={}),
- *         @OA\Property(property="created_at",type="string",format="date-time",example="2026-03-30T13:17:34.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:34.000000Z"),
- *         @OA\Property(property="deleted_at",type="string",format="date-time",nullable=true,example=null)
- *     ),
- *     @OA\Property(
- *         property="compensation_fund",
- *         type="object",
- *         @OA\Property(property="id", type="integer", example=25),
- *         @OA\Property(property="item_id", type="integer", example=7),
- *         @OA\Property(property="name", type="string", example="NAME_EXAMPLE"),
- *         @OA\Property(property="description", type="string", example="DESCRIPTION_EXAMPLE"),
- *         @OA\Property(property="settings", type="object", example={}),
- *         @OA\Property(property="created_at",type="string",format="date-time",example="2026-03-30T13:17:34.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:34.000000Z"),
- *         @OA\Property(property="deleted_at",type="string",format="date-time",nullable=true,example=null)
- *     )
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="EmployeeRequest",
+ *     type="object",
+ *     required={"person_id", "position_id", "risk_manager_id", "health_entity_id", "pension_fund_id", "compensation_fund_id", "start_date"},
+ *     @OA\Property(property="person_id", type="integer", description="Persona activa. Una persona solo puede tener un empleado.", example=57),
+ *     @OA\Property(property="operation_center", type="string", nullable=true, description="Centro de operaciones. Opcional.", example="050"),
+ *     @OA\Property(property="position_id", type="integer", description="Cargo activo.", example=58),
+ *     @OA\Property(property="risk_manager_id", type="integer", description="Administradora de riesgos (ARL) activa.", example=94),
+ *     @OA\Property(property="health_entity_id", type="integer", description="Entidad de salud (EPS) activa.", example=101),
+ *     @OA\Property(property="pension_fund_id", type="integer", description="Fondo de pensión activo.", example=152),
+ *     @OA\Property(property="compensation_fund_id", type="integer", description="Caja de compensación activa.", example=163),
+ *     @OA\Property(property="start_date", type="string", format="date", description="Formato Y-m-d.", example="2026-06-02"),
+ *     @OA\Property(property="end_date", type="string", format="date", nullable=true, description="Formato Y-m-d, posterior a `start_date`. Opcional.", example=null)
  * )
  */
 class EmployeeController extends Controller
@@ -202,93 +104,60 @@ class EmployeeController extends Controller
      *     path="/employees/all",
      *     tags={"Employees"},
      *     summary="Listar los empleados",
+     *     description="Cada empleado trae persona (con foto), cargo con área, usuario con roles y permisos, ARL, EPS, fondo de pensión y caja de compensación.",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Filtro de Busqueda.",
      *         required=false,
-     *         @OA\Schema(type="string", example="juan")
+     *         description="Texto a buscar. Cada palabra se busca en documento, nombres y apellidos de la persona, y en el nombre del cargo, área, ARL y EPS.",
+     *         @OA\Schema(type="string", example="GOMEZ")
      *     ),
      *     @OA\Parameter(
-     *         name="column",
+     *         name="position_id",
      *         in="query",
-     *         description="Columna a ordenar.",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"id","person_id","operation_center","position_id","risk_manager_id","health_entity_id","pension_fund_id","compensation_fund_id","start_date","end_date","created_at","updated_at","deleted_at"}, example="operation_center")
-     *     ),
-     *     @OA\Parameter(
-     *         name="dir",
-     *         in="query",
-     *         description="Dirección de ordenamiento.",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
-     *     ),
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Registros por página.",
-     *         required=false,
-     *         @OA\Schema(type="integer", example=10)
-     *     ),
-     *     @OA\Parameter(
-     *         name="with_trashed",
-     *         in="query",
-     *         description="Registros inactivos.",
-     *         required=false,
-     *         @OA\Schema(type="boolean", example=true)
+     *         description="Solo los empleados de este cargo. No se valida.",
+     *         @OA\Schema(type="integer", example=58)
      *     ),
      *     @OA\Parameter(
      *         name="with_user",
      *         in="query",
-     *         description="Registros con usuarios relacionados.",
      *         required=false,
-     *         @OA\Schema(type="boolean", example=true)
+     *         description="`true`/`1`: solo empleados con usuario. `false`/`0`: solo sin usuario. Si no se envía, todos.",
+     *         @OA\Schema(type="boolean", example=false)
      *     ),
+     *     @OA\Parameter(
+     *         name="column",
+     *         in="query",
+     *         required=false,
+     *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *         @OA\Schema(type="string", enum={"id", "person_id", "operation_center", "position_id", "risk_manager_id", "health_entity_id", "pension_fund_id", "compensation_fund_id", "start_date", "end_date", "created_at", "updated_at", "deleted_at"}, example="start_date")
+     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/Dir"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
      *     @OA\Response(
      *         response=200,
-     *         description="Lista de empleados cargada con éxito",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property= "users",
-     *                     type="array",
-     *                     @OA\Items(ref="#/components/schemas/Employee")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="meta",
-     *                     type="object",
-     *                     @OA\Property(
-     *                         property="pagination",
-     *                         type="object",
-     *                         @OA\Property(property="total", type="integer", example=1),
-     *                         @OA\Property(property="count", type="integer", example=1),
-     *                         @OA\Property(property="per_page", type="integer", example=1),
-     *                         @OA\Property(property="current_page", type="integer", example=1),
-     *                         @OA\Property(property="total_pages", type="integer", example=1)
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Lista de empleados cargada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/EmployeeListResponse")
      *     ),
      *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
+     *         response=422,
+     *         description="Parámetros de consulta inválidos.",
      *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"per_page": "Registros por pagina.", "page": "N° de pagina.", "search": "Filtro de Busqueda.", "column": "Columna a ordenar.", "dir": "Sentido del orden.", "with_trashed": "Registros inactivos", "with_user": "Usuario asociado"},
+     *                 "errors": {"with_user": {"Deber ser verdadero o falso."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function all(EmployeeAllRequest $request)
@@ -340,45 +209,27 @@ class EmployeeController extends Controller
      * @OA\Get(
      *     path="/employees/find/{id}",
      *     tags={"Employees"},
-     *     summary="Obtener un empleado específico",
+     *     summary="Obtener un empleado",
+     *     description="Ojo: hoy el `{id}` se valida contra la tabla de personas, no la de empleados (ver pendientes). Un id de empleado sin persona con ese mismo id da 422; uno que no es empleado pero sí persona da 404.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del empleado",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Empleado cargado con éxito",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="employee",
-     *                     ref="#/components/schemas/Employee"
-     *                 ),
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Empleado cargado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/EmployeeResponse")
      *     ),
      *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
+     *         response=404,
+     *         description="El id existe como persona pero no como empleado.",
      *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
+     *             ref="#/components/schemas/ServerErrorResponse",
+     *             example={"error": {"message": "No se encontraron resultados para la búsqueda.", "error": "No query results for model [App\Models\Employee] 380."}}
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function find(EmployeeFindRequest $request, $id)
@@ -408,140 +259,32 @@ class EmployeeController extends Controller
      *     path="/employees/store",
      *     tags={"Employees"},
      *     summary="Crear un empleado",
+     *     description="Vincula una persona con su cargo y sus entidades de seguridad social.",
      *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             required={"person_id","position_id","risk_manager_id","health_entity_id","pension_fund_id","compensation_fund_id","start_date"},
-     *             @OA\Property(property="person_id",
-     *                 type="integer",
-     *                 example=1,
-     *                 description="Identificador de la persona"
-     *             ),
-     *             @OA\Property(
-     *                 property="operation_center",
-     *                 type="string",
-     *                 nullable=true,
-     *                 example="001"
-     *             ),
-     *             @OA\Property(
-     *                 property="position_id",
-     *                 type="integer",
-     *                 example=10,
-     *                 description="Identificador del cargo"
-     *             ),
-     *             @OA\Property(
-     *                 property="risk_manager_id",
-     *                 type="integer",
-     *                 example=7,
-     *                 description="Identificador de la administradora de riesgos"
-     *             ),
-     *             @OA\Property(
-     *                 property="health_entity_id",
-     *                 type="integer",
-     *                 example=5,
-     *                 description="Identificador de la entidad de salud"
-     *             ),
-     *             @OA\Property(
-     *                 property="pension_fund_id",
-     *                 type="integer",
-     *                 example=3,
-     *                 description="Identificador del fondo de pensión"
-     *             ),
-     *             @OA\Property(
-     *                 property="compensation_fund_id",
-     *                 type="integer",
-     *                 example=2,
-     *                 description="Identificador de la caja de compensación"
-     *             ),
-     *             @OA\Property(
-     *                 property="start_date",
-     *                 type="string",
-     *                 format="date",
-     *                 example="2026-04-01",
-     *                 description="Fecha de inicio (Y-m-d)"
-     *             ),
-     *             @OA\Property(
-     *                 property="end_date",
-     *                 type="string",
-     *                 format="date",
-     *                 nullable=true,
-     *                 example="2026-12-31",
-     *                 description="Fecha de finalización (debe ser mayor a start_date)"
-     *             )
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/EmployeeRequest")
      *     ),
      *     @OA\Response(
-     *         response=200,
-     *         description="Empleado creado con éxito",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="employee",
-     *                     type="object",
-     *                     @OA\Property(property="person_id", type="integer", example=1),
-     *                     @OA\Property(property="operation_center", type="string", example="001"),
-     *                     @OA\Property(property="position_id", type="integer", example=1),
-     *                     @OA\Property(property="risk_manager_id", type="integer", example=1),
-     *                     @OA\Property(property="health_entity_id", type="integer", example=1),
-     *                     @OA\Property(property="pension_fund_id", type="integer", example=1),
-     *                     @OA\Property(property="compensation_fund_id", type="integer", example=1),
-     *                     @OA\Property(property="start_date", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                     @OA\Property(property="end_date", type="string", format="date-time", nullable=true, example=null),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         response=201,
+     *         description="Empleado creado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/EmployeeResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="Datos inválidos o la persona ya es empleado.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                  @OA\Property(property="person_id", type="string", example="Persona"),
-     *                  @OA\Property(property="operation_center", type="string", example="Centro de operaciones"),
-     *                  @OA\Property(property="position_id", type="string", example="Cargo"),
-     *                  @OA\Property(property="risk_manager_id", type="string", example="Administradora de Riesgos"),
-     *                  @OA\Property(property="health_entity_id", type="string", example="Entidad de Salud"),
-     *                  @OA\Property(property="pension_fund_id", type="string", example="Fondo de pensión"),
-     *                  @OA\Property(property="compensation_fund_id", type="string", example="Caja de compensación"),
-     *                  @OA\Property(property="start_date", type="string", example="Fecha inicio"),
-     *                  @OA\Property(property="end_date", type="string", example="Fecha fin")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="person_id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Es obligatorio.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"person_id": "Persona", "operation_center": "Centro de operaciones", "position_id": "Cargo", "risk_manager_id": "Administradora de Riesgos", "health_entity_id": "Entidad de Salud", "pension_fund_id": "Fondo de pensión", "compensation_fund_id": "Caja de compensación", "start_date": "Fecha inicio", "end_date": "Fecha fin"},
+     *                 "errors": {"person_id": {"Ya está registrado."}, "start_date": {"Formato inválido. Permitido Y-m-d."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function store(EmployeeStoreRequest $request)
@@ -579,144 +322,37 @@ class EmployeeController extends Controller
      * @OA\Put(
      *     path="/employees/update/{id}",
      *     tags={"Employees"},
-     *     summary="Editar un empleado específico",
+     *     summary="Editar un empleado",
+     *     description="Reemplaza todos los campos. Si no se envía `operation_center` o `end_date`, quedan en `null`.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del empleado",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"person_id","position_id","risk_manager_id","health_entity_id","pension_fund_id","compensation_fund_id","start_date"},
-     *             @OA\Property(
-     *                 property="operation_center",
-     *                 type="string",
-     *                 nullable=true,
-     *                 example="001"
-     *             ),
-     *             @OA\Property(
-     *                 property="position_id",
-     *                 type="integer",
-     *                 example=10,
-     *                 description="Identificador del cargo"
-     *             ),
-     *             @OA\Property(
-     *                 property="risk_manager_id",
-     *                 type="integer",
-     *                 example=7,
-     *                 description="Identificador de la administradora de riesgos"
-     *             ),
-     *             @OA\Property(
-     *                 property="health_entity_id",
-     *                 type="integer",
-     *                 example=5,
-     *                 description="Identificador de la entidad de salud"
-     *             ),
-     *             @OA\Property(
-     *                 property="pension_fund_id",
-     *                 type="integer",
-     *                 example=3,
-     *                 description="Identificador del fondo de pensión"
-     *             ),
-     *             @OA\Property(
-     *                 property="compensation_fund_id",
-     *                 type="integer",
-     *                 example=2,
-     *                 description="Identificador de la caja de compensación"
-     *             ),
-     *             @OA\Property(
-     *                 property="start_date",
-     *                 type="string",
-     *                 format="date",
-     *                 example="2026-04-01",
-     *                 description="Fecha de inicio (Y-m-d)"
-     *             ),
-     *             @OA\Property(
-     *                 property="end_date",
-     *                 type="string",
-     *                 format="date",
-     *                 nullable=true,
-     *                 example="2026-12-31",
-     *                 description="Fecha de finalización (debe ser mayor a start_date)"
-     *             )
+     *             ref="#/components/schemas/EmployeeRequest",
+     *             example={"person_id": 57, "operation_center": "051", "position_id": 59, "risk_manager_id": 94, "health_entity_id": 101, "pension_fund_id": 152, "compensation_fund_id": 163, "start_date": "2026-06-02", "end_date": "2026-12-31"}
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Empleado editado con éxito",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="employee",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="person_id", type="integer", example=1),
-     *                     @OA\Property(property="operation_center", type="string", example="001"),
-     *                     @OA\Property(property="position_id", type="integer", example=1),
-     *                     @OA\Property(property="risk_manager_id", type="integer", example=1),
-     *                     @OA\Property(property="health_entity_id", type="integer", example=1),
-     *                     @OA\Property(property="pension_fund_id", type="integer", example=1),
-     *                     @OA\Property(property="compensation_fund_id", type="integer", example=1),
-     *                     @OA\Property(property="start_date", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                     @OA\Property(property="end_date", type="string", format="date-time", nullable=true, example=null),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Empleado editado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/EmployeeResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="Datos inválidos o empleado no registrado.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                  @OA\Property(property="person_id", type="string", example="Persona"),
-     *                  @OA\Property(property="operation_center", type="string", example="Centro de operaciones"),
-     *                  @OA\Property(property="position_id", type="string", example="Cargo"),
-     *                  @OA\Property(property="risk_manager_id", type="string", example="Administradora de Riesgos"),
-     *                  @OA\Property(property="health_entity_id", type="string", example="Entidad de Salud"),
-     *                  @OA\Property(property="pension_fund_id", type="string", example="Fondo de pensión"),
-     *                  @OA\Property(property="compensation_fund_id", type="string", example="Caja de compensación"),
-     *                  @OA\Property(property="start_date", type="string", example="Fecha inicio"),
-     *                  @OA\Property(property="end_date", type="string", example="Fecha fin")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="person_id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Es obligatorio.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"id": "Identificador del empleado", "person_id": "Persona", "operation_center": "Centro de operaciones", "position_id": "Cargo", "risk_manager_id": "Administradora de Riesgos", "health_entity_id": "Entidad de Salud", "pension_fund_id": "Fondo de pensión", "compensation_fund_id": "Caja de compensación", "start_date": "Fecha inicio", "end_date": "Fecha fin"},
+     *                 "errors": {"end_date": {"Debe ser una fecha posterior a Fecha inicio."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function update(EmployeeUpdateRequest $request, $id)
@@ -754,79 +390,19 @@ class EmployeeController extends Controller
      * @OA\Delete(
      *     path="/employees/delete/{id}",
      *     tags={"Employees"},
-     *     summary="Desactivar un empleado específico",
+     *     summary="Desactivar un empleado",
+     *     description="Desactivación lógica (soft delete). Ojo: hoy el `{id}` se valida contra la tabla de personas activas, no la de empleados (ver pendientes).",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del empleado",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Empleado desactivado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="employee",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="person_id", type="integer", example=1),
-     *                     @OA\Property(property="operation_center", type="string", example="001"),
-     *                     @OA\Property(property="position_id", type="integer", example=1),
-     *                     @OA\Property(property="risk_manager_id", type="integer", example=1),
-     *                     @OA\Property(property="health_entity_id", type="integer", example=1),
-     *                     @OA\Property(property="pension_fund_id", type="integer", example=1),
-     *                     @OA\Property(property="compensation_fund_id", type="integer", example=1),
-     *                     @OA\Property(property="start_date", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                     @OA\Property(property="end_date", type="string", format="date-time", nullable=true, example=null),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Empleado desactivado correctamente. `deleted_at` queda con la fecha de desactivación.",
+     *         @OA\JsonContent(ref="#/components/schemas/EmployeeResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del empleado")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function delete(EmployeeDeleteRequest $request, $id)
@@ -855,79 +431,18 @@ class EmployeeController extends Controller
      * @OA\Patch(
      *     path="/employees/restore/{id}",
      *     tags={"Employees"},
-     *     summary="Activar un empleado",
+     *     summary="Restaurar un empleado desactivado",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del empleado",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Empleado activado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="clothing",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="person_id", type="integer", example=1),
-     *                     @OA\Property(property="operation_center", type="string", example="001"),
-     *                     @OA\Property(property="position_id", type="integer", example=1),
-     *                     @OA\Property(property="risk_manager_id", type="integer", example=1),
-     *                     @OA\Property(property="health_entity_id", type="integer", example=1),
-     *                     @OA\Property(property="pension_fund_id", type="integer", example=1),
-     *                     @OA\Property(property="compensation_fund_id", type="integer", example=1),
-     *                     @OA\Property(property="start_date", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                     @OA\Property(property="end_date", type="string", format="date-time", nullable=true, example=null),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Empleado restaurado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/EmployeeResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del empleado")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function restore(EmployeeRestoreRequest $request, $id)

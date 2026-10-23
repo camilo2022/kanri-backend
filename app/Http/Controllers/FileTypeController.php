@@ -15,38 +15,76 @@ use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 
 /**
- * @OA\Tag(
- *     name="File Types",
- *     description="Endpoints para gestionar tipos de archivos"
- * )
- *
- * @OA\PathItem(
- *     path="/FileTypes",
- *     description="Rutas de gestión de tipos de archivos"
+ * @OA\Schema(
+ *     schema="FileTypeFileSubtype",
+ *     description="Subtipo del tipo de archivo, con el pivote de `model_has_subitems`.",
+ *     allOf={
+ *         @OA\Schema(ref="#/components/schemas/Subitem"),
+ *         @OA\Schema(
+ *             @OA\Property(
+ *                 property="pivot",
+ *                 type="object",
+ *                 @OA\Property(property="model_type", type="string", example="App\Models\FileSubtype"),
+ *                 @OA\Property(property="subitem_id", type="integer", description="Id del tipo de archivo.", example=470),
+ *                 @OA\Property(property="model_id", type="integer", description="Id del subtipo.", example=471)
+ *             )
+ *         )
+ *     },
+ *     example={"id": 471, "item_id": 2, "name": "CÁMARA DE COMERCIO", "description": "CERTIFICADO DE EXISTENCIA Y REPRESENTACIÓN LEGAL", "settings": {}, "created_at": "2026-05-14T14:30:00.000000Z", "updated_at": "2026-05-14T14:30:00.000000Z", "deleted_at": null, "pivot": {"model_type": "App\Models\FileSubtype", "subitem_id": 470, "model_id": 471}}
  * )
  *
  * @OA\Schema(
  *     schema="FileType",
  *     type="object",
- *
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="item_id", type="integer", example=10),
- *     @OA\Property(property="name", type="string", example="No Aplica"),
- *     @OA\Property(property="description", type="string", example="No Aplica"),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *     @OA\Property(property="id", type="integer", example=470),
+ *     @OA\Property(property="item_id", type="integer", description="No viene en la respuesta de `all`.", example=1),
+ *     @OA\Property(property="name", type="string", example="DOCUMENTOS LEGALES"),
+ *     @OA\Property(property="description", type="string", example="DOCUMENTOS LEGALES DE PROVEEDORES Y CLIENTES"),
+ *     @OA\Property(property="settings", type="object", nullable=true, example=null),
+ *     @OA\Property(property="created_at", type="string", example="2026-05-14 14:25:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-05-14 14:25:00"),
+ *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
  *     @OA\Property(
  *         property="item",
  *         type="object",
- *         @OA\Property(property="id", type="integer", example=31),
+ *         @OA\Property(property="id", type="integer", example=1),
  *         @OA\Property(property="name", type="string", example="Tipos de archivos"),
- *         @OA\Property(property="description", type="string", example="Listado de tipos de archivos."),
- *         @OA\Property(property="settings", type="string", example="{}"),
+ *         @OA\Property(property="description", type="string", example="Clasificación estandarizada de archivos según su naturaleza, uso y propósito dentro de procesos administrativos, legales o documentales."),
+ *         @OA\Property(property="settings", type="object", nullable=true, example=null),
  *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
  *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
  *     ),
+ *     @OA\Property(property="file_subtypes", type="array", description="Subtipos del tipo de archivo. **Solo vienen en `all`**: el detalle no los devuelve.", @OA\Items(ref="#/components/schemas/FileTypeFileSubtype"))
+ * )
+ *
+ * @OA\Schema(
+ *     schema="FileTypeResponse",
+ *     type="object",
+ *     @OA\Property(property="data", type="object", @OA\Property(property="file_type", ref="#/components/schemas/FileType")),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="FileTypeListResponse",
+ *     type="object",
+ *     @OA\Property(
+ *         property="data",
+ *         type="object",
+ *         @OA\Property(property="file_types", type="array", @OA\Items(ref="#/components/schemas/FileType")),
+ *         @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="FileTypeRequest",
+ *     type="object",
+ *     required={"name", "description"},
+ *     @OA\Property(property="name", type="string", minLength=4, maxLength=50, description="Nombre en MAYÚSCULAS. Único entre los tipos de archivo.", example="DOCUMENTOS LEGALES"),
+ *     @OA\Property(property="description", type="string", maxLength=255, description="Descripción en MAYÚSCULAS.", example="DOCUMENTOS LEGALES DE PROVEEDORES Y CLIENTES")
  * )
  */
 class FileTypeController extends Controller
@@ -55,108 +93,43 @@ class FileTypeController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/file_types/all",
-     *     tags={"File Types"},
-     *     summary="Listar tipos de archivos",
+     *     path="/typification/file_types/all",
+     *     tags={"Typification › File Types"},
+     *     summary="Listar los tipos de archivo",
+     *     description="Cada tipo de archivo trae sus subtipos. En esta lista no viene `item_id`.",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Filtro de Busqueda.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="string", example="juan")
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/Search"),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
-     *         description="Columna a ordenar.",
      *         required=false,
-     *
-     *         @OA\Schema(type="string", enum={"id","name","description","created_at", "updated_at"}, example="name")
+     *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *         @OA\Schema(type="string", enum={"id", "name", "description", "created_at", "updated_at", "deleted_at"}, example="name")
      *     ),
-     *
-     *     @OA\Parameter(
-     *         name="dir",
-     *         in="query",
-     *         description="Dirección de ordenamiento.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
-     *     ),
-     *
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Registros por página.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="integer", example=10)
-     *     ),
-     *
-     *     @OA\Parameter(
-     *         name="with_trashed",
-     *         in="query",
-     *         description="Registros inactivos.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="boolean", example=true)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/Dir"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
      *     @OA\Response(
      *         response=200,
-     *         description="Lista de tipos de archivos cargada correctamente",
-     *
+     *         description="Lista de tipos de archivo cargada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/FileTypeListResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Parámetros de consulta inválidos.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="file_types",
-     *                     type="array",
-     *
-     *                     @OA\Items(ref="#/components/schemas/FileType")
-     *                 ),
-     *
-     *                 @OA\Property(
-     *                     property="meta",
-     *                     type="object",
-     *                     @OA\Property(
-     *                         property="pagination",
-     *                         type="object",
-     *                         @OA\Property(property="total", type="integer", example=1),
-     *                         @OA\Property(property="count", type="integer", example=1),
-     *                         @OA\Property(property="per_page", type="integer", example=1),
-     *                         @OA\Property(property="current_page", type="integer", example=1),
-     *                         @OA\Property(property="total_pages", type="integer", example=1)
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"per_page": "Registros por pagina.", "page": "N° de pagina.", "search": "Filtro de Busqueda.", "column": "Columna a ordenar.", "dir": "Sentido del orden.", "with_trashed": "Registros inactivos", "in_technical_sheet": "Aplica a Ficha Técnica"},
+     *                 "errors": {"column": {"Valor inválido. Permitidos: id, name, description, created_at, updated_at, deleted_at."}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function all(FileTypeAllRequest $request)
@@ -193,81 +166,21 @@ class FileTypeController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/file_types/find/{id}",
-     *     tags={"File Types"},
-     *     summary="Obtener un tipo de archivo específico",
+     *     path="/typification/file_types/find/{id}",
+     *     tags={"Typification › File Types"},
+     *     summary="Obtener un tipo de archivo",
+     *     description="No incluye `file_subtypes` (el Resource no los devuelve, aunque se cargan).",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del tipo de archivo",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Tipo de archivos cargado con éxito",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="file_type",
-     *                     ref="#/components/schemas/FileType"
-     *                 ),
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Tipo de archivo cargado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/FileTypeResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Identificador del tipo de archivos no registrado.",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example=1)
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function find(FileTypeFindRequest $request, $id)
@@ -294,100 +207,34 @@ class FileTypeController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/file_types/store",
-     *     tags={"File Types"},
+     *     path="/typification/file_types/store",
+     *     tags={"Typification › File Types"},
      *     summary="Crear un tipo de archivo",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\RequestBody(
      *         required=true,
-     *
-     *         @OA\JsonContent(
-     *             required={"name"},
-     *
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="Personal",
-     *                 description="Nombre del tipo de archivos"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="Personal",
-     *                 description="Descripción del tipo de archivos"
-     *              )
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/FileTypeRequest")
      *     ),
-     *
      *     @OA\Response(
-     *         response=200,
+     *         response=201,
      *         description="Tipo de archivo creado correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="file_type",
-     *                     type="object",
-     *                     @OA\Property(property="name", type="string", example="NAME_FILE_TYPE"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_FILE_TYPE"),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="id", type="integer", example=1)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/FileTypeResponse")
      *     ),
-     *
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
-     *
+     *         description="Datos inválidos.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del tipo de archivos"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del tipo de archivos")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"name": "Nombre", "description": "Descripción"},
+     *                 "errors": {"name": {"Ya está registrado."}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function store(FileTypeStoreRequest $request)
@@ -417,111 +264,38 @@ class FileTypeController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/file_types/update/{id}",
-     *     tags={"File Types"},
-     *     summary="Editar un tipo de archivos específico",
+     *     path="/typification/file_types/update/{id}",
+     *     tags={"Typification › File Types"},
+     *     summary="Editar un tipo de archivo",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del tipo de archivos",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
      *         required=true,
-     *
      *         @OA\JsonContent(
-     *             required={"name"},
-     *
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="XXS",
-     *                 description="Nombre del tipo de archivos"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="LISTA DE USUARIOS",
-     *                 description="Descripción del tipo de archivos"
-     *              )
+     *             ref="#/components/schemas/FileTypeRequest",
+     *             example={"name": "CONTRATOS", "description": "CONTRATOS Y ACUERDOS COMERCIALES"}
      *         )
      *     ),
-     *
      *     @OA\Response(
      *         response=200,
-     *         description="Tipo de archivos editado correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="file_type",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_FILE_TYPE"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_FILE_TYPE"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Tipo de archivo editado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/FileTypeResponse")
      *     ),
-     *
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
-     *
+     *         description="Datos inválidos o tipo de archivo no registrado.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del tipo de archivos"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del tipo de archivos")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="Formato Inválido. El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"id": "Identificador del tipo de tela", "name": "Nombre", "description": "Descripción"},
+     *                 "errors": {"description": {"Debe de ingresar mayúsculas."}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function update(FileTypeUpdateRequest $request, $id)
@@ -550,89 +324,21 @@ class FileTypeController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/file_types/delete/{id}",
-     *     tags={"File Types"},
-     *     summary="Desactivar un tipo de archivos específica",
+     *     path="/typification/file_types/delete/{id}",
+     *     tags={"Typification › File Types"},
+     *     summary="Desactivar un tipo de archivo",
+     *     description="Desactivación lógica (soft delete): el registro se conserva y puede restaurarse.",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del tipo de archivos",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Tipo de archivos desactivado correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="file_type",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_FILE_TYPE"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_FILE_TYPE"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Tipo de archivo desactivado correctamente. `deleted_at` queda con la fecha de desactivación.",
+     *         @OA\JsonContent(ref="#/components/schemas/FileTypeResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador de la tipos de archivos")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function delete(FileTypeDeleteRequest $request, $id)
@@ -659,89 +365,20 @@ class FileTypeController extends Controller
 
     /**
      * @OA\Patch(
-     *     path="/file_types/restore/{id}",
-     *     tags={"File Types"},
-     *     summary="Activar un tipo de archivos específica",
+     *     path="/typification/file_types/restore/{id}",
+     *     tags={"Typification › File Types"},
+     *     summary="Restaurar un tipo de archivo desactivado",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del tipo de archivos",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Tipo de archivos activado correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="file_type",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_FILE_TYPE"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_FILE_TYPE"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Tipo de archivo restaurado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/FileTypeResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador de la tipos de archivos")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function restore(FileTypeRestoreRequest $request, $id)

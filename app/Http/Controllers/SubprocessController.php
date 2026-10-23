@@ -16,11 +16,6 @@ use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 
 /**
- * @OA\Tag(
- *     name="Subprocess",
- *     description="Endpoints para gestionar subprocesos"
- * )
- *
  * @OA\PathItem(
  *     path="/Subprocesses",
  *     description="Rutas de gestión de subprocesos"
@@ -56,7 +51,7 @@ class SubprocessController extends Controller
     /**
      * @OA\Get(
      *     path="/subprocesses/all",
-     *     tags={"Subprocess"},
+     *     tags={"Workflow › Subprocesses"},
      *     summary="Listar subprocesos",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
@@ -179,7 +174,7 @@ class SubprocessController extends Controller
     /**
      * @OA\Get(
      *     path="/subprocesses/find/{id}",
-     *     tags={"Subprocess"},
+     *     tags={"Workflow › Subprocesses"},
      *     summary="Obtener un subproceso específico",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
@@ -267,7 +262,7 @@ class SubprocessController extends Controller
     /**
      * @OA\Post(
      *     path="/subprocesses/store",
-     *     tags={"Subprocess"},
+     *     tags={"Workflow › Subprocesses"},
      *     summary="Crear un subproceso",
      *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
@@ -380,7 +375,7 @@ class SubprocessController extends Controller
     /**
      * @OA\Put(
      *     path="/subprocesses/update/{id}",
-     *     tags={"Subprocess"},
+     *     tags={"Workflow › Subprocesses"},
      *     summary="Editar un subproceso específico",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
@@ -500,7 +495,7 @@ class SubprocessController extends Controller
     /**
      * @OA\Delete(
      *     path="/subprocesses/delete/{id}",
-     *     tags={"Subprocess"},
+     *     tags={"Workflow › Subprocesses"},
      *     summary="Desactivar un subproceso específico",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
@@ -596,7 +591,7 @@ class SubprocessController extends Controller
     /**
      * @OA\Patch(
      *     path="/subprocesses/restore/{id}",
-     *     tags={"Subprocess"},
+     *     tags={"Workflow › Subprocesses"},
      *     summary="Activar un subproceso específico",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(

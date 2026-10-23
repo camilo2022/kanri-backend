@@ -16,38 +16,101 @@ use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
 
 /**
- * @OA\Tag(
- *     name="Module",
- *     description="Endpoints de Gestión de Módulos"
- * )
- *
- * @OA\PathItem(
- *     path="/modules",
- *     description="Rutas de Gestion de Módulos"
+ * @OA\Schema(
+ *     schema="ModuleSubmodule",
+ *     type="object",
+ *     description="Submódulo (opción del menú). `module_id` y `permission_id` están ocultos en el modelo.",
+ *     @OA\Property(property="id", type="integer", example=41),
+ *     @OA\Property(property="name", type="string", example="Despachos"),
+ *     @OA\Property(property="url", type="string", description="Ruta del frontend.", example="/dispatches"),
+ *     @OA\Property(property="icon", type="string", description="Icono de react-icons (Font Awesome).", example="FaTruck"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-05-14T21:30:00.000000Z"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-05-14T21:30:00.000000Z"),
+ *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
  * )
  *
  * @OA\Schema(
  *     schema="Module",
  *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="name", type="string", example="users"),
- *     @OA\Property(property="icon", type="string", example="FaUser"),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *     description="Módulo del menú (tabla `modules`) serializado por Eloquent, con sus submódulos. Es el que viene en el menú del usuario (`GET /auth/user`).",
+ *     @OA\Property(property="id", type="integer", example=6),
+ *     @OA\Property(property="name", type="string", example="Bodega"),
+ *     @OA\Property(property="icon", type="string", description="Icono de react-icons (Font Awesome).", example="FaWarehouse"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-05-14T21:25:00.000000Z"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-05-14T21:25:00.000000Z"),
  *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *     @OA\Property(property="submodules", type="array", @OA\Items(ref="#/components/schemas/ModuleSubmodule"))
+ * )
+ *
+ * @OA\Schema(
+ *     schema="ModuleListItem",
+ *     type="object",
+ *     description="Módulo como lo entrega `ModuleCollection` (all).",
+ *     @OA\Property(property="id", type="integer", example=6),
+ *     @OA\Property(property="name", type="string", example="Bodega"),
+ *     @OA\Property(property="icon", type="string", example="FaWarehouse"),
+ *     @OA\Property(property="created_at", type="string", example="2026-05-14 16:25:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-05-14 16:25:00"),
+ *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
+ *     @OA\Property(property="submodules", type="array", @OA\Items(ref="#/components/schemas/ModuleSubmodule"))
+ * )
+ *
+ * @OA\Schema(
+ *     schema="ModuleDetail",
+ *     type="object",
+ *     description="Módulo como lo entrega `ModuleResource` (find, store, update, delete, restore). Hoy **no incluye `icon`** y trae `item_id`, `description`, `settings` e `item` siempre en `null`, porque el Resource está copiado de los catálogos (ver pendientes).",
+ *     @OA\Property(property="id", type="integer", example=6),
+ *     @OA\Property(property="item_id", nullable=true, example=null),
+ *     @OA\Property(property="name", type="string", example="Bodega"),
+ *     @OA\Property(property="description", nullable=true, example=null),
+ *     @OA\Property(property="settings", nullable=true, example=null),
+ *     @OA\Property(property="created_at", type="string", example="2026-05-14 16:25:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-05-14 16:25:00"),
+ *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
+ *     @OA\Property(property="item", nullable=true, example=null),
+ *     @OA\Property(property="submodules", type="array", @OA\Items(ref="#/components/schemas/ModuleSubmodule"))
+ * )
+ *
+ * @OA\Schema(
+ *     schema="ModuleResponse",
+ *     type="object",
+ *     @OA\Property(property="data", type="object", @OA\Property(property="module", ref="#/components/schemas/ModuleDetail")),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="ModuleListResponse",
+ *     type="object",
  *     @OA\Property(
- *         property="submodules",
- *         type="array",
- *         @OA\Items(
- *             type="object",
- *             @OA\Property(property="id", type="integer", example=1),
- *             @OA\Property(property="name", type="string", example="users"),
- *             @OA\Property(property="url", type="string", example="/users"),
- *             @OA\Property(property="icon", type="string", example="FaUser"),
- *             @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *             @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *             @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
- *         )
+ *         property="data",
+ *         type="object",
+ *         @OA\Property(property="modules", type="array", @OA\Items(ref="#/components/schemas/ModuleListItem")),
+ *         @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="ModuleRequest",
+ *     type="object",
+ *     required={"name", "icon"},
+ *     @OA\Property(
+ *         property="name",
+ *         type="string",
+ *         maxLength=18,
+ *         pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ]+(?:\.?\s[A-Za-zÁÉÍÓÚáéíóúÑñ]+)*$",
+ *         description="Solo letras (con tildes y Ñ); palabras separadas por un espacio (se admite un punto antes del espacio). Sin números. Único.",
+ *         example="Bodega"
+ *     ),
+ *     @OA\Property(
+ *         property="icon",
+ *         type="string",
+ *         maxLength=40,
+ *         pattern="^Fa([A-Z][a-zA-Z0-9]*|[0-9][a-zA-Z0-9]*)$",
+ *         description="Nombre de un icono de react-icons Font Awesome (prefijo `Fa`).",
+ *         example="FaWarehouse"
  *     )
  * )
  */
@@ -58,88 +121,42 @@ class ModuleController extends Controller
     /**
      * @OA\Get(
      *     path="/navegation/modules/all",
-     *     tags={"Navegation"},
-     *     summary="Listar los módulos",
+     *     tags={"Navegation › Modules"},
+     *     summary="Listar los módulos del menú",
+     *     description="Cada módulo trae sus submódulos. La búsqueda mira el nombre y el icono.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Filtro de Busqueda.",
-     *         required=false,
-     *         @OA\Schema(type="string", example="juan")
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/Search"),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
-     *         description="Columna a ordenar.",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"id","name","title", "description","created_at", "updated_at"}, example="name")
+     *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *         @OA\Schema(type="string", enum={"id", "name", "icon", "created_at", "updated_at"}, example="name")
      *     ),
-     *     @OA\Parameter(
-     *         name="dir",
-     *         in="query",
-     *         description="Dirección de ordenamiento.",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
-     *     ),
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Registros por página.",
-     *         required=false,
-     *         @OA\Schema(type="integer", example=10)
-     *     ),
-     *     @OA\Parameter(
-     *         name="with_trashed",
-     *         in="query",
-     *         description="Registros inactivos.",
-     *         required=false,
-     *         @OA\Schema(type="boolean", example=true)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/Dir"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
      *     @OA\Response(
      *         response=200,
      *         description="Lista de módulos cargada correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="modules",
-     *                     type="array",
-     *                     @OA\Items(ref="#/components/schemas/Module")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="meta",
-     *                     type="object",
-     *                     @OA\Property(
-     *                         property="pagination",
-     *                         type="object",
-     *                         @OA\Property(property="total", type="integer", example=1),
-     *                         @OA\Property(property="count", type="integer", example=1),
-     *                         @OA\Property(property="per_page", type="integer", example=1),
-     *                         @OA\Property(property="current_page", type="integer", example=1),
-     *                         @OA\Property(property="total_pages", type="integer", example=1)
-     *                     )
-     *                 ),
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/ModuleListResponse")
      *     ),
      *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
+     *         response=422,
+     *         description="Parámetros de consulta inválidos.",
      *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"with_trashed": "Registros inactivos"},
+     *                 "errors": {"column": {"El valor de la columna no es válido. "}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function all(ModuleAllRequest $request)
@@ -177,67 +194,20 @@ class ModuleController extends Controller
     /**
      * @OA\Get(
      *     path="/navegation/modules/find/{id}",
-     *     tags={"Navegation"},
-     *     summary="Obtener un módulo específico",
+     *     tags={"Navegation › Modules"},
+     *     summary="Obtener un módulo",
+     *     description="Hoy la respuesta no incluye `icon` (ver `ModuleDetail`).",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del módulo",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Módulo obtenido correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="role",
-     *                     ref="#/components/schemas/Module"
-     *                 ),
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Módulo cargado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/ModuleResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Identificador del módulo no registrado.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del módulo")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function find(ModuleFindRequest $request, $id)
@@ -266,87 +236,33 @@ class ModuleController extends Controller
     /**
      * @OA\Post(
      *     path="/navegation/modules/store",
-     *     tags={"Navegation"},
+     *     tags={"Navegation › Modules"},
      *     summary="Crear un módulo",
      *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             required={"name","icon"},
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="Usuarios",
-     *                 description="Nombre del módulo"
-     *             ),
-     *             @OA\Property(
-     *                 property="icon",
-     *                 type="string",
-     *                 example="FaUser",
-     *                 description="Icono del módulo"
-     *              )
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/ModuleRequest")
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Módulo creado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="modules",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="name", type="string", example="name_module_example"),
-     *                         @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="id", type="integer", example=0)
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Módulo creado correctamente (responde 200, no 201). `submodules` llega vacío.",
+     *         @OA\JsonContent(ref="#/components/schemas/ModuleResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="Datos inválidos.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del módulo"),
-     *                 @OA\Property(property="icon", type="string", example="Icono del módulo")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Ya está registrado.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"name": "Nombre del módulo", "icon": "Icono del módulo"},
+     *                 "errors": {"icon": {"Formato inválido. "}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function store(ModuleStoreRequest $request)
@@ -378,95 +294,37 @@ class ModuleController extends Controller
     /**
      * @OA\Put(
      *     path="/navegation/modules/update/{id}",
-     *     tags={"Navegation"},
-     *     summary="Editar un módulo específico",
+     *     tags={"Navegation › Modules"},
+     *     summary="Editar un módulo",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del módulo",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name","icon"},
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="Usuarios",
-     *                 description="Nombre del módulo"
-     *             ),
-     *             @OA\Property(
-     *                 property="icon",
-     *                 type="string",
-     *                 example="FaUser",
-     *                 description="Icono del módulo"
-     *              )
+     *             ref="#/components/schemas/ModuleRequest",
+     *             example={"name": "Inventarios", "icon": "FaBoxes"}
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Módulo actualizado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="modules",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=0),
-     *                         @OA\Property(property="name", type="string", example="name_module_example"),
-     *                         @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="delete_at", type="string", format="date-time", nullable=true, example=null)
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Módulo editado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/ModuleResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="Datos inválidos o módulo no registrado.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del módulo"),
-     *                 @OA\Property(property="icon", type="string", example="Icono del módulo")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Ya está registrado.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"name": "Nombre del módulo", "icon": "Icono del módulo"},
+     *                 "errors": {"name": {"Ya está registrado."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function update(ModuleUpdateRequest $request, $id)
@@ -498,76 +356,20 @@ class ModuleController extends Controller
     /**
      * @OA\Delete(
      *     path="/navegation/modules/delete/{id}",
-     *     tags={"Navegation"},
-     *     summary="Desactivar un módulo específico",
+     *     tags={"Navegation › Modules"},
+     *     summary="Desactivar un módulo",
+     *     description="Desactivación lógica (soft delete): el registro se conserva y puede restaurarse. No desactiva sus submódulos.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del módulo",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Módulo desactivado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="modules",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=0),
-     *                         @OA\Property(property="name", type="string", example="name_module_example"),
-     *                         @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="delete_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Módulo desactivado correctamente. `deleted_at` queda con la fecha de desactivación.",
+     *         @OA\JsonContent(ref="#/components/schemas/ModuleResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Identificador del módulo no registrado.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del módulo")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function delete(ModuleDeleteRequest $request)
@@ -595,76 +397,19 @@ class ModuleController extends Controller
     /**
      * @OA\Patch(
      *     path="/navegation/modules/restore/{id}",
-     *     tags={"Navegation"},
-     *     summary="Activar un módulo específico",
+     *     tags={"Navegation › Modules"},
+     *     summary="Restaurar un módulo desactivado",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del módulo",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
      *         description="Módulo restaurado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="modules",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=0),
-     *                         @OA\Property(property="name", type="string", example="name_module_example"),
-     *                         @OA\Property(property="icon", type="string", example="icon_module_example"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                         @OA\Property(property="delete_at", type="string", format="date-time", nullable=true, example=null)
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/ModuleResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Identificador del módulo no registrado.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del módulo")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function restore(ModuleRestoreRequest $request)

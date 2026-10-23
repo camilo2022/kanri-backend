@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Builder\BuilderDeleteRequest;
-use App\Http\Requests\Builder\BuilderStoreRequest;
-use App\Http\Requests\Builder\BuilderUpdateRequest;
+use App\Http\Requests\Cache\Builder\BuilderDeleteRequest;
+use App\Http\Requests\Cache\Builder\BuilderStoreRequest;
+use App\Http\Requests\Cache\Builder\BuilderUpdateRequest;
 use App\Http\Requests\OrganizationalStructure\Area\AreaAllRequest;
 use App\Http\Requests\OrganizationalStructure\Area\AreaDeleteRequest;
 use App\Http\Requests\OrganizationalStructure\Area\AreaFindRequest;
 use App\Http\Requests\OrganizationalStructure\Area\AreaRestoreRequest;
 use App\Http\Requests\OrganizationalStructure\Area\AreaStoreRequest;
 use App\Http\Requests\OrganizationalStructure\Area\AreaUpdateRequest;
-use App\Http\Resources\Builder\BuilderCollection;
-use App\Http\Resources\Builder\BuilderResource;
+use App\Http\Resources\Cache\Builder\BuilderCollection;
+use App\Http\Resources\Cache\Builder\BuilderResource;
 use App\Http\Resources\OrganizationalStructure\Area\AreaCollection;
 use App\Http\Resources\OrganizationalStructure\Area\AreaResource;
 use App\Models\Area;
@@ -25,48 +25,94 @@ use Illuminate\Support\Str;
 
 /**
  * @OA\Schema(
- *     schema="Area",
+ *     schema="Builder",
  *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="item_id", type="integer", example=1),
- *     @OA\Property(property="name", type="string", example="users"),
- *     @OA\Property(property="description", type="string", example="area que gestiona los usuarios"),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *     description="Constructor tal como se guarda en caché.",
+ *     @OA\Property(property="id", type="string", format="uuid", example="9b2f6c1e-4d7a-4f3b-8c2e-5a1d0e7f3b21"),
+ *     @OA\Property(property="trademark_ids", type="array", @OA\Items(type="integer"), example={21}),
+ *     @OA\Property(property="category_ids", type="array", @OA\Items(type="integer"), example={45}),
+ *     @OA\Property(property="subcategory_ids", type="array", @OA\Items(type="integer"), example={112}),
  *     @OA\Property(
- *         property="item",
+ *         property="percentages",
  *         type="object",
- *         @OA\Property(property="id", type="integer", example=1),
- *         @OA\Property(property="name", type="string", example="Áreas"),
- *         @OA\Property(property="description", type="string", example="Listado de áreas disponibles en la organización."),
- *         @OA\Property(property="settings", type="string", example="{}"),
- *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
+ *         description="Porcentaje por talla. La clave es el id de la talla.",
+ *         additionalProperties=@OA\AdditionalProperties(type="number"),
+ *         example={"101": 20, "102": 30, "103": 30, "104": 20}
+ *     )
+ * )
+ *
+ * @OA\Schema(
+ *     schema="BuilderDetail",
+ *     type="object",
+ *     description="Constructor con marcas, categorías, subcategorías y tallas ya resueltas (respuesta de `all`).",
+ *     @OA\Property(property="id", type="string", format="uuid", example="9b2f6c1e-4d7a-4f3b-8c2e-5a1d0e7f3b21"),
+ *     @OA\Property(
+ *         property="trademarks",
+ *         type="array",
+ *         @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/Subitem")}, example={"id": 21, "item_id": 15, "name": "DENIM CLASSIC", "description": "MARCA DE LÍNEA CLÁSICA", "settings": {}, "created_at": "2026-04-02T10:15:00.000000Z", "updated_at": "2026-04-02T10:15:00.000000Z", "deleted_at": null})
  *     ),
  *     @OA\Property(
- *         property="positions",
+ *         property="categories",
  *         type="array",
+ *         @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/Subitem")}, example={"id": 45, "item_id": 11, "name": "JEAN DAMA", "description": "PANTALÓN JEAN PARA DAMA", "settings": {}, "created_at": "2026-04-02T10:20:00.000000Z", "updated_at": "2026-04-02T10:20:00.000000Z", "deleted_at": null})
+ *     ),
+ *     @OA\Property(
+ *         property="subcategories",
+ *         type="array",
+ *         @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/Subitem")}, example={"id": 112, "item_id": 12, "name": "SKINNY", "description": "JEAN DAMA SKINNY TIRO ALTO", "settings": {}, "created_at": "2026-04-02T10:25:00.000000Z", "updated_at": "2026-04-02T10:25:00.000000Z", "deleted_at": null})
+ *     ),
+ *     @OA\Property(
+ *         property="percentages",
+ *         type="array",
+ *         description="Solo incluye las tallas que todavía existen.",
  *         @OA\Items(
  *             type="object",
- *             @OA\Property(property="id", type="integer", example=1),
- *             @OA\Property(property="item_id", type="integer", example=1),
- *             @OA\Property(property="name", type="string", example="No aplica"),
- *             @OA\Property(property="description", type="string", example="No aplica"),
- *             @OA\Property(property="settings", type="string", example="{}"),
- *             @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *             @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *             @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
- *             @OA\Property(
- *                 property="pivot",
- *                 type="object",
- *                 @OA\Property(property="model_type", type="string", example="App\\Models\\Position"),
- *                 @OA\Property(property="subitem_id", type="integer", example=1),
- *                 @OA\Property(property="model_id", type="integer", example=1),
- *             )
- *         )
+ *             @OA\Property(property="size", ref="#/components/schemas/Subitem"),
+ *             @OA\Property(property="percentage", type="number", example=20)
+ *         ),
+ *         example={{"size": {"id": 101, "item_id": 16, "name": "6", "description": "TALLA 6", "settings": {}, "created_at": "2026-04-02T10:30:00.000000Z", "updated_at": "2026-04-02T10:30:00.000000Z", "deleted_at": null}, "percentage": 20}}
  *     )
+ * )
+ *
+ * @OA\Schema(
+ *     schema="BuilderResponse",
+ *     type="object",
+ *     @OA\Property(property="data", type="object", @OA\Property(property="builder", ref="#/components/schemas/Builder")),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="BuilderListResponse",
+ *     type="object",
+ *     @OA\Property(property="data", type="object", @OA\Property(property="builders", type="array", @OA\Items(ref="#/components/schemas/BuilderDetail"))),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="BuilderRequest",
+ *     type="object",
+ *     required={"trademark_id", "percentages"},
+ *     @OA\Property(property="trademark_id", type="array", minItems=1, description="Marcas (al menos una).", @OA\Items(type="integer"), example={21}),
+ *     @OA\Property(property="category_id", type="array", nullable=true, description="Categorías. Opcional.", @OA\Items(type="integer"), example={45}),
+ *     @OA\Property(property="subcategory_id", type="array", nullable=true, description="Subcategorías. Exigen categoría y deben pertenecer a las categorías elegidas.", @OA\Items(type="integer"), example={112}),
+ *     @OA\Property(
+ *         property="percentages",
+ *         type="object",
+ *         description="Porcentaje (0 a 100) por id de talla. La suma debe ser exactamente 100 y cada talla debe pertenecer a alguna de las marcas elegidas.",
+ *         additionalProperties=@OA\AdditionalProperties(type="number", minimum=0, maximum=100),
+ *         example={"101": 20, "102": 30, "103": 30, "104": 20}
+ *     )
+ * )
+ *
+ * @OA\Parameter(
+ *     parameter="BuilderUuid",
+ *     name="uuid",
+ *     in="path",
+ *     required=true,
+ *     description="UUID del constructor.",
+ *     @OA\Schema(type="string", format="uuid", example="9b2f6c1e-4d7a-4f3b-8c2e-5a1d0e7f3b21")
  * )
  */
 class BuilderController extends Controller
@@ -75,89 +121,19 @@ class BuilderController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/organizational_structure/areas/all",
-     *     tags={"Organizational Structure"},
-     *     summary="Listar áreas",
+     *     path="/cache/builders/all",
+     *     tags={"Cache › Builders"},
+     *     summary="Listar los constructores de curvas",
+     *     description="Un constructor define el porcentaje de producción por talla para una combinación de marca, categoría y subcategoría. Se guardan en caché (no en la base de datos) y se identifican por UUID. Sin filtros ni paginación: devuelve todos.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Filtro de Busqueda.",
-     *         required=false,
-     *         @OA\Schema(type="string", example="LIDER DE MARCAS PROPIAS")
-     *     ),
-     *     @OA\Parameter(
-     *         name="column",
-     *         in="query",
-     *         description="Columna a ordenar.",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"id","name","description","created_at", "updated_at"}, example="name")
-     *     ),
-     *     @OA\Parameter(
-     *         name="dir",
-     *         in="query",
-     *         description="Dirección de ordenamiento.",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
-     *     ),
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Registros por página.",
-     *         required=false,
-     *         @OA\Schema(type="integer", example=10)
-     *     ),
-     *     @OA\Parameter(
-     *         name="with_trashed",
-     *         in="query",
-     *         description="Registros inactivos.",
-     *         required=false,
-     *         @OA\Schema(type="boolean", example=true)
-     *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Lista de áreas cargada correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="areas",
-     *                     type="array",
-     *                     @OA\Items(ref="#/components/schemas/Area")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="meta",
-     *                     type="object",
-     *                     @OA\Property(
-     *                         property="pagination",
-     *                         type="object",
-     *                         @OA\Property(property="total", type="integer", example=1),
-     *                         @OA\Property(property="count", type="integer", example=1),
-     *                         @OA\Property(property="per_page", type="integer", example=1),
-     *                         @OA\Property(property="current_page", type="integer", example=1),
-     *                         @OA\Property(property="total_pages", type="integer", example=1)
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Lista de constructores cargada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/BuilderListResponse")
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function all()
@@ -195,68 +171,25 @@ class BuilderController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/organizational_structure/areas/find/{id}",
-     *     tags={"Organizational Structure"},
-     *     summary="Obtener un área especifica",
+     *     path="/cache/builders/find/{id}",
+     *     tags={"Cache › Builders"},
+     *     summary="Obtener un constructor (pendiente: hoy devuelve un área)",
+     *     description="**Pendiente de corregir en el código.** Este método es una copia del de `AreaController`: busca un ÁREA por `id` numérico y responde con `data.area`. No consulta la caché de constructores.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del área",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=234)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Área cargada con éxito",
+     *         description="Hoy responde con el área del id indicado.",
      *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="area",
-     *                     ref="#/components/schemas/Area"
-     *                 ),
-     *             ),
+     *             @OA\Property(property="data", type="object", @OA\Property(property="area", ref="#/components/schemas/Area")),
      *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
      *             @OA\Property(property="error", type="boolean", example=false)
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Identificador del área no registrado.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example=1)
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function find(AreaFindRequest $request, $id)
@@ -283,86 +216,35 @@ class BuilderController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/organizational_structure/areas/store",
-     *     tags={"Organizational Structure"},
-     *     summary="Crear un área",
+     *     path="/cache/builders/store",
+     *     tags={"Cache › Builders"},
+     *     summary="Crear un constructor de curvas",
+     *     description="No puede existir otro constructor para la misma combinación de marca, categoría y subcategoría.",
      *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             required={"name"},
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="ADMINISTRACION",
-     *                 description="Nombre del Área"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="ADMINISTRACION",
-     *                 description="Descripción del Área"
-     *              )
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/BuilderRequest")
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Área creada correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="area",
-     *                     type="object",
-     *                     @OA\Property(property="name", type="string", example="name_module_example"),
-     *                     @OA\Property(property="description", type="string", example="description_module_example"),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="id", type="integer", example=1)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Constructor creado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/BuilderResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="Datos inválidos o combinación ya registrada.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del Área"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del Área")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"trademark_id": "Marcas", "category_id": "Categorías", "subcategory_id": "Subcategorías", "percentages": "Porcentajes"},
+     *                 "errors": {"percentages": {"La suma de los porcentajes debe ser exactamente 100%."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function store(BuilderStoreRequest $request)
@@ -440,95 +322,39 @@ class BuilderController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/organizational_structure/areas/update/{id}",
-     *     tags={"Organizational Structure"},
-     *     summary="Editar un área específica",
+     *     path="/cache/builders/update/{uuid}",
+     *     tags={"Cache › Builders"},
+     *     summary="Editar un constructor de curvas",
+     *     description="Reemplaza marcas, categorías, subcategorías y porcentajes. Las combinaciones no pueden chocar con las de otro constructor.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del área",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/BuilderUuid"),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name"},
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="Usuarios",
-     *                 description="Nombre del Área"
-     *             ),
-     *             @OA\Property(
-     *                 property="description",
-     *                 type="string",
-     *                 example="Lista de Usuarios",
-     *                 description="Descripción del Área"
-     *              )
+     *             ref="#/components/schemas/BuilderRequest",
+     *             example={"trademark_id": {21}, "category_id": {45}, "subcategory_id": {112}, "percentages": {"101": 15, "102": 35, "103": 35, "104": 15}}
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Área editada correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="area",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="NAME_AREA"),
-     *                     @OA\Property(property="description", type="string", example="DESCRIPTION_AREA"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Constructor editado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/BuilderResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="Datos inválidos, constructor inexistente o combinación usada por otro constructor.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="Nombre del Área"),
-     *                 @OA\Property(property="description", type="string", example="Descripción del Área")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="El campo debe estar en mayúsculas.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"trademark_id": "Marcas", "category_id": "Categorías", "subcategory_id": "Subcategorías", "percentages": "Porcentajes"},
+     *                 "errors": {"builder": {"El constructor no existe."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function update(BuilderUpdateRequest $request, string $uuid)
@@ -672,76 +498,32 @@ class BuilderController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/organizational_structure/areas/delete/{id}",
-     *     tags={"Organizational Structure"},
-     *     summary="Desactivar un área específica",
+     *     path="/cache/builders/delete/{uuid}",
+     *     tags={"Cache › Builders"},
+     *     summary="Eliminar un constructor de curvas",
+     *     description="Eliminación definitiva: se borra de la caché y no se puede restaurar.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del área",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/BuilderUuid"),
      *     @OA\Response(
      *         response=200,
-     *         description="Área desactivada correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="area",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="name_module_example"),
-     *                     @OA\Property(property="description", type="string", example="description_module_example"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Constructor eliminado correctamente",
+     *         @OA\JsonContent(@OA\Property(property="message", type="string", example="Constructor eliminado correctamente."))
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="El constructor no existe.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del área")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"trademark_id": "Marcas", "category_id": "Categorías", "subcategory_id": "Subcategorías", "percentages": "Porcentajes"},
+     *                 "errors": {"builder": {"El constructor no existe."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function delete(BuilderDeleteRequest $request, string $uuid)
@@ -805,78 +587,7 @@ class BuilderController extends Controller
     }
 
     /**
-     * @OA\Patch(
-     *     path="/organizational_structure/areas/restore/{id}",
-     *     tags={"Organizational Structure"},
-     *     summary="Activar un área específica",
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del área",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Área activada correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="area",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="item_id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="name_module_example"),
-     *                     @OA\Property(property="description", type="string", example="description_module_example"),
-     *                     @OA\Property(property="settings", type="string", example="{}"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del área")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
-     * )
+     * Sin ruta en routes/api.php y copiado de AreaController: no se documenta en Swagger.
      */
     public function restore(AreaRestoreRequest $request, $id)
     {

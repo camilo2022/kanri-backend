@@ -16,47 +16,104 @@ use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
 
 /**
- * @OA\Tag(
- *     name="Submodule",
- *     description="Endpoints de Gestión de Submódulos"
- * )
- *
- * @OA\PathItem(
- *     path="/modules/submodules",
- *     description="Rutas de Gestion de Submódulos"
+ * @OA\Schema(
+ *     schema="SubmoduleModule",
+ *     type="object",
+ *     description="Módulo al que pertenece el submódulo (sin sus submódulos).",
+ *     @OA\Property(property="id", type="integer", example=6),
+ *     @OA\Property(property="name", type="string", example="Bodega"),
+ *     @OA\Property(property="icon", type="string", example="FaWarehouse"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-05-14T21:25:00.000000Z"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-05-14T21:25:00.000000Z"),
+ *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
  * )
  *
  * @OA\Schema(
  *     schema="Submodule",
  *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="name", type="string", example="users"),
- *     @OA\Property(property="url", type="string", example="/users"),
- *     @OA\Property(property="icon", type="string", example="FaUser"),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *     description="Submódulo serializado por Eloquent (store, update, delete, restore): `module_id` y `permission_id` están ocultos; vienen `module` y `permission`. Fechas en ISO/UTC.",
+ *     @OA\Property(property="id", type="integer", example=45),
+ *     @OA\Property(property="name", type="string", example="Despachos"),
+ *     @OA\Property(property="url", type="string", example="/dispatches"),
+ *     @OA\Property(property="icon", type="string", example="FaTruck"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-05-14T21:30:00.000000Z"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-05-14T21:30:00.000000Z"),
  *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
- *     @OA\Property(
- *         property="module",
- *         type="object",
- *         @OA\Property(property="id", type="integer", example=1),
- *         @OA\Property(property="name", type="string", example="users"),
- *         @OA\Property(property="icon", type="string", example="FaUser"),
- *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
- *     ),
- *     @OA\Property(
- *         property="permission",
- *         type="object",
- *         @OA\Property(property="id", type="integer", example=1),
- *         @OA\Property(property="name", type="string", example="users"),
- *         @OA\Property(property="title", type="string", example="Usuarios."),
- *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
- *     )
+ *     @OA\Property(property="module", ref="#/components/schemas/SubmoduleModule"),
+ *     @OA\Property(property="permission", ref="#/components/schemas/Permission")
+ * )
  *
+ * @OA\Schema(
+ *     schema="SubmoduleListItem",
+ *     type="object",
+ *     description="Submódulo como lo entrega `SubmoduleCollection` (all).",
+ *     @OA\Property(property="id", type="integer", example=45),
+ *     @OA\Property(property="name", type="string", example="Despachos"),
+ *     @OA\Property(property="url", type="string", example="/dispatches"),
+ *     @OA\Property(property="icon", type="string", example="FaTruck"),
+ *     @OA\Property(property="created_at", type="string", example="2026-05-14 16:30:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-05-14 16:30:00"),
+ *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
+ *     @OA\Property(property="module", ref="#/components/schemas/SubmoduleModule"),
+ *     @OA\Property(property="permission", ref="#/components/schemas/Permission")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="SubmoduleDetail",
+ *     type="object",
+ *     description="Submódulo como lo entrega `SubmoduleResource` (find). Trae `item_id`, `settings` e `item` siempre en `null`, porque el Resource está copiado de los catálogos (ver pendientes).",
+ *     @OA\Property(property="id", type="integer", example=45),
+ *     @OA\Property(property="item_id", nullable=true, example=null),
+ *     @OA\Property(property="name", type="string", example="Despachos"),
+ *     @OA\Property(property="icon", type="string", example="FaTruck"),
+ *     @OA\Property(property="url", type="string", example="/dispatches"),
+ *     @OA\Property(property="settings", nullable=true, example=null),
+ *     @OA\Property(property="created_at", type="string", example="2026-05-14 16:30:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-05-14 16:30:00"),
+ *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
+ *     @OA\Property(property="item", nullable=true, example=null),
+ *     @OA\Property(property="permission", ref="#/components/schemas/Permission"),
+ *     @OA\Property(property="module", ref="#/components/schemas/SubmoduleModule")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="SubmoduleResponse",
+ *     type="object",
+ *     @OA\Property(property="data", type="object", @OA\Property(property="submodule", ref="#/components/schemas/SubmoduleDetail")),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="SubmoduleSavedResponse",
+ *     type="object",
+ *     @OA\Property(property="data", type="object", @OA\Property(property="submodule", ref="#/components/schemas/Submodule")),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="SubmoduleListResponse",
+ *     type="object",
+ *     @OA\Property(
+ *         property="data",
+ *         type="object",
+ *         @OA\Property(property="submodules", type="array", @OA\Items(ref="#/components/schemas/SubmoduleListItem")),
+ *         @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="SubmoduleRequest",
+ *     type="object",
+ *     required={"module_id", "permission_id", "name", "url", "icon"},
+ *     @OA\Property(property="module_id", type="integer", description="Módulo del menú donde aparece.", example=6),
+ *     @OA\Property(property="permission_id", type="integer", description="Permiso que debe tener el usuario para ver esta opción en el menú. Único: cada permiso abre un solo submódulo.", example=371),
+ *     @OA\Property(property="name", type="string", maxLength=18, pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ]+(?:\.?\s[A-Za-zÁÉÍÓÚáéíóúÑñ]+)*$", description="Texto del menú: palabras separadas por un espacio (se permite abreviar con punto, por ejemplo `C. de Producción`). Único.", example="Despachos"),
+ *     @OA\Property(property="url", type="string", maxLength=40, pattern="^\/[a-z_]+(\/[a-z_]+)*\/?$", description="Ruta del frontend, en minúsculas y guiones bajos. Única.", example="/dispatches"),
+ *     @OA\Property(property="icon", type="string", maxLength=40, pattern="^Fa([A-Z][a-zA-Z0-9]*|[0-9][a-zA-Z0-9]*)$", description="Nombre de un icono Font Awesome de react-icons.", example="FaTruck")
  * )
  */
 class SubmoduleController extends Controller
@@ -66,120 +123,51 @@ class SubmoduleController extends Controller
     /**
      * @OA\Get(
      *     path="/navegation/modules/submodules/all/{module_id}",
-     *     tags={"Navegation"},
-     *     summary="Listar los Submódulos",
+     *     tags={"Navegation › Submodules"},
+     *     summary="Listar los submódulos de un módulo",
+     *     description="Cada submódulo trae su módulo y su permiso.",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
      *         name="module_id",
      *         in="path",
-     *         description="Identificador del módulo",
      *         required=true,
-     *         @OA\Schema(type="integer", example=1)
+     *         description="Módulo.",
+     *         @OA\Schema(type="integer", example=6)
      *     ),
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Filtro de Busqueda.",
      *         required=false,
-     *         @OA\Schema(type="string", example="juan")
+     *         description="Cada palabra se busca en nombre, URL y nombre o título del permiso.",
+     *         @OA\Schema(type="string", example="despachos")
      *     ),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
-     *         description="Columna a ordenar.",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"id","name","title", "description","created_at", "updated_at"}, example="name")
+     *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *         @OA\Schema(type="string", enum={"id", "name", "icon", "created_at", "updated_at"}, example="name")
      *     ),
-     *     @OA\Parameter(
-     *         name="dir",
-     *         in="query",
-     *         description="Dirección de ordenamiento.",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
-     *     ),
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Registros por página.",
-     *         required=false,
-     *         @OA\Schema(type="integer", example=10)
-     *     ),
-     *     @OA\Parameter(
-     *         name="with_trashed",
-     *         in="query",
-     *         description="Registros inactivos.",
-     *         required=false,
-     *         @OA\Schema(type="boolean", example=true)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/Dir"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
      *     @OA\Response(
      *         response=200,
      *         description="Lista de submódulos cargada correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="submodules",
-     *                     type="array",
-     *                     @OA\Items(ref="#/components/schemas/Submodule")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="meta",
-     *                     type="object",
-     *                     @OA\Property(
-     *                         property="pagination",
-     *                         type="object",
-     *                         @OA\Property(property="total", type="integer", example=1),
-     *                         @OA\Property(property="count", type="integer", example=1),
-     *                         @OA\Property(property="per_page", type="integer", example=1),
-     *                         @OA\Property(property="current_page", type="integer", example=1),
-     *                         @OA\Property(property="total_pages", type="integer", example=1)
-     *                     )
-     *                 ),
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/SubmoduleListResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Identificador del módulo no registrado.",
+     *         description="Módulo no registrado o parámetros inválidos.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="module_id", type="string", example="Identificador del módulo. "),
-     *                 @OA\Property(property="per_page", type="string", example="Registros por pagina. "),
-     *                 @OA\Property(property="search", type="string", example="Filtro de busqueda. "),
-     *                 @OA\Property(property="column", type="string", example="Columna a ordenar. "),
-     *                 @OA\Property(property="dir", type="string", example="Sentido del orden. ")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="module_id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={"message": "Error de validación.", "attributes": {"module_id": "Identificador del módulo. ", "per_page": "Registros por pagina. ", "search": "Filtro de Busqueda. ", "column": "Columna a ordenar. ", "dir": "Sentido del orden. ", "with_trashed": "Registros inactivos"}, "errors": {"module_id": {"No hay ningún registro. "}}}
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function all(SubmoduleAllRequest $request, $module_id)
@@ -217,67 +205,20 @@ class SubmoduleController extends Controller
     /**
      * @OA\Get(
      *     path="/navegation/modules/submodules/find/{id}",
-     *     tags={"Navegation"},
-     *     summary="Listar los Submódulos",
+     *     tags={"Navegation › Submodules"},
+     *     summary="Obtener un submódulo",
+     *     description="También la puede usar quien tiene permiso de editar submódulos.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del submódulo",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Submódulo cargado con éxito",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="submodule",
-     *                     ref="#/components/schemas/Submodule"
-     *                 ),
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Submódulo cargado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/SubmoduleResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Identificador del sumódulo no registrado.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del submódulo. ")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function find(SubmoduleFindRequest $request)
@@ -305,145 +246,34 @@ class SubmoduleController extends Controller
     /**
      * @OA\Post(
      *     path="/navegation/modules/submodules/store",
-     *     tags={"Navegation"},
+     *     tags={"Navegation › Submodules"},
      *     summary="Crear un submódulo",
+     *     description="Agrega una opción al menú. Responde **200** (no 201) con el submódulo tal cual lo serializa Eloquent.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="name",
-     *         in="query",
-     *         description="Nombre del submódulo",
-     *         required=true,
-     *         @OA\Schema(type="string", example="name_submodule")
-     *     ),
-     *     @OA\Parameter(
-     *         name="icon",
-     *         in="query",
-     *         description="Icono del submódulo",
-     *         required=true,
-     *         @OA\Schema(type="string", example="icon_submodule")
-     *     ),
-     *     @OA\Parameter(
-     *         name="url",
-     *         in="query",
-     *         description="Url del submódulo",
-     *         required=true,
-     *         @OA\Schema(type="string", example="url_submodule")
-     *     ),
-     *     @OA\Parameter(
-     *         name="module_id",
-     *         in="query",
-     *         description="Identificador del módulo",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=0)
-     *     ),
-     *     @OA\Parameter(
-     *         name="permission_id",
-     *         in="query",
-     *         description="Identificador del módulo",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=0)
-     *     ),
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             required={"module_id","permission_id","name","url","icon"},
-     *             @OA\Property(
-     *                 property="module_id",
-     *                 type="integer",
-     *                 example=1,
-     *                 description="Identificador del módulo"
-     *             ),
-     *             @OA\Property(
-     *                 property="permission_id",
-     *                 type="integer",
-     *                 example=1,
-     *                 description="Identificador del permiso"
-     *             ),
-     *              @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="Usuarios",
-     *                 description="Nombre del submódulo"
-     *             ),
-     *             @OA\Property(
-     *                 property="url",
-     *                 type="string",
-     *                 example="/users",
-     *                 description="URL del submódulo"
-     *              ),
-     *             @OA\Property(
-     *                 property="icon",
-     *                 type="string",
-     *                 example="FaUser",
-     *                 description="Icono del submódulo"
-     *              )
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/SubmoduleRequest")
      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Submódulo creado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="submodule",
-     *                     ref="#/components/schemas/Submodule"
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/SubmoduleSavedResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="Datos inválidos.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="module_id", type="string", example="Identificador del módulo. "),
-     *                 @OA\Property(property="permission_id", type="string", example="Identificador del permiso. "),
-     *                 @OA\Property(property="name", type="string", example="Nombre del submódulo"),
-     *                 @OA\Property(property="url", type="string", example="Url del submódulo"),
-     *                 @OA\Property(property="icon", type="string", example="Icono del submódulo")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="module_id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Ya está registrado.")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="url",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Ya está registrado.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"module_id": "Identificador del módulo", "permission_id": "Identificador del permiso", "name": "Nombre del submódulo", "url": "Ruta del sobmódulo", "icon": "Icono del módulo"},
+     *                 "errors": {"permission_id": {"Ya está registrado."}, "icon": {"Formato inválido. "}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function store(SubmoduleStoreRequest $request)
@@ -482,122 +312,38 @@ class SubmoduleController extends Controller
     /**
      * @OA\Put(
      *     path="/navegation/modules/submodules/update/{id}",
-     *     tags={"Navegation"},
-     *     summary="Crear un submódulo",
+     *     tags={"Navegation › Submodules"},
+     *     summary="Editar un submódulo",
+     *     description="Reemplaza módulo, permiso, nombre, URL e icono.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del submódulo",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"module_id","permission_id","name","url","icon"},
-     *             @OA\Property(
-     *                 property="module_id",
-     *                 type="integer",
-     *                 example=1,
-     *                 description="Identificador del módulo"
-     *             ),
-     *             @OA\Property(
-     *                 property="permission_id",
-     *                 type="integer",
-     *                 example=1,
-     *                 description="Identificador del permiso"
-     *             ),
-     *              @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="Usuarios",
-     *                 description="Nombre del submódulo"
-     *             ),
-     *             @OA\Property(
-     *                 property="url",
-     *                 type="string",
-     *                 example="/users",
-     *                 description="URL del submódulo"
-     *              ),
-     *             @OA\Property(
-     *                 property="icon",
-     *                 type="string",
-     *                 example="FaUser",
-     *                 description="Icono del submódulo"
-     *              )
+     *             ref="#/components/schemas/SubmoduleRequest",
+     *             example={"module_id": 6, "permission_id": 371, "name": "Despachos", "url": "/warehouse/dispatches", "icon": "FaTruckLoading"}
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Submódulo actualizado con éxito",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="submodule",
-     *                     ref="#/components/schemas/Submodule"
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Submódulo editado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/SubmoduleSavedResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
+     *         description="Datos inválidos o submódulo no registrado.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="module_id", type="string", example="Identificador del módulo. "),
-     *                 @OA\Property(property="permission_id", type="string", example="Identificador del permiso. "),
-     *                 @OA\Property(property="name", type="string", example="Nombre del submódulo"),
-     *                 @OA\Property(property="url", type="string", example="Url del submódulo"),
-     *                 @OA\Property(property="icon", type="string", example="Icono del submódulo")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="module_id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Ya está registrado.")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="url",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Ya está registrado.")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="permission_id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="Ya está registrado.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"module_id": "Identificador del módulo", "permission_id": "Identificador del permiso", "name": "Nombre del submódulo", "url": "Ruta del sobmódulo", "icon": "Icono del módulo"},
+     *                 "errors": {"url": {"Ya está registrado."}}
+     *             }
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function update(SubmoduleUpdateRequest $request, $id)
@@ -636,67 +382,20 @@ class SubmoduleController extends Controller
     /**
      * @OA\Delete(
      *     path="/navegation/modules/submodules/delete/{id}",
-     *     tags={"Navegation"},
-     *     summary="Desactivar un submódulo específico",
+     *     tags={"Navegation › Submodules"},
+     *     summary="Desactivar un submódulo",
+     *     description="Desactivación lógica (soft delete): sale del menú, pero se conserva y puede restaurarse.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del submódulo",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Submódulo desactivado correctamente",
-     *         @OA\JsonContent(
-     *            @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="submodule",
-     *                     ref="#/components/schemas/Submodule"
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Submódulo desactivado correctamente. `deleted_at` queda con la fecha de desactivación.",
+     *         @OA\JsonContent(ref="#/components/schemas/SubmoduleSavedResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Identificador del submódulo no registrado.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del submódulo")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function delete(SubmoduleDeleteRequest $request)
@@ -728,67 +427,20 @@ class SubmoduleController extends Controller
     /**
      * @OA\Patch(
      *     path="/navegation/modules/submodules/restore/{id}",
-     *     tags={"Navegation"},
-     *     summary="Activar un submódulo específico",
+     *     tags={"Navegation › Submodules"},
+     *     summary="Restaurar un submódulo desactivado",
+     *     description="Solo acepta submódulos desactivados.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador del submódulo",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Submódulo activado correctamente",
-     *         @OA\JsonContent(
-     *            @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="submodule",
-     *                     ref="#/components/schemas/Submodule"
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Submódulo restaurado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/SubmoduleSavedResponse")
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Identificador del submódulo no registrado.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador del submódulo")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function restore(SubmoduleRestoreRequest $request)

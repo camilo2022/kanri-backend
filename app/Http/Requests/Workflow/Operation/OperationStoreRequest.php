@@ -15,7 +15,7 @@ class OperationStoreRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -27,9 +27,12 @@ class OperationStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'subprocess_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Subprocess::ITEM_ID],
-            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Operation::ITEM_ID],
+            'subprocess_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.Subprocess::ITEM_ID],
+            'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.Operation::ITEM_ID],
             'description' => ['required', 'string', 'max:255', 'uppercase'],
+            'settings' => ['required', 'array'],
+            'settings.in_technical_sheet' => ['required', 'boolean'],
+            'settings.in_production_order' => ['required', 'boolean'],
         ];
     }
 
@@ -43,7 +46,7 @@ class OperationStoreRequest extends FormRequest
             'min' => 'Se permite mínimo :min caracteres.',
             'unique' => 'Ya está registrado.',
             'uppercase' => 'El campo debe estar en mayúsculas.',
-            'exists' => 'No está registrado.'
+            'exists' => 'No está registrado.',
         ];
     }
 
@@ -53,6 +56,9 @@ class OperationStoreRequest extends FormRequest
             'subprocess_id' => 'Identificador del subproceso',
             'name' => 'Nombre',
             'description' => 'Descripción',
+            'settings' => 'Configuraciones',
+            'settings.in_technical_sheet' => 'Aplica a Ficha Técnica',
+            'settings.in_production_order' => 'Aplica a Orden de Producción',
         ];
     }
 }

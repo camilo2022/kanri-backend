@@ -21,102 +21,105 @@ use App\Traits\ApiResponser;
  *     description="Endpoints para gestionar personas"
  * )
  *
- * @OA\PathItem(
- *     path="/people",
- *     description="Rutas de gestión de personas"
- * )
- *
  * @OA\Schema(
  *     schema="Person",
  *     type="object",
- *
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="document", type="integer", example=10000001),
- *     @OA\Property(property="names", type="string", example="NAME_EXAMPLE"),
- *     @OA\Property(property="last_names", type="integer", example="NAME_LAST_NAMES"),
- *     @OA\Property(property="birth_date", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *     @OA\Property(property="address", type="string", example="Calle 7"),
- *     @OA\Property(property="phone", type="string", example="0001254"),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
+ *     description="Persona serializada por Eloquent (con su foto). Es la que viene anidada en empleados y usuarios.",
+ *     @OA\Property(property="id", type="integer", example=57),
+ *     @OA\Property(property="document_type_id", type="integer", example=422),
+ *     @OA\Property(property="document", type="string", example="1037612458"),
+ *     @OA\Property(property="names", type="string", example="VALENTINA"),
+ *     @OA\Property(property="last_names", type="string", example="RESTREPO OSORIO"),
+ *     @OA\Property(property="gender_id", type="integer", example=249),
+ *     @OA\Property(property="birth_date", type="string", format="date", example="1995-08-14"),
+ *     @OA\Property(property="blood_type_id", type="integer", example=318),
+ *     @OA\Property(property="address", type="string", example="CALLE 45 SUR # 39-120, ENVIGADO"),
+ *     @OA\Property(property="phone", type="string", example="3104567812"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-05-14T22:00:00.000000Z"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-05-14T22:00:00.000000Z"),
  *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
+ *     @OA\Property(property="photo", nullable=true, allOf={@OA\Schema(ref="#/components/schemas/File")})
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PersonListItem",
+ *     type="object",
+ *     description="Persona como la entrega `PersonCollection` (all). No trae los ids de catálogos (`gender_id`, etc.) ni `document_type`. `birth_date` sale en ISO/UTC (por ejemplo `1995-08-14T05:00:00.000000Z`).",
+ *     @OA\Property(property="id", type="integer", example=57),
+ *     @OA\Property(property="document", type="string", example="1037612458"),
+ *     @OA\Property(property="names", type="string", example="VALENTINA"),
+ *     @OA\Property(property="last_names", type="string", example="RESTREPO OSORIO"),
+ *     @OA\Property(property="birth_date", type="string", example="1995-08-14T05:00:00.000000Z"),
+ *     @OA\Property(property="address", type="string", example="CALLE 45 SUR # 39-120, ENVIGADO"),
+ *     @OA\Property(property="phone", type="string", example="3104567812"),
+ *     @OA\Property(property="created_at", type="string", example="2026-05-14 17:00:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-05-14 17:00:00"),
+ *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
+ *     @OA\Property(property="gender", ref="#/components/schemas/Subitem"),
+ *     @OA\Property(property="photo", nullable=true, allOf={@OA\Schema(ref="#/components/schemas/File")}),
+ *     @OA\Property(property="blood_type", ref="#/components/schemas/Subitem"),
+ *     @OA\Property(property="employee", nullable=true, type="object", additionalProperties=true, description="Empleado de la persona (`null` si no lo es).")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PersonDetail",
+ *     type="object",
+ *     description="Persona como la entrega `PersonResource` (find, store, update, delete, restore): `birth_date` en `Y-m-d`, con catálogos y tipo de documento (en `find`, con su tipo de persona y el empleado con su persona). No trae los ids de catálogos.",
+ *     @OA\Property(property="id", type="integer", example=57),
+ *     @OA\Property(property="document", type="string", example="1037612458"),
+ *     @OA\Property(property="names", type="string", example="VALENTINA"),
+ *     @OA\Property(property="last_names", type="string", example="RESTREPO OSORIO"),
+ *     @OA\Property(property="birth_date", type="string", format="date", example="1995-08-14"),
+ *     @OA\Property(property="address", type="string", example="CALLE 45 SUR # 39-120, ENVIGADO"),
+ *     @OA\Property(property="phone", type="string", example="3104567812"),
+ *     @OA\Property(property="created_at", type="string", example="2026-05-14 17:00:00"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-05-14 17:00:00"),
+ *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
+ *     @OA\Property(property="gender", ref="#/components/schemas/Subitem"),
+ *     @OA\Property(property="photo", nullable=true, allOf={@OA\Schema(ref="#/components/schemas/File")}),
+ *     @OA\Property(property="blood_type", ref="#/components/schemas/Subitem"),
+ *     @OA\Property(property="document_type", description="Tipo de documento (en `find`, con `person_type`).", allOf={@OA\Schema(ref="#/components/schemas/Subitem")}),
+ *     @OA\Property(property="employee", nullable=true, type="object", additionalProperties=true)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PersonResponse",
+ *     type="object",
+ *     @OA\Property(property="data", type="object", @OA\Property(property="person", ref="#/components/schemas/PersonDetail")),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PersonListResponse",
+ *     type="object",
  *     @OA\Property(
- *         property="gender",
+ *         property="data",
  *         type="object",
- *         @OA\Property(property="id", type="integer", example=25),
- *         @OA\Property(property="item_id", type="integer", example=7),
- *         @OA\Property(property="name", type="string", example="NAME_GENDER"),
- *         @OA\Property(property="description", type="string", example="DESCRIPTION_GENDER"),
- *         @OA\Property(property="settings", type="object", example={}),
- *         @OA\Property(property="created_at",type="string",format="date-time",example="2026-03-30T13:17:34.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:34.000000Z"),
- *         @OA\Property(property="deleted_at",type="string",format="date-time",nullable=true,example=null)
+ *         @OA\Property(property="people", type="array", @OA\Items(ref="#/components/schemas/PersonListItem")),
+ *         @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
  *     ),
- *     @OA\Property(
- *         property="photo",
- *         type="object",
- *         @OA\Property(property="id", type="integer", example=2),
- *         @OA\Property(property="model_type", type="string", example="App\\Models\\Person"),
- *         @OA\Property(property="model_id", type="integer", example=2),
- *         @OA\Property(property="name", type="string", example="2"),
- *         @OA\Property(property="file_type_id", type="integer", example=1),
- *         @OA\Property(property="file_subtype_id", type="integer", example=8),
- *         @OA\Property(property="path", type="string", format="uri", example="person/file.jpg"),
- *         @OA\Property(property="mime", type="string", example="image/jpeg"),
- *         @OA\Property(property="extension", type="string", example="jpg"),
- *         @OA\Property(property="size", type="integer", example=12870),
- *         @OA\Property(
- *             property="metadata",
- *             type="object",
- *             @OA\Property(property="mime", type="string", example="image/jpeg"),
- *             @OA\Property(property="size", type="integer", example=12870),
- *             @OA\Property(
- *                 property="image",
- *                 type="object",
- *                 @OA\Property(property="width", type="integer", example=128),
- *                 @OA\Property(property="height", type="integer", example=128)
- *             ),
- *             @OA\Property(property="hash_md5", type="string", example="eea1251373716a2da44ec80919fc4a33"),
- *             @OA\Property(property="extension", type="string", example="jpg"),
- *             @OA\Property(property="client_mime", type="string", example="image/jpeg"),
- *             @OA\Property(property="hash_sha256", type="string", example="913be661c7387b1c60f9c5eed3c0a37c1ab9dff5625ea6c7a39fe7909b0a86b8"),
- *             @OA\Property(property="uploaded_at", type="string", format="date-time", example="2026-03-31 18:58:06"),
- *             @OA\Property(property="original_name", type="string", example="2.jpg"),
- *             @OA\Property(property="original_extension", type="string", example="jpg")
- *         ),
- *         @OA\Property(property="settings", type="object", example={}),
- *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T19:19:35.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-31T18:58:06.000000Z")
- *     ),
- *     @OA\Property(
- *         property="blood_type",
- *         type="object",
- *         @OA\Property(property="id", type="integer", example=25),
- *         @OA\Property(property="item_id", type="integer", example=7),
- *         @OA\Property(property="name", type="string", example="NAME_EXAMPLE"),
- *         @OA\Property(property="description", type="string", example="DESCRIPTION_EXAMPLE"),
- *         @OA\Property(property="settings", type="object", example={}),
- *         @OA\Property(property="created_at",type="string",format="date-time",example="2026-03-30T13:17:34.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-30T13:17:34.000000Z"),
- *         @OA\Property(property="deleted_at",type="string",format="date-time",nullable=true,example=null)
- *     ),
- *     @OA\Property(
- *         property="person",
- *         type="object",
- *         @OA\Property(property="id", type="integer", example=1),
- *         @OA\Property(property="person_id", type="integer", example=1),
- *         @OA\Property(property="operation_center", type="string", example="001"),
- *         @OA\Property(property="position_id", type="integer", example=1),
- *         @OA\Property(property="risk_manager_id", type="integer", example=1),
- *         @OA\Property(property="health_entity_id", type="integer", example=1),
- *         @OA\Property(property="pension_fund_id", type="integer", example=1),
- *         @OA\Property(property="compensation_fund_id", type="integer", example=1),
- *         @OA\Property(property="start_date", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *         @OA\Property(property="end_date", type="string", format="date-time", nullable=true, example=null),
- *         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
- *         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
- *         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
- *     )
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PersonRequest",
+ *     type="object",
+ *     required={"document_type_id", "document", "names", "last_names", "gender_id", "birth_date", "blood_type_id", "address", "phone"},
+ *     description="Se envía como `multipart/form-data` para poder adjuntar la foto. Las reglas de `document` y `phone` difieren entre crear y editar (ver cada operación).",
+ *     @OA\Property(property="document_type_id", type="integer", description="Tipo de documento activo.", example=422),
+ *     @OA\Property(property="document", type="string", description="Único. Además debe cumplir alguna de las reglas (`settings.validations`) del tipo de documento; si no cumple ninguna, el error lista los mensajes de esas reglas.", example="1037612458"),
+ *     @OA\Property(property="names", type="string", pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$", description="Solo letras y espacios.", example="VALENTINA"),
+ *     @OA\Property(property="last_names", type="string", pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$", description="Solo letras y espacios.", example="RESTREPO OSORIO"),
+ *     @OA\Property(property="gender_id", type="integer", description="Género activo.", example=249),
+ *     @OA\Property(property="birth_date", type="string", format="date", description="Formato Y-m-d, anterior a hoy.", example="1995-08-14"),
+ *     @OA\Property(property="blood_type_id", type="integer", description="Tipo de sangre activo.", example=318),
+ *     @OA\Property(property="address", type="string", maxLength=255, example="CALLE 45 SUR # 39-120, ENVIGADO"),
+ *     @OA\Property(property="phone", type="string", example="3104567812"),
+ *     @OA\Property(property="photo", type="string", format="binary", description="Opcional. JPG o PNG de máximo 2 MB."),
+ *     @OA\Property(property="photo_type_id", type="integer", description="Tipo de archivo de la foto (no se valida). Hoy: 1 = Archivos personales.", example=1),
+ *     @OA\Property(property="photo_subtype_id", type="integer", description="Subtipo de archivo de la foto (no se valida). Hoy: 425 = FOTO.", example=425)
  * )
  */
 class PersonController extends Controller
@@ -128,105 +131,46 @@ class PersonController extends Controller
      *     path="/people/all",
      *     tags={"People"},
      *     summary="Listar las personas",
+     *     description="Cada persona trae género, tipo de sangre, foto y su empleado (si lo es).",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Filtro de Busqueda.",
      *         required=false,
-     *
-     *         @OA\Schema(type="string", example="juan")
+     *         description="Cada palabra se busca en documento, nombres, apellidos, fecha de nacimiento, teléfono, género y tipo de sangre.",
+     *         @OA\Schema(type="string", example="RESTREPO")
      *     ),
-     *
+     *     @OA\Parameter(
+     *         name="with_employee",
+     *         in="query",
+     *         required=false,
+     *         description="`true`/`1`: solo personas que son empleados (incluye empleados desactivados). `false`/`0`: solo las que no lo son. Si no se envía, todas.",
+     *         @OA\Schema(type="boolean", example=false)
+     *     ),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
-     *         description="Columna a ordenar.",
      *         required=false,
-     *
-     *         @OA\Schema(type="string", enum={"id","document","names","last_names","gender_id","birth_date","blood_type_id","address","phone","created_at","updated_at","deleted_at"}, example="names")
+     *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *         @OA\Schema(type="string", enum={"id", "document", "names", "last_names", "gender_id", "birth_date", "blood_type_id", "address", "phone", "created_at", "updated_at", "deleted_at"}, example="last_names")
      *     ),
-     *
-     *     @OA\Parameter(
-     *         name="dir",
-     *         in="query",
-     *         description="Dirección de ordenamiento.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
-     *     ),
-     *
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Registros por página.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="integer", example=10)
-     *     ),
-     *
-     *     @OA\Parameter(
-     *         name="with_trashed",
-     *         in="query",
-     *         description="Registros inactivos.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="boolean", example=true)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/Dir"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
      *     @OA\Response(
      *         response=200,
-     *         description="Lista de personas cargada con éxito",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property= "users",
-     *                     type="array",
-     *
-     *                     @OA\Items(ref="#/components/schemas/Person")
-     *                 ),
-     *
-     *                 @OA\Property(
-     *                     property="meta",
-     *                     type="object",
-     *                     @OA\Property(
-     *                         property="pagination",
-     *                         type="object",
-     *                         @OA\Property(property="total", type="integer", example=1),
-     *                         @OA\Property(property="count", type="integer", example=1),
-     *                         @OA\Property(property="per_page", type="integer", example=1),
-     *                         @OA\Property(property="current_page", type="integer", example=1),
-     *                         @OA\Property(property="total_pages", type="integer", example=1)
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Lista de personas cargada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/PersonListResponse")
      *     ),
-     *
      *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
+     *         response=422,
+     *         description="Parámetros de consulta inválidos.",
+     *         @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function all(PersonAllRequest $request)
@@ -273,54 +217,18 @@ class PersonController extends Controller
      * @OA\Get(
      *     path="/people/find/{id}",
      *     tags={"People"},
-     *     summary="Obtener una persona específica",
+     *     summary="Obtener una persona",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador de la persona",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Persona cargada con éxito",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="person",
-     *                     ref="#/components/schemas/Person"
-     *                 ),
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Persona cargada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/PersonResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function find(PersonFindRequest $request, $id)
@@ -350,157 +258,32 @@ class PersonController extends Controller
      *     path="/people/store",
      *     tags={"People"},
      *     summary="Crear una persona",
+     *     description="Al crear: `document` numérico de 5 a 14 dígitos y `phone` de exactamente 10 dígitos. Si se adjunta `photo`, se guarda en `storage/person`.",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\RequestBody(
      *         required=true,
-     *
-     *         @OA\MediaType(
-     *             mediaType="multipart/form-data",
-     *
-     *             @OA\Schema(
-     *                 required={"document","names","last_names","gender_id","birth_date","blood_type_id","address","phone","photo_type_id","photo_subtype_id"},
-     *
-     *                 @OA\Property(
-     *                     property="document",
-     *                     type="string",
-     *                     example="123456789"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="names",
-     *                     type="string",
-     *                     example="Zaray"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="last_names",
-     *                     type="string",
-     *                     example="Cortez Castro"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="gender_id",
-     *                     type="integer",
-     *                     example=1
-     *                 ),
-     *                 @OA\Property(
-     *                     property="birth_date",
-     *                     type="string",
-     *                     format="date",
-     *                     example="2000-01-01"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="blood_type_id",
-     *                     type="integer",
-     *                     example=2
-     *                 ),
-     *                 @OA\Property(
-     *                     property="address",
-     *                     type="string",
-     *                     example="Calle 123 #45-67"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="phone",
-     *                     type="string",
-     *                     example="3001234567"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="photo_type_id",
-     *                     type="string",
-     *                     example="1"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="photo_subtype_id",
-     *                     type="string",
-     *                     example="8"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="photo",
-     *                     type="string",
-     *                     format="binary",
-     *                     nullable=true,
-     *                     description="Archivo de imagen (jpg, png, etc.)"
-     *                 )
-     *             )
-     *         )
+     *         @OA\MediaType(mediaType="multipart/form-data", @OA\Schema(ref="#/components/schemas/PersonRequest"))
      *     ),
-     *
      *     @OA\Response(
-     *         response=200,
-     *         description="Persona creada con éxito",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="person",
-     *                     type="object",
-     *                     @OA\Property(property="document", type="integer", example=10000001),
-     *                     @OA\Property(property="names", type="string", example="NAME_EXAMPLE"),
-     *                     @OA\Property(property="last_names", type="integer", example="NAME_LAST_NAMES"),
-     *                     @OA\Property(property="birth_date", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                     @OA\Property(property="address", type="string", example="Calle 7"),
-     *                     @OA\Property(property="phone", type="string", example="0001254"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         response=201,
+     *         description="Persona creada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/PersonResponse")
      *     ),
-     *
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
-     *
+     *         description="Datos inválidos.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                  @OA\Property(property="document", type="string", example="Número de documento"),
-     *                  @OA\Property(property="names", type="string", example="Nombres"),
-     *                  @OA\Property(property="last_names", type="string", example="Apellidos"),
-     *                  @OA\Property(property="gender_id", type="string", example="Genero"),
-     *                  @OA\Property(property="birth_date", type="string", example="Fecha de nacimiento"),
-     *                  @OA\Property(property="blood_type_id", type="string", example="Tipo de sangre"),
-     *                  @OA\Property(property="address", type="string", example="Dirección"),
-     *                  @OA\Property(property="phone", type="string", example="Número de teléfono"),
-     *                  @OA\Property(property="photo", type="string", example="Foto")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="document",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="Es obligatorio.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"document": "Número de documento", "names": "Nombres", "last_names": "Apellidos", "gender_id": "Genero", "birth_date": "Fecha de nacimiento", "document_type_id": "Tipo de Documento", "blood_type_id": "Tipo de sangre", "address": "Dirección", "phone": "Número de teléfono", "photo": "Foto"},
+     *                 "errors": {"document": {"Debe de tener 10 digitos unicamente"}, "phone": {"Debe tener 10 números"}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function store(PersonStoreRequest $request)
@@ -549,149 +332,42 @@ class PersonController extends Controller
      * @OA\Put(
      *     path="/people/update/{id}",
      *     tags={"People"},
-     *     summary="Editar la información de una persona en específico",
+     *     summary="Editar una persona",
+     *     description="Para adjuntar foto (multipart) el frontend envía **POST** a esta misma URL con el campo `_method=PUT`, porque PHP no lee archivos en un PUT multipart. Al editar, las reglas son más laxas que al crear: `document` es texto de 4 a 14 caracteres y `phone` no tiene formato (ver pendientes).",
      *     security={{"sanctum":{}}},
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
      *         required=true,
-     *
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
-     *
      *             @OA\Schema(
-     *                 required={"document","names","last_names","gender_id","birth_date","blood_type_id","address","phone"},
-     *
-     *                 @OA\Property(
-     *                     property="document",
-     *                     type="string",
-     *                     example="123456789"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="names",
-     *                     type="string",
-     *                     example="Zaray"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="last_names",
-     *                     type="string",
-     *                     example="Cortez Castro"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="gender_id",
-     *                     type="integer",
-     *                     example=1
-     *                 ),
-     *                 @OA\Property(
-     *                     property="birth_date",
-     *                     type="string",
-     *                     format="date",
-     *                     example="2000-01-01"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="blood_type_id",
-     *                     type="integer",
-     *                     example=2
-     *                 ),
-     *                 @OA\Property(
-     *                     property="address",
-     *                     type="string",
-     *                     example="Calle 123 #45-67"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="phone",
-     *                     type="string",
-     *                     example="3001234567"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="photo",
-     *                     type="string",
-     *                     format="binary",
-     *                     nullable=true,
-     *                     description="Archivo de imagen (jpg, png, etc.)"
-     *                 )
+     *                 allOf={
+     *                     @OA\Schema(ref="#/components/schemas/PersonRequest"),
+     *                     @OA\Schema(@OA\Property(property="_method", type="string", enum={"PUT"}, description="Solo si se envía como POST."))
+     *                 }
      *             )
      *         )
      *     ),
-     *
      *     @OA\Response(
      *         response=200,
-     *         description="Persona editada con éxito",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="person",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="document", type="integer", example=10000001),
-     *                     @OA\Property(property="names", type="string", example="NAME_EXAMPLE"),
-     *                     @OA\Property(property="last_names", type="integer", example="NAME_LAST_NAMES"),
-     *                     @OA\Property(property="birth_date", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                     @OA\Property(property="address", type="string", example="Calle 7"),
-     *                     @OA\Property(property="phone", type="string", example="0001254"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
-     *                     @OA\Property(property="deleted_at",type="string",format="date-time",nullable=true,example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Persona editada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/PersonResponse")
      *     ),
-     *
      *     @OA\Response(
      *         response=422,
-     *         description="Contenido inválido.",
-     *
+     *         description="Datos inválidos o persona no registrada.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                  @OA\Property(property="document", type="string", example="Número de documento"),
-     *                  @OA\Property(property="names", type="string", example="Nombres"),
-     *                  @OA\Property(property="last_names", type="string", example="Apellidos"),
-     *                  @OA\Property(property="gender_id", type="string", example="Genero"),
-     *                  @OA\Property(property="birth_date", type="string", example="Fecha de nacimiento"),
-     *                  @OA\Property(property="blood_type_id", type="string", example="Tipo de sangre"),
-     *                  @OA\Property(property="address", type="string", example="Dirección"),
-     *                  @OA\Property(property="phone", type="string", example="Número de teléfono"),
-     *                  @OA\Property(property="photo", type="string", example="Foto")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="document",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="Es obligatorio.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"id": "Identificador de la persona", "document": "Número de documento", "names": "Nombres", "last_names": "Apellidos", "gender_id": "Genero", "birth_date": "Fecha de nacimiento", "blood_type_id": "Tipo de sangre", "address": "Dirección", "phone": "Número de teléfono", "photo": "Foto"},
+     *                 "errors": {"names": {"Formato inválido:\n- Solo letras."}, "photo": {"Extensión inválida. Permitidas jpg, jpeg, png."}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function update(PersonUpdateRequest $request, $id)
@@ -740,89 +416,19 @@ class PersonController extends Controller
      * @OA\Delete(
      *     path="/people/delete/{id}",
      *     tags={"People"},
-     *     summary="Desactivar una persona específica",
+     *     summary="Desactivar una persona",
+     *     description="Desactivación lógica (soft delete): el registro se conserva y puede restaurarse. No desactiva su empleado.",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador de la persona",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Persona desactivada correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="employee",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="document", type="integer", example=10000001),
-     *                     @OA\Property(property="names", type="string", example="NAME_EXAMPLE"),
-     *                     @OA\Property(property="last_names", type="integer", example="NAME_LAST_NAMES"),
-     *                     @OA\Property(property="birth_date", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                     @OA\Property(property="address", type="string", example="Calle 7"),
-     *                     @OA\Property(property="phone", type="string", example="0001254"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", example="2026-03-12 20:01:03")
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Persona desactivada correctamente. `deleted_at` queda con la fecha de desactivación.",
+     *         @OA\JsonContent(ref="#/components/schemas/PersonResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador de la persona")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function delete(PersonDeleteRequest $request, $id)
@@ -849,91 +455,20 @@ class PersonController extends Controller
 
     /**
      * @OA\Patch(
-     *     path="/people/remove/{id}",
+     *     path="/people/restore/{id}",
      *     tags={"People"},
-     *     summary="Activar una persona específica",
+     *     summary="Restaurar una persona desactivada",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Identificador de la persona",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
      *         response=200,
-     *         description="Persona activada correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="employee",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="document", type="integer", example=10000001),
-     *                     @OA\Property(property="names", type="string", example="NAME_EXAMPLE"),
-     *                     @OA\Property(property="last_names", type="integer", example="NAME_LAST_NAMES"),
-     *                     @OA\Property(property="birth_date", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                     @OA\Property(property="address", type="string", example="Calle 7"),
-     *                     @OA\Property(property="phone", type="string", example="0001254"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
-     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Persona restaurada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/PersonResponse")
      *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Contenido inválido.",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", example="Identificador de la persona")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function restore(PersonRestoreRequest $request, $id)
