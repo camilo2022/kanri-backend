@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Workflow\Process\ProcessAllRequest;
 use App\Http\Requests\Workflow\Process\ProcessDeleteRequest;
 use App\Http\Requests\Workflow\Process\ProcessFindRequest;
+use App\Http\Requests\Workflow\Process\ProcessQrRequest;
 use App\Http\Requests\Workflow\Process\ProcessRestoreRequest;
 use App\Http\Requests\Workflow\Process\ProcessSettingRequest;
 use App\Http\Requests\Workflow\Process\ProcessStoreRequest;
@@ -12,6 +13,7 @@ use App\Http\Requests\Workflow\Process\ProcessUpdateRequest;
 use App\Http\Resources\Workflow\Process\ProcessCollection;
 use App\Http\Resources\Workflow\Process\ProcessResource;
 use App\Models\Process;
+use App\Services\QrCodeService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 
@@ -544,7 +546,13 @@ class ProcessController extends Controller
             $process = Process::findOrFail($id);
             $process->name = $request->input('name');
             $process->description = $request->input('description');
-            $process->settings = $request->input('settings');
+            // La edición no maneja el schema (tablas dinámicas y estáticas): se conserva el guardado desde Configuración
+            $settings = $request->input('settings');
+            $stored = json_decode(json_encode($process->settings), true) ?? [];
+            if (array_key_exists('schema', $stored) && is_array($settings)) {
+                $settings['schema'] = $stored['schema'];
+            }
+            $process->settings = $settings;
 
             $process->save();
 
@@ -803,6 +811,79 @@ class ProcessController extends Controller
             return $this->successResponse(
                 [
                     'process' => $process,
+                ],
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage(),
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/workflow/processes/qr/{id}",
+     *     tags={"Workflow › Processes"},
+     *     summary="Generar el QR del puesto de trabajo (proceso)",
+     *     description="Devuelve el QR (SVG en base64) que se pega en el puesto de trabajo. Al escanearlo, la tablet abre Productividad (`<FRONTEND_URL>/productivity?qr=<uuid>`) lista para registrar trabajo. El identificador (uuid) se crea la primera vez y se guarda en `settings.uuid`. Solo se permite en el nivel más bajo: un proceso sin subprocesos, un subproceso sin operaciones o una operación, y que esté activo.",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="QR generado correctamente",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="qr", type="string", example="data:image/svg+xml;base64,PHN2ZyB4bWxucz0i..."),
+     *                 @OA\Property(property="url", type="string", example="https://kanri.example.com/productivity?qr=9b2f6c1e-4a7d-4c3b-8e5f-2d1a0b9c8e7f"),
+     *                 @OA\Property(
+     *                     property="workstation",
+     *                     type="object",
+     *                     @OA\Property(property="type", type="string", example="process"),
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Corte"),
+     *                     @OA\Property(property="path", type="string", example="Corte")
+     *                 )
+     *             ),
+     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+     *             @OA\Property(property="error", type="boolean", example=false)
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     */
+    public function qr(ProcessQrRequest $request, $id)
+    {
+        try {
+            $process = Process::findOrFail($id);
+
+            $url = rtrim(config('app.frontend_url'), '/').'/productivity?qr='.$process->settingsUuid();
+
+            return $this->successResponse(
+                [
+                    'qr' => app(QrCodeService::class)->generate($url),
+                    'url' => $url,
+                    'workstation' => [
+                        'type' => 'process',
+                        'id' => $process->id,
+                        'name' => $process->name,
+                        'path' => $process->name,
+                    ],
                 ],
                 $this->getMessage('Success'),
                 200

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Workflow\Operation\OperationAllRequest;
 use App\Http\Requests\Workflow\Operation\OperationDeleteRequest;
 use App\Http\Requests\Workflow\Operation\OperationFindRequest;
+use App\Http\Requests\Workflow\Operation\OperationQrRequest;
+use App\Services\QrCodeService;
 use App\Http\Requests\Workflow\Operation\OperationRestoreRequest;
 use App\Http\Requests\Workflow\Operation\OperationSettingRequest;
 use App\Http\Requests\Workflow\Operation\OperationStoreRequest;
@@ -328,7 +330,13 @@ class OperationController extends Controller
             $operation = Operation::findOrFail($id);
             $operation->name = $request->input('name');
             $operation->description = $request->input('description');
-            $operation->settings = $request->input('settings');
+            // La edición no maneja el schema (tablas dinámicas y estáticas): se conserva el guardado desde Configuración
+            $settings = $request->input('settings');
+            $stored = json_decode(json_encode($operation->settings), true) ?? [];
+            if (array_key_exists('schema', $stored) && is_array($settings)) {
+                $settings['schema'] = $stored['schema'];
+            }
+            $operation->settings = $settings;
 
             $operation->save();
 
@@ -482,4 +490,73 @@ class OperationController extends Controller
             );
         }
     }
+
+    /**
+     * @OA\Get(
+     *     path="/workflow/processes/subprocesses/operations/qr/{id}",
+     *     tags={"Workflow › Operations"},
+     *     summary="Generar el QR del puesto de trabajo (operación)",
+     *     description="Devuelve el QR (SVG en base64) que se pega en el puesto de trabajo. Al escanearlo, la tablet abre Productividad (`<FRONTEND_URL>/productivity?qr=<uuid>`) lista para registrar trabajo. El identificador (uuid) se crea la primera vez y se guarda en `settings.uuid`. Solo se permite en el nivel más bajo: un proceso sin subprocesos, un subproceso sin operaciones o una operación, y que esté activo.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Response(
+     *         response=200,
+     *         description="QR generado correctamente",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="qr", type="string", example="data:image/svg+xml;base64,PHN2ZyB4bWxucz0i..."),
+     *                 @OA\Property(property="url", type="string", example="https://kanri.example.com/productivity?qr=9b2f6c1e-4a7d-4c3b-8e5f-2d1a0b9c8e7f"),
+     *                 @OA\Property(
+     *                     property="workstation",
+     *                     type="object",
+     *                     @OA\Property(property="type", type="string", example="operation"),
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Pegar bolsillo"),
+     *                     @OA\Property(property="path", type="string", example="Confección › Delanteros › Pegar bolsillo")
+     *                 )
+     *             ),
+     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+     *             @OA\Property(property="error", type="boolean", example=false)
+     *         )
+     *     ),
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     */
+    public function qr(OperationQrRequest $request, $id)
+    {
+        try {
+            $operation = Operation::with(['subprocess' => ['process']])->findOrFail($id);
+
+            $url = rtrim(config('app.frontend_url'), '/').'/productivity?qr='.$operation->settingsUuid();
+
+            return $this->successResponse(
+                [
+                    'qr' => app(QrCodeService::class)->generate($url),
+                    'url' => $url,
+                    'workstation' => [
+                        'type' => 'operation',
+                        'id' => $operation->id,
+                        'name' => $operation->name,
+                        'path' => collect([$operation->subprocess->first()?->process->first()?->name, $operation->subprocess->first()?->name, $operation->name])->filter()->implode(' › '),
+                    ],
+                ],
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage(),
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
 }

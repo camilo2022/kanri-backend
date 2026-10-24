@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Casts\SettingsWithUuid;
+use App\Traits\HasSettingsUuid;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +14,7 @@ use OwenIt\Auditing\Auditable as Auditing;
 
 class Subprocess extends Model implements Auditable
 {
-    use Auditing, SoftDeletes;
+    use Auditing, HasSettingsUuid, SoftDeletes;
 
     public const ITEM_ID = 25;
 
@@ -35,7 +37,7 @@ class Subprocess extends Model implements Auditable
     ];
 
     protected $casts = [
-        'settings' => 'object'
+        'settings' => SettingsWithUuid::class
     ];
 
     protected static function booted()

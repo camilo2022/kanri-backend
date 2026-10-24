@@ -15,9 +15,11 @@ use App\Models\MovementDetail;
 use App\Models\MovementDetailQuantity;
 use App\Models\MovementDetailRedistribution;
 use App\Models\Process;
+use App\Models\Productivity;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
  * @OA\Schema(
@@ -279,7 +281,7 @@ class MovementController extends Controller
     public function find(MovementFindRequest $request, $id)
     {
         try {
-            $movement = Movement::with(['movement_details_output' => ['movement' => ['model', 'production_order_detail' => ['model', 'production_order']], 'model' => ['model', 'production_order_detail' => ['model' => ['trademark'], 'production_order' => ['technical_sheet' => ['collection']]]], 'movement_detail_redistributions', 'movement_detail_quantities', 'user_created' => ['employee' => ['person']], 'user_updated' => ['employee' => ['person']]],  'movement_details_input' => ['movement' => ['model', 'production_order_detail' => ['model', 'production_order']], 'model' => ['model', 'production_order_detail' => ['model' => ['trademark'], 'production_order' => ['technical_sheet' => ['collection']]]], 'movement_detail_redistributions', 'movement_detail_quantities', 'user_created' => ['employee' => ['person']], 'user_updated' => ['employee' => ['person']]], 'model' => ['after_processes', 'before_processes'], 'production_order_detail' => ['production_order_detail_quantities', 'production_order' => ['technical_sheet' => ['collection']], 'model' => ['trademark' => ['sizes'], 'subcategory' => ['category'], 'technical_sheet' => ['collection', 'subgroup', 'color', 'waistband_type', 'garment_type', 'wash_tone', 'boot_type', 'yoke_type', 'back_type']]]])
+            $movement = Movement::with(['movement_details_output' => ['movement' => ['model', 'production_order_detail' => ['model', 'production_order']], 'model' => fn (MorphTo $morph) => $morph->morphWith([Movement::class => ['model', 'production_order_detail' => ['model' => ['trademark'], 'production_order' => ['technical_sheet' => ['collection']]]], Productivity::class => ['model']]), 'movement_detail_redistributions', 'movement_detail_quantities', 'user_created' => ['employee' => ['person']], 'user_updated' => ['employee' => ['person']]],  'movement_details_input' => ['movement' => ['model', 'production_order_detail' => ['model', 'production_order']], 'model' => fn (MorphTo $morph) => $morph->morphWith([Movement::class => ['model', 'production_order_detail' => ['model' => ['trademark'], 'production_order' => ['technical_sheet' => ['collection']]]], Productivity::class => ['model']]), 'movement_detail_redistributions', 'movement_detail_quantities', 'user_created' => ['employee' => ['person']], 'user_updated' => ['employee' => ['person']]], 'model' => ['after_processes', 'before_processes'], 'production_order_detail' => ['production_order_detail_quantities', 'production_order' => ['technical_sheet' => ['collection']], 'model' => ['trademark' => ['sizes'], 'subcategory' => ['category'], 'technical_sheet' => ['collection', 'subgroup', 'color', 'waistband_type', 'garment_type', 'wash_tone', 'boot_type', 'yoke_type', 'back_type']]]])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -463,15 +465,18 @@ class MovementController extends Controller
 
             $movement_detail->load([
                 'movement' => ['model'],
-                'model' => [
-                    'model',
-                    'production_order_detail' => [
+                'model' => fn (MorphTo $morph) => $morph->morphWith([
+                    Movement::class => [
                         'model',
-                        'production_order' => [
-                            'technical_sheet' => ['collection'],
+                        'production_order_detail' => [
+                            'model',
+                            'production_order' => [
+                                'technical_sheet' => ['collection'],
+                            ],
                         ],
                     ],
-                ],
+                    Productivity::class => ['model'],
+                ]),
                 'movement_detail_quantities',
                 'movement_detail_redistributions',
                 'user_created' => ['employee' => ['person']],
@@ -593,18 +598,21 @@ class MovementController extends Controller
 
             $movement_detail->load([
                 'movement' => ['model'],
-                'model' => [
-                    'model',
-                    'production_order_detail' => [
-                        'production_order_detail_quantities',
+                'model' => fn (MorphTo $morph) => $morph->morphWith([
+                    Movement::class => [
                         'model',
-                        'production_order' => [
-                            'technical_sheet' => ['collection'],
+                        'production_order_detail' => [
+                            'production_order_detail_quantities',
+                            'model',
+                            'production_order' => [
+                                'technical_sheet' => ['collection'],
+                            ],
                         ],
+                        'movement_details_input' => ['movement_detail_quantities'],
+                        'movement_details_output' => ['movement_detail_quantities'],
                     ],
-                    'movement_details_input' => ['movement_detail_quantities'],
-                    'movement_details_output' => ['movement_detail_quantities']
-                ],
+                    Productivity::class => ['model'],
+                ]),
                 'movement_detail_quantities',
                 'movement_detail_redistributions',
                 'user_created' => ['employee' => ['person']],
@@ -675,15 +683,18 @@ class MovementController extends Controller
 
             $movement_detail->load([
                 'movement' => ['model'],
-                'model' => [
-                    'model',
-                    'production_order_detail' => [
+                'model' => fn (MorphTo $morph) => $morph->morphWith([
+                    Movement::class => [
                         'model',
-                        'production_order' => [
-                            'technical_sheet' => ['collection'],
+                        'production_order_detail' => [
+                            'model',
+                            'production_order' => [
+                                'technical_sheet' => ['collection'],
+                            ],
                         ],
                     ],
-                ],
+                    Productivity::class => ['model'],
+                ]),
                 'movement_detail_quantities',
                 'movement_detail_redistributions',
                 'user_created' => ['employee' => ['person']],
@@ -753,15 +764,18 @@ class MovementController extends Controller
 
             $movement_detail->load([
                 'movement' => ['model'],
-                'model' => [
-                    'model',
-                    'production_order_detail' => [
+                'model' => fn (MorphTo $morph) => $morph->morphWith([
+                    Movement::class => [
                         'model',
-                        'production_order' => [
-                            'technical_sheet' => ['collection'],
+                        'production_order_detail' => [
+                            'model',
+                            'production_order' => [
+                                'technical_sheet' => ['collection'],
+                            ],
                         ],
                     ],
-                ],
+                    Productivity::class => ['model'],
+                ]),
                 'movement_detail_quantities',
                 'movement_detail_redistributions',
                 'user_created' => ['employee' => ['person']],

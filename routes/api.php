@@ -36,6 +36,7 @@ use App\Http\Controllers\ProcessController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductionOrderController;
 use App\Http\Controllers\ProductionOrderDetailController;
+use App\Http\Controllers\ProductivityController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RiskManagerController;
 use App\Http\Controllers\RoleController;
@@ -353,6 +354,25 @@ Route::prefix('/pieces')->group(function () {
         Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:pieces.setting']);
         Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:pieces.delete']);
         Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:pieces.restore']);
+    });
+});
+
+Route::prefix('/productivity')->group(function () {
+    Route::controller(ProductivityController::class)->group(function () {
+        Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:productivity.all']);
+        Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:productivity.find']);
+        Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:productivity.store']);
+        Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:productivity.update']);
+        Route::get('/work_logs/{id}', 'workLogs')->middleware(['auth:sanctum', 'can:productivity.find']);
+        Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:productivity.delete']);
+        Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:productivity.restore']);
+        Route::get('/stops', 'stops')->middleware(['auth:sanctum', 'can:productivity.store']);
+        Route::get('/workstation/{token}', 'workstation')->middleware(['auth:sanctum', 'can:productivity.workstation']);
+        Route::get('/workstation/{token}/reference/{uuid}', 'reference')->middleware(['auth:sanctum', 'can:productivity.workstation']);
+        Route::post('/workstation/{token}/start', 'start')->middleware(['auth:sanctum', 'can:productivity.workstation']);
+        Route::post('/workstation/{token}/stops', 'stop')->middleware(['auth:sanctum', 'can:productivity.workstation']);
+        Route::post('/workstation/{token}/stops/end', 'stopEnd')->middleware(['auth:sanctum', 'can:productivity.workstation']);
+        Route::post('/workstation/{token}/finish', 'finish')->middleware(['auth:sanctum', 'can:productivity.workstation']);
     });
 });
 
@@ -704,6 +724,7 @@ Route::prefix('/workflow')->group(function () {
             Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:workflow.processes.delete']);
             Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:workflow.processes.restore']);
             Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:workflow.processes.settings']);
+            Route::get('/qr/{id}', 'qr')->middleware(['auth:sanctum', 'can:workflow.processes.qr']);
         });
 
         Route::prefix('/subprocesses')->group(function () {
@@ -715,6 +736,7 @@ Route::prefix('/workflow')->group(function () {
                 Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.delete']);
                 Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.restore']);
                 Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.settings']);
+                Route::get('/qr/{id}', 'qr')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.qr']);
             });
 
             Route::prefix('/operations')->group(function () {
@@ -726,6 +748,7 @@ Route::prefix('/workflow')->group(function () {
                     Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.operations.delete']);
                     Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.operations.restore']);
                     Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.operations.settings']);
+                    Route::get('/qr/{id}', 'qr')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.operations.qr']);
                 });
             });
         });

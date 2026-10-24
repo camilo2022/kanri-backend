@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Casts\SettingsWithUuid;
+use App\Traits\HasSettingsUuid;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +15,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class Operation extends Model implements Auditable
 {
-    use Auditing, HasRoles, SoftDeletes;
+    use Auditing, HasRoles, HasSettingsUuid, SoftDeletes;
 
     public const ITEM_ID = 26;
 
@@ -36,7 +38,7 @@ class Operation extends Model implements Auditable
     ];
 
     protected $casts = [
-        'settings' => 'object'
+        'settings' => SettingsWithUuid::class
     ];
 
     public function subprocess(): MorphToMany

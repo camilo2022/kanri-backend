@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Casts\SettingsWithUuid;
+use App\Traits\HasSettingsUuid;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +14,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Process extends Model implements Auditable
 {
-    use Auditing, SoftDeletes;
+    use Auditing, HasSettingsUuid, SoftDeletes;
 
     public const ITEM_ID = 24;
 
@@ -35,7 +37,7 @@ class Process extends Model implements Auditable
     ];
 
     protected $casts = [
-        'settings' => 'object',
+        'settings' => SettingsWithUuid::class,
     ];
 
     public const PENDING = 'Pendiente';
@@ -77,6 +79,15 @@ class Process extends Model implements Auditable
     public function subprocesses(): MorphToMany
     {
         return $this->morphedByMany(Subprocess::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
+    }
+
+    /**
+     * Primer proceso de la producción (hoy, Corte): pertenece a la orden de producción y no tiene procesos
+     * anteriores. Sus unidades no vienen de un traslado, sino de la productividad del turno.
+     */
+    public function isFirst(): bool
+    {
+        return (bool) ($this->settings->in_production_order ?? false) && ! $this->before_processes()->exists();
     }
 
     public function scopeSearch(Builder $query, ?string $search = null): Builder

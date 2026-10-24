@@ -1,0 +1,36 @@
+<?php
+
+namespace App\Http\Resources\Productivity;
+
+use Carbon\Carbon;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class ProductivityResource extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'productivity' => [
+                'id' => $this->id,
+                'model_type' => $this->model_type,
+                'model_id' => $this->model_id,
+                'date' => $this->date ? Carbon::parse($this->date)->format('Y-m-d') : null,
+                'start_time' => $this->start_time,
+                'end_time' => $this->end_time,
+                'settings' => $this->publicSettings(),
+                'status' => $this->status(),
+                'duration_hours' => $this->duration_hours,
+                'goal_day' => $this->goal_day,
+                'created_at' => $this->formatDate($this->created_at),
+                'updated_at' => $this->formatDate($this->updated_at),
+                'deleted_at' => $this->formatDate($this->deleted_at),
+                'model' => $this->model,
+            ],
+        ];
+    }
+
+    protected function formatDate($date)
+    {
+        return $date ? Carbon::parse($date)->format('Y-m-d H:i:s') : null;
+    }
+}

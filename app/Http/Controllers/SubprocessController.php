@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Workflow\Subprocess\SubprocessAllRequest;
 use App\Http\Requests\Workflow\Subprocess\SubprocessDeleteRequest;
 use App\Http\Requests\Workflow\Subprocess\SubprocessFindRequest;
+use App\Http\Requests\Workflow\Subprocess\SubprocessQrRequest;
+use App\Services\QrCodeService;
 use App\Http\Requests\Workflow\Subprocess\SubprocessRestoreRequest;
 use App\Http\Requests\Workflow\Subprocess\SubprocessSettingRequest;
 use App\Http\Requests\Workflow\Subprocess\SubprocessStoreRequest;
@@ -472,7 +474,13 @@ class SubprocessController extends Controller
             $subprocess = Subprocess::findOrFail($id);
             $subprocess->name = $request->input('name');
             $subprocess->description = $request->input('description');
-            $subprocess->settings = $request->input('settings');
+            // La edición no maneja el schema (tablas dinámicas y estáticas): se conserva el guardado desde Configuración
+            $settings = $request->input('settings');
+            $stored = json_decode(json_encode($subprocess->settings), true) ?? [];
+            if (array_key_exists('schema', $stored) && is_array($settings)) {
+                $settings['schema'] = $stored['schema'];
+            }
+            $subprocess->settings = $settings;
 
             $subprocess->save();
 
@@ -707,4 +715,73 @@ class SubprocessController extends Controller
             );
         }
     }
+
+    /**
+     * @OA\Get(
+     *     path="/workflow/processes/subprocesses/qr/{id}",
+     *     tags={"Workflow › Subprocesses"},
+     *     summary="Generar el QR del puesto de trabajo (subproceso)",
+     *     description="Devuelve el QR (SVG en base64) que se pega en el puesto de trabajo. Al escanearlo, la tablet abre Productividad (`<FRONTEND_URL>/productivity?qr=<uuid>`) lista para registrar trabajo. El identificador (uuid) se crea la primera vez y se guarda en `settings.uuid`. Solo se permite en el nivel más bajo: un proceso sin subprocesos, un subproceso sin operaciones o una operación, y que esté activo.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Response(
+     *         response=200,
+     *         description="QR generado correctamente",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="qr", type="string", example="data:image/svg+xml;base64,PHN2ZyB4bWxucz0i..."),
+     *                 @OA\Property(property="url", type="string", example="https://kanri.example.com/productivity?qr=9b2f6c1e-4a7d-4c3b-8e5f-2d1a0b9c8e7f"),
+     *                 @OA\Property(
+     *                     property="workstation",
+     *                     type="object",
+     *                     @OA\Property(property="type", type="string", example="subprocess"),
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Tendido"),
+     *                     @OA\Property(property="path", type="string", example="Corte › Tendido")
+     *                 )
+     *             ),
+     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+     *             @OA\Property(property="error", type="boolean", example=false)
+     *         )
+     *     ),
+     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     */
+    public function qr(SubprocessQrRequest $request, $id)
+    {
+        try {
+            $subprocess = Subprocess::with(['process'])->findOrFail($id);
+
+            $url = rtrim(config('app.frontend_url'), '/').'/productivity?qr='.$subprocess->settingsUuid();
+
+            return $this->successResponse(
+                [
+                    'qr' => app(QrCodeService::class)->generate($url),
+                    'url' => $url,
+                    'workstation' => [
+                        'type' => 'subprocess',
+                        'id' => $subprocess->id,
+                        'name' => $subprocess->name,
+                        'path' => collect([$subprocess->process->first()?->name, $subprocess->name])->filter()->implode(' › '),
+                    ],
+                ],
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage(),
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
 }

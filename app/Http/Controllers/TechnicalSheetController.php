@@ -382,7 +382,8 @@ class TechnicalSheetController extends Controller
             $pdfUrl = URL::signedRoute(
                 'technical_sheets.pdf',
                 [
-                    'uuid' => $production_order->technical_sheet->uuid,
+                    // La ficha técnica se descarga desde una orden de producción: el QR apunta a esa orden
+                    'uuid' => $production_order->uuid,
                 ]
             );
 

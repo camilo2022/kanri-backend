@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use OwenIt\Auditing\Auditable as Auditing;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Models\Audit;
@@ -72,6 +73,14 @@ class MovementDetail extends Model implements Auditable
     public function movement_detail_quantities(): HasMany
     {
         return $this->hasMany(MovementDetailQuantity::class);
+    }
+
+    /**
+     * Regla estándar con la que se midió el trabajo (cuando el detalle viene de la productividad de un turno).
+     */
+    public function rules(): MorphToMany
+    {
+        return $this->morphToMany(Rule::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
     }
 
     public function user_created(): HasOneThrough

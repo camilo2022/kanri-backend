@@ -530,6 +530,7 @@ class RolesAndPermissionsSeeder extends Seeder
                     ['name' => 'workflow.processes.delete', 'title' => 'Eliminar procesos.', 'description' => 'Permite eliminar procesos.'],
                     ['name' => 'workflow.processes.restore', 'title' => 'Resturar procesos.', 'description' => 'Permite restaurar procesos.'],
                     ['name' => 'workflow.processes.settings', 'title' => 'Configurar procesos.', 'description' => 'Permite configurar procesos.'],
+                    ['name' => 'workflow.processes.qr', 'title' => 'Generar QR de procesos.', 'description' => 'Permite generar el QR del puesto de trabajo de un proceso.'],
                     ['name' => 'workflow.processes.subprocesses.all', 'title' => 'Listar subprocesos.', 'description' => 'Permite listar subprocesos..'],
                     ['name' => 'workflow.processes.subprocesses.find', 'title' => 'Buscar un subproceso.', 'description' => 'Permite obtener un subproceso especifico.'],
                     ['name' => 'workflow.processes.subprocesses.store', 'title' => 'Crear subprocesos.', 'description' => 'Permite crear subprocesos.'],
@@ -537,6 +538,7 @@ class RolesAndPermissionsSeeder extends Seeder
                     ['name' => 'workflow.processes.subprocesses.delete', 'title' => 'Eliminar subprocesos.', 'description' => 'Permite eliminar subprocesos.'],
                     ['name' => 'workflow.processes.subprocesses.restore', 'title' => 'Resturar subprocesos.', 'description' => 'Permite restaurar subprocesos.'],
                     ['name' => 'workflow.processes.subprocesses.settings', 'title' => 'Configurar subprocesos.', 'description' => 'Permite configurar subprocesos.'],
+                    ['name' => 'workflow.processes.subprocesses.qr', 'title' => 'Generar QR de subprocesos.', 'description' => 'Permite generar el QR del puesto de trabajo de un subproceso.'],
                     ['name' => 'workflow.processes.subprocesses.operations.all', 'title' => 'Listar operaciones.', 'description' => 'Permite listar operaciones.'],
                     ['name' => 'workflow.processes.subprocesses.operations.find', 'title' => 'Buscar una operacion.', 'description' => 'Permite obtener una operación especifico.'],
                     ['name' => 'workflow.processes.subprocesses.operations.store', 'title' => 'Crear operaciones.', 'description' => 'Permite crear operaciones.'],
@@ -544,6 +546,7 @@ class RolesAndPermissionsSeeder extends Seeder
                     ['name' => 'workflow.processes.subprocesses.operations.delete', 'title' => 'Eliminar operaciones.', 'description' => 'Permite eliminar operaciones.'],
                     ['name' => 'workflow.processes.subprocesses.operations.restore', 'title' => 'Resturar operaciones.', 'description' => 'Permite restaurar operaciones.'],
                     ['name' => 'workflow.processes.subprocesses.operations.settings', 'title' => 'Configurar operaciones.', 'description' => 'Permite configurar operaciones.'],
+                    ['name' => 'workflow.processes.subprocesses.operations.qr', 'title' => 'Generar QR de operaciones.', 'description' => 'Permite generar el QR del puesto de trabajo de una operación.'],
                 ]
             ],
 

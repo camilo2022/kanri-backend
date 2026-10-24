@@ -15,6 +15,9 @@
         "/Processes": {
             "description": "Rutas de gestión de procesos"
         },
+        "/productivities": {
+            "description": "Rutas de gestión de productividades"
+        },
         "/reports": {
             "description": "Rutas de gestión de reportes"
         },
@@ -9555,6 +9558,94 @@
                 ]
             }
         },
+        "/workflow/processes/subprocesses/operations/qr/{id}": {
+            "get": {
+                "tags": [
+                    "Workflow › Operations"
+                ],
+                "summary": "Generar el QR del puesto de trabajo (operación)",
+                "description": "Devuelve el QR (SVG en base64) que se pega en el puesto de trabajo. Al escanearlo, la tablet abre Productividad (`<FRONTEND_URL>/productivity?qr=<uuid>`) lista para registrar trabajo. El identificador (uuid) se crea la primera vez y se guarda en `settings.uuid`. Solo se permite en el nivel más bajo: un proceso sin subprocesos, un subproceso sin operaciones o una operación, y que esté activo.",
+                "operationId": "03e2ac97249e93ae4877c0b9ec4ee218",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/PathId"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "QR generado correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "qr": {
+                                                    "type": "string",
+                                                    "example": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0i..."
+                                                },
+                                                "url": {
+                                                    "type": "string",
+                                                    "example": "https://kanri.example.com/productivity?qr=9b2f6c1e-4a7d-4c3b-8e5f-2d1a0b9c8e7f"
+                                                },
+                                                "workstation": {
+                                                    "properties": {
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "operation"
+                                                        },
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Pegar bolsillo"
+                                                        },
+                                                        "path": {
+                                                            "type": "string",
+                                                            "example": "Confección › Delanteros › Pegar bolsillo"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/pension_funds/all": {
             "get": {
                 "tags": [
@@ -12827,6 +12918,94 @@
                 ]
             }
         },
+        "/workflow/processes/qr/{id}": {
+            "get": {
+                "tags": [
+                    "Workflow › Processes"
+                ],
+                "summary": "Generar el QR del puesto de trabajo (proceso)",
+                "description": "Devuelve el QR (SVG en base64) que se pega en el puesto de trabajo. Al escanearlo, la tablet abre Productividad (`<FRONTEND_URL>/productivity?qr=<uuid>`) lista para registrar trabajo. El identificador (uuid) se crea la primera vez y se guarda en `settings.uuid`. Solo se permite en el nivel más bajo: un proceso sin subprocesos, un subproceso sin operaciones o una operación, y que esté activo.",
+                "operationId": "509aa403f5179f1b78986c1c17df17d6",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/PathId"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "QR generado correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "qr": {
+                                                    "type": "string",
+                                                    "example": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0i..."
+                                                },
+                                                "url": {
+                                                    "type": "string",
+                                                    "example": "https://kanri.example.com/productivity?qr=9b2f6c1e-4a7d-4c3b-8e5f-2d1a0b9c8e7f"
+                                                },
+                                                "workstation": {
+                                                    "properties": {
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "process"
+                                                        },
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Corte"
+                                                        },
+                                                        "path": {
+                                                            "type": "string",
+                                                            "example": "Corte"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/movements/production_order_details/all": {
             "get": {
                 "tags": [
@@ -12948,6 +13127,1463 @@
                                             "No hay ningún registro."
                                         ]
                                     }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivities/all": {
+            "get": {
+                "tags": [
+                    "Productivities"
+                ],
+                "summary": "Listar las productividades de un proceso",
+                "operationId": "632a9300e8d50d3d3cc519e86911fb0b",
+                "parameters": [
+                    {
+                        "name": "process_id",
+                        "in": "query",
+                        "description": "Identificador del proceso.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "column",
+                        "in": "query",
+                        "description": "Columna a ordenar.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "id",
+                                "date",
+                                "start_time",
+                                "end_time",
+                                "created_at",
+                                "updated_at"
+                            ],
+                            "example": "date"
+                        }
+                    },
+                    {
+                        "name": "dir",
+                        "in": "query",
+                        "description": "Dirección de ordenamiento.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ],
+                            "example": "asc"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Registros por página.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de productividades cargada correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "productivities": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Productivity"
+                                                    }
+                                                },
+                                                "meta": {
+                                                    "properties": {
+                                                        "pagination": {
+                                                            "properties": {
+                                                                "total": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "count": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "per_page": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "current_page": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "total_pages": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Identificador del proceso no registrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Error de validación."
+                                        },
+                                        "attributes": {
+                                            "properties": {
+                                                "process_id": {
+                                                    "type": "string",
+                                                    "example": "Identificador del proceso."
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "process_id": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "No hay ningún registro."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnauthorizedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServerErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/find/{id}": {
+            "get": {
+                "tags": [
+                    "Productivities"
+                ],
+                "summary": "Consultar un turno activo",
+                "description": "Devuelve el turno con su estado (Por iniciar, En curso o Terminado), la meta por hora y las paradas programadas. Lo usa el modal de editar turno.",
+                "operationId": "39209f4eb21f99533231a8c1fddd08ca",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Turno",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "productivity": {
+                                                    "$ref": "#/components/schemas/Productivity"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/work_logs/{id}": {
+            "get": {
+                "tags": [
+                    "Productivities"
+                ],
+                "summary": "Lo que se trabajó en un turno",
+                "description": "Trabajos del turno ordenados por hora de inicio. Los finalizados traen referencia, lote, puesto, regla, inicio, fin, personas, minutos (duración, paradas, trabajado y estándar), eficiencia, paradas, unidades y sus destinos con las cantidades por talla y el estado del ingreso (Pendiente, Aprobado…). Los que están en curso traen status «En curso», su inicio y sus paradas, sin unidades ni eficiencia.",
+                "operationId": "517240c6cccb5a9eee255d838d6e72b2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trabajos del turno",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "productivity": {
+                                                    "$ref": "#/components/schemas/Productivity"
+                                                },
+                                                "work_logs": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "Aprobado"
+                                                            },
+                                                            "workstation": {
+                                                                "type": "string",
+                                                                "example": "CORTE"
+                                                            },
+                                                            "production_order": {
+                                                                "properties": {
+                                                                    "code": {
+                                                                        "type": "string",
+                                                                        "example": "PO260928005"
+                                                                    },
+                                                                    "lot": {
+                                                                        "type": "string",
+                                                                        "example": "D"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "reference": {
+                                                                "type": "string",
+                                                                "example": "BO125478"
+                                                            },
+                                                            "start": {
+                                                                "type": "string",
+                                                                "example": "2026-10-24 07:00:00"
+                                                            },
+                                                            "end": {
+                                                                "type": "string",
+                                                                "example": "2026-10-24 13:38:33",
+                                                                "nullable": true
+                                                            },
+                                                            "people": {
+                                                                "type": "integer",
+                                                                "example": 4
+                                                            },
+                                                            "efficiency": {
+                                                                "type": "number",
+                                                                "example": 80,
+                                                                "nullable": true
+                                                            },
+                                                            "units": {
+                                                                "type": "integer",
+                                                                "example": 770,
+                                                                "nullable": true
+                                                            },
+                                                            "destinations": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "object"
+                                                                }
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/update/{id}": {
+            "put": {
+                "tags": [
+                    "Productivities"
+                ],
+                "summary": "Editar un turno",
+                "description": "Por iniciar: se puede cambiar fecha, horario, meta por hora y paradas programadas. En curso: solo la hora de fin (posterior a la hora actual; lo demás se ignora). Terminado o desactivado: 422. En todos los casos no puede cruzarse con otro turno del proceso y las paradas deben caber en el turno. Conserva el trabajo en curso de los puestos.",
+                "operationId": "ce430f079d02d457be4c555bf6b7839f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-10-26"
+                                    },
+                                    "start_time": {
+                                        "type": "string",
+                                        "example": "07:00"
+                                    },
+                                    "end_time": {
+                                        "type": "string",
+                                        "example": "17:00"
+                                    },
+                                    "settings": {
+                                        "properties": {
+                                            "goal_hour": {
+                                                "type": "number",
+                                                "example": 300
+                                            },
+                                            "stops": {
+                                                "type": "array",
+                                                "items": {
+                                                    "properties": {
+                                                        "stop_id": {
+                                                            "type": "integer",
+                                                            "example": 478
+                                                        },
+                                                        "start_time": {
+                                                            "type": "string",
+                                                            "example": "12:00"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Turno actualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "productivity": {
+                                                    "$ref": "#/components/schemas/Productivity"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/delete/{id}": {
+            "delete": {
+                "tags": [
+                    "Productivities"
+                ],
+                "summary": "Desactivar un turno",
+                "description": "Solo un turno que todavía no ha iniciado y sin trabajo registrado.",
+                "operationId": "473f1d3eb4e4343beb74aa71b61e1f08",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Turno desactivado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "productivity": {
+                                                    "$ref": "#/components/schemas/Productivity"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/restore/{id}": {
+            "patch": {
+                "tags": [
+                    "Productivities"
+                ],
+                "summary": "Activar un turno desactivado",
+                "description": "No debe cruzarse con otro turno activo del mismo proceso.",
+                "operationId": "50197e2b15d50b1e7b4f8ec6cbe9a44a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Turno activado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "productivity": {
+                                                    "$ref": "#/components/schemas/Productivity"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/workstation/{token}": {
+            "get": {
+                "tags": [
+                    "Productivities"
+                ],
+                "summary": "Resolver el QR de un puesto de trabajo",
+                "description": "Lo llama la pantalla de Productividad al escanear el QR del puesto. Devuelve el puesto (proceso, subproceso u operación, siempre el nivel más bajo y activo), su proceso y el turno abierto de ese proceso en este momento. Responde 422 si el código no existe, si el puesto no es del nivel más bajo o si no hay turno abierto.",
+                "operationId": "230e05c5a72fc7451d037da177848c49",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "description": "Identificador (uuid) del puesto de trabajo que lleva su QR",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "9b2f6c1e-4a7d-4c3b-8e5f-2d1a0b9c8e7f"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Puesto de trabajo y turno abierto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "workstation": {
+                                                    "properties": {
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "operation"
+                                                        },
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 215
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Pegar bolsillo"
+                                                        },
+                                                        "path": {
+                                                            "type": "string",
+                                                            "example": "Confección › Delanteros › Pegar bolsillo"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "process": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 205
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Confección"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "shift": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 12
+                                                        },
+                                                        "date": {
+                                                            "type": "string",
+                                                            "example": "2026-10-23"
+                                                        },
+                                                        "start_time": {
+                                                            "type": "string",
+                                                            "example": "06:00:00"
+                                                        },
+                                                        "end_time": {
+                                                            "type": "string",
+                                                            "example": "14:00:00"
+                                                        },
+                                                        "settings": {
+                                                            "type": "object",
+                                                            "example": {
+                                                                "goal_hour": 120
+                                                            }
+                                                        },
+                                                        "stops": {
+                                                            "description": "Paradas programadas del turno",
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "stop_id": {
+                                                                        "type": "integer",
+                                                                        "example": 478
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "ALMUERZO"
+                                                                    },
+                                                                    "type": {
+                                                                        "type": "string",
+                                                                        "example": "programmed"
+                                                                    },
+                                                                    "start": {
+                                                                        "type": "string",
+                                                                        "example": "2026-10-24 12:00:00"
+                                                                    },
+                                                                    "end": {
+                                                                        "type": "string",
+                                                                        "example": "2026-10-24 12:30:00"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "work": {
+                                                    "oneOf": [
+                                                        {
+                                                            "$ref": "#/components/schemas/WorkInProgress"
+                                                        }
+                                                    ],
+                                                    "nullable": true
+                                                },
+                                                "unprogrammed_stops": {
+                                                    "description": "Paradas no programadas del catálogo",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 480
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "PARO MECANICO"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/workstation/{token}/reference/{uuid}": {
+            "get": {
+                "tags": [
+                    "Productivities"
+                ],
+                "summary": "Resolver la ficha técnica escaneada en un puesto de trabajo",
+                "description": "Recibe el uuid del QR del puesto y el uuid de la orden de producción (sacado del QR de la ficha técnica impresa). Valida el puesto y el turno abierto como el endpoint del puesto, y devuelve la orden (código y lote), la referencia y la regla estándar que aplica: la del proceso del puesto, que coincide con su subproceso u operación si los tiene y con todos sus maestros, y que suma más puntos según los pesos configurados. Si ninguna aplica, `rule` es null.",
+                "operationId": "3b1e4cf2b3764a48ce14f346ca15e74d",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "description": "uuid del puesto de trabajo (de su QR)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "9b2f6c1e-4a7d-4c3b-8e5f-2d1a0b9c8e7f"
+                        }
+                    },
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "uuid de la orden de producción escaneada",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "3f1c2b4a-8d7e-4f6a-9b0c-1d2e3f4a5b6c"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Referencia y regla estándar",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "production_order": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 123
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "example": "00123"
+                                                        },
+                                                        "lot": {
+                                                            "type": "string",
+                                                            "example": "A"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "reference": {
+                                                    "properties": {
+                                                        "code": {
+                                                            "type": "string",
+                                                            "example": "4521"
+                                                        },
+                                                        "trademark": {
+                                                            "type": "string",
+                                                            "example": "BLESS ORIGINAL"
+                                                        },
+                                                        "group": {
+                                                            "type": "string",
+                                                            "example": "DAMA"
+                                                        },
+                                                        "category": {
+                                                            "type": "string",
+                                                            "example": "CLASICO"
+                                                        },
+                                                        "subcategory": {
+                                                            "type": "string",
+                                                            "example": "JEAN SKINNY"
+                                                        },
+                                                        "subgroup": {
+                                                            "type": "string",
+                                                            "example": "TIRO ALTO"
+                                                        },
+                                                        "collection": {
+                                                            "type": "string",
+                                                            "example": "C52026 - COLOMBIA MODA"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "rule": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 487
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "CORTE · MA BLESS ORIGINAL · GR DAMA"
+                                                        },
+                                                        "time": {
+                                                            "type": "number",
+                                                            "example": 60
+                                                        },
+                                                        "time_unit": {
+                                                            "type": "string",
+                                                            "example": "seg"
+                                                        },
+                                                        "people": {
+                                                            "type": "integer",
+                                                            "example": 4
+                                                        },
+                                                        "points": {
+                                                            "type": "integer",
+                                                            "example": 31
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/workstation/{token}/start": {
+            "post": {
+                "tags": [
+                    "Productivities"
+                ],
+                "summary": "Iniciar trabajo en un puesto",
+                "description": "Inicia el trabajo del puesto con la orden escaneada. Por ahora solo en el primer proceso de la producción medido por lotes (Corte). El inicio es la hora de inicio del turno si es el primer trabajo del puesto en el turno o, si no, la hora en que terminó el anterior. El trabajo en curso queda en el turno (settings.work_in_progress) hasta finalizarlo. Responde 422 si el puesto ya tiene un trabajo en curso, si no hay regla estándar que aplique, si la orden no tiene curva por destino o si el lote ya se registró o se está trabajando en otro puesto.",
+                "operationId": "da85103a7f6230f49a313bc494411f33",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "description": "uuid del puesto de trabajo (de su QR)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "production_order"
+                                ],
+                                "properties": {
+                                    "production_order": {
+                                        "description": "uuid de la orden de producción escaneada",
+                                        "type": "string",
+                                        "format": "uuid"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Trabajo en curso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WorkInProgress"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/workstation/{token}/stops": {
+            "post": {
+                "tags": [
+                    "Productivities"
+                ],
+                "summary": "Iniciar una parada no programada",
+                "description": "Registra que el trabajo en curso del puesto se detuvo ahora por una parada no programada (paro mecánico, falta de insumos…). Solo una a la vez y nunca dentro de una parada programada del turno; las programadas se definen en el turno.",
+                "operationId": "2a7ab8f211a7be8e8183abaa9d974a18",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "description": "uuid del puesto de trabajo (de su QR)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "stop_id"
+                                ],
+                                "properties": {
+                                    "stop_id": {
+                                        "description": "Parada de tipo no programada",
+                                        "type": "integer",
+                                        "example": 480
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Trabajo en curso con la parada abierta",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WorkInProgress"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/workstation/{token}/stops/end": {
+            "post": {
+                "tags": [
+                    "Productivities"
+                ],
+                "summary": "Terminar la parada no programada en curso",
+                "operationId": "90d2a7a94d49536ac70845eff767e5ee",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "description": "uuid del puesto de trabajo (de su QR)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trabajo en curso sin parada abierta",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WorkInProgress"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/workstation/{token}/finish": {
+            "post": {
+                "tags": [
+                    "Productivities"
+                ],
+                "summary": "Finalizar el trabajo en curso",
+                "description": "Termina el trabajo ahora (cierra la parada abierta, si hay), calcula tiempos y eficiencia y crea un ingreso por destino: un detalle de movimiento cuyo origen es el turno, en estado Pendiente, en el movimiento del proceso y destino (se crea si no existe), con las unidades por talla y la regla enlazada. El proceso lo aprueba en Movimientos y la curva de la orden se ajusta.",
+                "operationId": "b871afda7b025415bb1753762697e7a5",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "description": "uuid del puesto de trabajo (de su QR)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "quantities"
+                                ],
+                                "properties": {
+                                    "quantities": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "production_order_detail_id": {
+                                                    "description": "Destino de la orden",
+                                                    "type": "integer",
+                                                    "example": 365
+                                                },
+                                                "size_id": {
+                                                    "type": "integer",
+                                                    "example": 374
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Resumen del trabajo",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "start": {
+                                                    "type": "string",
+                                                    "example": "2026-10-24 07:00:00"
+                                                },
+                                                "end": {
+                                                    "type": "string",
+                                                    "example": "2026-10-24 08:30:00"
+                                                },
+                                                "people": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                },
+                                                "duration_minutes": {
+                                                    "type": "number",
+                                                    "example": 90
+                                                },
+                                                "stop_minutes": {
+                                                    "type": "number",
+                                                    "example": 15
+                                                },
+                                                "available_minutes": {
+                                                    "type": "number",
+                                                    "example": 360
+                                                },
+                                                "dead_minutes": {
+                                                    "type": "number",
+                                                    "example": 60
+                                                },
+                                                "worked_minutes": {
+                                                    "type": "number",
+                                                    "example": 300
+                                                },
+                                                "standard_minutes": {
+                                                    "type": "number",
+                                                    "example": 240
+                                                },
+                                                "efficiency": {
+                                                    "type": "number",
+                                                    "example": 80,
+                                                    "nullable": true
+                                                },
+                                                "stops": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "units": {
+                                                    "type": "integer",
+                                                    "example": 345
+                                                },
+                                                "movement_details": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "integer"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/stops": {
+            "get": {
+                "tags": [
+                    "Productivities"
+                ],
+                "summary": "Paradas del catálogo para productividad",
+                "description": "Paradas programadas (con su duración en minutos, para agregarlas al turno) y no programadas (las que se registran durante un trabajo). Lo usa el modal de programar turno.",
+                "operationId": "dbc1b24e4c042c49caaf888725d33143",
+                "responses": {
+                    "200": {
+                        "description": "Paradas por tipo",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "programmed": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 478
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "ALMUERZO"
+                                                            },
+                                                            "minutes": {
+                                                                "type": "integer",
+                                                                "example": 30
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "unprogrammed": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 480
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "PARO MECANICO"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -18069,6 +19705,94 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/workflow/processes/subprocesses/qr/{id}": {
+            "get": {
+                "tags": [
+                    "Workflow › Subprocesses"
+                ],
+                "summary": "Generar el QR del puesto de trabajo (subproceso)",
+                "description": "Devuelve el QR (SVG en base64) que se pega en el puesto de trabajo. Al escanearlo, la tablet abre Productividad (`<FRONTEND_URL>/productivity?qr=<uuid>`) lista para registrar trabajo. El identificador (uuid) se crea la primera vez y se guarda en `settings.uuid`. Solo se permite en el nivel más bajo: un proceso sin subprocesos, un subproceso sin operaciones o una operación, y que esté activo.",
+                "operationId": "8b2c0f1da07d5469f7d7899223aece54",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/PathId"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "QR generado correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "qr": {
+                                                    "type": "string",
+                                                    "example": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0i..."
+                                                },
+                                                "url": {
+                                                    "type": "string",
+                                                    "example": "https://kanri.example.com/productivity?qr=9b2f6c1e-4a7d-4c3b-8e5f-2d1a0b9c8e7f"
+                                                },
+                                                "workstation": {
+                                                    "properties": {
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "subprocess"
+                                                        },
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Tendido"
+                                                        },
+                                                        "path": {
+                                                            "type": "string",
+                                                            "example": "Corte › Tendido"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
                     }
                 },
                 "security": [
@@ -31725,6 +33449,151 @@
                 },
                 "type": "object"
             },
+            "Productivity": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "model_type": {
+                        "type": "string",
+                        "example": "App\\\\Models\\\\Process"
+                    },
+                    "model_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2026-10-21"
+                    },
+                    "start_time": {
+                        "type": "string",
+                        "example": "07:00:00"
+                    },
+                    "end_time": {
+                        "type": "string",
+                        "example": "17:00:00"
+                    },
+                    "settings": {
+                        "type": "object",
+                        "example": []
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-10-21T13:17:29.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-10-21T13:17:29.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "WorkInProgress": {
+                "description": "Trabajo en curso de un puesto: tiempos, paradas no programadas, la orden que se trabaja (con su referencia y regla) y sus destinos con la curva actual.",
+                "properties": {
+                    "start": {
+                        "description": "Inicio: la hora de inicio del turno o el fin del trabajo anterior del puesto",
+                        "type": "string",
+                        "example": "2026-10-24 07:00:00"
+                    },
+                    "started_at": {
+                        "description": "Momento en que se tocó Iniciar",
+                        "type": "string",
+                        "example": "2026-10-24 07:12:40"
+                    },
+                    "stops": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "stop_id": {
+                                    "type": "integer",
+                                    "example": 480
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "PARO MECANICO"
+                                },
+                                "start": {
+                                    "type": "string",
+                                    "example": "2026-10-24 08:05:00"
+                                },
+                                "end": {
+                                    "type": "string",
+                                    "example": null,
+                                    "nullable": true
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "open_stop": {
+                        "description": "Parada no programada sin terminar",
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "destinations": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "production_order_detail_id": {
+                                    "type": "integer",
+                                    "example": 365
+                                },
+                                "destination": {
+                                    "type": "string",
+                                    "example": "NACIONAL"
+                                },
+                                "reference": {
+                                    "description": "Referencia (código del producto) de ese destino",
+                                    "type": "string",
+                                    "example": "BO125478"
+                                },
+                                "sizes": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "size_id": {
+                                                "type": "integer",
+                                                "example": 374
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "example": "04"
+                                            },
+                                            "quantity": {
+                                                "type": "integer",
+                                                "example": 20
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "preview": {
+                        "description": "Resumen si se finalizara en este momento: start, end, people, duration_minutes, stop_minutes, available_minutes, dead_minutes, worked_minutes, standard_minutes, efficiency y stops (cada una con name, type, start, end y minutes, recortadas al trabajo)",
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "production_order": {
+                        "type": "object"
+                    },
+                    "reference": {
+                        "type": "object"
+                    },
+                    "rule": {
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
             "Report": {
                 "properties": {
                     "id": {
@@ -36361,6 +38230,10 @@
         {
             "name": "Pieces",
             "description": "Endpoints para gestionar piezas"
+        },
+        {
+            "name": "Productivities",
+            "description": "Endpoints para gestionar productividades"
         },
         {
             "name": "Reports",
