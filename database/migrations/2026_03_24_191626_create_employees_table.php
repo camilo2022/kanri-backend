@@ -18,18 +18,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('employees', function (Blueprint $table) {
-            $table->id();
-            $table->foreignIdFor(Person::class)->unique()->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Item');
-            $table->string('operation_center')->nullable();
-            $table->foreignIdFor(Position::class)->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Item');
-            $table->foreignIdFor(RiskManager::class)->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Item');
-            $table->foreignIdFor(HealthEntity::class)->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Item');
-            $table->foreignIdFor(PensionFund::class)->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Item');
-            $table->foreignIdFor(CompensationFund::class)->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Item');
-            $table->date('start_date');
-            $table->date('end_date')->nullable();
-            $table->timestamps();
-            $table->softDeletes();
+            $table->id()->comment('Identificador');
+            $table->foreignIdFor(Person::class)->unique()->comment('Persona')->constrained()->onUpdate('cascade')->onDelete('cascade');
+            $table->string('operation_center')->nullable()->comment('Centro de operación');
+            $table->foreignIdFor(Position::class)->comment('Cargo')->constrained()->onUpdate('cascade')->onDelete('cascade');
+            $table->foreignIdFor(RiskManager::class)->comment('Administradora de riesgos')->constrained()->onUpdate('cascade')->onDelete('cascade');
+            $table->foreignIdFor(HealthEntity::class)->comment('Entidad de salud')->constrained()->onUpdate('cascade')->onDelete('cascade');
+            $table->foreignIdFor(PensionFund::class)->comment('Fondo de pensión')->constrained()->onUpdate('cascade')->onDelete('cascade');
+            $table->foreignIdFor(CompensationFund::class)->comment('Caja de compensación')->constrained()->onUpdate('cascade')->onDelete('cascade');
+            $table->foreignId('workstation_id')->nullable()->comment('Puesto de trabajo')->constrained('subitems')->onUpdate('cascade')->nullOnDelete();
+            $table->date('start_date')->comment('Fecha de ingreso');
+            $table->date('end_date')->nullable()->comment('Fecha de retiro');
+            $table->timestamp('created_at')->nullable()->comment('Fecha de creación');
+            $table->timestamp('updated_at')->nullable()->comment('Fecha de actualización');
+            $table->softDeletes()->comment('Fecha de desactivación');
         });
     }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Authorization\Role;
 
 use Illuminate\Http\Request;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Carbon;
 
@@ -10,10 +11,12 @@ class RoleCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Role::class, $this->collection->pluck('id')->all());
         return [
-            'roles' => $this->collection->map(function ($role) {
+            'roles' => $this->collection->map(function ($role) use ($audited) {
                 return [
                     'id' => $role->id,
+                    'has_audits' => isset($audited[$role->id]),
                     'name' => $role->name,
                     'title' => $role->title,
                     'description' => $role->description,

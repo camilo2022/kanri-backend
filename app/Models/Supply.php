@@ -67,7 +67,7 @@ class Supply extends Model implements Auditable
 
     public function technical_sheets(): MorphToMany
     {
-        return $this->morphToMany(TechnicalSheet::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
+        return $this->morphedByMany(TechnicalSheet::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
     }
 
     public function production_order_details(): MorphMany
@@ -89,8 +89,8 @@ class Supply extends Model implements Auditable
         if ($search === '') {
             return $query;
         }
-
-        $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
+         
+        $terms = [preg_replace('/\s+/', ' ', $search)];
 
         return $query->where(function (Builder $q) use ($terms) {
             foreach ($terms as $term) {

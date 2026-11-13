@@ -5,13 +5,13 @@ namespace App\Traits;
 trait ApiMessage
 {
 	private $messages = [
-		'Success' => 'Operación completada con éxito. ',
-		'ModelNotFoundException' => 'No se encontraron resultados para la búsqueda. ',
-		'QueryException' => 'Error en la base de datos, por favor, inténtelo de nuevo más tarde. ',
-		'Exception' => 'Se ha producido un error inesperado, por favor, inténtelo de nuevo más tarde. ',
-        'ValidationException' => 'Error de validación. ',
-        'UnauthorizedException' => 'Contraseña inválida. Asegúrate de escribirla correctamente. ',
-        'AuthenticationException' => 'No autenticado. '
+		'Success' => 'Operación completada con éxito.',
+		'ModelNotFoundException' => 'El registro solicitado no existe.',
+		'QueryException' => 'Error en la base de datos, por favor, inténtelo de nuevo más tarde.',
+		'Exception' => 'Se ha producido un error inesperado, por favor, inténtelo de nuevo más tarde.',
+        'ValidationException' => 'Error de validación.',
+        'UnauthorizedException' => 'Contraseña inválida. Asegúrate de escribirla correctamente.',
+        'AuthenticationException' => 'No autenticado.'
 	];
 
     private $codes = [
@@ -26,7 +26,7 @@ trait ApiMessage
 
     public function getMessage($key) : string
 	{
-        return isset($this->messages[$key]) ? $this->messages[$key] : 'Mensaje no encontrado';
+        return isset($this->messages[$key]) ? $this->messages[$key] : $this->messages['Exception'];
     }
 
     public function getCode($key) : string

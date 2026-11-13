@@ -13,8 +13,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('model_has_product', function (Blueprint $table) {
-            $table->morphs('model');
-            $table->foreignIdFor(Product::class)->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Product');
+            $table->string('model_type')->comment('Tipo de registro asociado');
+            $table->unsignedBigInteger('model_id')->comment('Registro asociado');
+            $table->index(['model_type', 'model_id']);
+            $table->foreignIdFor(Product::class)->comment('Producto')->constrained()->onUpdate('cascade')->onDelete('cascade');
             $table->unique(['product_id', 'model_id', 'model_type'], 'mhp_pi_mi_mt');
         });
     }

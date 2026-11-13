@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Authorization\Permission;
 
 use Illuminate\Http\Request;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Carbon;
 
@@ -10,10 +11,12 @@ class PermissionCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Permission::class, $this->collection->pluck('id')->all());
         return [
-            'permissions' => $this->collection->map(function ($permission) {
+            'permissions' => $this->collection->map(function ($permission) use ($audited) {
                 return [
                     'id' => $permission->id,
+                    'has_audits' => isset($audited[$permission->id]),
                     'name' => $permission->name,
                     'title' => $permission->title,
                     'description' => $permission->description,

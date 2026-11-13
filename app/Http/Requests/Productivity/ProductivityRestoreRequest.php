@@ -3,24 +3,34 @@
 namespace App\Http\Requests\Productivity;
 
 use App\Models\Productivity;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 /**
  * Restaurar (activar) un turno desactivado: no debe cruzarse con otro turno activo del mismo proceso.
  */
-class ProductivityRestoreRequest extends ProductivityFindRequest
+class ProductivityRestoreRequest extends FormRequest
 {
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(response()->json([
+            'message' => 'Error de validación.',
+            'attributes' => $this->attributes(),
+            'errors' => $validator->errors(),
+        ], 422));
+    }
+
+    public function authorize(): bool
+    {
+        return true;
+    }
+
     public function rules(): array
     {
         return [
             'id' => ['required', 'exists:productivity,id,deleted_at,NOT_NULL'],
         ];
-    }
-
-    public function messages(): array
-    {
-        return array_merge(parent::messages(), [
-            'exists' => 'El turno no existe o ya está activo.',
-        ]);
     }
 
     public function withValidator($validator)
@@ -42,5 +52,17 @@ class ProductivityRestoreRequest extends ProductivityFindRequest
                 $validator->errors()->add('id', 'Ya hay otro turno activo que se cruza con este horario; ajústalo antes de activar este.');
             }
         });
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'id' => 'Turno.',
+        ];
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->merge(['id' => $this->route('id')]);
     }
 }

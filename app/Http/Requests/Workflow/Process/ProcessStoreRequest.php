@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests\Workflow\Process;
 
+use App\Models\Operation;
 use App\Models\Process;
+use App\Models\Subprocess;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\DB;
 
 class ProcessStoreRequest extends FormRequest
 {
@@ -25,8 +28,6 @@ class ProcessStoreRequest extends FormRequest
 
     public function rules(): array
     {
-        logger($this);
-
         return [
             'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.Process::ITEM_ID],
             'description' => ['required', 'string', 'max:255', 'uppercase'],
@@ -34,26 +35,21 @@ class ProcessStoreRequest extends FormRequest
             'after_processes.*' => ['nullable', 'numeric', 'exists:subitems,id,item_id,'.Process::ITEM_ID],
             'settings' => ['required', 'array'],
             'settings.subprocesses' => ['required', 'boolean'],
+            'settings.subprocess_flow' => ['nullable', 'required_if_accepted:settings.subprocesses', 'in:'.implode(',', Process::FLOWS)],
             'settings.in_technical_sheet' => ['required', 'boolean'],
             'settings.in_production_order' => ['required', 'boolean'],
+            'settings.color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'settings.paragraph' => ['sometimes'],
             'settings.productivity_measurement' => ['required_if:settings.in_production_order,true'],
+            'settings.any_workstation' => ['nullable', 'boolean'],
+            'settings.reprocesses' => ['nullable', 'boolean'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'required' => 'Es obligatorio.',
-            'array' => 'Debe ser una lista de datos.',
-            'string' => 'Debe ser una cadena de texto.',
-            'numeric' => 'Debe ser un valor numérico.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.',
-            'uppercase' => 'El campo debe estar en mayúsculas.',
-            'exists' => 'No está registrado.',
-            'required_if' => 'Es obligatorio.',
+            'settings.color.regex' => 'Debe ser un color en formato #RRGGBB.',
         ];
     }
 
@@ -66,16 +62,33 @@ class ProcessStoreRequest extends FormRequest
             'after_processes' => 'Procesos Posteriores',
             'settings' => 'Configuraciones',
             'settings.subprocesses' => 'Subprocesos',
+            'settings.subprocess_flow' => 'Flujo de subprocesos',
             'settings.in_technical_sheet' => 'Aplica a Ficha Técnica',
             'settings.in_production_order' => 'Aplica a Orden de Producción',
+            'settings.color' => 'Color asociado',
             'settings.paragraph' => 'Lugar de producción',
             'settings.productivity_measurement' => 'Medición de la productividad',
+            'settings.any_workstation' => 'Cualquier puesto trabaja la referencia',
+            'settings.reprocesses' => 'Permite reprocesos',
         ];
     }
 
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
+            // El color no se repite nunca entre procesos, subprocesos y operaciones
+            if ($color = $this->input('settings.color')) {
+                $taken = DB::table('subitems')
+                    ->whereIn('item_id', [Process::ITEM_ID, Subprocess::ITEM_ID, Operation::ITEM_ID])
+                    ->whereNull('deleted_at')
+                    ->whereRaw("UPPER(JSON_UNQUOTE(JSON_EXTRACT(settings, '$.color'))) = ?", [strtoupper($color)])
+                    ->value('name');
+
+                if ($taken) {
+                    $validator->errors()->add('settings.color', "Ese color ya lo tiene {$taken}: elige otro.");
+                }
+            }
+
             if ($validator->errors()->isNotEmpty()) {
                 return;
             }

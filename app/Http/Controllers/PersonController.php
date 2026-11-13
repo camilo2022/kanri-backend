@@ -10,6 +10,8 @@ use App\Http\Requests\Person\PersonStoreRequest;
 use App\Http\Requests\Person\PersonUpdateRequest;
 use App\Http\Resources\Person\PersonCollection;
 use App\Http\Resources\Person\PersonResource;
+use App\Models\City;
+use App\Models\Department;
 use App\Models\Person;
 use App\Services\FileService;
 use App\Traits\ApiMessage;
@@ -176,7 +178,7 @@ class PersonController extends Controller
     public function all(PersonAllRequest $request)
     {
         try {
-            $people = Person::with(['gender', 'blood_type', 'employee', 'photo'])
+            $people = Person::with(['gender', 'blood_type', 'employee', 'photo', 'phone_country'])
                 ->when($request->boolean('with_employee'), function ($query) {
                     return $query;
                 })
@@ -234,8 +236,9 @@ class PersonController extends Controller
     public function find(PersonFindRequest $request, $id)
     {
         try {
-            $person = Person::with(['gender', 'blood_type', 'employee' => ['person'], 'photo', 'document_type' => ['person_type']])
+            $person = Person::with(['gender', 'blood_type', 'employee' => ['person'], 'photo', 'document_type' => ['person_type'], 'phone_country'])
                 ->findOrFail($id);
+            $person->loadMorph('location', [City::class => ['department' => ['country']], Department::class => ['country']]);
 
             return $this->successResponse(
                 new PersonResource($person),
@@ -297,7 +300,12 @@ class PersonController extends Controller
             $person->gender_id = $request->integer('gender_id');
             $person->birth_date = $request->input('birth_date');
             $person->blood_type_id = $request->integer('blood_type_id');
+            $person->email = $request->input('email');
+            $person->location_type = $request->input('location_type');
+            $person->location_id = $request->integer('location_id');
             $person->address = $request->input('address');
+            $person->neighborhood = $request->input('neighborhood');
+            $person->phone_country_id = $request->integer('phone_country_id');
             $person->phone = $request->input('phone');
             $person->save();
 
@@ -381,7 +389,12 @@ class PersonController extends Controller
             $person->gender_id = $request->integer('gender_id');
             $person->birth_date = $request->input('birth_date');
             $person->blood_type_id = $request->integer('blood_type_id');
+            $person->email = $request->input('email');
+            $person->location_type = $request->input('location_type');
+            $person->location_id = $request->integer('location_id');
             $person->address = $request->input('address');
+            $person->neighborhood = $request->input('neighborhood');
+            $person->phone_country_id = $request->integer('phone_country_id');
             $person->phone = $request->input('phone');
             $person->save();
 

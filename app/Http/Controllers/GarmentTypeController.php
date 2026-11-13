@@ -124,7 +124,7 @@ class GarmentTypeController extends Controller
     public function all(GarmentTypeAllRequest $request)
     {
         try {
-            $garment_types = GarmentType::when($request->filled('search'), function ($query) use ($request) {
+            $garment_types = GarmentType::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {

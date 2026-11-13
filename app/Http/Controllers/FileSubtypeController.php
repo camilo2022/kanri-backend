@@ -130,7 +130,7 @@ class FileSubtypeController extends Controller
     public function all(FileSubtypeAllRequest $request, $file_type_id)
     {
         try {
-            $file_subtypes = FileSubtype::with(['file_type'])
+            $file_subtypes = FileSubtype::with(['item', 'file_type'])
                 ->whereHas('file_type', fn ($r) => $r->where('id', $file_type_id))
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\ReportExport;
+use App\Exports\SourceReportExport;
 use App\Http\Requests\Report\ReportAllRequest;
 use App\Http\Requests\Report\ReportDeleteRequest;
 use App\Http\Requests\Report\ReportExportRequest;
@@ -15,6 +16,8 @@ use App\Http\Resources\Report\DataCollection;
 use App\Http\Resources\Report\ReportCollection;
 use App\Http\Resources\Report\ReportResource;
 use App\Models\Report;
+use App\Services\ProductivityReportService;
+use App\Services\TraceabilityReportService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 use Maatwebsite\Excel\Facades\Excel;
@@ -167,7 +170,7 @@ class ReportController extends Controller
     public function all(ReportAllRequest $request)
     {
         try {
-            $reports = Report::with(['permissions'])
+            $reports = Report::with(['item', 'permissions'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -246,6 +249,11 @@ class ReportController extends Controller
         }
 
         if ($data === 'processes') {
+            // Camino hasta la ficha según el data_key: en fichas es directo; en detalles de orden pasa por
+            // production_order.technical_sheet
+            $sheet_path = array_values(array_diff($parts, ['technical_sheet_details']));
+            $processes_relation = implode('.', [...$sheet_path, 'technical_sheet_details_processes']);
+
             $process_filters = collect($values)
                 ->map(function ($value) {
 
@@ -265,7 +273,7 @@ class ReportController extends Controller
                     ->toArray();
 
                 $query->whereHas(
-                    'technical_sheet_details_processes',
+                    $processes_relation,
                     function ($q) use ($process_id, $statuses) {
 
                         $q->where('model_id', $process_id)
@@ -288,10 +296,54 @@ class ReportController extends Controller
         });
     }
 
+    /**
+     * Filas de un reporte con settings.source (trazabilidad, productividad): las arma su servicio y aquí se proyectan a
+     * las columnas elegidas, con la forma de DataCollection (data: [etiqueta => [value, style]], fields: etiquetas).
+     */
+    private function sourceRows(Report $report, $request): array
+    {
+        $labels = collect($report->settings->fields ?? [])
+            ->flatMap(fn ($group) => collect(data_get($group, 'fields', [])))
+            ->mapWithKeys(fn ($field) => [data_get($field, 'data_key') => data_get($field, 'label')]);
+        // Las columnas dinámicas de tallas llegan como «id_nombre» (374_T04), igual que en los demás reportes
+        $columns = collect($request->validated('fields', []))
+            ->map(function ($item) use ($labels) {
+                $key = data_get($item, 'data_key');
+
+                return preg_match('/^(\d+)_(.+)$/', (string) $key, $size)
+                    ? ['label' => $size[2], 'size' => (int) $size[1]]
+                    : ($labels->has($key) ? ['label' => $labels[$key], 'key' => $key] : null);
+            })
+            ->filter()
+            ->values();
+
+        $rows = match ($report->settings->source) {
+            'traceability' => app(TraceabilityReportService::class)->rows($request->validated('filters', [])),
+            'productivity' => app(ProductivityReportService::class)->rows($request->validated('filters', [])),
+        };
+
+        return [
+            'data' => collect($rows)
+                ->map(fn ($row) => $columns->mapWithKeys(fn ($column) => [$column['label'] => [
+                    'value' => isset($column['size']) ? ($row['values']['sizes'][$column['size']] ?? null) : ($row['values'][$column['key']] ?? null),
+                    'style' => $row['style'] ?? null,
+                ]])->all())
+                ->all(),
+            'fields' => $columns->pluck('label')->all(),
+            // Agrupación de filas en el Excel (+ / −): detalle 2, subtotal 1, franja y total 0
+            'levels' => collect($rows)->map(fn ($row) => $row['level'] ?? 0)->all(),
+        ];
+    }
+
     public function generate(ReportGenerateRequest $request, $id)
     {
         try {
             $report = Report::findOrFail($id);
+
+            // Reporte con filas calculadas (settings.source): las arma su servicio con la misma forma (data y fields)
+            if ($report->settings->source ?? null) {
+                return $this->successResponse($this->sourceRows($report, $request), $this->getMessage('Success'), 200);
+            }
 
             $fields = $request->validated('fields', []);
             $filters = $request->validated('filters', []);
@@ -377,6 +429,13 @@ class ReportController extends Controller
     {
         try {
             $report = Report::findOrFail($id);
+
+            // Reporte con filas calculadas (settings.source): mismas filas que generate, mismo Excel
+            if ($report->settings->source ?? null) {
+                $rows = $this->sourceRows($report, $request);
+
+                return Excel::download(new SourceReportExport($rows['data'], $rows['fields'], $rows['levels']), 'report.xlsx');
+            }
 
             $fields = $request->validated('fields', []);
             $filters = $request->validated('filters', []);

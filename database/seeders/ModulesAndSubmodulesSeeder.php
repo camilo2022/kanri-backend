@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Module;
+use App\Models\Permission;
 use App\Models\Submodule;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -14,229 +15,77 @@ class ModulesAndSubmodulesSeeder extends Seeder
 
         $modules_and_submodules = [
             [
-                'module' => [
-                    'name' => 'Configuración',
-                    'icon' => 'FaCogs',
-                ],
-
+                'module' => ['name' => 'Configuración', 'icon' => 'FaCogs'],
                 'submodules' => [
-                    [
-                        'name' => 'Módulos',
-                        'url' => '/modules',
-                        'icon' => 'FaBuffer',
-                        'permission_id' => 17
-                    ],
-                    [
-                        'name' => 'Usuarios',
-                        'url' => '/users',
-                        'icon' => 'FaUserFriends',
-                        'permission_id' => 1
-                    ],
-                    [
-                        'name' => 'Personas',
-                        'url' => '/people',
-                        'icon' => 'FaUsers',
-                        'permission_id' => 29
-                    ],
-                    [
-                        'name' => 'Empleados',
-                        'url' => '/employees',
-                        'icon' => 'FaHospitalUser',
-                        'permission_id' => 35
-                    ],
-                    [
-                        'name' => 'Roles',
-                        'url' => '/roles',
-                        'icon' => 'FaShieldAlt',
-                        'permission_id' => 9
-                    ],
-                    [
-                        'name' => 'Permisos',
-                        'url' => '/permissions',
-                        'icon' => 'FaUserLock',
-                        'permission_id' => 13
-                    ],
-                ]
+                    ['name' => 'Módulos', 'url' => '/modules', 'icon' => 'FaBuffer', 'permission' => 'navegation.modules.all'],
+                    ['name' => 'Usuarios', 'url' => '/users', 'icon' => 'FaUserFriends', 'permission' => 'users.all'],
+                    ['name' => 'Personas', 'url' => '/people', 'icon' => 'FaUsers', 'permission' => 'people.all'],
+                    ['name' => 'Empleados', 'url' => '/employees', 'icon' => 'FaHospitalUser', 'permission' => 'employees.all'],
+                    ['name' => 'Roles', 'url' => '/roles', 'icon' => 'FaShieldAlt', 'permission' => 'authorization.roles.all'],
+                    ['name' => 'Permisos', 'url' => '/permissions', 'icon' => 'FaUserLock', 'permission' => 'authorization.permissions.all'],
+                ],
             ],
             [
-                'module' => [
-                    'name' => 'Administración',
-                    'icon' => 'FaToolbox',
-                ],
-
+                'module' => ['name' => 'Administración', 'icon' => 'FaToolbox'],
                 'submodules' => [
-                    [
-                        'name' => 'Áreas',
-                        'url' => '/areas',
-                        'icon' => 'FaMapMarkedAlt',
-                        'permission_id' => 41
-                    ],
-                    [
-                        'name' => 'Géneros',
-                        'url' => '/genders',
-                        'icon' => 'FaVenusMars',
-                        'permission_id' => 55
-                    ],
-                    [
-                        'name' => 'Tipos de Sangre',
-                        'url' => '/blood_types',
-                        'icon' => 'FaTint',
-                        'permission_id' => 61
-                    ],
-                    [
-                        'name' => 'Admin de Riesgos',
-                        'url' => '/risk_managers',
-                        'icon' => 'FaBuilding',
-                        'permission_id' => 85
-                    ],
-                    [
-                        'name' => 'Entidades de Salud',
-                        'url' => '/health_entities',
-                        'icon' => 'FaHospital',
-                        'permission_id' => 79
-                    ],
-                    [
-                        'name' => 'C. de Compensación',
-                        'url' => '/compensation_funds',
-                        'icon' => 'FaHandsHelping',
-                        'permission_id' => 73
-                    ],
-                    [
-                        'name' => 'Fondos de Pensión',
-                        'url' => '/pension_funds',
-                        'icon' => 'FaPiggyBank',
-                        'permission_id' => 67
-                    ],
-                ]
-            ],
-
-            [
-                'module' => [
-                    'name' => 'Caracterizacion',
-                    'icon' => 'FaTag',
+                    ['name' => 'Áreas', 'url' => '/areas', 'icon' => 'FaMapMarkedAlt', 'permission' => 'organizational_structure.areas.all'],
+                    ['name' => 'Géneros', 'url' => '/genders', 'icon' => 'FaVenusMars', 'permission' => 'genders.all'],
+                    ['name' => 'Tipos de Sangre', 'url' => '/blood_types', 'icon' => 'FaTint', 'permission' => 'blood_types.all'],
+                    ['name' => 'Admin de Riesgos', 'url' => '/risk_managers', 'icon' => 'FaBuilding', 'permission' => 'risk_managers.all'],
+                    ['name' => 'Entidades de Salud', 'url' => '/health_entities', 'icon' => 'FaHospital', 'permission' => 'health_entities.all'],
+                    ['name' => 'C. de Compensación', 'url' => '/compensation_funds', 'icon' => 'FaHandsHelping', 'permission' => 'compensation_funds.all'],
+                    ['name' => 'Fondos de Pensión', 'url' => '/pension_funds', 'icon' => 'FaPiggyBank', 'permission' => 'pension_funds.all'],
                 ],
-
-                'submodules' => [
-                    [
-                        'name' => 'Marcas',
-                        'url' => '/trademarks',
-                        'icon' => 'FaTags',
-                        'permission_id' => 91
-                    ],
-                    [
-                        'name' => 'Tallas',
-                        'url' => '/sizes',
-                        'icon' => 'FaTape',
-                        'permission_id' => 105
-                    ],
-                    [
-                        'name' => 'Subgrupos',
-                        'url' => '/subgroups',
-                        'icon' => 'FaObjectGroup',
-                        'permission_id' => 169
-                    ],
-                    [
-                        'name' => 'Grupos',
-                        'url' => '/groups',
-                        'icon' => 'FaBoxes',
-                        'permission_id' => 163
-                    ],
-                    [
-                        'name' => 'Piezas',
-                        'url' => '/pieces',
-                        'icon' => 'FaStream',
-                        'permission_id' => 112
-                    ],
-                    [
-                        'name' => 'Tipos de Prenda',
-                        'url' => '/garment_types',
-                        'icon' => 'FaThList',
-                        'permission_id' => 119
-                    ],
-                    [
-                        'name' => 'Tipos de Bota',
-                        'url' => '/boot_types',
-                        'icon' => 'FaShoePrints',
-                        'permission_id' => 126
-                    ],
-                    [
-                        'name' => 'Tipo de Trasero',
-                        'url' => '/back_types',
-                        'icon' => 'FaBookmark',
-                        'permission_id' => 133
-                    ],
-                    [
-                        'name' => 'Tipos de Pretina',
-                        'url' => '/waistband_types',
-                        'icon' => 'FaGripLines',
-                        'permission_id' => 140
-                    ],
-                    [
-                        'name' => 'Categorías',
-                        'url' => '/categories',
-                        'icon' => 'FaListUI',
-                        'permission_id' => 147
-                    ],
-                    [
-                        'name' => 'Procesos',
-                        'url' => '/processes',
-                        'icon' => 'FaAlignLeft',
-                        'permission_id' => 179
-                    ],
-                    [
-                        'name' => 'Tonos de Lavado',
-                        'url' => '/wash_tones',
-                        'icon' => 'FaFillDrip',
-                        'permission_id' => 191
-                    ],
-                    [
-                        'name' => 'Colores',
-                        'url' => '/colors',
-                        'icon' => 'FaPalette',
-                        'permission_id' => 197
-                    ],
-                    [
-                        'name' => 'Colecciones',
-                        'url' => '/collections',
-                        'icon' => 'FaCubes',
-                        'permission_id' => 203
-                    ],
-                    [
-                        'name' => 'Tipos de Cotilla',
-                        'url' => '/yoke_types',
-                        'icon' => 'FaDraftingCompass',
-                        'permission_id' => 209
-                    ],
-                    [
-                        'name' => 'Proveedores',
-                        'url' => '/suppliers',
-                        'icon' => 'FaCampground',
-                        'permission_id' => 215
-                    ],
-                    [
-                        'name' => 'Tipos de Insumo',
-                        'url' => '/supply_types',
-                        'icon' => 'FaToolbox',
-                        'permission_id' => 219
-                    ],
-                ]
             ],
             [
-                'module' => [
-                    'name' => 'Gestión',
-                    'icon' => 'FaCogs',
-                ],
-
+                'module' => ['name' => 'Caracterizacion', 'icon' => 'FaTag'],
                 'submodules' => [
-                    [
-                        'name' => 'G. de Colecciones',
-                        'url' => '/management/collections',
-                        'icon' => 'FaFolder',
-                        'permission_id' => 19
-                    ],
-                ]
+                    ['name' => 'Marcas', 'url' => '/trademarks', 'icon' => 'FaTags', 'permission' => 'trademarks.all'],
+                    ['name' => 'Tallas', 'url' => '/sizes', 'icon' => 'FaTape', 'permission' => 'sizes.all'],
+                    ['name' => 'Subgrupos', 'url' => '/subgroups', 'icon' => 'FaObjectGroup', 'permission' => 'classification.subgroups.all'],
+                    ['name' => 'Grupos', 'url' => '/groups', 'icon' => 'FaBoxes', 'permission' => 'classification.groups.all'],
+                    ['name' => 'Piezas', 'url' => '/pieces', 'icon' => 'FaStream', 'permission' => 'sizes.restore'],
+                    ['name' => 'Tipos de Prenda', 'url' => '/garment_types', 'icon' => 'FaThList', 'permission' => 'pieces.restore'],
+                    ['name' => 'Tipos de Bota', 'url' => '/boot_types', 'icon' => 'FaShoePrints', 'permission' => 'garment_types.restore'],
+                    ['name' => 'Tipo de Trasero', 'url' => '/back_types', 'icon' => 'FaBookmark', 'permission' => 'boot_types.restore'],
+                    ['name' => 'Tipos de Pretina', 'url' => '/waistband_types', 'icon' => 'FaGripLines', 'permission' => 'back_types.restore'],
+                    ['name' => 'Categorías', 'url' => '/categories', 'icon' => 'FaListUl', 'permission' => 'waistband_types.restore'],
+                    ['name' => 'Procesos', 'url' => '/processes', 'icon' => 'FaAlignLeft', 'permission' => 'workflow.processes.all'],
+                    ['name' => 'Tonos de Lavado', 'url' => '/wash_tones', 'icon' => 'FaFillDrip', 'permission' => 'workflow.processes.subprocesses.restore'],
+                    ['name' => 'Colores', 'url' => '/colors', 'icon' => 'FaPalette', 'permission' => 'workflow.processes.subprocesses.operations.delete'],
+                    ['name' => 'Colecciones', 'url' => '/collections', 'icon' => 'FaCubes', 'permission' => 'wash_tones.update'],
+                    ['name' => 'Tipos de Cotilla', 'url' => '/yoke_types', 'icon' => 'FaDraftingCompass', 'permission' => 'colors.update'],
+                    ['name' => 'T. de Proveedores', 'url' => '/supplier_types', 'icon' => 'FaCampground', 'permission' => 'typification.supplier_types.all'],
+                    ['name' => 'Tipos de Insumo', 'url' => '/supply_types', 'icon' => 'FaToolbox', 'permission' => 'yoke_types.find'],
+                    ['name' => 'Tipos de Archivo', 'url' => '/file_types', 'icon' => 'FaFileAlt', 'permission' => 'typification.file_types.all'],
+                    ['name' => 'Tipos de Personas', 'url' => '/person_types', 'icon' => 'FaUsers', 'permission' => 'typification.person_types.all'],
+                    ['name' => 'Bancos', 'url' => '/banks', 'icon' => 'FaLandmark', 'permission' => 'banks.all'],
+                    ['name' => 'Tipos de Cuenta', 'url' => '/account_types', 'icon' => 'FaCcMastercard', 'permission' => 'account_types.all'],
+                    ['name' => 'Tipologia', 'url' => '/typologies', 'icon' => 'FaTypo3', 'permission' => 'typification.typologies.all'],
+                    ['name' => 'Tipos de Parada', 'url' => '/stop_types', 'icon' => 'FaStopCircle', 'permission' => 'stop_types.all'],
+                    ['name' => 'Reglas', 'url' => '/rules', 'icon' => 'FaRuler', 'permission' => 'rules.all'],
+                ],
+            ],
+            [
+                'module' => ['name' => 'Gestión', 'icon' => 'FaCogs'],
+                'submodules' => [
+                    ['name' => 'G. de Colecciones', 'url' => '/management/collections', 'icon' => 'FaFolder', 'permission' => 'navegation.modules.store'],
+                    ['name' => 'Productos', 'url' => '/products', 'icon' => 'FaBoxes', 'permission' => 'products.all'],
+                    ['name' => 'G. de Producción', 'url' => '/management/production', 'icon' => 'FaCubes', 'permission' => 'technical_sheets.production_orders.all'],
+                    ['name' => 'C. de Producción', 'url' => '/production_schedule', 'icon' => 'FaCalendarAlt', 'permission' => 'technical_sheets.production_orders.find'],
+                    ['name' => 'Reportes', 'url' => '/reports', 'icon' => 'FaFileInvoice', 'permission' => 'reports.view'],
+                ],
+            ],
+            [
+                'module' => ['name' => 'Planta', 'icon' => 'FaCity'],
+                'submodules' => [
+                    ['name' => 'Movimientos', 'url' => '/movements', 'icon' => 'FaExchangeAlt', 'permission' => 'movements.all'],
+                    ['name' => 'Productividad', 'url' => '/productivity', 'icon' => 'FaBusinessTime', 'permission' => 'productivity.all'],
+                ],
             ],
         ];
+
+        $permissions = Permission::pluck('id', 'name');
 
         foreach ($modules_and_submodules as $item) {
 
@@ -252,7 +101,7 @@ class ModulesAndSubmodulesSeeder extends Seeder
                     'name' => $submodule['name'],
                     'url' => $submodule['url'],
                     'icon' => $submodule['icon'],
-                    'permission_id' => $submodule['permission_id'],
+                    'permission_id' => $permissions[$submodule['permission']],
                 ]);
             }
         }

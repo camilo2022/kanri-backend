@@ -6,16 +6,21 @@ use App\Models\BackType;
 use App\Models\BootType;
 use App\Models\Collection;
 use App\Models\Color;
+use App\Models\File;
 use App\Models\GarmentType;
+use App\Models\Operation;
 use App\Models\Product;
 use App\Models\Subgroup;
+use App\Models\Subprocess;
+use App\Models\Supply;
 use App\Models\SupplyType;
 use App\Models\TechnicalSheet;
-use App\Models\Supply;
+use App\Models\TechnicalSheetDetail;
 use App\Models\Typology;
 use App\Models\WaistbandType;
 use App\Models\WashTone;
 use App\Models\YokeType;
+use App\Services\ProductivityDetailService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -43,7 +48,7 @@ class TechnicalSheetUpdateRequest extends FormRequest
             'id' => ['required', 'exists:technical_sheets,id'],
             'date' => ['required', 'date_format:Y-m-d', 'before_or_equal:now'],
             'status' => ['required', 'in:'.implode(',', [TechnicalSheet::PENDING, TechnicalSheet::REVIEW, TechnicalSheet::APPROVED, TechnicalSheet::CANCELLED])],
-            'code' => ['required', 'unique:technical_sheets,code,'.$this->input('id').',id'],
+            'code' => ['required', 'string', 'max:11', 'unique:technical_sheets,code,'.$this->input('id').',id'],
             'product_id' => ['required', 'exists:products,id', 'unique:technical_sheets,product_id,'.$this->route('id').',id'],
             'collection_id' => ['required', 'exists:subitems,id,item_id,'.Collection::ITEM_ID.',deleted_at,NULL'],
             'garment_type_id' => ['required', 'exists:subitems,id,item_id,'.GarmentType::ITEM_ID.',deleted_at,NULL'],
@@ -61,10 +66,13 @@ class TechnicalSheetUpdateRequest extends FormRequest
             'observation' => ['nullable', 'string', 'max:1000'],
             'description' => ['nullable', 'string', 'max:1000'],
             'photo_d' => ['required', 'array'],
-            'photo_d.file' => ['sometimes', 'image', 'max:2048'],
+            'photo_d.file' => ['sometimes', 'image', 'max:2048', 'dimensions:max_width='.File::MAX_IMAGE_SIDE.',max_height='.File::MAX_IMAGE_SIDE],
             'photo_t' => ['required', 'array'],
-            'photo_t.file' => ['sometimes', 'image', 'max:2048'],
+            'photo_t.file' => ['sometimes', 'image', 'max:2048', 'dimensions:max_width='.File::MAX_IMAGE_SIDE.',max_height='.File::MAX_IMAGE_SIDE],
             'technical_sheet_details' => ['required', 'array'],
+            'removed_details' => ['nullable', 'array'],
+            'removed_details.*.model_type' => ['required', 'in:'.Subprocess::class.','.Operation::class],
+            'removed_details.*.model_id' => ['required', 'integer'],
             'technical_sheet_details.*' => ['sometimes', 'array'],
             'technical_sheet_details.*.typology' => ['nullable', 'exists:subitems,id,item_id,'.Typology::ITEM_ID.',deleted_at,NULL'],
             'technical_sheet_details.*.settings' => ['sometimes', 'array'],
@@ -81,20 +89,7 @@ class TechnicalSheetUpdateRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'required' => 'Es obligatorio.',
-            'required_with' => 'Es requerido.',
-            'date_format' => 'Formato inválido. Permitido :format.',
             'date.before_or_equal' => 'No puede ser posterior a '.now()->format('Y-d-m').'.',
-            'exists' => 'No registrado en el sistema.',
-            'unique' => 'Ya está registrado.',
-            'boolean' => 'Debe ser un dato tipo si/no',
-            'numeric' => 'Debe ser un dato númerico',
-            'min' => 'El valor debe ser mayor o igual a :min',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'array' => 'Debe ser un arreglo de datos',
-            'image' => 'Debe ser una imagen.',
-            'mimes' => 'Extensión inválida. Permitidas :values.',
             'photo.max' => 'Se permite máximo :max KB.',
         ];
     }
@@ -136,6 +131,7 @@ class TechnicalSheetUpdateRequest extends FormRequest
             'photo_d' => 'Foto delantera',
             'photo_t' => 'Foto trasera',
             'technical_sheet_details' => 'Detalles de la ficha tecnica',
+            'removed_details' => 'Subprocesos y operaciones quitados de la ficha',
 
         ];
     }
@@ -173,6 +169,40 @@ class TechnicalSheetUpdateRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            // Quitar de la ficha: ni lo automático ni lo que algún lote ya trabajó; quitar un subproceso quita sus operaciones
+            $removed = collect();
+
+            foreach ($this->input('removed_details', []) as $i => $item) {
+                $model = in_array($item['model_type'] ?? null, [Subprocess::class, Operation::class], true) ? $item['model_type']::find($item['model_id'] ?? null) : null;
+
+                if (! $model) {
+                    $validator->errors()->add("removed_details.$i", 'El subproceso u operación no existe.');
+
+                    continue;
+                }
+
+                if ($error = app(ProductivityDetailService::class)->sheetRemovalError($model, (int) $this->route('id'))) {
+                    $validator->errors()->add("removed_details.$i", $error);
+
+                    continue;
+                }
+
+                $removed = $removed->push($model::class.':'.$model->id)
+                    ->merge($model instanceof Subprocess ? $model->operations->map(fn ($operation) => Operation::class.':'.$operation->id) : []);
+            }
+
+            // Lo que va en secuencia necesita en la ficha alguno de sus anteriores (contando lo que queda tras quitar)
+            $keys = collect($this->input('technical_sheet_details', []))
+                ->map(fn ($detail) => ($detail['model_type'] ?? '').':'.($detail['model_id'] ?? ''))
+                ->merge($this->route('id') ? TechnicalSheetDetail::where('technical_sheet_id', $this->route('id'))->get()->map(fn ($detail) => $detail->model_type.':'.$detail->model_id) : [])
+                ->unique()
+                ->diff($removed)
+                ->values();
+
+            foreach (app(ProductivityDetailService::class)->sheetSequenceErrors($keys, $this->integer('wash_tone_id') ?: null) as $id => $message) {
+                $validator->errors()->add("technical_sheet_details.$id", $message);
+            }
+
             $product = Product::find($this->integer('product_id'));
             $supply_types = SupplyType::with('supplies')
                 ->where('settings->in_technical_sheet', true)->get();

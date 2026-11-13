@@ -2,103 +2,52 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Audit\AuditAllRequest;
-use App\Http\Requests\Audit\AuditFindRequest;
-use App\Http\Resources\Audit\AuditCollection;
-use OwenIt\Auditing\Models\Audit;
+use App\Http\Requests\Audit\AuditTimelineRequest;
+use App\Http\Resources\Audit\AuditTimelineCollection;
+use App\Models\ProductivityDetail;
+use App\Models\Stop;
+use App\Support\AuditResolver;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use OwenIt\Auditing\Models\Audit;
 
 /**
  * @OA\Tag(
  *     name="Audit",
- *     description="Endpoints para gestionar auditorias"
+ *     description="Endpoints para gestionar el historial de cambios de cada registro"
  * )
  *
  * @OA\Schema(
- *     schema="AuditEvent",
- *     type="string",
- *     description="Tipo de cambio registrado.",
- *     enum={"created", "updated", "deleted", "restored", "attach", "detach", "sync"},
- *     example="updated"
- * )
- *
- * @OA\Schema(
- *     schema="AuditValues",
+ *     schema="AuditTimelineResponse",
  *     type="object",
- *     description="Valores de los campos auditados antes (`old_values`) o después (`new_values`) del cambio. Las claves dependen del modelo; en attach/detach/sync traen la relación afectada.",
- *     additionalProperties=true,
- *     example={"name": "CALIDAD", "description": "ÁREA DE CALIDAD"}
- * )
  *
- * @OA\Schema(
- *     schema="AuditListItem",
- *     type="object",
- *     description="Registro como lo entrega `AuditCollection` (all). No incluye `user_id`, `auditable_id` ni `user_agent`.",
- *     @OA\Property(property="id", type="integer", example=1842),
- *     @OA\Property(property="user_type", type="string", nullable=true, example="App\Models\User"),
- *     @OA\Property(property="event", ref="#/components/schemas/AuditEvent"),
- *     @OA\Property(property="auditable_type", type="string", description="Clase del modelo modificado.", example="App\Models\Area"),
- *     @OA\Property(property="auditable_name", type="string", nullable=true, description="Nombre en español del modelo; `null` si no está en `model_types`.", example="Área"),
- *     @OA\Property(property="url", type="string", example="http://kanri-backend.test/api/organizational_structure/areas/update/12"),
- *     @OA\Property(property="ip_address", type="string", example="192.168.1.25"),
- *     @OA\Property(property="tags", type="string", nullable=true, description="Etiqueta de la relación afectada en attach/detach/sync.", example=null),
- *     @OA\Property(property="audit_tag", type="string", nullable=true, description="Nombre en español de `tags`; `null` si no tiene traducción.", example=null),
- *     @OA\Property(property="old_values", ref="#/components/schemas/AuditValues"),
- *     @OA\Property(property="new_values", allOf={@OA\Schema(ref="#/components/schemas/AuditValues")}, example={"name": "CONTROL DE CALIDAD", "description": "ÁREA ENCARGADA DE INSPECCIONAR LAS PRENDAS TERMINADAS"}),
- *     @OA\Property(property="created_at", type="string", example="2026-05-14 10:02:45"),
- *     @OA\Property(property="updated_at", type="string", example="2026-05-14 10:02:45"),
- *     @OA\Property(property="user", nullable=true, description="Usuario que hizo el cambio, con empleado, persona, cargo y área. `null` si lo hizo el sistema (seeders, comandos).", allOf={@OA\Schema(ref="#/components/schemas/User")}),
- *     @OA\Property(property="auditable", type="object", nullable=true, additionalProperties=true, description="Registro modificado tal como está hoy (serializado por Eloquent). `null` si ya no existe.", example={"id": 12, "item_id": 3, "name": "CONTROL DE CALIDAD", "description": "ÁREA ENCARGADA DE INSPECCIONAR LAS PRENDAS TERMINADAS", "settings": {}, "created_at": "2026-05-14T09:32:10.000000Z", "updated_at": "2026-05-14T10:02:45.000000Z", "deleted_at": null})
- * )
- *
- * @OA\Schema(
- *     schema="Audit",
- *     type="object",
- *     description="Registro como lo entrega `find`: el modelo tal cual, con fechas ISO. No incluye `auditable_name` ni `audit_tag`.",
- *     @OA\Property(property="id", type="integer", example=1842),
- *     @OA\Property(property="user_type", type="string", nullable=true, example="App\Models\User"),
- *     @OA\Property(property="user_id", type="integer", nullable=true, example=15),
- *     @OA\Property(property="event", ref="#/components/schemas/AuditEvent"),
- *     @OA\Property(property="auditable_type", type="string", example="App\Models\Area"),
- *     @OA\Property(property="auditable_id", type="integer", example=12),
- *     @OA\Property(property="old_values", ref="#/components/schemas/AuditValues"),
- *     @OA\Property(property="new_values", allOf={@OA\Schema(ref="#/components/schemas/AuditValues")}, example={"name": "CONTROL DE CALIDAD", "description": "ÁREA ENCARGADA DE INSPECCIONAR LAS PRENDAS TERMINADAS"}),
- *     @OA\Property(property="url", type="string", example="http://kanri-backend.test/api/organizational_structure/areas/update/12"),
- *     @OA\Property(property="ip_address", type="string", example="192.168.1.25"),
- *     @OA\Property(property="user_agent", type="string", nullable=true, example="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36"),
- *     @OA\Property(property="tags", type="string", nullable=true, example=null),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-05-14T15:02:45.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-05-14T15:02:45.000000Z"),
- *     @OA\Property(property="user", nullable=true, allOf={@OA\Schema(ref="#/components/schemas/User")}),
- *     @OA\Property(property="auditable", type="object", nullable=true, additionalProperties=true, example={"id": 12, "item_id": 3, "name": "CONTROL DE CALIDAD", "description": "ÁREA ENCARGADA DE INSPECCIONAR LAS PRENDAS TERMINADAS", "settings": {}, "created_at": "2026-05-14T09:32:10.000000Z", "updated_at": "2026-05-14T10:02:45.000000Z", "deleted_at": null})
- * )
- *
- * @OA\Schema(
- *     schema="AuditListResponse",
- *     type="object",
  *     @OA\Property(
  *         property="data",
  *         type="object",
- *         @OA\Property(property="audits", type="array", @OA\Items(ref="#/components/schemas/AuditListItem")),
  *         @OA\Property(
- *             property="model_types",
- *             type="object",
- *             description="Catálogo fijo: nombre corto de la clase → nombre en español. Sirve para armar el filtro `auditable_name`.",
- *             additionalProperties=@OA\AdditionalProperties(type="string"),
- *             example={"Area": "Área", "Position": "Cargo", "Trademark": "Marca", "User": "Usuario"}
+ *             property="audits",
+ *             type="array",
+ *
+ *             @OA\Items(
+ *                 type="object",
+ *
+ *                 @OA\Property(property="id", type="integer", example=1842),
+ *                 @OA\Property(property="event", type="string", description="Tipo de cambio, o `units` para un bloque de +1 y −1.", enum={"created", "updated", "deleted", "restored", "attach", "detach", "sync", "units"}, example="updated"),
+ *                 @OA\Property(property="clicks", type="object", nullable=true, description="Solo en `units`: clics del bloque.", @OA\Property(property="plus", type="integer", example=84), @OA\Property(property="minus", type="integer", example=2)),
+ *                 @OA\Property(property="started_at", type="string", nullable=true, description="Solo en `units`: hora del primer clic.", example="2026-10-28 17:46:57"),
+ * *                 @OA\Property(property="record", type="string", nullable=true, description="Nombre del registro modificado.", example="BO100000"),
+ *                 @OA\Property(property="user", type="string", description="Persona que hizo el cambio; `Sistema` si no hay usuario.", example="Ana Gómez"),
+ *                 @OA\Property(property="url", type="string", example="http://kanri-backend.test/api/products/update/12"),
+ *                 @OA\Property(property="ip_address", type="string", example="192.168.1.25"),
+ *                 @OA\Property(property="user_agent", type="string", nullable=true, example="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0"),
+ *                 @OA\Property(property="old_values", type="object", description="Valores anteriores, con el nombre legible de cada campo.", additionalProperties=true, example={"Marca": "ADIDAS (#7)"}),
+ *                 @OA\Property(property="new_values", type="object", description="Valores nuevos, con el nombre legible de cada campo.", additionalProperties=true, example={"Marca": "STARA DENIM (#91)"}),
+ *                 @OA\Property(property="created_at", type="string", example="2026-11-05 10:02:45")
+ *             )
  *         ),
  *         @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
  *     ),
- *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
- *     @OA\Property(property="error", type="boolean", example=false)
- * )
- *
- * @OA\Schema(
- *     schema="AuditResponse",
- *     type="object",
- *     @OA\Property(property="data", type="object", @OA\Property(property="audit", ref="#/components/schemas/Audit")),
  *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
  *     @OA\Property(property="error", type="boolean", example=false)
  * )
@@ -109,105 +58,86 @@ class AuditController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/audits/all",
+     *     path="/products/audit/{id}",
      *     tags={"Audit"},
-     *     summary="Listar registros de auditoría",
-     *     description="Todos los filtros son opcionales y se combinan. No hay búsqueda por texto ni registros desactivados.",
+     *     summary="Historial de cambios de un producto",
+     *     description="Cada grupo de rutas con listado tiene su `/audit/{id}` (por ejemplo `/typification/supply_types/supplies/audit/{id}`): todas devuelven solo los cambios de ese registro, del más reciente al más antiguo, con nombres legibles. Los eventos sin datos no se incluyen, y los +1 y −1 seguidos de un registro de trabajo llegan como un solo evento `units`.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="user_id",
-     *         in="query",
-     *         required=false,
-     *         description="Solo los cambios hechos por este usuario.",
-     *         @OA\Schema(type="integer", example=15)
-     *     ),
-     *     @OA\Parameter(
-     *         name="event",
-     *         in="query",
-     *         required=false,
-     *         description="Tipo de cambio.",
-     *         @OA\Schema(ref="#/components/schemas/AuditEvent")
-     *     ),
-     *     @OA\Parameter(
-     *         name="auditable_name",
-     *         in="query",
-     *         required=false,
-     *         description="Clase completa del modelo modificado (se compara con `auditable_type`, no con el nombre en español). No se valida.",
-     *         @OA\Schema(type="string", example="App\Models\Area")
-     *     ),
-     *     @OA\Parameter(
-     *         name="start_date",
-     *         in="query",
-     *         required=false,
-     *         description="Desde este día (00:00:00). Si no se envía `end_date`, el rango llega hasta hoy.",
-     *         @OA\Schema(type="string", format="date", example="2026-05-01")
-     *     ),
-     *     @OA\Parameter(
-     *         name="end_date",
-     *         in="query",
-     *         required=false,
-     *         description="Hasta este día (23:59:59). Envíalo junto con `start_date`: si va solo, el rango empieza hoy y una fecha pasada no devuelve nada.",
-     *         @OA\Schema(type="string", format="date", example="2026-05-31")
-     *     ),
-     *     @OA\Parameter(
-     *         name="column",
-     *         in="query",
-     *         required=false,
-     *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
-     *         @OA\Schema(type="string", enum={"created_at", "event"}, example="created_at")
-     *     ),
-     *     @OA\Parameter(ref="#/components/parameters/Dir"),
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Parameter(ref="#/components/parameters/PerPage"),
      *     @OA\Parameter(ref="#/components/parameters/Page"),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Lista de auditoría cargada correctamente",
-     *         @OA\JsonContent(ref="#/components/schemas/AuditListResponse")
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Parámetros de consulta inválidos.",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ValidationErrorResponse",
-     *             example={
-     *                 "message": "Error de validación.",
-     *                 "attributes": {"per_page": "Registros por pagina.", "page": "N° de pagina.", "search": "Filtro de Busqueda.", "column": "Columna a ordenar.", "dir": "Sentido del orden.", "event": "Tipo de evento.", "start_date": "Fecha inicio de rango", "end_date": "Fecha fin de rango"},
-     *                 "errors": {"event": {"Valor inválido. Permitidos: created, updated, deleted, restored, attach, detach, sync."}}
-     *             }
-     *         )
-     *     ),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/technical_sheets/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de una ficha técnica",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/technical_sheets/production_orders/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de una orden de producción",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
      *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
-    public function all(AuditAllRequest $request)
+    public function timeline(AuditTimelineRequest $request, $id)
     {
         try {
-            $audits = Audit::with(['user' => ['employee' => ['person', 'position' => ['area']]], 'auditable'])
-                ->when($request->filled('user_id'), function ($query) use ($request) {
-                    return $query->where('user_id', $request->integer('user_id'));
-                })
-                ->when($request->filled('event'), function ($query) use ($request) {
-                    return $query->where('event', $request->input('event'));
-                })
-                ->when($request->filled('auditable_name'), function ($query) use ($request) {
-                    return $query->where('auditable_type', $request->input('auditable_name'));
-                })
-                ->when($request->filled('start_date') || $request->filled('end_date'), function ($query) use ($request) {
-                    return $query->whereBetween('created_at', [
-                        Carbon::parse($request->input('start_date'))->startOfDay(),
-                        Carbon::parse($request->input('end_date'))->endOfDay()
-                    ]);
-                })
-                ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
-                });
+            $model = $request->route('model');
+            $record = AuditResolver::queryOf($model)->findOrFail($id);
+            $blocks = $this->timeline_block([$model => [$record->id]]);
 
-            $audits = $audits->paginate($request->integer('per_page', $audits->count()));
+            $page = DB::query()->fromSub($blocks, 'blocks')
+                ->selectRaw('MIN(id) as first_id, MAX(id) as last_id, MAX(is_click) as is_click, SUM(is_plus) as plus, SUM(is_minus) as minus, MAX(created_at) as last_at')
+                ->groupBy('auditable_type', 'auditable_id', 'block')
+                ->orderByDesc('last_at')->orderByDesc('last_id')
+                ->paginate($request->integer('per_page', 20));
+
+            $audits = Audit::with(['user' => ['employee' => ['person']]])
+                ->whereIn('id', collect($page->items())->flatMap(fn ($block) => [$block->first_id, $block->last_id]))
+                ->get()->keyBy('id');
+
+            $page->through(function ($block) use ($audits) {
+                $audit = $audits[$block->last_id];
+                if ($block->is_click) {
+                    $audit->setRelation('first_click', $audits[$block->first_id]);
+                    $audit->setAttribute('clicks', ['plus' => (int) $block->plus, 'minus' => (int) $block->minus]);
+                }
+
+                return $audit;
+            });
 
             return $this->successResponse(
-                new AuditCollection($audits),
+                new AuditTimelineCollection($page),
                 $this->getMessage('Success'),
                 200
             );
@@ -215,7 +145,7 @@ class AuditController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -223,44 +153,39 @@ class AuditController extends Controller
     }
 
     /**
-     * @OA\Get(
-     *     path="/audits/find/{id}",
-     *     tags={"Audit"},
-     *     summary="Obtener un registro de auditoría",
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/PathId"),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Registro de auditoría cargado correctamente",
-     *         @OA\JsonContent(ref="#/components/schemas/AuditResponse")
-     *     ),
-     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
-     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
-     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
-     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
-     * )
+     * Eventos del historial, cada uno con su bloque: los clics seguidos de +1 y −1 de un registro de trabajo comparten
+     * bloque si los hizo el mismo usuario y no hubo otro evento ni una parada en medio; cualquier otro evento va solo.
      */
-    public function find(AuditFindRequest $request, $id)
+    private function timeline_block(array $trail)
     {
-        try {
-            $audit = Audit::with(['user' => ['employee' => ['person', 'position' => ['area']]], 'auditable'])
-                ->findOrFail($id);
+        $in_trail = function ($query) use ($trail) {
+            foreach ($trail as $type => $ids) {
+                $query->orWhere(fn ($part) => $part->where('auditable_type', $type)->whereIn('auditable_id', $ids));
+            }
+        };
+        $is_click = "(auditable_type = ? AND event = 'updated' AND url LIKE ?)";
 
-            return $this->successResponse(
-                [
-                    'audit' => $audit
-                ],
-                $this->getMessage('Success'),
-                200
+        $events = AuditResolver::withChanges(Audit::query()->where($in_trail))
+            ->selectRaw(
+                "id, auditable_type, auditable_id, user_id, created_at, {$is_click} as is_plus, {$is_click} as is_minus",
+                [ProductivityDetail::class, '%/workstation/%/plus', ProductivityDetail::class, '%/workstation/%/minus']
             );
-        } catch (\Throwable $e) {
-            return $this->errorResponse(
-                [
-                    'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
-                ],
-                $this->getCode(class_basename($e))
+
+        $previous = 'OVER (PARTITION BY auditable_type, auditable_id ORDER BY id)';
+        $with_previous = DB::query()->fromSub($events, 'events')
+            ->selectRaw("events.*, LAG(is_plus + is_minus) {$previous} as previous_click, LAG(user_id) {$previous} as previous_user, LAG(created_at) {$previous} as previous_at");
+
+        $with_start = DB::query()->fromSub($with_previous, 'events')
+            ->selectRaw(
+                "events.*, is_plus + is_minus as is_click, CASE WHEN is_plus + is_minus = 1 AND previous_click = 1 AND user_id <=> previous_user AND NOT EXISTS (
+                    SELECT 1 FROM productivity_detail_models AS stops
+                    WHERE stops.productivity_detail_id = events.auditable_id AND stops.model_type = ?
+                    AND stops.created_at BETWEEN events.previous_at AND events.created_at
+                ) THEN 0 ELSE 1 END as starts_block",
+                [Stop::class]
             );
-        }
+
+        return DB::query()->fromSub($with_start, 'events')
+            ->selectRaw("events.*, SUM(starts_block) {$previous} as block");
     }
 }

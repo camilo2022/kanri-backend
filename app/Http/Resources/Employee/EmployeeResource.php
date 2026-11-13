@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources\Employee;
 
-
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,6 +19,7 @@ class EmployeeResource extends JsonResource
                 'health_entity_id' => $this->health_entity_id,
                 'pension_fund_id' => $this->pension_fund_id,
                 'compensation_fund_id' => $this->compensation_fund_id,
+                'workstation_id' => $this->workstation_id,
                 'start_date' => $this->start_date?->format('Y-m-d'),
                 'end_date' => $this->end_date?->format('Y-m-d'),
                 'created_at' => $this->formatDate($this->created_at),
@@ -32,7 +32,8 @@ class EmployeeResource extends JsonResource
                 'health_entity' => $this->health_entity,
                 'pension_fund' => $this->pension_fund,
                 'compensation_fund' => $this->compensation_fund,
-            ]
+                'workstation' => $this->workstation,
+            ],
         ];
     }
 

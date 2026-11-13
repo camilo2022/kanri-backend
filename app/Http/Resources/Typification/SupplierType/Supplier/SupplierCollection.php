@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Typification\SupplierType\Supplier;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class SupplierCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Supplier::class, $this->collection->pluck('id')->all());
         return [
-            'suppliers' => $this->collection->map(function ($supplier) {
+            'suppliers' => $this->collection->map(function ($supplier) use ($audited) {
                 return [
                     'id' => $supplier->id,
+                    'has_audits' => isset($audited[$supplier->id]),
                     'item_id' => $supplier->item_id,
                     'name' => $supplier->name,
                     'description' => $supplier->description,

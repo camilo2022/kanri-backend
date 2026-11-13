@@ -26,8 +26,8 @@ class OperationAllRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'subprocess_id' => ['nullable', 'numeric', 'exists:subitems,id,item_id,' . Subprocess::ITEM_ID],
-            'per_page' => ['nullable', 'numeric'],
+            'subprocess_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Subprocess::ITEM_ID],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
             'column' => ['nullable', 'string', 'in:id,name,description,created_at,updated_at,deleted_at'],
@@ -36,21 +36,10 @@ class OperationAllRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'numeric' => 'Debe ser un valor numérico.',
-            'in' => 'Valor inválido. Permitidos: :values.',
-            'boolean' => 'Deber ser verdadero o falso.'
-        ];
-    }
-
     public function attributes(): array
     {
         return [
-            'process_id' => 'Identificador del subproceso.',
+            'subprocess_id' => 'Subproceso',
             'per_page' => 'Registros por página.',
             'page' => 'N° de página.',
             'search' => 'Filtro de Busqueda.',
@@ -62,6 +51,9 @@ class OperationAllRequest extends FormRequest
 
     protected function prepareForValidation()
     {
-        $this->merge(['with_trashed' => $this->boolean('with_trashed')]);
+        $this->merge([
+            'subprocess_id' => $this->route('subprocess_id'),
+            'with_trashed' => $this->boolean('with_trashed'),
+        ]);
     }
 }

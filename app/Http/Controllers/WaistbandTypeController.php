@@ -126,7 +126,7 @@ class WaistbandTypeController extends Controller
     public function all(WaistbandTypeAllRequest $request)
     {
         try {
-            $waistband_types = WaistbandType::when($request->filled('search'), function ($query) use ($request) {
+            $waistband_types = WaistbandType::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {

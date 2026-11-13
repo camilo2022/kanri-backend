@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Workflow\Operation;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class OperationCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Operation::class, $this->collection->pluck('id')->all());
         return [
-            'operations' => $this->collection->map(function ($operation) {
+            'operations' => $this->collection->map(function ($operation) use ($audited) {
                 return [
                     'id' => $operation->id,
+                    'has_audits' => isset($audited[$operation->id]),
                     'item_id' => $operation->item_id,
                     'name' => $operation->name,
                     'description' => $operation->description,
@@ -22,6 +25,9 @@ class OperationCollection extends ResourceCollection
                     'settings' => $operation->settings,
                     'item' => $operation->item,
                     'subprocess' => $operation->subprocess,
+                    'before_operations' => $operation->before_operations,
+                    'after_operations' => $operation->after_operations,
+                    'after_subprocesses' => $operation->after_subprocesses,
                 ];
             }),
             'meta' => [

@@ -5,21 +5,11 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Cache\Builder\BuilderDeleteRequest;
 use App\Http\Requests\Cache\Builder\BuilderStoreRequest;
 use App\Http\Requests\Cache\Builder\BuilderUpdateRequest;
-use App\Http\Requests\OrganizationalStructure\Area\AreaAllRequest;
-use App\Http\Requests\OrganizationalStructure\Area\AreaDeleteRequest;
-use App\Http\Requests\OrganizationalStructure\Area\AreaFindRequest;
-use App\Http\Requests\OrganizationalStructure\Area\AreaRestoreRequest;
-use App\Http\Requests\OrganizationalStructure\Area\AreaStoreRequest;
-use App\Http\Requests\OrganizationalStructure\Area\AreaUpdateRequest;
 use App\Http\Resources\Cache\Builder\BuilderCollection;
 use App\Http\Resources\Cache\Builder\BuilderResource;
-use App\Http\Resources\OrganizationalStructure\Area\AreaCollection;
-use App\Http\Resources\OrganizationalStructure\Area\AreaResource;
-use App\Models\Area;
-use App\Models\Category;
+use App\Services\BuilderService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
-use App\Models\Subcategory;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
@@ -170,51 +160,6 @@ class BuilderController extends Controller
     }
 
     /**
-     * @OA\Get(
-     *     path="/cache/builders/find/{id}",
-     *     tags={"Cache › Builders"},
-     *     summary="Obtener un constructor (pendiente: hoy devuelve un área)",
-     *     description="**Pendiente de corregir en el código.** Este método es una copia del de `AreaController`: busca un ÁREA por `id` numérico y responde con `data.area`. No consulta la caché de constructores.",
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/PathId"),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Hoy responde con el área del id indicado.",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object", @OA\Property(property="area", ref="#/components/schemas/Area")),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
-     *     ),
-     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
-     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
-     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
-     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
-     * )
-     */
-    public function find(AreaFindRequest $request, $id)
-    {
-        try {
-            $area = Area::with(['item', 'positions'])
-                ->findOrFail($id);
-
-            return $this->successResponse(
-                new AreaResource($area),
-                $this->getMessage('Success'),
-                200
-            );
-        } catch (\Throwable $e) {
-            return $this->errorResponse(
-                [
-                    'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
-                ],
-                $this->getCode(class_basename($e))
-            );
-        }
-    }
-
-    /**
      * @OA\Post(
      *     path="/cache/builders/store",
      *     tags={"Cache › Builders"},
@@ -226,7 +171,7 @@ class BuilderController extends Controller
      *         @OA\JsonContent(ref="#/components/schemas/BuilderRequest")
      *     ),
      *     @OA\Response(
-     *         response=200,
+     *         response=201,
      *         description="Constructor creado correctamente",
      *         @OA\JsonContent(ref="#/components/schemas/BuilderResponse")
      *     ),
@@ -252,62 +197,32 @@ class BuilderController extends Controller
         try {
             $data = $request->validated();
 
-            $trademark_ids = $data['trademark_id'];
-            $category_ids = $data['category_id'] ?? [];
-            $subcategory_ids = $data['subcategory_id'] ?? [];
-            $percentages = $data['percentages'];
-
             $builder_id = (string) Str::uuid();
 
             $builder = [
                 'id' => $builder_id,
-                'trademark_ids' => $trademark_ids,
-                'category_ids' => $category_ids,
-                'subcategory_ids' => $subcategory_ids,
-                'percentages' => $percentages,
+                'trademark_ids' => $data['trademark_id'],
+                'category_ids' => $data['category_id'] ?? [],
+                'subcategory_ids' => $data['subcategory_id'] ?? [],
+                'percentages' => $data['percentages'],
             ];
 
-            $builder_cache_key = "curve_builder:{$builder_id}";
-
-            Cache::forever($builder_cache_key, $builder);
+            Cache::forever("curve_builder:{$builder_id}", $builder);
 
             $builder_ids = Cache::get('curve_builder:ids', []);
 
             $builder_ids[] = $builder_id;
 
-            Cache::forever('curve_builder:ids', array_unique($builder_ids));
+            Cache::forever('curve_builder:ids', array_values(array_unique($builder_ids)));
 
-            $categories = Category::with(['subcategories' => fn($query) => $query->whereIn('id', $subcategory_ids) ])
-                ->whereIn('id', $category_ids)
-                ->get();
-
-            $index_keys = [];
-
-            foreach ($trademark_ids as $trademark_id) {
-                if($categories->isEmpty()) {
-                    $index_keys[] = "curve_builder:index:{$trademark_id}";
-                    continue;
-                }
-
-                foreach ($categories as $category) {
-                    if($category->subcategories->isEmpty()) {
-                        $index_keys[] = "curve_builder:index:" . "{$trademark_id}:" . "{$category->id}";
-                        continue;
-                    }
-                    foreach ($category->subcategories as $subcategory) {
-                        $index_keys[] = "curve_builder:index:{$trademark_id}.{$category->id}.{$subcategory->id}";
-                    }
-                }
-            }
-
-            foreach (array_unique($index_keys) as $index_key) {
+            foreach (app(BuilderService::class)->indexKeys($builder) as $index_key) {
                 Cache::forever($index_key, $builder_id);
             }
 
             return $this->successResponse(
                 new BuilderResource($builder),
                 $this->getMessage('Success'),
-                200
+                201
             );
         } catch (\Throwable $e) {
             return $this->errorResponse(
@@ -360,123 +275,23 @@ class BuilderController extends Controller
     public function update(BuilderUpdateRequest $request, string $uuid)
     {
         try {
-
             $data = $request->validated();
 
-            $trademark_ids = $data['trademark_id'];
-            $category_ids = $data['category_id'] ?? [];
-            $subcategory_ids = $data['subcategory_id'] ?? [];
-            $percentages = $data['percentages'];
-
             $builder_cache_key = "curve_builder:{$uuid}";
-            $builder = Cache::get($builder_cache_key);
 
-            $subcategories = Subcategory::with('category')
-                ->whereIn('id', $subcategory_ids)
-                ->get();
-
-            $old_trademark_ids = $builder['trademark_ids'] ?? [];
-            $old_category_ids = $builder['category_ids'] ?? [];
-            $old_subcategory_ids = $builder['subcategory_ids'] ?? [];
-
-            if (empty($old_category_ids)) {
-                foreach ($old_trademark_ids as $trademark_id) {
-
-                    $index_key = "curve_builder:index:{$trademark_id}";
-                    Cache::forget($index_key);
-                }
-            } elseif (empty($old_subcategory_ids)) {
-
-                foreach ($old_trademark_ids as $trademark_id) {
-                    foreach ($old_category_ids as $category_id) {
-                        $index_key =
-                            "curve_builder:index:"
-                            . "{$trademark_id}:"
-                            . "{$category_id}";
-
-                        Cache::forget($index_key);
-                    }
-                }
-            } else {
-
-                $old_subcategories = Subcategory::with('category')
-                    ->whereIn('id', $old_subcategory_ids)
-                    ->get();
-
-                foreach ($old_trademark_ids as $trademark_id) {
-
-                    foreach ($old_subcategories as $subcategory) {
-
-                        $category_id = $subcategory->category
-                            ->first()
-                            ->id;
-
-                        $index_key =
-                            "curve_builder:index:"
-                            . "{$trademark_id}:"
-                            . "{$category_id}:"
-                            . "{$subcategory->id}";
-
-                        Cache::forget($index_key);
-                    }
-                }
-            }
+            $this->forget_index_keys(Cache::get($builder_cache_key), $uuid);
 
             $builder = [
                 'id' => $uuid,
-                'trademark_ids' => $trademark_ids,
-                'category_ids' => $category_ids,
-                'subcategory_ids' => $subcategory_ids,
-                'percentages' => $percentages,
+                'trademark_ids' => $data['trademark_id'],
+                'category_ids' => $data['category_id'] ?? [],
+                'subcategory_ids' => $data['subcategory_id'] ?? [],
+                'percentages' => $data['percentages'],
             ];
 
             Cache::forever($builder_cache_key, $builder);
 
-            $index_keys = [];
-
-            if (empty($category_ids)) {
-
-                foreach ($trademark_ids as $trademark_id) {
-
-                    $index_keys[] =
-                        "curve_builder:index:{$trademark_id}";
-                }
-            } else {
-
-                $categories_with_subcategories = $subcategories
-                    ->pluck('category.id')
-                    ->unique()
-                    ->map(fn($id) => (string) $id)
-                    ->toArray();
-
-
-                foreach ($trademark_ids as $trademark_id) {
-                    foreach ($subcategories as $subcategory) {
-
-                        $category_id = $subcategory->category
-                            ->first()
-                            ->id;
-
-                        $index_keys[] =
-                            "curve_builder:index:"
-                            . "{$trademark_id}:"
-                            . "{$category_id}:"
-                            . "{$subcategory->id}";
-                    }
-
-                    foreach ($category_ids as $category_id) {
-
-                        if (!in_array((string) $category_id, $categories_with_subcategories, true)) {
-                            $index_keys[] =
-                                "curve_builder:index:"
-                                . "{$trademark_id}:"
-                                . "{$category_id}";
-                        }
-                    }
-                }
-            }
-
-            foreach (array_unique($index_keys) as $index_key) {
+            foreach (app(BuilderService::class)->indexKeys($builder) as $index_key) {
                 Cache::forever($index_key, $uuid);
             }
 
@@ -507,7 +322,7 @@ class BuilderController extends Controller
      *     @OA\Response(
      *         response=200,
      *         description="Constructor eliminado correctamente",
-     *         @OA\JsonContent(@OA\Property(property="message", type="string", example="Constructor eliminado correctamente."))
+     *         @OA\JsonContent(ref="#/components/schemas/BuilderResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
@@ -516,7 +331,7 @@ class BuilderController extends Controller
      *             ref="#/components/schemas/ValidationErrorResponse",
      *             example={
      *                 "message": "Error de validación.",
-     *                 "attributes": {"trademark_id": "Marcas", "category_id": "Categorías", "subcategory_id": "Subcategorías", "percentages": "Porcentajes"},
+     *                 "attributes": {"uuid": "Constructor", "builder": "Constructor"},
      *                 "errors": {"builder": {"El constructor no existe."}}
      *             }
      *         )
@@ -529,74 +344,21 @@ class BuilderController extends Controller
     public function delete(BuilderDeleteRequest $request, string $uuid)
     {
         try {
-
             $builder_cache_key = "curve_builder:{$uuid}";
 
             $builder = Cache::get($builder_cache_key);
 
-            $trademark_ids = $builder['trademark_ids'] ?? [];
-            $category_ids = $builder['category_ids'] ?? [];
-            $subcategory_ids = $builder['subcategory_ids'] ?? [];
+            $this->forget_index_keys($builder, $uuid);
 
-            if (empty($category_ids)) {
-
-                foreach ($trademark_ids as $trademark_id) {
-                    $index_key = "curve_builder:index:{$trademark_id}";
-                    Cache::forget($index_key);
-                }
-            } elseif (empty($subcategory_ids)) {
-                foreach ($trademark_ids as $trademark_id) {
-                    foreach ($category_ids as $category_id) {
-                        $index_key = "curve_builder:index:" . "{$trademark_id}:" . "{$category_id}";
-                        Cache::forget($index_key);
-                    }
-                }
-            } else {
-
-                $subcategories = Subcategory::with('category')
-                    ->whereIn('id', $subcategory_ids)
-                    ->get();
-
-                foreach ($trademark_ids as $trademark_id) {
-                    foreach ($subcategories as $subcategory) {
-
-                        $category_id = $subcategory->category
-                            ->first()
-                            ->id;
-
-                        $index_key = "curve_builder:index:" . "{$trademark_id}:" . "{$category_id}:" . "{$subcategory->id}";
-                        Cache::forget($index_key);
-                    }
-                }
-            }
+            Cache::forever(
+                'curve_builder:ids',
+                array_values(array_diff(Cache::get('curve_builder:ids', []), [$uuid]))
+            );
 
             Cache::forget($builder_cache_key);
 
-            return response()->json([
-                'message' => 'Constructor eliminado correctamente.'
-            ], 200);
-        } catch (\Throwable $e) {
-            return $this->errorResponse(
-                [
-                    'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
-                ],
-                $this->getCode(class_basename($e))
-            );
-        }
-    }
-
-    /**
-     * Sin ruta en routes/api.php y copiado de AreaController: no se documenta en Swagger.
-     */
-    public function restore(AreaRestoreRequest $request, $id)
-    {
-        try {
-            $area = Area::withTrashed()->findOrFail($id);
-            $area->restore();
-
             return $this->successResponse(
-                new AreaResource($area),
+                new BuilderResource($builder),
                 $this->getMessage('Success'),
                 200
             );
@@ -608,6 +370,19 @@ class BuilderController extends Controller
                 ],
                 $this->getCode(class_basename($e))
             );
+        }
+    }
+
+    private function forget_index_keys(?array $builder, string $uuid): void
+    {
+        if (! $builder) {
+            return;
+        }
+
+        foreach (app(BuilderService::class)->indexKeys($builder) as $index_key) {
+            if (Cache::get($index_key) === $uuid) {
+                Cache::forget($index_key);
+            }
         }
     }
 }

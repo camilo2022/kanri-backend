@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Typification\BloodType;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class BloodTypeCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\BloodType::class, $this->collection->pluck('id')->all());
         return [
-            'blood_types' => $this->collection->map(function ($blood_type) {
+            'blood_types' => $this->collection->map(function ($blood_type) use ($audited) {
                 return [
                     'id' => $blood_type->id,
+                    'has_audits' => isset($audited[$blood_type->id]),
                     'item_id' => $blood_type->item_id,
                     'name' => $blood_type->name,
                     'description' => $blood_type->description,

@@ -11,13 +11,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('bank_accounts', function (Blueprint $table) {
-            $table->id();
-            $table->nullableMorphs('model');
-            $table->foreignIdFor(Bank::class)->constrained()->cascadeOnUpdate();
-            $table->foreignIdFor(AccountType::class)->constrained()->cascadeOnUpdate();
-            $table->string('account_number', 30);
-            $table->timestamps();
-            $table->softDeletes();
+            $table->id()->comment('Identificador');
+            $table->string('model_type')->nullable()->comment('Tipo de registro asociado');
+            $table->unsignedBigInteger('model_id')->nullable()->comment('Registro asociado');
+            $table->index(['model_type', 'model_id']);
+            $table->foreignIdFor(Bank::class)->comment('Banco')->constrained()->cascadeOnUpdate();
+            $table->foreignIdFor(AccountType::class)->comment('Tipo de cuenta')->constrained()->cascadeOnUpdate();
+            $table->string('account_number', 30)->comment('Número de cuenta');
+            $table->timestamp('created_at')->nullable()->comment('Fecha de creación');
+            $table->timestamp('updated_at')->nullable()->comment('Fecha de actualización');
+            $table->softDeletes()->comment('Fecha de desactivación');
         });
     }
 

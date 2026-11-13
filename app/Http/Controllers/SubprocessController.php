@@ -140,16 +140,13 @@ class SubprocessController extends Controller
     public function all(SubprocessAllRequest $request, $process_id)
     {
         try {
-            $subprocesses = Subprocess::with(['process'])
+            $subprocesses = Subprocess::with(['item', 'process', 'before_subprocesses', 'after_subprocesses'])
                 ->whereHas('process', fn($r) => $r->where('id', $process_id))
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
                 ->when($request->boolean('with_trashed'), function ($query) {
                     return $query->withTrashed();
-                })
-                ->when($request->integer('process_id'), function ($query) use ($request) {
-                    return $query->where('id', '!=', $request->integer('process_id'));
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
                     return $query->orderBy($request->input('column'), $request->input('dir'));
@@ -242,7 +239,7 @@ class SubprocessController extends Controller
     public function find(SubprocessFindRequest $request, $id)
     {
         try {
-            $subprocess = Subprocess::with(['process'])
+            $subprocess = Subprocess::with(['process', 'before_subprocesses', 'after_subprocesses'])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -282,6 +279,14 @@ class SubprocessController extends Controller
      *                 type="string",
      *                 example="MEDIA",
      *                 description="Descripción del subproceso"
+     *             ),
+     *             @OA\Property(property="process_id", type="integer", example=205),
+     *             @OA\Property(property="after_subprocesses", type="array", description="Subprocesos siguientes: solo si el proceso tiene `settings.subprocess_flow = sequence`, del mismo proceso, distintos de él mismo y sin formar ciclos. En `update`, si no se envía, se conservan los guardados.", @OA\Items(type="integer", example=342)),
+     *             @OA\Property(
+     *                 property="settings",
+     *                 type="object",
+     *                 @OA\Property(property="operations", type="boolean", example=true),
+     *                 @OA\Property(property="operation_flow", type="string", enum={"sequence", "parallel"}, description="Obligatorio si `operations` es verdadero. En `sequence` las relaciones entre sus operaciones son la cadena; en `parallel` son dependencias («Depende de»).", example="parallel")
      *             )
      *         )
      *     ),
@@ -356,7 +361,9 @@ class SubprocessController extends Controller
 
             $subprocess->save();
 
+            // Subproceso nuevo: sync no toca cadenas de nadie (ver Subprocess::process)
             $subprocess->auditSync('process', $request->integer('process_id'));
+            $subprocess->auditAttach('after_subprocesses', $request->array('after_subprocesses'));
 
             return $this->successResponse(
                 new SubprocessResource($subprocess),
@@ -402,6 +409,14 @@ class SubprocessController extends Controller
      *                 type="string",
      *                 example="MEDIA",
      *                 description="Descripción del subproceso"
+     *             ),
+     *             @OA\Property(property="process_id", type="integer", example=205),
+     *             @OA\Property(property="after_subprocesses", type="array", description="Subprocesos siguientes: solo si el proceso tiene `settings.subprocess_flow = sequence`, del mismo proceso, distintos de él mismo y sin formar ciclos. En `update`, si no se envía, se conservan los guardados.", @OA\Items(type="integer", example=342)),
+     *             @OA\Property(
+     *                 property="settings",
+     *                 type="object",
+     *                 @OA\Property(property="operations", type="boolean", example=true),
+     *                 @OA\Property(property="operation_flow", type="string", enum={"sequence", "parallel"}, description="Obligatorio si `operations` es verdadero. En `sequence` las relaciones entre sus operaciones son la cadena; en `parallel` son dependencias («Depende de»).", example="parallel")
      *             )
      *         )
      *     ),
@@ -483,6 +498,11 @@ class SubprocessController extends Controller
             $subprocess->settings = $settings;
 
             $subprocess->save();
+
+            // Solo si se envían: un cliente que no los maneja no borra las cadenas guardadas
+            if ($request->has('after_subprocesses')) {
+                $subprocess->auditSync('after_subprocesses', $request->array('after_subprocesses'));
+            }
 
             return $this->successResponse(
                 new SubprocessResource($subprocess),

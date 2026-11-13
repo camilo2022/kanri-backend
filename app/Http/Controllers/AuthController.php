@@ -9,6 +9,7 @@ use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use OpenApi\Annotations as OA;
 
 /**
@@ -33,8 +34,8 @@ use OpenApi\Annotations as OA;
  * @OA\Schema(
  *     schema="LoginRequest",
  *     type="object",
- *     required={"email", "password"},
- *     @OA\Property(property="email", type="string", format="email", example="laura.gomez@kanri.test"),
+ *     required={"username", "password"},
+ *     @OA\Property(property="username", type="string", example="lauragomezr", description="Nombre de usuario, con o sin @"),
  *     @OA\Property(property="password", type="string", format="password", example="Calidad2026*")
  * )
  *
@@ -77,12 +78,16 @@ class AuthController extends Controller
 {
     use ApiMessage, ApiResponser;
 
+    /** Intentos fallidos de inicio de sesión permitidos por IP, y cuánto dura el bloqueo al superarlos (15 minutos). */
+    private const LOGIN_MAX_ATTEMPTS = 5;
+    private const LOGIN_LOCK_SECONDS = 900;
+
     /**
      * @OA\Post(
      *     path="/auth/login",
      *     tags={"Auth"},
      *     summary="Iniciar sesión",
-     *     description="Devuelve el usuario y un token nuevo, que se envía en `Authorization: Bearer <token>` (botón Authorize). **Cierra las demás sesiones**: borra todos los tokens anteriores del usuario. No requiere token.",
+     *     description="Devuelve el usuario y un token nuevo, que se envía en `Authorization: Bearer <token>` (botón Authorize). Cada inicio de sesión crea su propio token: las sesiones abiertas en otros equipos (web, app móvil) siguen activas. No requiere token.",
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(ref="#/components/schemas/LoginRequest")
@@ -94,7 +99,7 @@ class AuthController extends Controller
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="No existe un usuario con ese correo.",
+     *         description="No existe un usuario con ese nombre de usuario.",
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse",
      *             example={"error": {"message": "No se encontraron resultados para la búsqueda.", "error": "No query results for model [App\Models\User]."}}
@@ -111,7 +116,7 @@ class AuthController extends Controller
      *             @OA\Examples(
      *                 example="validacion",
      *                 summary="Datos inválidos",
-     *                 value={"message": "Error de validación.", "attributes": {"email": "Correo electrónico", "password": "Contraseña"}, "errors": {"email": {"Debe ser una dirección de correo electrónico válida."}}}
+     *                 value={"message": "Error de validación.", "attributes": {"username": "Nombre de usuario", "password": "Contraseña"}, "errors": {"username": {"Es obligatorio."}}}
      *             ),
      *             @OA\Examples(
      *                 example="contrasena",
@@ -125,20 +130,40 @@ class AuthController extends Controller
      */
     public function login(LoginRequest $request)
     {
-        try {
-            $user = User::with(['employee' => ['person']])->where('email', $request->input('email'))->firstOrFail();
+        // Hasta 5 intentos fallidos por IP; al superarlos, esa IP queda bloqueada 15 minutos (desde el primer fallo)
+        $limiterKey = 'login:' . $request->ip();
+        if (RateLimiter::tooManyAttempts($limiterKey, self::LOGIN_MAX_ATTEMPTS)) {
+            $seconds = RateLimiter::availableIn($limiterKey);
 
-            if (! Hash::check($request->input('password'), $user->password)) {
+            return $this->errorResponse(
+                [
+                    'message' => 'Demasiados intentos fallidos. Tu dirección IP quedó bloqueada temporalmente.',
+                    'error' => 'Inténtalo de nuevo en ' . max(1, (int) ceil($seconds / 60)) . ' minuto(s).',
+                ],
+                429
+            )->header('Retry-After', $seconds);
+        }
+
+        try {
+            // Se acepta con o sin la @ que se muestra en pantalla
+            $user = User::with(['employee' => ['person']])->where('username', ltrim(trim((string) $request->input('username')), '@'))->first();
+
+            // Usuario inexistente y contraseña incorrecta responden igual, para no revelar qué usuarios existen
+            if (! $user || ! Hash::check($request->input('password'), $user->password)) {
+                RateLimiter::hit($limiterKey, self::LOGIN_LOCK_SECONDS);
+
                 return $this->errorResponse(
                     [
-                        'message' => $this->getMessage('UnauthorizedException'),
+                        'message' => 'Usuario o contraseña incorrectos. Verifica tus datos e inténtalo de nuevo.',
                         'error' => 'Credenciales incorrectas.',
                     ],
                     422
                 );
             }
 
-            $user->tokens()->delete();
+            RateLimiter::clear($limiterKey);
+
+            // Cada inicio de sesión crea su propio token: las sesiones de otros equipos (web, app móvil) siguen activas
             $token = $user->createToken('auth_token')->plainTextToken;
             $user->load(['roles', 'permissions', 'processes', 'subprocesses', 'operations']);
 
@@ -182,7 +207,7 @@ class AuthController extends Controller
         try {
             $user = Auth::user();
 
-            $user->load(['employee' => ['person' => ['gender', 'blood_type'], 'position' => ['area'], 'risk_manager', 'health_entity', 'pension_fund', 'compensation_fund'], 'roles', 'permissions', 'processes', 'subprocesses', 'operations']);
+            $user->load(['employee' => ['person' => ['gender', 'blood_type', 'phone_country'], 'position' => ['area'], 'risk_manager', 'health_entity', 'pension_fund', 'compensation_fund'], 'roles', 'permissions', 'processes', 'subprocesses', 'operations']);
 
             $navegation = Module::with(['submodules' => fn ($query) => $query->whereIn('permission_id', Auth::user()->permissions->modelKeys())])
                 ->whereHas('submodules', fn ($query) => $query->whereIn('permission_id', Auth::user()->permissions->modelKeys()))
@@ -212,7 +237,7 @@ class AuthController extends Controller
      *     path="/auth/logout",
      *     tags={"Auth"},
      *     summary="Cerrar sesión",
-     *     description="Borra **todos** los tokens del usuario: cierra la sesión en todos los dispositivos.",
+     *     description="Borra solo el token con el que se hace la petición: cierra la sesión en este equipo; las de otros equipos siguen activas.",
      *     security={{"sanctum":{}}},
      *     @OA\Response(
      *         response=200,
@@ -226,7 +251,7 @@ class AuthController extends Controller
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=15),
      *                     @OA\Property(property="employee_id", type="integer", example=42),
-     *                     @OA\Property(property="email", type="string", example="laura.gomez@kanri.test"),
+     *                     @OA\Property(property="username", type="string", example="lauragomezr"),
      *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-05-14T09:50:00.000000Z"),
      *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-05-14T09:50:00.000000Z"),
      *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null)
@@ -244,7 +269,8 @@ class AuthController extends Controller
     {
         try {
             $user = Auth::user();
-            $user->tokens()->delete();
+            // Solo se cierra esta sesión (el token con el que se hizo la petición); las de otros equipos siguen
+            $user->currentAccessToken()->delete();
 
             return $this->successResponse(
                 [

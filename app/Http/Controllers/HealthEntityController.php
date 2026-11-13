@@ -69,7 +69,7 @@ use App\Traits\ApiResponser;
  *     schema="HealthEntityRequest",
  *     type="object",
  *     required={"name", "description"},
- *     @OA\Property(property="name", type="string", minLength=4, maxLength=50, description="Nombre en MAYÚSCULAS. Único entre las entidades de salud.", example="ALIANSALUD"),
+ *     @OA\Property(property="name", type="string", minLength=4, maxLength=100, description="Nombre en MAYÚSCULAS. Único entre las entidades de salud.", example="ALIANSALUD"),
  *     @OA\Property(property="description", type="string", maxLength=255, description="Descripción en MAYÚSCULAS.", example="ALIANSALUD ENTIDAD PROMOTORA DE SALUD")
  * )
  */
@@ -121,7 +121,7 @@ class HealthEntityController extends Controller
     public function all(HealthEntityAllRequest $request)
     {
         try {
-            $health_entitys = HealthEntity::when($request->filled('search'), function ($query) use ($request) {
+            $health_entities = HealthEntity::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {
@@ -131,10 +131,10 @@ class HealthEntityController extends Controller
                     return $query->orderBy($request->input('column'), $request->input('dir'));
                 });
 
-            $health_entitys = $health_entitys->paginate($request->integer('per_page', $health_entitys->count()));
+            $health_entities = $health_entities->paginate($request->integer('per_page', $health_entities->count()));
 
             return $this->successResponse(
-                new HealthEntityCollection($health_entitys),
+                new HealthEntityCollection($health_entities),
                 $this->getMessage('Success'),
                 200
             );

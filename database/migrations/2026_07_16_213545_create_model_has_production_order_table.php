@@ -13,9 +13,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('model_has_production_order', function (Blueprint $table) {
-            $table->foreignIdFor(ProductionOrder::class)->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('ProductionOrder');
-            $table->morphs('model');
-            $table->unsignedInteger('quantity');
+            $table->foreignIdFor(ProductionOrder::class)->comment('Orden de producción')->constrained()->onUpdate('cascade')->onDelete('cascade');
+            $table->string('model_type')->comment('Tipo de registro asociado');
+            $table->unsignedBigInteger('model_id')->comment('Registro asociado');
+            $table->index(['model_type', 'model_id']);
+            $table->unsignedInteger('quantity')->comment('Cantidad');
             $table->unique(['production_order_id', 'model_id', 'model_type'], 'mhpo_poi_mi_mt');
         });
     }

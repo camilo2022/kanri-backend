@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Typification\WaistbandType;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class WaistbandTypeCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\WaistbandType::class, $this->collection->pluck('id')->all());
         return [
-            'waistband_types' => $this->collection->map(function ($waistband_type) {
+            'waistband_types' => $this->collection->map(function ($waistband_type) use ($audited) {
                 return [
                     'id' => $waistband_type->id,
+                    'has_audits' => isset($audited[$waistband_type->id]),
                     'item_id' => $waistband_type->item_id,
                     'name' => $waistband_type->name,
                     'description' => $waistband_type->description,

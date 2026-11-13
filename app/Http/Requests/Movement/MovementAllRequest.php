@@ -25,23 +25,11 @@ class MovementAllRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'per_page' => ['nullable', 'numeric'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
-            'column' => ['nullable', 'string', 'in:id,name,description,created_at,updated_at,deleted_at'],
+            'column' => ['nullable', 'string', 'in:id,status,created_at,updated_at'],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
-            'with_trashed' => ['required', 'boolean']
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'numeric' => 'Debe ser un valor numérico.',
-            'in' => 'Valor inválido. Permitidos: :values.',
-            'boolean' => 'Deber ser verdadero o falso.'
         ];
     }
 
@@ -53,12 +41,6 @@ class MovementAllRequest extends FormRequest
             'search' => 'Filtro de Busqueda.',
             'column' => 'Columna a ordenar.',
             'dir' => 'Sentido del orden.',
-            'with_trashed' => 'Registros inactivos'
         ];
-    }
-
-    protected function prepareForValidation()
-    {
-        $this->merge(['with_trashed' => $this->boolean('with_trashed')]);
     }
 }

@@ -70,7 +70,7 @@ use App\Traits\ApiResponser;
  *     schema="RiskManagerRequest",
  *     type="object",
  *     required={"name", "description"},
- *     @OA\Property(property="name", type="string", minLength=4, maxLength=50, description="Nombre en MAYÚSCULAS. Único entre las administradoras de riesgos.", example="POSITIVA"),
+ *     @OA\Property(property="name", type="string", minLength=4, maxLength=100, description="Nombre en MAYÚSCULAS. Único entre las administradoras de riesgos.", example="POSITIVA"),
  *     @OA\Property(property="description", type="string", maxLength=255, description="Descripción en MAYÚSCULAS.", example="POSITIVA COMPAÑÍA DE SEGUROS S.A.")
  * )
  */
@@ -122,7 +122,7 @@ class RiskManagerController extends Controller
     public function all(RiskManagerAllRequest $request)
     {
         try {
-            $risk_managers = RiskManager::when($request->filled('search'), function ($query) use ($request) {
+            $risk_managers = RiskManager::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {

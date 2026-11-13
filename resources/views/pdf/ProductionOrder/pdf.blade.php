@@ -277,20 +277,13 @@
             <tr>
                 @php
 
-                    $metros_reales = collect($production_order->settings)->sum(
+                    $metros_reales = collect($production_order->settings)->filter(fn($item) => isset($item->large))->sum(
                         fn($item) => $item->large * $item->quantity,
                     );
 
                     $detail = $production_order->production_order_details->first(
                         fn($item) => $item->model_type === Supply::class,
                     );
-
-                    logger([
-                        '$production_order->production_order_details',
-                        $production_order->production_order_details,
-                    ]);
-                    logger(['$production_order->settings', $production_order->settings]);
-                    logger(['$detail', $detail]);
 
                     $total_unidades = $detail
                         ? $detail->production_order_detail_quantities
@@ -560,7 +553,7 @@
 
             $sizes = $production_order->technical_sheet->product->trademark->sizes;
 
-            $agrupaciones = collect($production_order->settings)->map(function ($setting) use ($detail, $sizes) {
+            $agrupaciones = collect($production_order->settings)->filter(fn($item) => isset($item->large))->map(function ($setting) use ($detail, $sizes) {
                 $items = $detail
                     ? $detail->production_order_detail_quantities->where('quantity', $setting->quantity)
                     : collect();

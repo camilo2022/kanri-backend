@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Product;
 
-use App\Models\Product;
 use App\Models\Subcategory;
 use App\Models\Trademark;
 use Illuminate\Contracts\Validation\Validator;
@@ -16,7 +15,7 @@ class ProductStoreRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -29,19 +28,10 @@ class ProductStoreRequest extends FormRequest
     {
         return [
             'code' => ['required', 'unique:products,code'],
-            'trademark_id' => ['required', 'exists:subitems,id,item_id,' . Trademark::ITEM_ID],
-            'subcategory_id' => ['required', 'exists:subitems,id,item_id,' . Subcategory::ITEM_ID],
+            'trademark_id' => ['required', 'exists:subitems,id,item_id,'.Trademark::ITEM_ID],
+            'subcategory_id' => ['required', 'exists:subitems,id,item_id,'.Subcategory::ITEM_ID],
             'reference_relation' => ['nullable', 'boolean'],
-            'technical_sheet_id' =>  ['nullable', 'exists:technical_sheets,id']
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'exists' => 'No registrado en el sistema.',
-            'unique' => 'Ya está registrado.',
+            'technical_sheet_id' => ['nullable', 'exists:technical_sheets,id'],
         ];
     }
 
@@ -50,7 +40,7 @@ class ProductStoreRequest extends FormRequest
         return [
             'code' => 'Código de la Referencia del Producto',
             'trademark_id' => 'Identificador de la marca',
-            'subcategory_id' => 'Identificador de la subcategoría'
+            'subcategory_id' => 'Identificador de la subcategoría',
         ];
     }
 
@@ -71,10 +61,10 @@ class ProductStoreRequest extends FormRequest
                     $messages[] = $item->message;
                 }
 
-                if (!$isValid) {
+                if (! $isValid) {
                     $validator->errors()->add(
                         'code',
-                        "No cumple con ninguna de las validaciones:\n• " .
+                        "No cumple con ninguna de las validaciones:\n• ".
                             implode("\n• ", $messages)
                     );
                 }
@@ -85,5 +75,11 @@ class ProductStoreRequest extends FormRequest
     protected function prepareForValidation()
     {
         $this->merge(['reference_relation' => $this->boolean('reference_relation')]);
+
+        if ($this->boolean('reference_relation')) {
+            $this->merge([
+                'trademark_id' => Trademark::where('name', 'STARA DENIM')->value('id'),
+            ]);
+        }
     }
 }

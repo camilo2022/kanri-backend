@@ -27,21 +27,15 @@ class CollectionFindRequest extends FormRequest
     {
         return [
             'id' => ['required', 'exists:subitems,id,item_id,' . Collection::ITEM_ID],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'exists' => 'No hay ningún registro.'
+            'search' => ['nullable', 'string', 'max:100'],
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador de la colección'
+            'id' => 'Identificador de la colección',
+            'search' => 'Código del producto',
         ];
     }
 

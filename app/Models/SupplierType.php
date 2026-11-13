@@ -69,8 +69,8 @@ class SupplierType extends Model implements Auditable
         if ($search === '') {
             return $query;
         }
-
-        $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
+         
+        $terms = [preg_replace('/\s+/', ' ', $search)];
 
         return $query->where(function (Builder $q) use ($terms) {
             foreach ($terms as $term) {

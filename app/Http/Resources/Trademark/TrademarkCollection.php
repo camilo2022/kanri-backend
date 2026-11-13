@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Trademark;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class TrademarkCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Trademark::class, $this->collection->pluck('id')->all());
         return [
-            'trademarks' => $this->collection->map(function ($trademark) {
+            'trademarks' => $this->collection->map(function ($trademark) use ($audited) {
                 return [
                     'id' => $trademark->id,
+                    'has_audits' => isset($audited[$trademark->id]),
                     'item' => $trademark->item,
                     'name' => $trademark->name,
                     'description' => $trademark->description,

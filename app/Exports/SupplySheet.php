@@ -37,7 +37,7 @@ class SupplySheet implements FromCollection, WithHeadings, WithMapping, WithTitl
             ->where('type', 'selectdinamic')
             ->keyBy('field');
 
-        foreach ($this->supply_type->settings->form as $field) {
+        foreach ($this->supply_type->settings->form ?? [] as $field) {
             if (($field->cardinality ?? '') === 'multiple') {
                 continue;
             }
@@ -61,7 +61,7 @@ class SupplySheet implements FromCollection, WithHeadings, WithMapping, WithTitl
             'description',
         ];
 
-        foreach ($this->supply_type->settings->form as $field) {
+        foreach ($this->supply_type->settings->form ?? [] as $field) {
 
             if (($field->cardinality ?? '') === 'multiple') {
                 continue;

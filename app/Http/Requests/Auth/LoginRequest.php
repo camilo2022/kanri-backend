@@ -25,24 +25,15 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'email'],
+            'username' => ['required', 'string', 'max:100'],
             'password' => ['required', 'string'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'email' => 'Debe ser una dirección de correo electrónico válida.',
-            'string' => 'Debe ser una cadena de caracteres.',
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'email' => 'Correo electrónico',
+            'username' => 'Nombre de usuario',
             'password' => 'Contraseña',
         ];
     }

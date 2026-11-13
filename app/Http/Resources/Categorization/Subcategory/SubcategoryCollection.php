@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Categorization\Subcategory;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class SubcategoryCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Subcategory::class, $this->collection->pluck('id')->all());
         return [
-            'subcategories' => $this->collection->map(function ($subcategory) {
+            'subcategories' => $this->collection->map(function ($subcategory) use ($audited) {
                 return [
                     'id' => $subcategory->id,
+                    'has_audits' => isset($audited[$subcategory->id]),
                     'item' => $subcategory->item,
                     'name' => $subcategory->name,
                     'description' => $subcategory->description,

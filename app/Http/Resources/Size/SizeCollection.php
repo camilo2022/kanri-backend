@@ -3,16 +3,27 @@
 namespace App\Http\Resources\Size;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class SizeCollection extends ResourceCollection
 {
+    protected $item;
+
+    public function __construct($resource, $item = null)
+    {
+        parent::__construct($resource);
+        $this->item = $item;
+    }
+
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Size::class, $this->collection->pluck('id')->all());
         return [
-            'sizes' => $this->collection->map(function ($size) {
+            'sizes' => $this->collection->map(function ($size) use ($audited) {
                 return [
                     'id' => $size->id,
+                    'has_audits' => isset($audited[$size->id]),
                     'item' => $size->item,
                     'name' => $size->name,
                     'description' => $size->description,
@@ -22,6 +33,7 @@ class SizeCollection extends ResourceCollection
                     'settings' => $size->settings,
                 ];
             }),
+            'item' => $this->item,
             'meta' => [
                 'pagination' => $this->paginationMeta(),
             ],

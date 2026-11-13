@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Movement;
 
 use App\Models\MovementDetail;
+use App\Services\ProductivityDetailService;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -23,6 +24,9 @@ class MovementResource extends JsonResource
                 'production_order_detail' => $this->production_order_detail,
                 'movement_details_input' => $this->movement_details_input,
                 'movement_details_output' => $this->movement_details_output,
+                // Lo que se puede trasladar a otro proceso: lo que ya pasó por todos los pasos de la ficha − lo
+                // trasladado (null: el proceso no mide productividad, sin tope)
+                'transferable' => app(ProductivityDetailService::class)->transferable($this->resource),
             ],
             'statuses' => MovementDetail::statuses(),
         ];

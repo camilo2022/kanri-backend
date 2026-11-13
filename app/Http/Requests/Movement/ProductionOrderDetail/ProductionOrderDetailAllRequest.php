@@ -31,14 +31,6 @@ class ProductionOrderDetailAllRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'exists' => 'No hay ningún registro.',
-            'boolean' => 'Deber ser verdadero o falso.',
-        ];
-    }
-
     public function attributes(): array
     {
         return [

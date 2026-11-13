@@ -3,16 +3,19 @@
 namespace App\Http\Resources\HealthEntity;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class HealthEntityCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\HealthEntity::class, $this->collection->pluck('id')->all());
         return [
-            'health_entities' => $this->collection->map(function ($health_entity) {
+            'health_entities' => $this->collection->map(function ($health_entity) use ($audited) {
                 return [
                     'id' => $health_entity->id,
+                    'has_audits' => isset($audited[$health_entity->id]),
                     'item_id' => $health_entity->item_id,
                     'name' => $health_entity->name,
                     'description' => $health_entity->description,

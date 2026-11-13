@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Navegation\Module;
 
 use Illuminate\Http\Request;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Carbon;
 
@@ -10,10 +11,12 @@ class ModuleCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Module::class, $this->collection->pluck('id')->all());
         return [
-            'modules' => $this->collection->map(function ($module) {
+            'modules' => $this->collection->map(function ($module) use ($audited) {
                 return [
                     'id' => $module->id,
+                    'has_audits' => isset($audited[$module->id]),
                     'name' => $module->name,
                     'icon' => $module->icon,
                     'created_at' => $this->formatDate($module->created_at),

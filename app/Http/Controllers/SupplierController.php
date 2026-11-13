@@ -10,6 +10,8 @@ use App\Http\Requests\Typification\SupplierType\Supplier\SupplierStoreRequest;
 use App\Http\Requests\Typification\SupplierType\Supplier\SupplierUpdateRequest;
 use App\Http\Resources\Typification\SupplierType\Supplier\SupplierCollection;
 use App\Http\Resources\Typification\SupplierType\Supplier\SupplierResource;
+use App\Models\City;
+use App\Models\Department;
 use App\Models\FileSubtype;
 use App\Models\Person;
 use App\Models\Supplier;
@@ -215,7 +217,7 @@ class SupplierController extends Controller
     public function all(SupplierAllRequest $request, $supplier_type_id)
     {
         try {
-            $suppliers = Supplier::with(['supplier_type'])
+            $suppliers = Supplier::with(['item', 'supplier_type'])
                 ->whereHas('supplier_type', fn ($r) => $r->where('id', $supplier_type_id))
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
@@ -267,8 +269,9 @@ class SupplierController extends Controller
     public function find(SupplierFindRequest $request, $id)
     {
         try {
-            $supplier = Supplier::with(['supplier_type', 'person' => ['document_type' => ['person_type']], 'bank_account' => ['bank_certificate']])
+            $supplier = Supplier::with(['supplier_type', 'person' => ['document_type' => ['person_type'], 'phone_country'], 'bank_account' => ['bank_certificate']])
                 ->findOrFail($id);
+            $supplier->person->loadMorph('location', [City::class => ['department' => ['country']], Department::class => ['country']]);
 
             return $this->successResponse(
                 new SupplierResource($supplier),
@@ -347,7 +350,12 @@ class SupplierController extends Controller
                 $person->gender_id = $person_data['gender_id'];
                 $person->birth_date = $person_data['birth_date'];
                 $person->blood_type_id = $person_data['blood_type_id'];
+                $person->email = $person_data['email'];
+                $person->location_type = $person_data['location_type'];
+                $person->location_id = $person_data['location_id'];
                 $person->address = $person_data['address'];
+                $person->neighborhood = $person_data['neighborhood'] ?? null;
+                $person->phone_country_id = $person_data['phone_country_id'];
                 $person->phone = $person_data['phone'];
 
                 $supplier->person()->save($person);
@@ -469,7 +477,12 @@ class SupplierController extends Controller
                         'gender_id' => $person_data['gender_id'],
                         'birth_date' => $person_data['birth_date'],
                         'blood_type_id' => $person_data['blood_type_id'],
+                        'email' => $person_data['email'],
+                        'location_type' => $person_data['location_type'],
+                        'location_id' => $person_data['location_id'],
                         'address' => $person_data['address'],
+                        'neighborhood' => $person_data['neighborhood'] ?? null,
+                        'phone_country_id' => $person_data['phone_country_id'],
                         'phone' => $person_data['phone'],
                     ]);
 
@@ -482,7 +495,12 @@ class SupplierController extends Controller
                         'gender_id' => $person_data['gender_id'],
                         'birth_date' => $person_data['birth_date'],
                         'blood_type_id' => $person_data['blood_type_id'],
+                        'email' => $person_data['email'],
+                        'location_type' => $person_data['location_type'],
+                        'location_id' => $person_data['location_id'],
                         'address' => $person_data['address'],
+                        'neighborhood' => $person_data['neighborhood'] ?? null,
+                        'phone_country_id' => $person_data['phone_country_id'],
                         'phone' => $person_data['phone'],
                     ]);
                 }

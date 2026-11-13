@@ -160,7 +160,7 @@ class ProcessController extends Controller
     public function all(ProcessAllRequest $request)
     {
         try {
-            $processes = Process::with(['before_processes', 'after_processes', 'subprocesses' => ['operations']])
+            $processes = Process::with(['item', 'before_processes', 'after_processes', 'subprocesses' => ['after_subprocesses', 'operations' => ['after_operations', 'after_subprocesses']]])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -173,11 +173,11 @@ class ProcessController extends Controller
                 ->when($request->boolean('in_production_order'), function ($query) {
                     return $query->where('settings->in_production_order', true);
                 })
-                ->when($request->boolean('in_productivity'), function ($query) {
-                    return $query->where('settings->in_productivity', true);
+                ->when($request->boolean('with_typologies'), function ($query) {
+                    return $query->with(['typologies']);
                 })
-                ->when($request->filled('Process_id'), function ($query) use ($request) {
-                    return $query->where('id', '<>', $request->integer('Process_id'));
+                ->when($request->filled('process_id'), function ($query) use ($request) {
+                    return $query->where('id', '<>', $request->integer('process_id'));
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
                     return $query->orderBy($request->input('column'), $request->input('dir'));
@@ -283,7 +283,7 @@ class ProcessController extends Controller
     public function find(ProcessFindRequest $request, $id)
     {
         try {
-            $process = Process::with(['item', 'before_processes', 'after_processes', 'subprocesses' => ['operations']])
+            $process = Process::with(['item', 'before_processes', 'after_processes', 'subprocesses' => ['operations' => ['after_subprocesses']]])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -326,6 +326,13 @@ class ProcessController extends Controller
      *                 type="string",
      *                 example="MEDIA",
      *                 description="Descripción del proceso"
+     *             ),
+     *             @OA\Property(property="after_processes", type="array", description="Procesos siguientes.", @OA\Items(type="integer", example=206)),
+     *             @OA\Property(
+     *                 property="settings",
+     *                 type="object",
+     *                 @OA\Property(property="subprocesses", type="boolean", example=true),
+     *                 @OA\Property(property="subprocess_flow", type="string", enum={"sequence", "parallel"}, description="Obligatorio si `subprocesses` es verdadero. En `sequence` los subprocesos se encadenan con `after_subprocesses`; al guardar otro valor se borran esas cadenas.", example="sequence")
      *             )
      *         )
      *     ),
@@ -464,6 +471,13 @@ class ProcessController extends Controller
      *                 type="string",
      *                 example="MEDIA",
      *                 description="Descripción del proceso"
+     *             ),
+     *             @OA\Property(property="after_processes", type="array", description="Procesos siguientes.", @OA\Items(type="integer", example=206)),
+     *             @OA\Property(
+     *                 property="settings",
+     *                 type="object",
+     *                 @OA\Property(property="subprocesses", type="boolean", example=true),
+     *                 @OA\Property(property="subprocess_flow", type="string", enum={"sequence", "parallel"}, description="Obligatorio si `subprocesses` es verdadero. En `sequence` los subprocesos se encadenan con `after_subprocesses`; al guardar otro valor se borran esas cadenas.", example="sequence")
      *             )
      *         )
      *     ),
@@ -557,6 +571,11 @@ class ProcessController extends Controller
             $process->save();
 
             $process->auditSync('after_processes', $request->array('after_processes'));
+
+            // Sin subprocesos en secuencia no hay cadenas entre ellos
+            if (($process->settings->subprocess_flow ?? Process::PARALLEL) !== Process::SEQUENCE) {
+                $process->clearSubprocessChains();
+            }
 
             return $this->successResponse(
                 [

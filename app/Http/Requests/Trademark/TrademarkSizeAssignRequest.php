@@ -28,17 +28,14 @@ class TrademarkSizeAssignRequest extends FormRequest
     {
         return [
             'id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Trademark::ITEM_ID],
-            'size_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Size::ITEM_ID, 'unique:model_has_subitems,subitem_id,NULL,NULL,model_type,' . Trademark::class . ',model_id,' . $this->route('id')]
+            'size_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Size::ITEM_ID, 'unique:model_has_subitems,model_id,NULL,NULL,model_type,' . Size::class . ',subitem_id,' . $this->route('id')]
         ];
     }
 
     public function messages(): array
     {
         return [
-            'required' => 'Es obligatorio.',
-            'numeric' => 'Debe ser un número.',
-            'exists' => 'No hay ningún registro.',
-            'unique' => 'Ya registrado.'
+            'size_id.unique' => 'La talla ya está asignada a esta marca.',
         ];
     }
 
@@ -46,7 +43,7 @@ class TrademarkSizeAssignRequest extends FormRequest
     {
         return [
             'id' => 'Identificador de la marca',
-            'subcategory_id' => 'Identificador de la talla'
+            'size_id' => 'Identificador de la talla'
         ];
     }
 

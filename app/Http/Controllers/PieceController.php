@@ -122,7 +122,7 @@ class PieceController extends Controller
     public function all(PieceAllRequest $request)
     {
         try {
-            $pieces = Piece::when($request->filled('search'), function ($query) use ($request) {
+            $pieces = Piece::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {

@@ -4,7 +4,9 @@ namespace App\Http\Requests\Person;
 
 use App\Models\BloodType;
 use App\Models\DocumentType;
+use App\Models\File;
 use App\Models\Gender;
+use App\Services\PersonService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -29,64 +31,61 @@ class PersonStoreRequest extends FormRequest
     {
         return [
             'document_type_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.DocumentType::ITEM_ID.',deleted_at,NULL'],
-            'document' => ['required', 'numeric', 'digits_between:5,14', 'unique:people,document'],
+            'document' => ['required', 'string', 'max:30', 'unique:people,document'],
             'names' => ['required', 'string', 'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/'],
             'last_names' => ['required', 'string', 'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/'],
             'gender_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.Gender::ITEM_ID.',deleted_at,NULL'],
             'birth_date' => ['required', 'date', 'date_format:Y-m-d', 'before:now'],
             'blood_type_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.BloodType::ITEM_ID.',deleted_at,NULL'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:people,email'],
+            'location_type' => ['required', 'string', 'in:'.implode(',', array_keys(PersonService::LOCATION_TYPES))],
+            'location_id' => ['required', 'integer'],
             'address' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'numeric', 'digits:10'],
-            'photo' => ['sometimes', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'neighborhood' => ['nullable', 'string', 'uppercase', 'max:100'],
+            'phone_country_id' => ['required', 'integer', 'exists:countries,id'],
+            'phone' => ['required', 'string', 'max:20'],
+            'photo' => ['sometimes', 'mimes:jpg,jpeg,png,webp,avif', 'max:10240', 'dimensions:max_width='.File::MAX_IMAGE_SIDE.',max_height='.File::MAX_IMAGE_SIDE],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'numeric' => 'Debe ser un dato númerico.',
-            'digits_between' => 'Debe tener entre 5 y 14 dígitos.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'size' => 'Se permite la longitud de :value caracteres.',
-            'unique' => 'Ya está registrado.',
             'regex' => "Formato inválido:\n- Solo letras.",
-            'exists' => 'No hay ningún registro.',
-            'date' => 'Debe ser una fecha válida.',
-            'date_format' => 'Formato inválido. Permitido :format.',
-            'before' => 'Debe ser una fecha anterior a :date.',
-            'image' => 'Debe ser una imagen.',
-            'mimes' => 'Extensión inválida. Permitidas :values.',
             'photo.max' => 'Se permite máximo :max KB.',
-            'digits' => 'Debe tener :digits números',
         ];
     }
 
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            if (filled($this->input('document_type_id')) && filled($this->input('document'))) {
-                $document_type = DocumentType::find($this->input('document_type_id'));
-                $document = $this->input('document');
-                $isValid = false;
-                $messages = [];
+            $service = app(PersonService::class);
 
-                foreach ($document_type?->settings?->validations ?? [] as $item) {
-                    if (preg_match($item->regex, $document)) {
-                        $isValid = true;
-                        break;
-                    }
-                    $messages[] = $item->message;
+            // Documento según las reglas de su tipo (un tipo sin reglas no se puede usar)
+            if (! $validator->errors()->has('document_type_id') && ! $validator->errors()->has('document')) {
+                if ($error = $service->documentError($this->integer('document_type_id'), (string) $this->input('document'))) {
+                    $validator->errors()->add('document', $error);
                 }
+            }
 
-                if (! $isValid) {
-                    $validator->errors()->add(
-                        'document',
-                        implode("\n", $messages)
-                    );
+            // Teléfono según las reglas de su país (un país sin reglas no se puede usar)
+            if (! $validator->errors()->has('phone_country_id') && ! $validator->errors()->has('phone')) {
+                if ($error = $service->phoneError($this->integer('phone_country_id'), (string) $this->input('phone'))) {
+                    $validator->errors()->add('phone', $error);
                 }
+            }
+
+            // Ubicación en el último nivel disponible (país, departamento o ciudad)
+            if (! $validator->errors()->has('location_type') && ! $validator->errors()->has('location_id')) {
+                if ($error = $service->locationError((string) $this->input('location_type'), $this->integer('location_id'))) {
+                    $validator->errors()->add('location_id', $error);
+                }
+            }
+
+            // El indicativo del teléfono es el del país de la ubicación
+            if (! $validator->errors()->has('location_id') && ! $validator->errors()->has('phone_country_id')
+                && $service->locationCountryId((string) $this->input('location_type'), $this->integer('location_id')) !== $this->integer('phone_country_id')) {
+                $validator->errors()->add('phone_country_id', 'El indicativo del teléfono debe ser el del país de la ubicación.');
             }
         });
     }
@@ -102,8 +101,18 @@ class PersonStoreRequest extends FormRequest
             'document_type_id' => 'Tipo de Documento',
             'blood_type_id' => 'Tipo de sangre',
             'address' => 'Dirección',
+            'email' => 'Correo',
+            'location_type' => 'Nivel de la ubicación',
+            'location_id' => 'Ubicación',
+            'neighborhood' => 'Barrio',
+            'phone_country_id' => 'País del teléfono',
             'phone' => 'Número de teléfono',
             'photo' => 'Foto',
         ];
+    }
+
+    protected function passedValidation()
+    {
+        $this->merge(['location_type' => PersonService::LOCATION_TYPES[$this->input('location_type')]]);
     }
 }

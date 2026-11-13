@@ -5,6 +5,7 @@ namespace App\Http\Resources\Rule;
 use App\Traits\ModelTypes;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\DB;
 
@@ -22,6 +23,7 @@ class RuleCollection extends ResourceCollection
 
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Rule::class, $this->collection->pluck('id')->all());
         $models = $this->getModelTypesFromRules();
 
         $class_to_key = collect($models)->mapWithKeys(fn ($config, $key) => [$config['model'] => $key]);
@@ -44,7 +46,7 @@ class RuleCollection extends ResourceCollection
         $pivot_by_rule = $pivot_rows->groupBy('subitem_id');
 
         return [
-            'rules' => $this->collection->map(function ($rule) use ($pivot_by_rule, $loaded_models, $class_to_key) {
+            'rules' => $this->collection->map(function ($rule) use ($pivot_by_rule, $loaded_models, $class_to_key, $audited) {
                 $relations = collect($pivot_by_rule[$rule->id] ?? [])
                     ->mapWithKeys(function ($row) use ($loaded_models, $class_to_key) {
                         $key = $class_to_key[$row->model_class] ?? null;
@@ -55,6 +57,7 @@ class RuleCollection extends ResourceCollection
 
                 return [
                     'id' => $rule->id,
+                    'has_audits' => isset($audited[$rule->id]),
                     'item_id' => $rule->item_id,
                     'name' => $rule->name,
                     'description' => $rule->description,

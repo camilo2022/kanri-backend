@@ -7,6 +7,7 @@ use App\Http\Requests\Typification\SupplyType\Supply\SupplyAllRequest;
 use App\Http\Requests\Typification\SupplyType\Supply\SupplyDeleteRequest;
 use App\Http\Requests\Typification\SupplyType\Supply\SupplyExcelRequest;
 use App\Http\Requests\Typification\SupplyType\Supply\SupplyFindRequest;
+use App\Http\Requests\Typification\SupplyType\Supply\SupplyImportRequest;
 use App\Http\Requests\Typification\SupplyType\Supply\SupplyRestoreRequest;
 use App\Http\Requests\Typification\SupplyType\Supply\SupplySaveRequest;
 use App\Http\Requests\Typification\SupplyType\Supply\SupplyStoreRequest;
@@ -19,9 +20,7 @@ use App\Models\Supply;
 use App\Models\SupplyType;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
-use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -77,8 +76,7 @@ use Maatwebsite\Excel\Facades\Excel;
  *     @OA\Property(
  *         property="data",
  *         type="object",
- *         @OA\Property(property="supply", ref="#/components/schemas/SupplyDetail"),
- *         @OA\Property(property="model_types", type="object", description="Modelos que se pueden usar en los campos `selectdinamic` (igual que en tipos de insumo).", additionalProperties=true)
+ *         @OA\Property(property="supply", ref="#/components/schemas/SupplyDetail")
  *     ),
  *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
  *     @OA\Property(property="error", type="boolean", example=false)
@@ -175,8 +173,6 @@ class SupplyController extends Controller
 
             $supplies = $supplies->paginate($request->integer('per_page', $supplies->count()));
 
-            logger()->debug('DATA', ['SUPPLY_TYPE' => $supply_type_id, 'RESULT' => $supplies]);
-
             return $this->successResponse(
                 new SupplyCollection($supplies),
                 $this->getMessage('Success'),
@@ -198,7 +194,7 @@ class SupplyController extends Controller
      *     path="/typification/supply_types/supplies/find/{id}",
      *     tags={"Typification › Supplies"},
      *     summary="Obtener un insumo",
-     *     description="Trae el insumo con su tipo, sus relaciones dinámicas y `model_types`. Hoy responde **500** si el tipo de insumo tiene campos `selectdinamic` (TELA, ROLLO…), porque el modelo `Supply` no tiene el método `related()` (ver pendientes).",
+     *     description="Trae el insumo con su tipo y sus relaciones dinámicas (cada una por su nombre, por ejemplo `color`, y por el campo, `color_id`).",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
@@ -468,7 +464,7 @@ class SupplyController extends Controller
      *     path="/typification/supply_types/supplies/export/{supply_type_id}",
      *     tags={"Typification › Supplies"},
      *     summary="Exportar a Excel los insumos de un tipo",
-     *     description="Descarga `supplys.xlsx`: una hoja con los insumos del tipo y, por cada campo `selectdinamic` múltiple del formulario, una hoja con sus relaciones. Sirve también como plantilla para importar.",
+     *     description="Descarga `insumos.xlsx`: una hoja con los insumos del tipo y, por cada campo `selectdinamic` múltiple del formulario, una hoja con sus relaciones. Sirve también como plantilla para importar.",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
      *         name="supply_type_id",
@@ -497,7 +493,7 @@ class SupplyController extends Controller
      */
     public function export(SupplyExcelRequest $request, $supply_type_id)
     {
-        return Excel::download(new SupplyExport($supply_type_id), 'supplys.xlsx');
+        return Excel::download(new SupplyExport($supply_type_id), 'insumos.xlsx');
     }
 
     /**
@@ -505,7 +501,7 @@ class SupplyController extends Controller
      *     path="/typification/supply_types/supplies/import/{supply_type_id}",
      *     tags={"Typification › Supplies"},
      *     summary="Importar insumos desde Excel",
-     *     description="Lee el archivo (mismo formato que la exportación), valida todas las filas y, si no hay errores, crea o actualiza cada insumo por su nombre dentro de una transacción. Si hay errores, responde 422 con un reporte en texto (`file`, ruta en el disco `public`). **Hoy siempre responde 422**: el controlador valida la lista con la clave `supplys` y las reglas esperan `supplies` (ver pendientes). El archivo no se valida y el `{supply_type_id}` inexistente responde 404.",
+     *     description="Lee el archivo (mismo formato que la exportación), valida todas las filas y, si no hay errores, crea o actualiza cada insumo por su nombre. Si hay errores, responde 422 con un reporte en texto (`file`, ruta en el disco `public`). El archivo debe ser un Excel (.xlsx) y el `{supply_type_id}` inexistente responde 404.",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
      *         name="supply_type_id",
@@ -546,7 +542,7 @@ class SupplyController extends Controller
      *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
-    public function import(Request $request, $supply_type_id)
+    public function import(SupplyImportRequest $request, $supply_type_id)
     {
         try {
             $supply_type = SupplyType::findOrFail($supply_type_id);
@@ -557,14 +553,20 @@ class SupplyController extends Controller
 
             $formRequest = new SupplySaveRequest;
 
-            $supplys = $import->builder()->build();
+            $supplies = $import->builder()->build();
 
-            $duplicates = $import->builder()->duplicateSupplys();
+            $duplicates = $import->builder()->duplicateSupplies();
+
+            // El Request se arma a mano: se le cargan los datos para que sus reglas dinámicas los lean
+            $formRequest->merge([
+                'supply_type_id' => $supply_type_id,
+                'supplies' => $supplies,
+            ]);
 
             $validator = Validator::make(
                 [
                     'supply_type_id' => $supply_type_id,
-                    'supplys' => $supplys,
+                    'supplies' => $supplies,
                 ],
                 $formRequest->rules(),
                 $formRequest->messages(),
@@ -580,7 +582,7 @@ class SupplyController extends Controller
             if ($validator->fails()) {
                 $path = app(ImportErrorReport::class)->generate(
                     $validator->errors()->toArray(),
-                    $supplys,
+                    $supplies,
                     $supply_type
                 );
 
@@ -591,37 +593,35 @@ class SupplyController extends Controller
                 ], 422);
             }
 
-            DB::transaction(function () use ($supplys, $supply_type_id) {
-                foreach ($supplys as $item) {
-                    $supply = Supply::updateOrCreate(
-                        ['name' => $item['name']],
-                        [
-                            'description' => $item['description'],
-                            'settings' => $item['settings'] ?? null,
-                        ]
-                    );
+            foreach ($supplies as $item) {
+                $supply = Supply::updateOrCreate(
+                    ['name' => $item['name']],
+                    [
+                        'description' => $item['description'],
+                        'settings' => $item['settings'] ?? (object) [],
+                    ]
+                );
 
-                    $supply->auditSync('supply_type', $supply_type_id);
+                $supply->auditSync('supply_type', $supply_type_id);
 
-                    $supply->load(['supply_type']);
+                $supply->load(['supply_type']);
 
-                    collect($supply->supply_type->first()?->settings?->form ?? [])
-                        ->where('type', 'selectdinamic')
-                        ->each(function ($relationship) use ($supply, $item) {
-                            if (Arr::has($item, "class.$relationship->field")) {
-                                $supply->related($relationship->model)
-                                    ->sync(
-                                        Arr::wrap(
-                                            Arr::get($item, "class.$relationship->field")
-                                        )
-                                    );
-                            }
-                        });
-                }
-            });
+                collect($supply->supply_type->first()?->settings?->form ?? [])
+                    ->where('type', 'selectdinamic')
+                    ->each(function ($relationship) use ($supply, $item) {
+                        if (Arr::has($item, "class.$relationship->field")) {
+                            $supply->related($relationship->model)
+                                ->sync(
+                                    Arr::wrap(
+                                        Arr::get($item, "class.$relationship->field")
+                                    )
+                                );
+                        }
+                    });
+            }
 
             return $this->successResponse(
-                $supplys,
+                $supplies,
                 $this->getMessage('Success'),
                 200
             );

@@ -46,7 +46,7 @@ class BuilderCollection extends ResourceCollection
             ->get()
             ->keyBy('id');
 
-        $subcategories = Subcategory::whereIn('id', $subcategory_ids)
+        $subcategories = Subcategory::with(['category'])->whereIn('id', $subcategory_ids)
             ->get()
             ->keyBy('id');
 

@@ -23,6 +23,10 @@ class OperationResource extends JsonResource
                 'updated_at' => $this->formatDate($this->updated_at),
                 'deleted_at' => $this->formatDate($this->deleted_at),
                 'item' => $this->item,
+                'subprocess' => $this->subprocess,
+                'before_operations' => $this->before_operations,
+                'after_operations' => $this->after_operations,
+                'after_subprocesses' => $this->after_subprocesses,
             ],
             'model_types' => $this->getModelTypes(),
         ];

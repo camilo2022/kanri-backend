@@ -6,9 +6,11 @@ use App\Models\AccountType;
 use App\Models\Bank;
 use App\Models\BloodType;
 use App\Models\DocumentType;
+use App\Models\FileSubtype;
 use App\Models\Gender;
 use App\Models\Supplier;
 use App\Models\SupplierType;
+use App\Services\PersonService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -45,14 +47,19 @@ class SupplierStoreRequest extends FormRequest
 
             $rules['person'] = ['required', 'array'];
             $rules['person.document_type_id'] = ['required', 'numeric', 'exists:subitems,id,item_id,'.DocumentType::ITEM_ID.',deleted_at,NULL'];
-            $rules['person.document'] = ['required', 'numeric', 'digits_between:5,14', 'unique:people,document'];
+            $rules['person.document'] = ['required', 'string', 'max:30', 'unique:people,document'];
+            $rules['person.email'] = ['required', 'string', 'email', 'max:255', 'unique:people,email'];
             $rules['person.names'] = ['required', 'string', 'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/'];
             $rules['person.last_names'] = ['required', 'string', 'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/'];
             $rules['person.gender_id'] = ['required', 'numeric', 'exists:subitems,id,item_id,'.Gender::ITEM_ID.',deleted_at,NULL'];
             $rules['person.birth_date'] = ['required', 'date', 'date_format:Y-m-d', 'before:now'];
             $rules['person.blood_type_id'] = ['required', 'numeric', 'exists:subitems,id,item_id,'.BloodType::ITEM_ID.',deleted_at,NULL'];
+            $rules['person.location_type'] = ['required', 'string', 'in:'.implode(',', array_keys(PersonService::LOCATION_TYPES))];
+            $rules['person.location_id'] = ['required', 'integer'];
             $rules['person.address'] = ['required', 'string', 'max:255'];
-            $rules['person.phone'] = ['required', 'numeric', 'digits:10'];
+            $rules['person.neighborhood'] = ['nullable', 'string', 'uppercase', 'max:100'];
+            $rules['person.phone_country_id'] = ['required', 'integer', 'exists:countries,id'];
+            $rules['person.phone'] = ['required', 'string', 'max:20'];
 
         }
 
@@ -64,26 +71,11 @@ class SupplierStoreRequest extends FormRequest
             $rules['account_bank.account_type_id'] = ['required', 'numeric', 'exists:subitems,id,item_id,'.AccountType::ITEM_ID.',deleted_at,NULL'];
             $rules['account_bank.bank_certificate'] = ['required', 'array'];
             $rules['account_bank.bank_certificate.file'] = ['required', 'file', 'mimes:pdf', 'max:10240'];
+            $rules['account_bank.bank_certificate.file_subtype_id'] = ['required', 'numeric', 'exists:subitems,id,item_id,'.FileSubtype::ITEM_ID.',deleted_at,NULL'];
 
         }
 
         return $rules;
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'numeric' => 'Debe ser un número.',
-            'exists' => 'No hay ningún registro.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.',
-            'uppercase' => 'El campo debe estar en mayúsculas.',
-            'digits_between' => 'Debe tener entre 2 y 5 dígitos.',
-            'digits' => 'Debe tener :digits números',
-        ];
     }
 
     public function attributes(): array
@@ -113,25 +105,28 @@ class SupplierStoreRequest extends FormRequest
                 }
             }
 
-            if (filled($this->input('person.document_type_id')) && filled($this->input('person.document'))) {
-                $document_type = DocumentType::find($this->input('person.document_type_id'));
-                $document = $this->input('person.document');
-                $isValid = false;
-                $messages = [];
+            // Persona de contacto: mismas reglas que una persona (documento según su tipo, teléfono según su país, ubicación al último nivel)
+            if ($this->has('person')) {
+                $service = app(PersonService::class);
 
-                foreach ($document_type?->settings?->validations ?? [] as $item) {
-                    if (preg_match($item->regex, $document)) {
-                        $isValid = true;
-                        break;
-                    }
-                    $messages[] = $item->message;
+                if (! $validator->errors()->has('person.document_type_id') && ! $validator->errors()->has('person.document')
+                    && ($error = $service->documentError($this->integer('person.document_type_id'), (string) $this->input('person.document')))) {
+                    $validator->errors()->add('person.document', $error);
                 }
 
-                if (! $isValid) {
-                    $validator->errors()->add(
-                        'person.document',
-                        implode("\n", $messages)
-                    );
+                if (! $validator->errors()->has('person.phone_country_id') && ! $validator->errors()->has('person.phone')
+                    && ($error = $service->phoneError($this->integer('person.phone_country_id'), (string) $this->input('person.phone')))) {
+                    $validator->errors()->add('person.phone', $error);
+                }
+
+                if (! $validator->errors()->has('person.location_type') && ! $validator->errors()->has('person.location_id')
+                    && ($error = $service->locationError((string) $this->input('person.location_type'), $this->integer('person.location_id')))) {
+                    $validator->errors()->add('person.location_id', $error);
+                }
+
+                if (! $validator->errors()->has('person.location_id') && ! $validator->errors()->has('person.phone_country_id')
+                    && $service->locationCountryId((string) $this->input('person.location_type'), $this->integer('person.location_id')) !== $this->integer('person.phone_country_id')) {
+                    $validator->errors()->add('person.phone_country_id', 'El indicativo del teléfono debe ser el del país de la ubicación.');
                 }
             }
 
@@ -175,5 +170,12 @@ class SupplierStoreRequest extends FormRequest
                 );
             }
         });
+    }
+
+    protected function passedValidation()
+    {
+        if ($this->has('person')) {
+            $this->merge(['person' => ['location_type' => PersonService::LOCATION_TYPES[$this->input('person.location_type')]] + $this->input('person')]);
+        }
     }
 }

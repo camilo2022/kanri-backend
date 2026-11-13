@@ -26,19 +26,8 @@ class GenderStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'min:1', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Gender::ITEM_ID],
-            'description' => ['required', 'string', 'max:255']
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.'
+            'name' => ['required', 'uppercase', 'string', 'min:1', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Gender::ITEM_ID],
+            'description' => ['required', 'uppercase', 'string', 'max:255']
         ];
     }
 

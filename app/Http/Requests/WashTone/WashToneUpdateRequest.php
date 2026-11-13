@@ -26,7 +26,7 @@ class WashToneUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'numeric', 'string', 'exists:subitems,id,item_id,' . WashTone::ITEM_ID],
+            'id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . WashTone::ITEM_ID],
             'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . WashTone::ITEM_ID],
             'description' => ['required', 'string', 'max:255', 'uppercase'],
             'settings' => ['required', 'array'],
@@ -34,24 +34,10 @@ class WashToneUpdateRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'array' => 'Debe ser una lista de datos.',
-            'numeric' => 'Debe ser un dato númerico.',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.',
-            'uppercase' => 'El campo debe estar en mayúsculas.',
-            'digits_between' => 'Debe tener entre 2 y 5 dígitos.',
-        ];
-    }
-
     public function attributes(): array
     {
         return [
+            'id' => 'Identificador del tono de lavado',
             'name' => 'Nombre',
             'description' => 'Descripción',
             'settings' => 'Configuraciones',
@@ -62,5 +48,27 @@ class WashToneUpdateRequest extends FormRequest
     protected function prepareForValidation()
     {
         $this->merge(['id' => $this->route('id')]);
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+
+            if (!$this->filled('settings.code')) {
+                return;
+            }
+
+            $exists = WashTone::withTrashed()
+                ->where('settings->code', $this->input('settings.code'))
+                ->whereKeyNot($this->route('id'))
+                ->exists();
+
+            if ($exists) {
+                $validator->errors()->add(
+                    'settings.code',
+                    'El código ya se encuentra registrado.'
+                );
+            }
+        });
     }
 }

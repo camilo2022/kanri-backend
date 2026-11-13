@@ -2,12 +2,14 @@
 
 namespace App\Http\Requests\Rule;
 
+use App\Models\Operation;
 use App\Models\Process;
 use App\Models\Rule;
 use App\Models\Subprocess;
+use App\Services\ProductivityDetailService;
+use App\Services\StandardRuleService;
 use App\Traits\ModelTypes;
 use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
@@ -36,30 +38,19 @@ class RuleUpdateRequest extends FormRequest
             'rule_id' => ['required', 'exists:subitems,id,item_id,'.Rule::ITEM_ID],
             'name' => ['required', 'uppercase', 'string', 'min:4', 'max:150', 'unique:subitems,name,'.$this->route('id').',id,item_id,'.Rule::ITEM_ID],
             'settings' => ['required', 'array'],
-            'settings.people' => ['required', 'numeric', 'min:1'],
-            'settings.time_unit' => ['required', 'string', 'in:seg,min'],
-            'settings.time' => ['required', 'numeric', 'min:1'],
+            'settings.capacities' => ['required', 'array', 'min:1'],
+            'settings.capacities.*.people' => ['required', 'integer', 'min:1', 'distinct'],
+            'settings.capacities.*.time' => ['required', 'numeric', 'gt:0'],
+            'settings.capacities.*.time_unit' => ['required', 'string', 'in:seg,min'],
             'relations.process' => ['required', 'exists:subitems,id,item_id,'.Process::ITEM_ID],
-            'signature' => ['required', 'unique:subitems,settings->signature,'.$this->route('id').',id,item_id,'.Rule::ITEM_ID],
+            'signature' => ['required', 'string'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'settings.time.min' => 'Debe ser mayor o igual a :min.',
-            'settings.people.min' => 'Debe ser mayor o igual a :min.',
             'name.min' => 'Se permite mínimo :min caracteres.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'unique' => 'Ya está registrado.',
-            'exists' => 'No está registrado.',
-            'uppercase' => 'Debe de ingresar mayúsculas.',
-            'array' => 'Debe ser un arreglo.',
-            'numeric' => 'Debe ser un valor numérico.',
-            'digits_between' => 'Debe tener entre 2 y 5 dígitos.',
-            'signature.unique' => 'Ya existe una regla con esta misma combinación de relaciones.',
         ];
     }
 
@@ -70,12 +61,66 @@ class RuleUpdateRequest extends FormRequest
             'name' => 'Nombre',
             'description' => 'Descripción',
             'settings' => 'Configuraciones',
+            'settings.capacities' => 'Capacidades',
+            'settings.capacities.*.people' => 'Personas',
+            'settings.capacities.*.time' => 'Tiempo',
+            'settings.capacities.*.time_unit' => 'Unidad de tiempo',
             'settings.code' => 'Código',
         ];
     }
 
     public function withValidator($validator)
     {
+        // Capacidades: por unidades una sola; por lotes, a más personas menos tiempo
+        $validator->after(function ($validator) {
+            $capacities = $this->input('settings.capacities');
+
+            if (! is_array($capacities) || collect($validator->errors()->keys())->contains(fn ($key) => str_starts_with($key, 'settings.capacities'))) {
+                return;
+            }
+
+            // La medición es la del alcance más específico de la regla (operación, subproceso o proceso), con herencia
+            $scope = Operation::find($this->input('relations.operation'))
+                ?? Subprocess::find($this->input('relations.subprocess'))
+                ?? Process::find($this->input('relations.process'));
+
+            if (! $scope || app(ProductivityDetailService::class)->measurementOf($scope) !== 'lots') {
+                if (count($capacities) > 1) {
+                    $validator->errors()->add('settings.capacities', 'Un puesto que no se mide por lotes tiene una sola capacidad.');
+                }
+
+                return;
+            }
+
+            $sorted = collect($capacities)
+                ->map(fn ($capacity, $index) => [
+                    'index' => $index,
+                    'people' => (int) $capacity['people'],
+                    'time' => (float) $capacity['time'],
+                    'time_unit' => $capacity['time_unit'],
+                    'seconds' => (float) $capacity['time'] * ($capacity['time_unit'] === 'min' ? 60 : 1),
+                ])
+                ->sortBy('people')
+                ->values();
+
+            foreach ($sorted as $position => $capacity) {
+                $previous = $sorted[$position - 1] ?? null;
+
+                if ($previous && $capacity['seconds'] >= $previous['seconds']) {
+                    $validator->errors()->add(
+                        "settings.capacities.{$capacity['index']}.time",
+                        sprintf(
+                            'Con %d personas el tiempo debe ser menor que con %d personas (%s %s).',
+                            $capacity['people'],
+                            $previous['people'],
+                            rtrim(rtrim(number_format($previous['time'], 2, ',', '.'), '0'), ','),
+                            $previous['time_unit']
+                        )
+                    );
+                }
+            }
+        });
+
         $validator->after(function ($validator) {
             $item = DB::table('items')->where('id', Rule::ITEM_ID)->first();
 
@@ -133,33 +178,7 @@ class RuleUpdateRequest extends FormRequest
                 }
             }
 
-            $class_to_key = collect($models)->mapWithKeys(fn ($config, $key) => [$config['model'] => $key]);
-
-            // Se excluye la regla que se está editando para no compararla con su propia firma.
-            $rule_ids = DB::table('subitems')
-                ->where('item_id', Rule::ITEM_ID)
-                ->where('id', '!=', $this->route('id'))
-                ->whereNull('deleted_at')
-                ->pluck('id');
-
-            $existing_signatures = DB::table('model_has_subitems')
-                ->whereIn('subitem_id', $rule_ids)
-                ->get(['subitem_id', 'model_type', 'model_id'])
-                ->groupBy('subitem_id')
-                ->map(function ($rows) use ($class_to_key) {
-                    return $rows
-                        ->mapWithKeys(function ($row) use ($class_to_key) {
-                            $class = Relation::getMorphedModel($row->model_type) ?? $row->model_type;
-                            $key = $class_to_key[$class] ?? null;
-
-                            return $key ? [$key => $row->model_id] : [];
-                        })
-                        ->sortKeys()
-                        ->map(fn ($value, $key) => "$key:$value")
-                        ->implode('|');
-                });
-
-            if ($existing_signatures->contains($this->input('signature'))) {
+            if (app(StandardRuleService::class)->activeSignatures((int) $this->route('id'))->contains($this->input('signature'))) {
                 $validator->errors()->add('signature', 'Ya existe una regla con esta misma combinación de relaciones.');
             }
         });

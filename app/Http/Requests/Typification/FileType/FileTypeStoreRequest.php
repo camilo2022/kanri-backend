@@ -31,18 +31,6 @@ class FileTypeStoreRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.',
-            'uppercase' => 'Debe de ingresar mayúsculas.',
-        ];
-    }
-
     public function attributes(): array
     {
         return [

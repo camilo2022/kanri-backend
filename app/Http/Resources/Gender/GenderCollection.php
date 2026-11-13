@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Gender;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class GenderCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Gender::class, $this->collection->pluck('id')->all());
         return [
-            'genders' => $this->collection->map(function ($gender) {
+            'genders' => $this->collection->map(function ($gender) use ($audited) {
                 return [
                     'id' => $gender->id,
+                    'has_audits' => isset($audited[$gender->id]),
                     'item_id' => $gender->item_id,
                     'name' => $gender->name,
                     'description' => $gender->description,

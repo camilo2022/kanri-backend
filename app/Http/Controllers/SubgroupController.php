@@ -117,7 +117,7 @@ class SubgroupController extends Controller
     public function all(SubgroupAllRequest $request)
     {
         try {
-            $subgroups = Subgroup::when($request->filled('search'), function ($query) use ($request) {
+            $subgroups = Subgroup::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {

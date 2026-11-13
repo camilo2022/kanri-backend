@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
@@ -72,12 +72,14 @@ class MovementDetail extends Model implements Auditable
 
     public function movement_detail_quantities(): HasMany
     {
-        return $this->hasMany(MovementDetailQuantity::class);
+        return $this->hasMany(MovementDetailQuantity::class)->whereNotNull('size_id');
     }
 
-    /**
-     * Regla estándar con la que se midió el trabajo (cuando el detalle viene de la productividad de un turno).
-     */
+    public function counter(): HasOne
+    {
+        return $this->hasOne(MovementDetailQuantity::class)->whereNull('size_id');
+    }
+
     public function rules(): MorphToMany
     {
         return $this->morphToMany(Rule::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
@@ -97,57 +99,6 @@ class MovementDetail extends Model implements Auditable
             ->where('audits.auditable_type', self::class)
             ->where('audits.event', 'updated')
             ->where('audits.user_type', User::class);
-    }
-
-    public function scopeSearch(Builder $query, ?string $search = null): Builder
-    {
-        $search = trim((string) $search);
-
-        if ($search === '') {
-            return $query;
-        }
-
-        $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
-
-        return $query->where(function (Builder $q) use ($terms) {
-
-            foreach ($terms as $term) {
-
-                $q->where(function (Builder $sq) use ($term) {
-
-                    $sq->where('consecutive', 'LIKE', "%{$term}%")
-                        ->orWhere('cut', 'LIKE', "%{$term}%")
-
-                        // MARCA
-                        ->orWhereHas('model', function (Builder $query) use ($term) {
-                            $query->where('name', 'LIKE', "%{$term}%");
-                        })
-
-                        // MARCA
-                        ->orWhereHas('model.trademark', function (Builder $query) use ($term) {
-                            $query->where('name', 'LIKE', "%{$term}%");
-                        })
-
-                        // COLECCIÓN
-                        ->orWhereHas('model.technical_sheet.collection', function (Builder $query) use ($term) {
-                            $query->where('name', 'LIKE', "%{$term}%");
-                        })
-
-                        // TIPO DE PRENDA
-                        ->orWhereHas('model.technical_sheet.product.subcategory', function (Builder $query) use ($term) {
-                            $query->where('name', 'LIKE', "%{$term}%");
-                        })
-
-                        // POSICIÓN
-                        ->orWhereHas('position', function (Builder $query) use ($term) {
-                            $query->where('name', 'LIKE', "%{$term}%")
-                                ->orWhereHas('area', function (Builder $areaQuery) use ($term) {
-                                    $areaQuery->where('name', 'LIKE', "%{$term}%");
-                                });
-                        });
-                });
-            }
-        });
     }
 
     public static function statuses()

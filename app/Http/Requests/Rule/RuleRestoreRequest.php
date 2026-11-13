@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Rule;
 
 use App\Models\Rule;
+use App\Services\StandardRuleService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -31,19 +32,27 @@ class RuleRestoreRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'exists' => 'No hay ningún registro.',
-        ];
-    }
-
     public function attributes(): array
     {
         return [
             'id' => 'Identificador de la regla',
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        // Al activarla no puede repetir la combinación de relaciones de otra regla activa
+        $validator->after(function ($validator) {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            $service = app(StandardRuleService::class);
+
+            if ($service->activeSignatures()->contains($service->signatureOf((int) $this->input('id')))) {
+                $validator->errors()->add('id', 'Ya existe una regla activa con esta misma combinación de relaciones.');
+            }
+        });
     }
 
     protected function prepareForValidation()

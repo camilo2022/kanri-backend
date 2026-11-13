@@ -41,17 +41,6 @@ class OperationSettingRequest extends FormRequest
     public function messages()
     {
         return [
-            'required' => 'Es requerido.',
-            'required_with' => 'Es requerido.',
-            'string' => 'Debe ser una cadena de caracteres.',
-            'distinct'  => 'Ya ha sido tomado en otra validación.',
-            'unique' => 'Ya ha sido tomado.',
-            'numeric' => 'Debe ser un valor numérico.',
-            'array' => 'Debe ser una lista de datos.',
-            'max' => 'No debe exceder los :max caracteres.',
-            'min' => 'Debe tener minimo :min elementos.',
-            'uppercase' => 'El campo debe estar en mayúsculas.',
-            'lowercase' => 'El campo debe estar en mayúsculas.',
             'regex' => 'Formato inválido. Solo letras minúsculas y guiones bajos (_).',
         ];
     }

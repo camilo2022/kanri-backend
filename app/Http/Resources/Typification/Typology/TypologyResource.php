@@ -2,13 +2,11 @@
 
 namespace App\Http\Resources\Typification\Typology;
 
-use App\Traits\ModelTypes;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class TypologyResource extends JsonResource
 {
-    use ModelTypes;
 
     public function toArray($request)
     {
@@ -25,7 +23,6 @@ class TypologyResource extends JsonResource
                 'item' => $this->item,
                 'processes' => $this->processes,
             ],
-            'model_types' => $this->getModelTypes(),
         ];
     }
 

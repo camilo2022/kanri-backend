@@ -15,12 +15,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('products', function (Blueprint $table) {
-            $table->id();
-            $table->string('code')->unique();
-            $table->foreignIdFor(Trademark::class)->constrained()->onUpdate('cascade')->comment('Marca');
-            $table->foreignIdFor(Subcategory::class)->constrained()->onUpdate('cascade')->comment('Item');
-            $table->timestamps();
-            $table->softDeletes();
+            $table->id()->comment('Identificador');
+            $table->string('code')->unique()->comment('Código');
+            $table->foreignIdFor(Trademark::class)->comment('Marca')->constrained()->onUpdate('cascade');
+            $table->foreignIdFor(Subcategory::class)->comment('Subcategoría')->constrained()->onUpdate('cascade');
+            $table->timestamp('created_at')->nullable()->comment('Fecha de creación');
+            $table->timestamp('updated_at')->nullable()->comment('Fecha de actualización');
+            $table->softDeletes()->comment('Fecha de desactivación');
         });
     }
 

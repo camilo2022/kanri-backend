@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Typification\PersonType;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class PersonTypeCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\PersonType::class, $this->collection->pluck('id')->all());
         return [
-            'person_types' => $this->collection->map(function ($person_type) {
+            'person_types' => $this->collection->map(function ($person_type) use ($audited) {
                 return [
                     'id' => $person_type->id,
+                    'has_audits' => isset($audited[$person_type->id]),
                     'item' => $person_type->item,
                     'name' => $person_type->name,
                     'description' => $person_type->description,

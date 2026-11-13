@@ -55,44 +55,12 @@ use App\Traits\ApiResponser;
  * )
  *
  * @OA\Schema(
- *     schema="CollectionDetail",
- *     description="Colección como la entrega `CollectionResource`: incluye sus fichas técnicas.",
- *     allOf={
- *         @OA\Schema(ref="#/components/schemas/Collection"),
- *         @OA\Schema(
- *             @OA\Property(
- *                 property="technical_sheets",
- *                 type="array",
- *                 description="Fichas técnicas de la colección. En `find` cada ficha trae además `technical_sheet_details`, `product` (con `trademark.sizes` y `subcategory.category`), `garment_type`, `wash_tone`, `boot_type`, `photo_d`, `photo_t`, `products` y `production_orders` (con detalles, cantidades, tela, color, proveedor y reasignaciones). En store/update/delete/restore vienen sin relaciones.",
- *                 @OA\Items(
- *                     type="object",
- *                     additionalProperties=true,
- *                     @OA\Property(property="id", type="integer", example=905),
- *                     @OA\Property(property="uuid", type="string", format="uuid", example="3f6d2a1c-8b4e-4c7a-9e21-6a5b0d4c2f18"),
- *                     @OA\Property(property="code", type="string", example="CU85"),
- *                     @OA\Property(property="collection_id", type="integer", example=118),
- *                     @OA\Property(property="product_id", type="integer", example=1460),
- *                     @OA\Property(property="status", type="string", enum={"Pendiente", "En revision", "Aprobado", "Cancelado"}, example="En revision")
- *                 )
- *             )
- *         )
- *     }
- * )
- *
- * @OA\Schema(
  *     schema="CollectionResponse",
  *     type="object",
  *     @OA\Property(
  *         property="data",
  *         type="object",
- *         @OA\Property(property="collection", ref="#/components/schemas/CollectionDetail"),
- *         @OA\Property(
- *             property="status_production_order",
- *             type="array",
- *             description="Catálogo fijo de estados de una orden de producción.",
- *             @OA\Items(type="string"),
- *             example={"Pendiente", "Cancelado", "Aprobado"}
- *         )
+ *         @OA\Property(property="collection", ref="#/components/schemas/Collection")
  *     ),
  *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
  *     @OA\Property(property="error", type="boolean", example=false)
@@ -119,7 +87,7 @@ use App\Traits\ApiResponser;
  *         property="name",
  *         type="string",
  *         pattern="^C\d(19\d{2}|20([0-1]\d|2[0-6]))$",
- *         description="`C`, un dígito y el año (de 1900 a 2026; ver pendientes). Único entre las colecciones.",
+ *         description="`C`, un dígito y el año (19xx o 20xx). Único entre las colecciones.",
  *         example="C32026"
  *     ),
  *     @OA\Property(property="description", type="string", maxLength=255, description="Descripción en MAYÚSCULAS.", example="COLECCIÓN PRIMAVERA DENIM"),
@@ -224,8 +192,7 @@ class CollectionController extends Controller
     public function find(CollectionFindRequest $request, $id)
     {
         try {
-            $collection = Collection::with(['item', 'technical_sheets' => ['technical_sheet_details', 'product' => ['trademark' => ['sizes'], 'subcategory' => ['category']], 'garment_type', 'wash_tone', 'boot_type',  'photo_d', 'photo_t', 'products', 'production_orders' => ['production_order_details' => ['production_order_detail_quantities', 'model'], 'fabric' => ['model'], 'color', 'supplier', 'reassignments']]])
-                ->findOrFail($id);
+            $collection = Collection::with(['item'])->findOrFail($id);
 
             return $this->successResponse(
                 new CollectionResource($collection),
@@ -255,7 +222,7 @@ class CollectionController extends Controller
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="Colección creada correctamente. `technical_sheets` llega vacío.",
+     *         description="Colección creada correctamente",
      *         @OA\JsonContent(ref="#/components/schemas/CollectionResponse")
      *     ),
      *     @OA\Response(
@@ -306,7 +273,7 @@ class CollectionController extends Controller
      *     path="/collections/update/{id}",
      *     tags={"Collections"},
      *     summary="Editar una colección",
-     *     description="**Hoy solo guarda `name` y `description`.** `settings` se valida (código único, fechas sin cruce) pero no se guarda (ver pendientes). Responde 201, no 200.",
+     *     description="Guarda nombre, descripción y `settings`. El código es único y las fechas no se cruzan con otra colección (activa o desactivada); las colecciones sin fechas no cuentan.",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
@@ -317,7 +284,7 @@ class CollectionController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=201,
+     *         response=200,
      *         description="Colección editada correctamente",
      *         @OA\JsonContent(ref="#/components/schemas/CollectionResponse")
      *     ),
@@ -344,13 +311,14 @@ class CollectionController extends Controller
             $collection = Collection::findOrFail($id);
             $collection->name = $request->input('name');
             $collection->description = $request->input('description');
+            $collection->settings = $request->input('settings');
 
             $collection->save();
 
             return $this->successResponse(
                 new CollectionResource($collection),
                 $this->getMessage('Success'),
-                201
+                200
             );
         } catch (\Throwable $e) {
             return $this->errorResponse(

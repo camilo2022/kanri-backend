@@ -35,21 +35,15 @@ class ProductivityAllRequest extends FormRequest
                 Operation::class => Operation::ITEM_ID,
                 default => 0,
             }],
-            'per_page' => ['nullable', 'numeric'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
+            // Turnos de un día (tableros)
+            'date' => ['nullable', 'date_format:Y-m-d'],
+            // Rango de fechas del listado de turnos
+            'date_from' => ['nullable', 'date_format:Y-m-d'],
+            'date_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'page' => ['nullable', 'numeric'],
             'column' => ['nullable', 'string', 'in:id,date,start_time,end_time,created_at,updated_at'],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'numeric' => 'Debe ser un valor numérico.',
-            'in' => 'Valor inválido. Permitidos: :values.',
-            'exists' => 'No hay ningún registro.',
         ];
     }
 
@@ -60,6 +54,9 @@ class ProductivityAllRequest extends FormRequest
             'model_id' => 'Identificador del elemento.',
             'per_page' => 'Registros por página.',
             'page' => 'N° de página.',
+            'date' => 'Fecha del turno.',
+            'date_from' => 'Fecha desde.',
+            'date_to' => 'Fecha hasta.',
             'column' => 'Columna a ordenar.',
             'dir' => 'Sentido del orden.',
         ];

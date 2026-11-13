@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Typification\Typology;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class TypologyCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Typology::class, $this->collection->pluck('id')->all());
         return [
-            'typologies' => $this->collection->map(function ($typology) {
+            'typologies' => $this->collection->map(function ($typology) use ($audited) {
                 return [
                     'id' => $typology->id,
+                    'has_audits' => isset($audited[$typology->id]),
                     'item' => $typology->item,
                     'name' => $typology->name,
                     'description' => $typology->description,

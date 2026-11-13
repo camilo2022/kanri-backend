@@ -24,26 +24,24 @@ class User extends Authenticatable implements Auditable
 
     protected $fillable = [
         'employee_id',
-        'email',
+        'username',
         'password',
     ];
 
     protected $auditInclude = [
         'employee_id',
-        'email',
+        'username',
         'password',
     ];
 
     protected $hidden = [
         'password',
-        'email_verified_at',
         'remember_token',
     ];
 
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -64,19 +62,23 @@ class User extends Authenticatable implements Auditable
         return $this->belongsTo(Employee::class);
     }
 
+    /**
+     * Procesos, subprocesos y operaciones del usuario. En model_has_subitems el elemento del flujo va en subitem_id
+     * (su llave foránea es a subitems) y el usuario en model_type/model_id.
+     */
     public function processes(): MorphToMany
     {
-        return $this->morphedByMany(Process::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
+        return $this->morphToMany(Process::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
     }
 
     public function subprocesses(): MorphToMany
     {
-        return $this->morphedByMany(Subprocess::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
+        return $this->morphToMany(Subprocess::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
     }
 
     public function operations(): MorphToMany
     {
-        return $this->morphedByMany(Operation::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
+        return $this->morphToMany(Operation::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
     }
 
     public function scopeSearch(Builder $query, ?string $search = null): Builder
@@ -85,19 +87,32 @@ class User extends Authenticatable implements Auditable
         if ($search === '') {
             return $query;
         }
-
-        $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
+         
+        $terms = [preg_replace('/\s+/', ' ', $search)];
 
         return $query->where(function (Builder $q) use ($terms) {
             foreach ($terms as $term) {
                 $q->orWhere(function (Builder $sq) use ($term) {
-                    $sq->orWhere('email', 'LIKE', '%'.$term.'%')
+                    $sq->orWhere('username', 'LIKE', '%'.ltrim($term, '@').'%')
                         ->orWhereHas('employee.person', function (Builder $employeeQuery) use ($term) {
                             $employeeQuery->where('names', 'LIKE', "%{$term}%")
-                                ->orWhere('last_names', 'LIKE', "%{$term}%");
+                                ->orWhere('last_names', 'LIKE', "%{$term}%")
+                                ->orWhereRaw("CONCAT_WS(' ', names, last_names) LIKE ?", ["%{$term}%"]);
                         });
                 });
             }
         });
+    }
+
+    /** La auditoría deja constancia del cambio de contraseña, nunca su hash. */
+    public function transformAudit(array $data): array
+    {
+        foreach (['old_values', 'new_values'] as $side) {
+            if (isset($data[$side]['password'])) {
+                $data[$side]['password'] = 'Cambiada';
+            }
+        }
+
+        return $data;
     }
 }

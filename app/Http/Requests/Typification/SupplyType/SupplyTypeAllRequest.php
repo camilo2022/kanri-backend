@@ -25,7 +25,7 @@ class SupplyTypeAllRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'per_page' => ['nullable', 'numeric'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
             'column' => ['nullable', 'string', 'in:id,name,description,created_at,updated_at,deleted_at'],
@@ -33,17 +33,6 @@ class SupplyTypeAllRequest extends FormRequest
             'with_trashed' => ['required', 'boolean'],
             'in_technical_sheet' => ['nullable', 'boolean'],
             'in_production_order' => ['nullable', 'boolean']
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'numeric' => 'Debe ser un valor numérico.',
-            'in' => 'Valor inválido. Permitidos: :values.',
-            'boolean' => 'Deber ser verdadero o falso.'
         ];
     }
 

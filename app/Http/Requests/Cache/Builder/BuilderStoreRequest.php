@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Size;
 use App\Models\Subcategory;
 use App\Models\Trademark;
+use App\Services\BuilderService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -38,17 +39,6 @@ class BuilderStoreRequest extends FormRequest
             'subcategory_id.*' => ['exists:subitems,id,item_id,'.Subcategory::ITEM_ID.',deleted_at,NULL'],
             'percentages' => ['required', 'array'],
             'percentages.*' => ['required', 'numeric', 'min:0', 'max:100'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'array' => 'Debe ser um array',
-            'numeric' => 'Debe ser un dato numerico',
-            'min' => 'Debe ser minimo :min',
-            'max' => 'Debe ser minimo :max',
         ];
     }
 
@@ -138,78 +128,30 @@ class BuilderStoreRequest extends FormRequest
                 }
             }
 
-            if (empty($category_ids)) {
+            // Claves que tendría el constructor: ninguna puede ser ya de otro (si no, lo sobrescribiría)
+            $index_keys = app(BuilderService::class)->indexKeys([
+                'trademark_ids' => $trademark_ids,
+                'category_ids' => $category_ids,
+                'subcategory_ids' => $subcategory_ids,
+            ]);
 
-                foreach ($trademark_ids as $trademark_id) {
+            foreach ($index_keys as $index_key) {
+                $owner_id = Cache::get($index_key);
 
-                    $cache_key = "curve_builder:index:{$trademark_id}";
-
-                    if (Cache::has($cache_key)) {
-                        $validator->errors()->add(
-                            'trademark_ids',
-                            'Ya existe un constructor para una de las marcas seleccionadas.'
-                        );
-
-                        break;
-                    }
+                if (! $owner_id || $owner_id === null) {
+                    continue;
                 }
-            } elseif (empty($subcategory_ids)) {
-                foreach ($trademark_ids as $trademark_id) {
-                    foreach ($category_ids as $category_id) {
 
-                        $cache_key = 'curve_builder:index:'."{$trademark_id}:"."{$category_id}";
+                [$field, $message] = match (substr_count($index_key, ':')) {
+                    2 => ['trademark_ids', 'Ya existe un constructor para una de las marcas seleccionadas.'],
+                    3 => ['category_ids', 'Ya existe un constructor para una de las combinaciones de marca y categoría seleccionadas.'],
+                    default => ['subcategory_ids', 'Ya existe un constructor para una de las combinaciones seleccionadas.'],
+                };
 
-                        if (Cache::has($cache_key)) {
-                            $validator->errors()->add(
-                                'category_ids',
-                                'Ya existe un constructor para una de las combinaciones de marca y categoría seleccionadas.'
-                            );
+                $validator->errors()->add($field, $message);
 
-                            break 2;
-                        }
-                    }
-                }
-            } else {
-                $subcategories = Subcategory::with('category')
-                    ->whereIn('id', $subcategory_ids)
-                    ->get();
-
-                $builder_ids = Cache::get('curve_builder:ids', []);
-
-                $builders = collect($builder_ids)
-                    ->map(fn ($builder_id) => Cache::get("curve_builder:{$builder_id}"))
-                    ->filter();
-
-                foreach ($trademark_ids as $trademark_id) {
-                    foreach ($subcategories as $subcategory) {
-                        $category_id = $subcategory->category->first()->id;
-
-                        $exists = $builders->contains(function ($builder) use (
-                            $trademark_id,
-                            $category_id,
-                            $subcategory
-                        ) {
-                            return in_array($trademark_id, $builder['trademark_ids'])
-                                && in_array($category_id, $builder['category_ids'])
-                                && in_array($subcategory->id, $builder['subcategory_ids']);
-                        });
-
-                        if ($exists) {
-                            $validator->errors()->add(
-                                'subcategory_ids',
-                                'Ya existe un constructor para una de las combinaciones seleccionadas.'
-                            );
-
-                            break 2;
-                        }
-                    }
-                }
+                break;
             }
         });
-    }
-
-    protected function prepareForValidation()
-    {
-        $this->merge(['pocket_fabric' => $this->boolean('pocket_fabric')]);
     }
 }

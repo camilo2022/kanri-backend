@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Typification\BootType;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class BootTypeCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\BootType::class, $this->collection->pluck('id')->all());
         return [
-            'boot_types' => $this->collection->map(function ($boot_type) {
+            'boot_types' => $this->collection->map(function ($boot_type) use ($audited) {
                 return [
                     'id' => $boot_type->id,
+                    'has_audits' => isset($audited[$boot_type->id]),
                     'item_id' => $boot_type->item_id,
                     'name' => $boot_type->name,
                     'description' => $boot_type->description,

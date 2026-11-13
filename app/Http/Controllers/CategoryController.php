@@ -7,8 +7,6 @@ use App\Http\Requests\Categorization\Category\CategoryDeleteRequest;
 use App\Http\Requests\Categorization\Category\CategoryFindRequest;
 use App\Http\Requests\Categorization\Category\CategoryRestoreRequest;
 use App\Http\Requests\Categorization\Category\CategoryStoreRequest;
-use App\Http\Requests\Categorization\Category\CategorySubcategoryAssignRequest;
-use App\Http\Requests\Categorization\Category\CategorySubcategoryRemoveRequest;
 use App\Http\Requests\Categorization\Category\CategoryUpdateRequest;
 use App\Http\Resources\Categorization\Category\CategoryCollection;
 use App\Http\Resources\Categorization\Category\CategoryResource;
@@ -199,8 +197,6 @@ class CategoryController extends Controller
         try {
             $category = Category::with(['item', 'subcategories'])
                 ->findOrFail($id);
-
-            $category->load(['item', 'subcategories']);
 
             return $this->successResponse(
                 new CategoryResource($category),
@@ -404,56 +400,6 @@ class CategoryController extends Controller
         try {
             $category = Category::withTrashed()->findOrFail($id);
             $category->restore();
-
-            $category->load(['item', 'subcategories']);
-
-            return $this->successResponse(
-                new CategoryResource($category),
-                $this->getMessage('Success'),
-                200
-            );
-        } catch (\Throwable $e) {
-            return $this->errorResponse(
-                [
-                    'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
-                ],
-                $this->getCode(class_basename($e))
-            );
-        }
-    }
-
-    public function subcategory_assign(CategorySubcategoryAssignRequest $request, $id)
-    {
-        try {
-            $category = Category::findOrFail($id);
-
-            $category->auditAttach('subcategories', $request->integer('subcategory_id'));
-
-            $category->load(['item', 'subcategories']);
-
-            return $this->successResponse(
-                new CategoryResource($category),
-                $this->getMessage('Success'),
-                200
-            );
-        } catch (\Throwable $e) {
-            return $this->errorResponse(
-                [
-                    'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
-                ],
-                $this->getCode(class_basename($e))
-            );
-        }
-    }
-
-    public function subcategory_remove(CategorySubcategoryRemoveRequest $request, $id)
-    {
-        try {
-            $category = Category::findOrFail($id);
-
-            $category->auditDetach('subcategories', $request->integer('subcategory_id'));
 
             $category->load(['item', 'subcategories']);
 

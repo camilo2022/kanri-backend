@@ -3,7 +3,12 @@
 namespace App\Services;
 
 use App\Models\File;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Format;
+use Intervention\Image\ImageManager;
 
 class FileService
 {
@@ -34,15 +39,28 @@ class FileService
             $metadata['image'] = compact('width', 'height');
         }
 
+        // Un archivo por modelo/tipo/subtipo: al subir otro se reemplaza el anterior (si el nombre fuera parte de la
+        // identidad se crearía otro registro y la relación seguiría mostrando el viejo)
+        $previous = File::query()
+            ->where('model_id', $model->id)
+            ->where('model_type', get_class($model))
+            ->where('file_type_id', $file_type_id)
+            ->where('file_subtype_id', $file_subtype_id)
+            ->first();
+
+        if ($previous && $previous->path && $previous->path !== $path) {
+            Storage::disk($disk)->delete($previous->path);
+        }
+
         return File::updateOrCreate(
             [
                 'model_id' => $model->id,
                 'model_type' => get_class($model),
                 'file_type_id' => $file_type_id,
                 'file_subtype_id' => $file_subtype_id,
-                'name' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
             ],
             [
+                'name' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
                 'path' => $path,
                 'mime' => $file->getMimeType(),
                 'extension' => $file->getClientOriginalExtension(),
@@ -138,60 +156,54 @@ class FileService
         return true;
     }
 
+    /**
+     * Las imágenes (JPG, PNG o WebP) se guardan siempre como WebP: pesan menos y el servidor carga menos. Se reducen a
+     * un máximo de 1000 x 1000 px sin ampliar las pequeñas. Intervention corrige la orientación EXIF al leer la imagen.
+     */
     private function process_image($file)
     {
         $path = $file->getPathname();
 
-        $mime = mime_content_type($path);
-
-        switch ($mime) {
-            case 'image/jpeg':
-                $image = imagecreatefromjpeg($path);
-                break;
-
-            case 'image/png':
-                $image = @imagecreatefrompng($path);
-                break;
-
-            default:
-                return $file;
+        if (! in_array(mime_content_type($path), ['image/jpeg', 'image/png', 'image/webp', 'image/avif'], true)) {
+            return $file;
         }
 
-        if ($mime === 'image/jpeg' && function_exists('exif_read_data')) {
-            $exif = @exif_read_data($path);
-
-            if (! empty($exif['Orientation'])) {
-                $image = $this->fix_orientation($image, $exif['Orientation']);
-            }
+        // Abrir la imagen ocupa unos 4 bytes por píxel: una más grande que el límite agota la memoria y no se puede atrapar
+        [$width, $height] = @getimagesize($path) ?: [0, 0];
+        if ($width > File::MAX_IMAGE_SIDE || $height > File::MAX_IMAGE_SIDE) {
+            throw ValidationException::withMessages([
+                'file' => [__('validation.dimensions', ['max_width' => File::MAX_IMAGE_SIDE, 'max_height' => File::MAX_IMAGE_SIDE])],
+            ]);
         }
 
-        imagedestroy($image);
+        try {
+            $webp = $this->convertir_webp(file_get_contents($path));
 
-        return $file;
+            // En una carpeta de la aplicación: Apache no puede escribir en la temporal del sistema (C:/Windows/Temp)
+            $folder = storage_path('app/tmp');
+            is_dir($folder) || mkdir($folder, 0755, true);
+            $temp = tempnam($folder, 'img');
+            file_put_contents($temp, $webp);
+            register_shutdown_function(fn () => @unlink($temp));
+        } catch (\Throwable $e) {
+            // Si la imagen no se puede procesar se guarda tal como llegó
+            return $file;
+        }
+
+        $name = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME).'.webp';
+
+        return new UploadedFile($temp, $name, 'image/webp', null, true);
     }
 
-    private function fix_orientation($image, $orientation)
+    private function convertir_webp(string $contents): string
     {
-        switch ($orientation) {
+        $manager = new ImageManager(new Driver());
 
-            case 3:
-                $rotated = imagerotate($image, 180, 0);
-                break;
+        $image = $manager->decodeBinary($contents);
 
-            case 6:
-                $rotated = imagerotate($image, -90, 0);
-                break;
+        // Redimensionar proporcionalmente, sin ampliar imágenes pequeñas.
+        $image->scaleDown(width: 1000, height: 1000);
 
-            case 8:
-                $rotated = imagerotate($image, 90, 0);
-                break;
-
-            default:
-                return $image;
-        }
-
-        imagedestroy($image);
-
-        return $rotated ?: $image;
+        return $image->encodeUsingFormat(Format::WEBP, quality: 80)->toString();
     }
 }

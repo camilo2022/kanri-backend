@@ -2,15 +2,12 @@
 
 namespace App\Http\Resources\Typification\SupplyType\Supply;
 
-use App\Traits\ModelTypes;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
 
 class SupplyResource extends JsonResource
 {
-    use ModelTypes;
-
     public function toArray($request)
     {
         $relationships = collect($this->supply_type->first()?->settings?->form ?? [])
@@ -44,7 +41,6 @@ class SupplyResource extends JsonResource
                 'supply_type' => $this->supply_type->first(),
                 ...$relationships,
             ],
-            'model_types' => $this->getModelTypesFromSupply(),
         ];
     }
 

@@ -149,7 +149,7 @@ class AreaController extends Controller
     public function all(AreaAllRequest $request)
     {
         try {
-            $areas = Area::with(['positions'])
+            $areas = Area::with(['item', 'positions'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })

@@ -7,8 +7,12 @@ use App\Models\Piece;
 use App\Models\Process;
 use App\Models\Product;
 use App\Models\ProductionOrder;
+use App\Models\ProductionOrderDetail;
 use App\Models\Supplier;
 use App\Models\Supply;
+use App\Models\TechnicalSheet;
+use App\Services\ProductionPlanService;
+use App\Services\ProductionOrderCurveService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -39,6 +43,7 @@ class ProductionOrderSaveRequest extends FormRequest
             'production_place' => ['required', 'string', 'in:BLESS,SATELITE'],
             'supplier_id' => ['nullable', 'required_if:production_place,SATELITE', 'exists:subitems,id,item_id,'.Supplier::ITEM_ID],
             'priority' => ['required', 'in:'.implode(',', ProductionOrder::priorities())],
+            'color_id' => ['required', 'exists:subitems,id,item_id,'.Color::ITEM_ID],
             'reasigned_curve' => ['boolean'],
             'reassigned_origins' => ['nullable', 'required_if:reasigned_curve,true', 'array', 'min:1'],
             'reassigned_origins.*.production_order_id' => ['required', 'integer', 'exists:production_orders,id'],
@@ -55,18 +60,7 @@ class ProductionOrderSaveRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'required' => 'Es obligatorio.',
-            'date_format' => 'Formato inválido. Permitido :format.',
             'date.before_or_equal' => 'No puede ser posterior a :date.',
-            'exists' => 'No registrado en el sistema.',
-            'boolean' => 'Debe ser un dato tipo si/no',
-            'numeric' => 'Debe ser un dato númerico',
-            'min' => 'El valor debe ser mayor o igual a :min',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'in' => 'Valor inválido. Permitidos: :values.',
-            'integer' => 'Debe ser un dato númerico',
-            'distinct' => 'Debe ser un valor unico',
         ];
     }
 
@@ -77,6 +71,7 @@ class ProductionOrderSaveRequest extends FormRequest
             'efficiency' => 'Eficiencia',
             'cut' => 'Identificador de lote',
             'fabric_id' => 'Identificador de la tela',
+            'color_id' => 'Color',
             'width' => 'Ancho de la tela',
             'pocket_fabric' => 'Indicador de uso de tela de bolsillo',
             'observation' => 'Observación',
@@ -94,6 +89,19 @@ class ProductionOrderSaveRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            if ($this->boolean('reasigned_curve')) {
+                $started_orders = app(ProductionOrderCurveService::class)->startedOrderIds();
+
+                foreach ($this->input('reassigned_origins') ?? [] as $index => $origin) {
+                    if (in_array((int) ($origin['production_order_id'] ?? 0), $started_orders, true)) {
+                        $validator->errors()->add(
+                            "reassigned_origins.$index.production_order_id",
+                            'No se puede reasignar curva de un lote que ya se empezó a trabajar o está programado.'
+                        );
+                    }
+                }
+            }
+
             if ($this->id === null) {
                 $current_cut = strtoupper(trim($this->cut ?? ''));
 
@@ -146,43 +154,48 @@ class ProductionOrderSaveRequest extends FormRequest
                 $validator->errors()->add('curve', 'Es obligatorio.');
             }
 
-            $empty = [];
+            $technical_sheet = TechnicalSheet::with(['products'])->find($this->technical_sheet_id);
 
             foreach ($details as $index => $detail) {
-                $model = $detail['model_type'];
+                $model = $detail['model_type'] ?? null;
                 $destination = $detail['destination'] ?? null;
 
-                if (! class_exists($model)) {
-                    $validator->errors()->add(
-                        "production_order_details.$model.model_type",
-                        'El tipo de modelo no es válido.'
-                    );
+                // Cada error va a la celda que lo muestra en Gestión de producción
+                $cell = match ($model) {
+                    Product::class => $destination ? "curve.$destination" : 'curve',
+                    Supply::class => 'fabric_id',
+                    Color::class => 'color_id',
+                    default => "production_order_details.$index.model_id",
+                };
+
+                if (! $model || ! class_exists($model)) {
+                    $validator->errors()->add($cell, 'El tipo de modelo no es válido.');
 
                     continue;
                 }
 
                 if (! isset($detail['model_id'])) {
-                    $validator->errors()->add(
-                        "production_order_details.$model.$destination.model_id",
-                        'No hay identificador del detalle.'
-                    );
+                    $validator->errors()->add($cell, 'No hay identificador del detalle.');
 
                     continue;
                 }
 
                 if (! $model::whereKey($detail['model_id'])->exists()) {
-                    $validator->errors()->add(
-                        "production_order_details.$model.model_id",
-                        'El modelo seleccionado no existe.'
-                    );
+                    $validator->errors()->add($cell, 'El modelo seleccionado no existe.');
                 }
 
                 if ($model === Product::class) {
                     if (empty($destination)) {
-                        $validator->errors()->add(
-                            "production_order_details.$model.destination",
-                            'El destino es obligatorio para los productos.'
-                        );
+                        $validator->errors()->add($cell, 'El destino es obligatorio para los productos.');
+                    }
+
+                    // NACIONAL y MEDELLIN llevan el producto de la ficha; STARA, uno de sus productos STARA
+                    $right_product = $destination === 'STARA'
+                        ? (bool) $technical_sheet?->products->contains('id', (int) $detail['model_id'])
+                        : (int) $detail['model_id'] === (int) $technical_sheet?->product_id;
+
+                    if ($destination && ! $right_product) {
+                        $validator->errors()->add($cell, "El producto no corresponde al destino $destination de la ficha técnica.");
                     }
 
                     if ((array_sum(array_column($detail['sizes'], 'quantity')) === 0) && $detail['id'] === null) {
@@ -192,12 +205,6 @@ class ProductionOrderSaveRequest extends FormRequest
                         );
 
                         continue;
-                    }
-
-                    if ($destination !== 'STARA') {
-                        if (empty($detail['sizes'])) {
-                            $empty[] = $destination;
-                        }
                     }
                 }
 
@@ -249,37 +256,38 @@ class ProductionOrderSaveRequest extends FormRequest
                     }
 
                     $current_date = data_get($detail, 'settings.date');
+                    $saved_date = ! empty($detail['id']) ? (ProductionOrderDetail::find($detail['id'])?->settings->date ?? null) : null;
+
+                    // Con trabajo hecho en el proceso (completo o a medias), la fecha que tenía no se cambia ni se quita
+                    if ($saved_date && $current_date !== $saved_date && $this->filled('id')
+                        && app(ProductionPlanService::class)->workedInProcess($this->integer('id'), $process->id)) {
+                        $validator->errors()->add("production_order_details.$process->id.settings.date", "Esta referencia ya se trabajó en {$process->name}: su fecha no se puede cambiar.");
+
+                        continue;
+                    }
 
                     if (! $current_date) {
                         continue;
                     }
 
-                    foreach ($details as $other_index => $other_detail) {
+                    // Solo se revisa la fecha nueva o cambiada: las que ya estaban no impiden guardar otros datos
 
-                        if ($other_index === $index) {
-                            continue;
-                        }
+                    if ($current_date !== $saved_date
+                        && ($error = ProductionOrder::planningError($this->integer('technical_sheet_id'), $process))) {
+                        $validator->errors()->add("production_order_details.$process->id.settings.date", $error);
 
-                        if (($other_detail['model_type'] ?? null) !== Process::class) {
-                            continue;
-                        }
-
-                        $other_date = data_get($other_detail, 'settings.date');
-
-                        if (! $other_date) {
-                            continue;
-                        }
-
-                        if ($current_date === $other_date) {
-                            $validator->errors()->add(
-                                "production_order_details.$process->id.settings.date",
-                                'La fecha de programación de este proceso ya está asignada a otro proceso.'
-                            );
-
-                            break;
-                        }
+                        continue;
                     }
 
+                    // Una fecha nueva o cambiada no puede haber pasado; hoy, solo antes o durante el turno del proceso
+                    if ($current_date !== $saved_date
+                        && ($error = app(ProductionPlanService::class)->dateError($process, $current_date))) {
+                        $validator->errors()->add("production_order_details.$process->id.settings.date", $error);
+
+                        continue;
+                    }
+
+                    // Varios procesos del lote pueden ir el mismo día (p. ej. Corte rápido y Alistamiento urgente)
                     foreach ($process->before_processes ?? [] as $before_process) {
 
                         $before_detail = collect($details)->first(function ($other_detail) use ($before_process) {
@@ -332,14 +340,6 @@ class ProductionOrderSaveRequest extends FormRequest
                 }
             }
 
-            if (count($empty) > 1) {
-                foreach ($empty as $item) {
-                    $validator->errors()->add(
-                        "production_order_details.$model.$item",
-                        'Es obligatorio definir la especificación de curva por talla.'
-                    );
-                }
-            }
         });
     }
 

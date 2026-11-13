@@ -14,15 +14,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('movement_details', function (Blueprint $table) {
-            $table->id();
-            $table->foreignIdFor(Movement::class)->constrained()->cascadeOnUpdate();
-            $table->nullableMorphs('model');
-            $table->enum('status', ['Pendiente', 'Aprobado'])->default('Pendiente');
-            $table->text('observation')->nullable();
+            $table->id()->comment('Identificador');
+            $table->foreignIdFor(Movement::class)->comment('Movimiento')->constrained()->cascadeOnUpdate();
+            $table->string('model_type')->nullable()->comment('Tipo de registro asociado');
+            $table->unsignedBigInteger('model_id')->nullable()->comment('Registro asociado');
+            $table->index(['model_type', 'model_id']);
+            $table->enum('status', ['Pendiente', 'Aprobado', 'Rechazado', 'Cancelado'])->default('Pendiente')->comment('Estado');
+            $table->text('observation')->nullable()->comment('Observación');
             $table->json('settings')->default(new Expression('(JSON_OBJECT())'))->comment('Configuraciones');
-            $table->timestamps();
-            $table->timestamp('created_at')->useCurrent();
-            $table->timestamp('updated_at')->nullable()->default(null)->useCurrentOnUpdate();
+            $table->timestamp('created_at')->useCurrent()->comment('Fecha de creación');
+            $table->timestamp('updated_at')->nullable()->default(null)->useCurrentOnUpdate()->comment('Fecha de actualización');
         });
     }
 

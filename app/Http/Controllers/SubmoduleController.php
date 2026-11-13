@@ -292,11 +292,9 @@ class SubmoduleController extends Controller
             $submodule->load(['module', 'permission']);
 
             return $this->successResponse(
-                [
-                    'submodule' => $submodule
-                ],
+                new SubmoduleResource($submodule),
                 $this->getMessage('Success'),
-                200
+                201
             );
         } catch (\Throwable $e) {
             return $this->errorResponse(
@@ -362,9 +360,7 @@ class SubmoduleController extends Controller
             $submodule->load(['module', 'permission']);
 
             return $this->successResponse(
-                [
-                    'submodule' => $submodule
-                ],
+                new SubmoduleResource($submodule),
                 $this->getMessage('Success'),
                 200
             );
@@ -407,9 +403,7 @@ class SubmoduleController extends Controller
             $submodule->load(['module', 'permission']);
 
             return $this->successResponse(
-                [
-                    'submodule' => $submodule
-                ],
+                new SubmoduleResource($submodule),
                 $this->getMessage('Success'),
                 200
             );
@@ -452,9 +446,7 @@ class SubmoduleController extends Controller
             $submodule->load(['module', 'permission']);
 
             return $this->successResponse(
-                [
-                    'submodule' => $submodule
-                ],
+                new SubmoduleResource($submodule),
                 $this->getMessage('Success'),
                 200
             );

@@ -3,16 +3,19 @@
 namespace App\Http\Resources\WashTone;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class WashToneCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\WashTone::class, $this->collection->pluck('id')->all());
         return [
-            'wash_tones' => $this->collection->map(function ($wash_tone) {
+            'wash_tones' => $this->collection->map(function ($wash_tone) use ($audited) {
                 return [
                     'id' => $wash_tone->id,
+                    'has_audits' => isset($audited[$wash_tone->id]),
                     'item_id' => $wash_tone->item_id,
                     'name' => $wash_tone->name,
                     'description' => $wash_tone->description,

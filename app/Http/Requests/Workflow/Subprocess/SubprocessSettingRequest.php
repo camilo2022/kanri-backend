@@ -48,17 +48,6 @@ class SubprocessSettingRequest extends FormRequest
     public function messages()
     {
         return [
-            'required' => 'Es requerido.',
-            'required_with' => 'Es requerido.',
-            'string' => 'Debe ser una cadena de caracteres.',
-            'distinct'  => 'Ya ha sido tomado en otra validación.',
-            'unique' => 'Ya ha sido tomado.',
-            'numeric' => 'Debe ser un valor numérico.',
-            'array' => 'Debe ser una lista de datos.',
-            'max' => 'No debe exceder los :max caracteres.',
-            'min' => 'Debe tener minimo :min elementos.',
-            'uppercase' => 'El campo debe estar en mayúsculas.',
-            'lowercase' => 'El campo debe estar en mayúsculas.',
             'regex' => 'Formato inválido. Solo letras minúsculas y guiones bajos (_).',
         ];
     }
@@ -188,9 +177,9 @@ class SubprocessSettingRequest extends FormRequest
                         }
 
                         $rules = $s['rules'] ?? [];
-                        $type = $s['type'] ?? null;
+                        $typeField = $s['type'] ?? null;
 
-                        if (in_array($type, ['text', 'textarea', 'number'])) {
+                        if (in_array($typeField, ['text', 'textarea', 'number'])) {
 
                             $array = [];
 
@@ -265,7 +254,7 @@ class SubprocessSettingRequest extends FormRequest
                             }
                         }
 
-                        if (in_array($type, ['date', 'datetime'])) {
+                        if (in_array($typeField, ['date', 'datetime'])) {
 
                             $array = [];
 
@@ -284,7 +273,7 @@ class SubprocessSettingRequest extends FormRequest
                             }
 
                             if (array_key_exists('after', $array)) {
-                                if ($type === 'date') {
+                                if ($typeField === 'date') {
                                     $fecha = Carbon::createFromFormat('Y-m-d', $array['after']);
 
                                     if (!empty($array['after'])) {
@@ -297,7 +286,7 @@ class SubprocessSettingRequest extends FormRequest
                                     }
                                 }
 
-                                if ($type === 'datetime') {
+                                if ($typeField === 'datetime') {
                                     $fecha = Carbon::createFromFormat('Y-m-d H:i', $array['after']);
 
                                     if (!empty($array['after'])) {
@@ -312,7 +301,7 @@ class SubprocessSettingRequest extends FormRequest
                             }
 
                             if (array_key_exists('before', $array)) {
-                                if ($type === 'date') {
+                                if ($typeField === 'date') {
                                     $fecha = Carbon::createFromFormat('Y-m-d', $array['before']);
 
                                     if (!empty($array['before'])) {
@@ -325,7 +314,7 @@ class SubprocessSettingRequest extends FormRequest
                                     }
                                 }
 
-                                if ($type === 'datetime') {
+                                if ($typeField === 'datetime') {
                                     $fecha = Carbon::createFromFormat('Y-m-d H:i', $array['before']);
 
                                     if (!empty($array['before'])) {
@@ -341,7 +330,7 @@ class SubprocessSettingRequest extends FormRequest
 
                             if (array_key_exists('after', $array) && array_key_exists('before', $array)) {
                                 if (!empty($array['before']) && !empty($array['after'])) {
-                                    if ($type === 'date') {
+                                    if ($typeField === 'date') {
                                         if (Carbon::createFromFormat('Y-m-d', $array['after'])->gte(Carbon::createFromFormat('Y-m-d', $array['before']))) {
                                             $validator->errors()->add(
                                                 "$basePath.rules.after",
@@ -349,7 +338,7 @@ class SubprocessSettingRequest extends FormRequest
                                             );
                                         }
                                     }
-                                    if ($type === 'datetime') {
+                                    if ($typeField === 'datetime') {
                                         if (Carbon::createFromFormat('Y-m-d H:i', $array['after'])->gte(Carbon::createFromFormat('Y-m-d H:i', $array['before']))) {
                                             $validator->errors()->add(
                                                 "$basePath.rules.after",

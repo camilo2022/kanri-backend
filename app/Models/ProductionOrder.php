@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ProductivityDetailService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,6 +31,10 @@ class ProductionOrder extends Model implements Auditable
 
     public const STARA = 'STARA';
 
+    public const BLESS = 'BLESS';
+
+    public const SATELITE = 'SATELITE';
+
     public const PRIORITY_VERY_LOW = 1;
 
     public const PRIORITY_LOW = 2;
@@ -42,14 +47,11 @@ class ProductionOrder extends Model implements Auditable
 
     protected $fillable = [
         'technical_sheet_id',
-        'model_id',
-        'model_type',
         'consecutive',
         'production_place',
         'supplier_id',
         'efficiency',
         'cut',
-        'fabric_id',
         'width',
         'pocket_fabric',
         'observation',
@@ -59,14 +61,11 @@ class ProductionOrder extends Model implements Auditable
 
     protected $auditInclude = [
         'technical_sheet_id',
-        'model_id',
-        'model_type',
         'consecutive',
         'production_place',
         'supplier_id',
         'efficiency',
         'cut',
-        'fabric_id',
         'width',
         'pocket_fabric',
         'observation',
@@ -93,7 +92,7 @@ class ProductionOrder extends Model implements Auditable
 
     public function color(): MorphToMany
     {
-        return $this->morphedByMany(Color::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
+        return $this->morphToMany(Color::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
     }
 
     public function fabric(): HasOne
@@ -151,6 +150,82 @@ class ProductionOrder extends Model implements Auditable
         return $this->belongsTo(Supplier::class)->withTrashed();
     }
 
+    /**
+     * Lotes que la programación en cadena (CORTE) puede poner en el turno: los que tienen unidades en el proceso y les falta
+     * pasar por algún puesto de la cadena que su ficha lleva, no solo por el primero (EXTENDIDO, CORTADO y ETIQUETADO hechos y
+     * le falta REVISIÓN CORTE). El plan se salta los puestos ya hechos.
+     */
+    public function scopeChainPending(Builder $query, int $process_id): Builder
+    {
+        $process = Process::find($process_id);
+        $service = app(ProductivityDetailService::class);
+        $workstations = $service->workstations($process)->map(fn ($item) => $item['model_type']::find($item['model_id']))->filter();
+
+        $ids = static::query()
+            ->programmableIn($process_id)
+            ->get()
+            ->filter(fn (ProductionOrder $production_order) => $service->lotUnitsIn($production_order, $process) > 0
+                && $workstations->contains(fn (Model $workstation) => ! $service->routeError($production_order, $workstation, $process)
+                    && $service->lotWaiting($production_order, $workstation, $process)))
+            ->pluck('id');
+
+        return $query->whereIn('production_orders.id', $ids);
+    }
+
+    public function scopeProgrammableIn(Builder $query, int $process_id, ?Model $workstation = null, bool $pending_previous = false): Builder
+    {
+        $process = Process::find($process_id);
+        $first = $process?->isFirst();
+
+        // El lugar de producción decide la rama: un lote de satélite no pasa por la rama de la empresa y viceversa
+        $query->whereNotIn('production_place', $process ? app(ProductivityDetailService::class)->excludedPlaces($process) : [])
+            ->whereHas('technical_sheet.technical_sheet_details', fn ($detail) => $detail
+            ->where('model_type', Process::class)
+            ->where('model_id', $process_id)
+            ->whereIn('status', [TechnicalSheetDetail::REVIEW, TechnicalSheetDetail::APPROVED]))
+            // El primer proceso no recibe ingresos
+            ->unless($first, fn ($lots) => $lots
+                ->whereHas('production_order_details.movements', fn ($movement) => $movement
+                    ->where('model_type', Process::class)
+                    ->where('model_id', $process_id)
+                    ->whereHas('movement_details_input', fn ($input) => $input->where('status', MovementDetail::APPROVED))));
+
+        if (! $workstation) {
+            return $query;
+        }
+
+        $service = app(ProductivityDetailService::class);
+        $ids = static::query()
+            ->programmableIn($process_id)
+            ->get()
+            ->filter(fn (ProductionOrder $production_order) => ! $service->routeError($production_order, $workstation, $process)
+                // Con anteriores en la cadena, el lote debe estar programado o trabajado en ellos (Relojera tras Parche); la
+                // programación los pide igual (pending_previous) y los muestra según lo que tenga puesto en el anterior
+                && ($pending_previous || ! $service->previousScheduledError($production_order, $workstation, $process))
+                // Por lote: el lote tiene unidades en el proceso (la curva con tallas activas o lo recibido) y le falta
+                // pasar por el puesto; por unidades: le quedan unidades por hacer en su paso
+                && ($service->schedulesByLot($process, $workstation)
+                    ? $service->lotUnitsIn($production_order, $process) > 0 && $service->lotWaiting($production_order, $workstation, $process)
+                    : $service->unitsToDo($production_order, $workstation, $process) > 0))
+            ->pluck('id');
+
+        return $query->whereIn('production_orders.id', $ids);
+    }
+
+    /**
+     * Por qué no se puede poner fecha a este proceso del lote en Gestión de Producción, o null.
+     */
+    public static function planningError(int $technical_sheet_id, Process $process): ?string
+    {
+        $ready = TechnicalSheetDetail::where('technical_sheet_id', $technical_sheet_id)
+            ->where('model_type', Process::class)
+            ->where('model_id', $process->id)
+            ->whereIn('status', [TechnicalSheetDetail::REVIEW, TechnicalSheetDetail::APPROVED])
+            ->exists();
+
+        return $ready ? null : "{$process->name} aún no está en revisión ni aprobado en la ficha técnica.";
+    }
+
     public function scopeSearch(Builder $query, ?string $search = null): Builder
     {
         $search = trim((string) $search);
@@ -158,7 +233,7 @@ class ProductionOrder extends Model implements Auditable
             return $query;
         }
 
-        $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
+        $terms = [preg_replace('/\s+/', ' ', $search)];
 
         return $query->where(function (Builder $q) use ($terms) {
             foreach ($terms as $term) {

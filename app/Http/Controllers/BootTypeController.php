@@ -124,7 +124,7 @@ class BootTypeController extends Controller
     public function all(BootTypeAllRequest $request)
     {
         try {
-            $boot_types = BootType::when($request->filled('search'), function ($query) use ($request) {
+            $boot_types = BootType::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {

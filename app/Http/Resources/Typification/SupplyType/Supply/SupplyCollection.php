@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Typification\SupplyType\Supply;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Str;
 
@@ -10,9 +11,10 @@ class SupplyCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Supply::class, $this->collection->pluck('id')->all());
 
         return [
-            'supplies' => $this->collection->map(function ($supply) {
+            'supplies' => $this->collection->map(function ($supply) use ($audited) {
                 $relationships = collect($supply->supply_type->first()?->settings?->form ?? [])
                     ->where('type', 'selectdinamic')
                     ->mapWithKeys(function ($field) use ($supply) {
@@ -32,6 +34,7 @@ class SupplyCollection extends ResourceCollection
                                 ? $query->first()
                                 : $query->get()->modelKeys(),
                             */
+                            $key => $field->cardinality === 'single' ? $query->first() : $query->get(),
                             $field->field => $field->cardinality === 'single' ? $query->first() : $query->get(),
                         ];
                     })
@@ -39,6 +42,7 @@ class SupplyCollection extends ResourceCollection
 
                 return [
                     'id' => $supply->id,
+                    'has_audits' => isset($audited[$supply->id]),
                     'item' => $supply->item,
                     'name' => $supply->name,
                     'description' => $supply->description,

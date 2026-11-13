@@ -26,27 +26,11 @@ class YokeTypeUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'numeric', 'string', 'exists:subitems,id,item_id,' . YokeType::ITEM_ID],
+            'id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . YokeType::ITEM_ID],
             'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . YokeType::ITEM_ID],
             'description' => ['required', 'string', 'max:255', 'uppercase'],
             'settings' => ['required', 'array'],
             'settings.code' => ['required', 'numeric', 'digits_between:2,5'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'array' => 'Debe ser una lista de datos.',
-            'numeric' => 'Debe ser un dato númerico.',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.',
-            'uppercase' => 'Debe de ingresar mayúsculas.',
-            'exists' => 'No está registrado.',
-            'digits_between' => 'Debe tener entre 2 y 5 dígitos.',
         ];
     }
 
@@ -69,7 +53,7 @@ class YokeTypeUpdateRequest extends FormRequest
                 return;
             }
 
-            $exists = YokeType::query()
+            $exists = YokeType::withTrashed()
                 ->where('settings->code', $this->input('settings.code'))
                 ->whereKeyNot($this->route('id'))
                 ->exists();

@@ -3,16 +3,19 @@
 namespace App\Http\Resources\CompensationFund;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class CompensationFundCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\CompensationFund::class, $this->collection->pluck('id')->all());
         return [
-            'compensation_funds' => $this->collection->map(function ($compensation_fund) {
+            'compensation_funds' => $this->collection->map(function ($compensation_fund) use ($audited) {
                 return [
                     'id' => $compensation_fund->id,
+                    'has_audits' => isset($audited[$compensation_fund->id]),
                     'item_id' => $compensation_fund->item_id,
                     'name' => $compensation_fund->name,
                     'description' => $compensation_fund->description,

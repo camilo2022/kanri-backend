@@ -13,13 +13,13 @@ use App\Http\Resources\Navegation\Module\ModuleResource;
 use App\Models\Module;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
-use Illuminate\Http\Request;
 
 /**
  * @OA\Schema(
  *     schema="ModuleSubmodule",
  *     type="object",
  *     description="Submódulo (opción del menú). `module_id` y `permission_id` están ocultos en el modelo.",
+ *
  *     @OA\Property(property="id", type="integer", example=41),
  *     @OA\Property(property="name", type="string", example="Despachos"),
  *     @OA\Property(property="url", type="string", description="Ruta del frontend.", example="/dispatches"),
@@ -33,6 +33,7 @@ use Illuminate\Http\Request;
  *     schema="Module",
  *     type="object",
  *     description="Módulo del menú (tabla `modules`) serializado por Eloquent, con sus submódulos. Es el que viene en el menú del usuario (`GET /auth/user`).",
+ *
  *     @OA\Property(property="id", type="integer", example=6),
  *     @OA\Property(property="name", type="string", example="Bodega"),
  *     @OA\Property(property="icon", type="string", description="Icono de react-icons (Font Awesome).", example="FaWarehouse"),
@@ -46,6 +47,7 @@ use Illuminate\Http\Request;
  *     schema="ModuleListItem",
  *     type="object",
  *     description="Módulo como lo entrega `ModuleCollection` (all).",
+ *
  *     @OA\Property(property="id", type="integer", example=6),
  *     @OA\Property(property="name", type="string", example="Bodega"),
  *     @OA\Property(property="icon", type="string", example="FaWarehouse"),
@@ -59,6 +61,7 @@ use Illuminate\Http\Request;
  *     schema="ModuleDetail",
  *     type="object",
  *     description="Módulo como lo entrega `ModuleResource` (find, store, update, delete, restore). Hoy **no incluye `icon`** y trae `item_id`, `description`, `settings` e `item` siempre en `null`, porque el Resource está copiado de los catálogos (ver pendientes).",
+ *
  *     @OA\Property(property="id", type="integer", example=6),
  *     @OA\Property(property="item_id", nullable=true, example=null),
  *     @OA\Property(property="name", type="string", example="Bodega"),
@@ -74,6 +77,7 @@ use Illuminate\Http\Request;
  * @OA\Schema(
  *     schema="ModuleResponse",
  *     type="object",
+ *
  *     @OA\Property(property="data", type="object", @OA\Property(property="module", ref="#/components/schemas/ModuleDetail")),
  *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
  *     @OA\Property(property="error", type="boolean", example=false)
@@ -82,6 +86,7 @@ use Illuminate\Http\Request;
  * @OA\Schema(
  *     schema="ModuleListResponse",
  *     type="object",
+ *
  *     @OA\Property(
  *         property="data",
  *         type="object",
@@ -96,6 +101,7 @@ use Illuminate\Http\Request;
  *     schema="ModuleRequest",
  *     type="object",
  *     required={"name", "icon"},
+ *
  *     @OA\Property(
  *         property="name",
  *         type="string",
@@ -125,26 +131,33 @@ class ModuleController extends Controller
      *     summary="Listar los módulos del menú",
      *     description="Cada módulo trae sus submódulos. La búsqueda mira el nombre y el icono.",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/Search"),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
      *         required=false,
      *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *
      *         @OA\Schema(type="string", enum={"id", "name", "icon", "created_at", "updated_at"}, example="name")
      *     ),
+     *
      *     @OA\Parameter(ref="#/components/parameters/Dir"),
      *     @OA\Parameter(ref="#/components/parameters/PerPage"),
      *     @OA\Parameter(ref="#/components/parameters/Page"),
      *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Lista de módulos cargada correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/ModuleListResponse")
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Parámetros de consulta inválidos.",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ValidationErrorResponse",
      *             example={
@@ -154,6 +167,7 @@ class ModuleController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
      *     @OA\Response(response=500, ref="#/components/responses/ServerError")
@@ -166,7 +180,7 @@ class ModuleController extends Controller
                 ->when($request->input('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
-                ->when($request->boolean('with_trashed'), function ($query) use ($request) {
+                ->when($request->boolean('with_trashed'), function ($query) {
                     return $query->withTrashed();
                 })
                 ->when($request->input('column') && $request->input('dir'), function ($query) use ($request) {
@@ -184,7 +198,7 @@ class ModuleController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -198,12 +212,16 @@ class ModuleController extends Controller
      *     summary="Obtener un módulo",
      *     description="Hoy la respuesta no incluye `icon` (ver `ModuleDetail`).",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Módulo cargado correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/ModuleResponse")
      *     ),
+     *
      *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
@@ -215,10 +233,8 @@ class ModuleController extends Controller
         try {
             $module = Module::findOrFail($id);
 
-            $module->load(['submodules']);
-
             return $this->successResponse(
-                new ModuleResource($module),
+                new ModuleResource($module->load(['submodules'])),
                 $this->getMessage('Success'),
                 200
             );
@@ -226,7 +242,7 @@ class ModuleController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -239,18 +255,24 @@ class ModuleController extends Controller
      *     tags={"Navegation › Modules"},
      *     summary="Crear un módulo",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(ref="#/components/schemas/ModuleRequest")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Módulo creado correctamente (responde 200, no 201). `submodules` llega vacío.",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/ModuleResponse")
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Datos inválidos.",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ValidationErrorResponse",
      *             example={
@@ -260,6 +282,7 @@ class ModuleController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
      *     @OA\Response(response=500, ref="#/components/responses/ServerError")
@@ -268,7 +291,77 @@ class ModuleController extends Controller
     public function store(ModuleStoreRequest $request)
     {
         try {
-            $module = new Module();
+            $module = new Module;
+
+            $module->name = $request->input('name');
+            $module->icon = $request->input('icon');
+
+            $module->save();
+
+            return $this->successResponse(
+                new ModuleResource($module),
+                $this->getMessage('Success'),
+                201
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage(),
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/navegation/modules/update/{id}",
+     *     tags={"Navegation › Modules"},
+     *     summary="Editar un módulo",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/ModuleRequest",
+     *             example={"name": "Inventarios", "icon": "FaBoxes"}
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Módulo editado correctamente",
+     *
+     *         @OA\JsonContent(ref="#/components/schemas/ModuleResponse")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Datos inválidos o módulo no registrado.",
+     *
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"name": "Nombre del módulo", "icon": "Icono del módulo"},
+     *                 "errors": {"name": {"Ya está registrado."}}
+     *             }
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     */
+    public function update(ModuleUpdateRequest $request, $id)
+    {
+        try {
+            $module = Module::findOrFail($id);
 
             $module->name = $request->input('name');
             $module->icon = $request->input('icon');
@@ -284,69 +377,7 @@ class ModuleController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
-                ],
-                $this->getCode(class_basename($e))
-            );
-        }
-    }
-
-    /**
-     * @OA\Put(
-     *     path="/navegation/modules/update/{id}",
-     *     tags={"Navegation › Modules"},
-     *     summary="Editar un módulo",
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/PathId"),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ModuleRequest",
-     *             example={"name": "Inventarios", "icon": "FaBoxes"}
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Módulo editado correctamente",
-     *         @OA\JsonContent(ref="#/components/schemas/ModuleResponse")
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Datos inválidos o módulo no registrado.",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ValidationErrorResponse",
-     *             example={
-     *                 "message": "Error de validación.",
-     *                 "attributes": {"name": "Nombre del módulo", "icon": "Icono del módulo"},
-     *                 "errors": {"name": {"Ya está registrado."}}
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
-     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
-     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
-     * )
-     */
-    public function update(ModuleUpdateRequest $request, $id)
-    {
-        try {
-            $module = Module::findOrFail($id);
-
-            $module->name = $request->input('name');
-            $module->icon =  $request->input('icon');
-
-            $module->save();
-
-            return $this->successResponse(
-                new ModuleResource($module),
-                $this->getMessage('Success'),
-                200
-            );
-        } catch (\Throwable $e) {
-            return $this->errorResponse(
-                [
-                    'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -360,12 +391,16 @@ class ModuleController extends Controller
      *     summary="Desactivar un módulo",
      *     description="Desactivación lógica (soft delete): el registro se conserva y puede restaurarse. No desactiva sus submódulos.",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Módulo desactivado correctamente. `deleted_at` queda con la fecha de desactivación.",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/ModuleResponse")
      *     ),
+     *
      *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
@@ -387,7 +422,7 @@ class ModuleController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -400,12 +435,16 @@ class ModuleController extends Controller
      *     tags={"Navegation › Modules"},
      *     summary="Restaurar un módulo desactivado",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Módulo restaurado correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/ModuleResponse")
      *     ),
+     *
      *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
@@ -427,7 +466,7 @@ class ModuleController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );

@@ -37,21 +37,6 @@ class SupplierTypeUpdateRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'numeric' => 'Debe ser un número.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.',
-            'exists' => 'No está registrado.',
-            'uppercase' => 'El campo debe estar en mayúsculas.',
-            'digits_between' => 'Debe tener entre 2 y 5 dígitos.',
-        ];
-    }
-
     public function attributes(): array
     {
         return [

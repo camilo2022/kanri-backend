@@ -122,7 +122,7 @@ class BloodTypeController extends Controller
     public function all(BloodTypeAllRequest $request)
     {
         try {
-            $blood_types = BloodType::when($request->filled('search'), function ($query) use ($request) {
+            $blood_types = BloodType::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {

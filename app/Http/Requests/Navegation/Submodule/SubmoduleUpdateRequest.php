@@ -37,13 +37,7 @@ class SubmoduleUpdateRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'required' => 'Es obligatorio.',
-            'regex' => 'Formato inválido. ',
-            'string' => 'Debe ser una cadena de texto.',
-            'unique' => 'Ya está registrado.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'numeric' => 'Tipo de dato inválido. ',
-            'exists' => 'No hay ningún registro.'
+            'regex' => 'Formato inválido.',
         ];
     }
 
@@ -53,8 +47,8 @@ class SubmoduleUpdateRequest extends FormRequest
             'module_id' => 'Identificador del módulo',
             'permission_id' => 'Identificador del permiso',
             'name' => 'Nombre del submódulo',
-            'url' => 'Ruta del sobmódulo',
-            'icon' => 'Icono del módulo',
+            'url' => 'Ruta del submódulo',
+            'icon' => 'Icono del submódulo',
         ];
     }
 

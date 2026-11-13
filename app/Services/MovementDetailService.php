@@ -4,11 +4,55 @@ namespace App\Services;
 
 use App\Models\Movement;
 use App\Models\MovementDetail;
+use App\Models\MovementDetailQuantity;
 use App\Models\ProductionOrderDetail;
 use Illuminate\Database\Eloquent\Collection;
 
 class MovementDetailService
 {
+    /**
+     * Estado del movimiento de origen de un traslado: Ingreso si no ha enviado nada; Salida si envió todo y se lo
+     * aceptaron; Movimiento si envió una parte o lo enviado espera que el otro proceso lo acepte. Se llama al crear o
+     * editar un traslado (después de guardar sus cantidades) y al aprobarlo o rechazarlo.
+     */
+    public function refreshOriginStatus(MovementDetail $movement_detail): void
+    {
+        if ($movement_detail->model_type !== Movement::class) {
+            return;
+        }
+
+        $origin_movement = Movement::find($movement_detail->model_id);
+
+        if (! $origin_movement) {
+            return;
+        }
+
+        // Sin el contador de producción (fila sin talla): solo unidades por talla
+        $total_input = MovementDetailQuantity::whereNotNull('size_id')->whereHas('movement_detail', function ($query) use ($origin_movement) {
+            $query->where('movement_id', $origin_movement->id)
+                ->where('status', MovementDetail::APPROVED);
+        })->sum('quantity');
+
+        $output = fn (string $status) => (int) MovementDetailQuantity::whereNotNull('size_id')->whereHas('movement_detail', function ($query) use ($origin_movement, $status) {
+            $query->where('model_type', Movement::class)
+                ->where('model_id', $origin_movement->id)
+                ->where('status', $status);
+        })->sum('quantity');
+
+        $approved_output = $output(MovementDetail::APPROVED);
+        $pending_output = $output(MovementDetail::PENDING);
+
+        // Ingreso: no ha enviado nada. Salida: envió todo y se lo aceptaron. Movimiento: envió una parte o lo enviado
+        // espera que el otro proceso lo acepte (los rechazados no cuentan como enviados)
+        $origin_movement->update([
+            'status' => match (true) {
+                $approved_output + $pending_output === 0 => 'Ingreso',
+                $pending_output === 0 && $approved_output >= (int) $total_input => 'Salida',
+                default => 'Movimiento',
+            },
+        ]);
+    }
+
     public function reconstruct(MovementDetail $movement_detail): void
     {
         $processed = [];
@@ -107,8 +151,13 @@ class MovementDetailService
         }
     }
 
-    private function accumulate(array &$accum, int $size_id, int $quantity): void
+    private function accumulate(array &$accum, ?int $size_id, int $quantity): void
     {
+        // El contador de producción (sin talla) no es parte de la curva
+        if ($size_id === null) {
+            return;
+        }
+
         $accum[$size_id] = ($accum[$size_id] ?? 0) + $quantity;
     }
 

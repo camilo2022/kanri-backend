@@ -3,13 +3,18 @@
 namespace App\Http\Requests\Typification\SupplyType\Supply;
 
 use App\Models\SupplyType;
+use App\Traits\ModelTypes;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator as Valid;
 
 class SupplySaveRequest extends FormRequest
 {
+    use ModelTypes;
+
     public array $duplicates = [];
 
     protected function failedValidation(Validator $validator)
@@ -33,20 +38,6 @@ class SupplySaveRequest extends FormRequest
             'supplies.*' => ['required', 'array'],
             'supplies.*.name' => ['required', 'min:4', 'max:50'],
             'supplies.*.description' => ['required', 'uppercase', 'string', 'max:255'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.',
-            'uppercase' => 'Debe de ingresar mayúsculas.',
-            'exists' => 'No registrado en el sistema.',
-            'distinct' => 'El valor ya existe dentro del elemento.',
         ];
     }
 
@@ -157,6 +148,8 @@ class SupplySaveRequest extends FormRequest
             }
 
             $rules = $this->dynamicRules();
+            $supply_type = SupplyType::find($this->input('supply_type_id'));
+            $models = collect($this->getModelTypes());
 
             foreach ($this->input('supplies', []) as $index => $supply) {
 
@@ -175,6 +168,29 @@ class SupplySaveRequest extends FormRequest
                             $validator->errors()->add(
                                 "supplies.$index.$field",
                                 $message
+                            );
+                        }
+                    }
+                }
+
+                foreach ($supply_type?->settings?->form ?? [] as $column) {
+                    $param = $models->firstWhere('model', $models->firstWhere('model', $column->model ?? null)['param'] ?? null);
+                    $param_id = $param ? ($column->{$param['field']} ?? null) : null;
+
+                    if (! $param_id) {
+                        continue;
+                    }
+
+                    foreach (Arr::wrap(data_get($supply, "class.$column->field")) as $key => $id) {
+                        $belongs = $column->model::find($id)
+                            ?->{Str::snake(class_basename($param['model']))}()
+                            ->where('model_has_subitems.subitem_id', $param_id)
+                            ->exists();
+
+                        if (! $belongs) {
+                            $validator->errors()->add(
+                                ($column->cardinality ?? 'single') === 'multiple' ? "supplies.$index.class.$column->field.$key" : "supplies.$index.class.$column->field",
+                                'No pertenece al '.Str::lower($param['label']).' configurado.'
                             );
                         }
                     }

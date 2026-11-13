@@ -21,7 +21,6 @@ class Movement extends Model implements Auditable
         'model_type',
         'production_order_detail_id',
         'status',
-        'settings',
     ];
 
     protected $auditInclude = [
@@ -29,11 +28,6 @@ class Movement extends Model implements Auditable
         'model_type',
         'production_order_detail_id',
         'status',
-        'settings',
-    ];
-
-    protected $casts = [
-        'settings' => 'object',
     ];
 
     public function production_order_detail(): BelongsTo
@@ -44,11 +38,6 @@ class Movement extends Model implements Auditable
     public function model(): MorphTo
     {
         return $this->morphTo();
-    }
-
-    public function item(): BelongsTo
-    {
-        return $this->belongsTo(Item::class);
     }
 
     public function movement_details_input(): HasMany
@@ -137,8 +126,8 @@ class Movement extends Model implements Auditable
             }
         }
 
-        // BÚSQUEDA NORMAL POR TÉRMINOS
-        $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
+        // BÚSQUEDA NORMAL POR TÉRMINOS         
+        $terms = [preg_replace('/\s+/', ' ', $search)];
 
         return $query->where(function (Builder $q) use ($terms) {
 

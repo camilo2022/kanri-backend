@@ -135,7 +135,7 @@ class PersonTypeController extends Controller
     public function all(PersonTypeAllRequest $request)
     {
         try {
-            $person_types = PersonType::with(['document_types'])
+            $person_types = PersonType::with(['item', 'document_types'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })

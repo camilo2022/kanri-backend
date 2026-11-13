@@ -2,8 +2,10 @@
 
 namespace App\Traits;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 trait ApiResponser
 {
@@ -28,7 +30,21 @@ trait ApiResponser
      */
     protected function errorResponse($message, $code)
     {
-        return response()->json(['error' => $message], $code);
+        // El detalle técnico nunca sale en la respuesta: los fallos del servidor quedan en el log
+        if (is_array($message)) {
+            $technical = ['error', 'file', 'line', 'trace'];
+
+            if ($code >= 500) {
+                Log::error(request()->method().' '.request()->path(), Arr::only($message, $technical));
+            }
+
+            $message = Arr::except($message, $technical);
+        }
+
+        // `message` en la raíz para que todas las respuestas de error se lean igual; `error` conserva el formato original
+        $texto = is_array($message) ? ($message['message'] ?? null) : $message;
+
+        return response()->json(['message' => is_string($texto) ? $texto : 'Ocurrió un error.', 'error' => $message], $code);
     }
 
     /**

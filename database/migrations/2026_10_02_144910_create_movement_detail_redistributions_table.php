@@ -14,12 +14,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('movement_detail_redistributions', function (Blueprint $table) {
-            $table->id();
-            $table->foreignIdFor(MovementDetail::class)->constrained()->cascadeOnUpdate();
-            $table->foreignIdFor(Size::class, 'output_size_id')->nullable()->constrained()->cascadeOnUpdate();
-            $table->foreignIdFor(Size::class, 'input_size_id')->nullable()->constrained()->cascadeOnUpdate();
-            $table->unsignedInteger('quantity');
-            $table->timestamps();
+            $table->id()->comment('Identificador');
+            $table->foreignIdFor(MovementDetail::class)->comment('Detalle de movimiento')->constrained()->cascadeOnUpdate();
+            $table->foreignIdFor(Size::class, 'output_size_id')->nullable()->comment('Talla que sale')->constrained()->cascadeOnUpdate();
+            $table->foreignIdFor(Size::class, 'input_size_id')->nullable()->comment('Talla que entra')->constrained()->cascadeOnUpdate();
+            $table->unsignedInteger('quantity')->comment('Cantidad');
+            $table->timestamp('created_at')->nullable()->comment('Fecha de creación');
+            $table->timestamp('updated_at')->nullable()->comment('Fecha de actualización');
         });
     }
 

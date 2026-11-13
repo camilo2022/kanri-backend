@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Categorization\Subcategory;
 
+use App\Models\Category;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -25,7 +26,8 @@ class SubcategoryAllRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'per_page' => ['nullable', 'numeric'],
+            'category_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Category::ITEM_ID],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
             'column' => ['nullable', 'string', 'in:id,name,description,created_at,updated_at,deleted_at'],
@@ -34,21 +36,10 @@ class SubcategoryAllRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'numeric' => 'Debe ser un valor numérico.',
-            'in' => 'Valor inválido. Permitidos: :values.',
-            'exists' => 'No hay ningún registro.',
-            'boolean' => 'Deber ser verdadero o falso.'
-        ];
-    }
-
     public function attributes(): array
     {
         return [
+            'category_id' => 'Categoría',
             'per_page' => 'Registros por pagina.',
             'page' => 'N° de pagina.',
             'search' => 'Filtro de Busqueda.',
@@ -60,6 +51,9 @@ class SubcategoryAllRequest extends FormRequest
 
     protected function prepareForValidation()
     {
-        $this->merge(['with_trashed' => $this->boolean('with_trashed')]);
+        $this->merge([
+            'category_id' => $this->route('category_id'),
+            'with_trashed' => $this->boolean('with_trashed'),
+        ]);
     }
 }

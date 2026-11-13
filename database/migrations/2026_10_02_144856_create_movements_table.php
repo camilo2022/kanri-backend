@@ -13,11 +13,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('movements', function (Blueprint $table) {
-            $table->id();
-            $table->morphs('model');
-            $table->foreignIdFor(ProductionOrderDetail::class)->constrained()->cascadeOnUpdate();
-            $table->enum('status', ['Ingreso', 'Movimiento', 'Salida'])->default('Ingreso');
-            $table->timestamps();
+            $table->id()->comment('Identificador');
+            $table->string('model_type')->comment('Tipo de registro asociado');
+            $table->unsignedBigInteger('model_id')->comment('Registro asociado');
+            $table->index(['model_type', 'model_id']);
+            $table->foreignIdFor(ProductionOrderDetail::class)->comment('Detalle de la orden')->constrained()->cascadeOnUpdate();
+            $table->enum('status', ['Ingreso', 'Movimiento', 'Salida'])->default('Ingreso')->comment('Estado');
+            $table->timestamp('created_at')->nullable()->comment('Fecha de creación');
+            $table->timestamp('updated_at')->nullable()->comment('Fecha de actualización');
         });
     }
 

@@ -5,6 +5,7 @@ namespace App\Http\Requests\Movement;
 use App\Models\Movement;
 use App\Models\MovementDetail;
 use App\Models\Process;
+use App\Models\ProductivityDetail;
 use App\Models\Size;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -34,10 +35,11 @@ class MovementApproveRequest extends FormRequest
             'origin' => ['required', 'array'],
             'origin.production_order_detail_id' => ['required', 'exists:production_order_details,id'],
             'origin.process' => ['required', 'array'],
-            'origin.process.model_type' => ['required', 'in:'.implode(',', [Process::class])],
+            'origin.process.model_type' => ['required', 'in:'.implode(',', [Process::class, ProductivityDetail::class])],
             'origin.process.model_id' => ['required_with:origin.process.model_type',
                 match ($this->input('origin.process.model_type')) {
                     Process::class => 'exists:subitems,id,item_id,'.Process::ITEM_ID,
+                    ProductivityDetail::class => 'exists:productivity_details,id',
                     default => 'nullable'
                 }],
             'destination' => ['required', 'array'],
@@ -59,24 +61,6 @@ class MovementApproveRequest extends FormRequest
             'redistributions.*.quantity' => ['required', 'integer', 'min:1'],
             'status' => ['sometimes', 'in:'.implode(',', MovementDetail::statuses())],
             'observation' => ['nullable', 'string', 'max:255'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'required_with' => 'Es obligatorio cuando se proporciona :values.',
-            'exists' => 'No registrado en el sistema.',
-            'boolean' => 'Debe ser un dato tipo sí/no.',
-            'numeric' => 'Debe ser un dato numérico.',
-            'integer' => 'Debe ser un número entero.',
-            'min' => 'El valor debe ser mayor o igual a :min.',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'in' => 'Valor inválido. Permitidos: :values.',
-            'distinct' => 'Debe ser un valor único.',
-            'array' => 'Debe ser una lista o estructura válida.',
         ];
     }
 
@@ -108,8 +92,28 @@ class MovementApproveRequest extends FormRequest
 
             $origin_id = $this->input('origin.process.model_id');
             $destination_id = $this->input('destination.process.model_id');
+            $from_productivity = $this->input('origin.process.model_type') === ProductivityDetail::class;
 
-            if ($origin_id && $destination_id && is_numeric($origin_id) && is_numeric($destination_id)) {
+            // Al primer proceso (Corte) solo se ingresa desde Productividad: el origen debe ser un registro de trabajo
+            $destination_process = is_numeric($destination_id) ? Process::find((int) $destination_id) : null;
+
+            if ($destination_process?->isFirst()) {
+                $approved_detail = $this->filled('movement_detail_id') ? MovementDetail::find($this->input('movement_detail_id')) : null;
+
+                if (! $from_productivity
+                    || ($approved_detail && (
+                        $approved_detail->model_type !== ProductivityDetail::class
+                        || (int) $approved_detail->model_id !== (int) $origin_id
+                    ))
+                ) {
+                    $validator->errors()->add(
+                        'origin.process.model_type',
+                        "El ingreso a {$destination_process->name} solo puede venir de Productividad (un registro de trabajo)."
+                    );
+                }
+            }
+
+            if (! $from_productivity && $origin_id && $destination_id && is_numeric($origin_id) && is_numeric($destination_id)) {
                 $origin_id = (int) $origin_id;
                 $destination_id = (int) $destination_id;
 

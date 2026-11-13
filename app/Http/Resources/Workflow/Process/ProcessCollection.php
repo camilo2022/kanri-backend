@@ -4,16 +4,19 @@ namespace App\Http\Resources\Workflow\Process;
 
 use App\Models\Process;
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class ProcessCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Process::class, $this->collection->pluck('id')->all());
         return [
-            'processes' => $this->collection->map(function ($process) {
+            'processes' => $this->collection->map(function ($process) use ($request, $audited) {
                 return [
                     'id' => $process->id,
+                    'has_audits' => isset($audited[$process->id]),
                     'item_id' => $process->item_id,
                     'model_type' => Process::class,
                     'name' => $process->name,
@@ -26,6 +29,8 @@ class ProcessCollection extends ResourceCollection
                     'after_processes' => $process->after_processes,
                     'subprocesses' => $process->subprocesses,
                     'item' => $process->item,
+                    // Cronograma de producción: leyenda y filtro con las tipologías de cada proceso
+                    ...($request->boolean('with_typologies') ? ['typologies' => $process->typologies] : []),
                 ];
             }),
             'meta' => [

@@ -24,6 +24,8 @@ class SubprocessResource extends JsonResource
                 'deleted_at' => $this->formatDate($this->deleted_at),
                 'item' => $this->item,
                 'process' => $this->process,
+                'before_subprocesses' => $this->before_subprocesses,
+                'after_subprocesses' => $this->after_subprocesses,
             ],
             'model_types' => $this->getModelTypes(),
         ];

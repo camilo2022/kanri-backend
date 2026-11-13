@@ -9,6 +9,8 @@ use App\Models\Rule;
 use App\Models\Subprocess;
 use App\Traits\ModelTypes;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -27,11 +29,56 @@ class StandardRuleService
     use ModelTypes;
 
     /**
+     * Firma de cada regla activa (id => "clave:id|clave:id", claves ordenadas), para no repetir una combinación de
+     * relaciones. $except_id deja fuera la regla que se está editando.
+     */
+    public function activeSignatures(?int $except_id = null): Collection
+    {
+        $rule_ids = DB::table('subitems')
+            ->where('item_id', Rule::ITEM_ID)
+            ->when($except_id, fn ($query) => $query->where('id', '!=', $except_id))
+            ->whereNull('deleted_at')
+            ->pluck('id');
+
+        return $this->signaturesOf($rule_ids->all());
+    }
+
+    /**
+     * Firma de una regla, aunque esté borrada (para revisar si al restaurarla choca con una activa).
+     */
+    public function signatureOf(int $rule_id): string
+    {
+        return $this->signaturesOf([$rule_id])->get($rule_id, '');
+    }
+
+    protected function signaturesOf(array $rule_ids): Collection
+    {
+        $class_to_key = collect($this->getModelTypesFromRules())->mapWithKeys(fn ($config, $key) => [$config['model'] => $key]);
+
+        return DB::table('model_has_subitems')
+            ->whereIn('subitem_id', $rule_ids)
+            ->get(['subitem_id', 'model_type', 'model_id'])
+            ->groupBy('subitem_id')
+            ->map(function ($rows) use ($class_to_key) {
+                return $rows
+                    ->mapWithKeys(function ($row) use ($class_to_key) {
+                        $class = Relation::getMorphedModel($row->model_type) ?? $row->model_type;
+                        $key = $class_to_key[$class] ?? null;
+
+                        return $key ? [$key => $row->model_id] : [];
+                    })
+                    ->sortKeys()
+                    ->map(fn ($value, $key) => "$key:$value")
+                    ->implode('|');
+            });
+    }
+
+    /**
      * Valores de la referencia por maestro (clave de getModelTypesFromRules => id).
      */
-    public function referenceValues(ProductionOrder $productionOrder): array
+    public function referenceValues(ProductionOrder $production_order): array
     {
-        $sheet = $productionOrder->technical_sheet;
+        $sheet = $production_order->technical_sheet;
         $product = $sheet?->product;
 
         return array_filter([
@@ -54,7 +101,7 @@ class StandardRuleService
     /**
      * Devuelve ['rule' => Rule, 'points' => int, 'matched' => [claves]] o null si ninguna aplica.
      */
-    public function resolve(ProductionOrder $productionOrder, Model $workstation, Process $process): ?array
+    public function resolve(ProductionOrder $production_order, Model $workstation, Process $process): ?array
     {
         $scope = [
             'process' => $process->id,
@@ -66,20 +113,20 @@ class StandardRuleService
             'operation' => $workstation instanceof Operation ? $workstation->id : null,
         ];
 
-        $reference = $this->referenceValues($productionOrder);
+        $reference = $this->referenceValues($production_order);
 
         $models = $this->getModelTypesFromRules();
-        $keyByClass = collect($models)->mapWithKeys(fn ($config, $key) => [$config['model'] => $key])->all();
+        $key_by_class = collect($models)->mapWithKeys(fn ($config, $key) => [$config['model'] => $key])->all();
 
         $weights = json_decode(DB::table('items')->where('id', Rule::ITEM_ID)->value('settings') ?? '{}', true)['weights'] ?? [];
 
         // Reglas del proceso del puesto, con todas sus relaciones en una sola consulta
-        $ruleIds = DB::table('model_has_subitems')
+        $rule_ids = DB::table('model_has_subitems')
             ->where('model_type', Process::class)
             ->where('model_id', $process->id)
             ->pluck('subitem_id');
 
-        $rules = Rule::whereIn('id', $ruleIds)->get();
+        $rules = Rule::whereIn('id', $rule_ids)->get();
 
         $relations = DB::table('model_has_subitems')
             ->whereIn('subitem_id', $rules->pluck('id'))
@@ -91,7 +138,7 @@ class StandardRuleService
         foreach ($rules as $rule) {
             $values = [];
             foreach ($relations->get($rule->id, collect()) as $relation) {
-                $key = $keyByClass[$relation->model_type] ?? null;
+                $key = $key_by_class[$relation->model_type] ?? null;
                 if ($key) {
                     $values[$key][] = (int) $relation->model_id;
                 }

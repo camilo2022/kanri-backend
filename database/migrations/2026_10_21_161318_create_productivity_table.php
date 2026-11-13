@@ -13,13 +13,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('productivity', function (Blueprint $table) {
-            $table->id();
-            $table->morphs('model');
-            $table->date('date');
-            $table->time('start_time');
-            $table->time('end_time');
+            $table->id()->comment('Identificador');
+            $table->string('model_type')->comment('Tipo de proceso');
+            $table->unsignedBigInteger('model_id')->comment('Proceso');
+            $table->index(['model_type', 'model_id']);
+            $table->date('date')->comment('Fecha');
+            $table->time('start_time')->comment('Hora de inicio');
+            $table->time('end_time')->comment('Hora de fin');
             $table->json('settings')->default(new Expression('(JSON_OBJECT())'))->comment('Configuraciones');
-            $table->timestamps();
+            $table->timestamp('created_at')->nullable()->comment('Fecha de creación');
+            $table->timestamp('updated_at')->nullable()->comment('Fecha de actualización');
+            $table->softDeletes()->comment('Fecha de desactivación');
         });
     }
 

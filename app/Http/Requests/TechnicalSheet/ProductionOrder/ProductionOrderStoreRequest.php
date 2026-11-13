@@ -11,6 +11,7 @@ use App\Models\Size;
 use App\Models\Supplier;
 use App\Models\Supply;
 use App\Models\TechnicalSheet;
+use App\Services\ProductionOrderCurveService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -67,17 +68,7 @@ class ProductionOrderStoreRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'required' => 'Es obligatorio.',
-            'exists' => 'No registrado en el sistema.',
-            'boolean' => 'Debe ser un dato tipo si/no',
-            'numeric' => 'Debe ser un dato númerico',
-            'min' => 'El valor debe ser mayor o igual a :min',
             'production_order_details.max' => 'El valor debe ser menor o igual a :min',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'in' => 'Valor inválido. Permitidos: :values.',
-            'integer' => 'Debe ser un dato númerico',
-            'distinct' => 'Debe ser un valor unico',
         ];
     }
 
@@ -100,16 +91,41 @@ class ProductionOrderStoreRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            if ($this->boolean('reasigned_curve')) {
+                $started_orders = app(ProductionOrderCurveService::class)->startedOrderIds();
+
+                foreach ($this->input('reassigned_origins') ?? [] as $index => $origin) {
+                    if (in_array((int) ($origin['production_order_id'] ?? 0), $started_orders, true)) {
+                        $validator->errors()->add(
+                            "reassigned_origins.$index.production_order_id",
+                            'No se puede reasignar curva de un lote que ya se empezó a trabajar o está programado.'
+                        );
+                    }
+                }
+            }
+
+            // Si los datos básicos ya fallaron no hay nada coherente que validar a fondo (evita errores 500 con datos vacíos)
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
             $technical_sheet = TechnicalSheet::find($this->input('technical_sheet_id'));
             $product = Product::find($technical_sheet->product_id);
-            $hasFile = $this->hasFile('strokes_file.file');
 
-            if (! $hasFile) {
-                $validator->errors()->add(
-                    'strokes_file',
-                    'Debe seleccionar un archivo'
-                );
+            // Corte único por ficha, igual que al editar
+            if (ProductionOrder::where('technical_sheet_id', $this->input('technical_sheet_id'))->where('cut', $this->input('cut'))->exists()) {
+                $validator->errors()->add('cut', 'Ya existe un lote con ese corte para esta referencia.');
             }
+
+            // Las filas de tela que llegan con id deben ser de esta orden (si no, se moverían de otra)
+            $row_ids = collect($this->input('production_order_details', []))
+                ->flatMap(fn ($detail) => collect($detail['rows'] ?? [])->flatMap(fn ($row) => collect($row['sizes'] ?? [])->pluck('id')))
+                ->filter()
+                ->unique();
+            $own_ids = collect();
+            if ($row_ids->diff($own_ids)->isNotEmpty()) {
+                $validator->errors()->add('fabric_id', 'Hay cantidades de tela que no pertenecen a esta orden.');
+            }
+            // El trazo es opcional (como en Gestión de producción); si llega, se valida su nombre más abajo
 
             if (! empty($this->fabric_id)) {
                 $supply = Supply::with('supply_type')->find($this->fabric_id);
@@ -310,8 +326,6 @@ class ProductionOrderStoreRequest extends FormRequest
                             });
 
                         $available_quantity = $supply_quantity - $used_quantity;
-
-                        logger()->debug('QUANTITIES', ['QUANTITY' => $quantity, 'SUPPLY_QUANTITY' => $supply_quantity, 'USED_QUANTITY' => $used_quantity, 'AVAIILABLE_QUANTITY' => $available_quantity]);
 
                         if ($quantity > $available_quantity) {
                             $validator->errors()->add(

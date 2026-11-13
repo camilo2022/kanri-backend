@@ -4,12 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as Auditing;
+use OwenIt\Auditing\Contracts\Auditable;
 
 class File extends Model implements Auditable
 {
     use Auditing;
+
+    // Lado máximo en píxeles de una imagen: más grande no se puede abrir para optimizarla sin agotar la memoria
+    public const MAX_IMAGE_SIDE = 6000;
 
     protected $table = 'files';
 
@@ -24,7 +27,7 @@ class File extends Model implements Auditable
         'extension',
         'size',
         'metadata',
-        'settings'
+        'settings',
     ];
 
     protected $auditInclude = [
@@ -37,35 +40,25 @@ class File extends Model implements Auditable
         'mime',
         'extension',
         'size',
-        'metadata'
+        'metadata',
     ];
 
     protected $casts = [
-        'metadata' => 'object'
+        'metadata' => 'object',
     ];
 
     public function getPathAttribute($value): ?string
     {
-        return $value ? url('storage/' . $value) : null;
+        return $value ? url('storage/'.$value) : null;
     }
 
     public function getPdfPathAttribute()
     {
-        return public_path('storage/' . $this->attributes['path']);
+        return public_path('storage/'.$this->attributes['path']);
     }
 
     public function model(): MorphTo
     {
         return $this->morphTo();
     }
-
-    /*public function file_type(): BelongsTo
-    {
-        return $this->belongsTo(FileType::class);
-    }
-
-    public function file_subtype(): BelongsTo
-    {
-        return $this->belongsTo(FileSubtype::class);
-    }*/
 }

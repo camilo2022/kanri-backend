@@ -7,8 +7,11 @@ use App\Traits\HasSettingsUuid;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Auditable as Auditing;
 use OwenIt\Auditing\Contracts\Auditable;
 
@@ -46,6 +49,13 @@ class Process extends Model implements Auditable
 
     public const APPROVED = 'Aprobado';
 
+    // Flujo de los hijos (settings.subprocess_flow del proceso y settings.operation_flow del subproceso)
+    public const SEQUENCE = 'sequence';
+
+    public const PARALLEL = 'parallel';
+
+    public const FLOWS = [self::SEQUENCE, self::PARALLEL];
+
     protected static function booted()
     {
         static::addGlobalScope('item_id', function (Builder $builder) {
@@ -76,18 +86,52 @@ class Process extends Model implements Auditable
         return $this->morphToMany(Process::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
     }
 
+    public function typologies(): MorphToMany
+    {
+        return $this->morphToMany(Typology::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
+    }
+
     public function subprocesses(): MorphToMany
     {
         return $this->morphedByMany(Subprocess::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
     }
 
+    public function productivities(): MorphMany
+    {
+        return $this->morphMany(Productivity::class, 'model');
+    }
+
     /**
-     * Primer proceso de la producción (hoy, Corte): pertenece a la orden de producción y no tiene procesos
-     * anteriores. Sus unidades no vienen de un traslado, sino de la productividad del turno.
+     * Borra las cadenas (siguientes y anteriores) entre los subprocesos del proceso. Se usa cuando su flujo deja de
+     * ser en secuencia.
      */
+    public function clearSubprocessChains(): void
+    {
+        $ids = $this->subprocesses()->withTrashed()->pluck('subitems.id');
+        $operation_ids = DB::table('model_has_subitems')
+            ->where('model_type', Operation::class)
+            ->whereIn('subitem_id', $ids)
+            ->pluck('model_id');
+
+        // Entre subprocesos y de una operación a un subproceso (RESINA → LAVADO RESINA)
+        DB::table('model_has_subitems')
+            ->where('model_type', Subprocess::class)
+            ->whereIn('subitem_id', $ids->merge($operation_ids))
+            ->whereIn('model_id', $ids)
+            ->delete();
+    }
+
     public function isFirst(): bool
     {
         return (bool) ($this->settings->in_production_order ?? false) && ! $this->before_processes()->exists();
+    }
+
+    /**
+     * Empleados asignados a este puesto de trabajo.
+     */
+    public function employees(): HasMany
+    {
+        return $this->hasMany(Employee::class, 'workstation_id');
     }
 
     public function scopeSearch(Builder $query, ?string $search = null): Builder
@@ -96,8 +140,8 @@ class Process extends Model implements Auditable
         if ($search === '') {
             return $query;
         }
-
-        $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
+         
+        $terms = [preg_replace('/\s+/', ' ', $search)];
 
         return $query->where(function (Builder $q) use ($terms) {
             foreach ($terms as $term) {

@@ -151,7 +151,7 @@ class DocumentTypeController extends Controller
     public function all(DocumentTypeAllRequest $request, $person_type_id)
     {
         try {
-            $document_types = DocumentType::with(['person_type'])
+            $document_types = DocumentType::with(['item', 'person_type'])
                 ->whereHas('person_type', fn ($r) => $r->where('id', $person_type_id))
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));

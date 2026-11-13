@@ -13,21 +13,23 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('production_orders', function (Blueprint $table) {
-            $table->id();
-            $table->foreignIdFor(TechnicalSheet::class)->constrained()->cascadeOnUpdate();
-            $table->string('consecutive', 11)->unique();
-            $table->enum('production_place', ['BLESS', 'SATELITE'])->default('BLESS');
-            $table->foreignIdFor(Supplier::class)->nullable()->constrained()->cascadeOnUpdate();
-            $table->float('efficiency', 8.3)->nullable();
-            $table->string('cut', 2);
-            $table->decimal('width', 8, 2)->nullable();
-            $table->boolean('pocket_fabric')->default(false);
-            $table->enum('priority', ['1', '2', '3', '4', '5'])->default('3');
-            $table->text('observation')->nullable();
+            $table->id()->comment('Identificador');
+            $table->uuid()->comment('Código único');
+            $table->foreignIdFor(TechnicalSheet::class)->comment('Ficha técnica')->constrained()->cascadeOnUpdate();
+            $table->string('consecutive', 11)->unique()->comment('Consecutivo');
+            $table->enum('production_place', ['BLESS', 'SATELITE'])->default('BLESS')->comment('Lugar de producción');
+            $table->foreignIdFor(Supplier::class)->nullable()->comment('Proveedor')->constrained()->cascadeOnUpdate();
+            $table->float('efficiency', 24)->nullable()->comment('Eficiencia');
+            $table->string('cut', 2)->comment('Lote');
+            $table->decimal('width', 8, 2)->nullable()->comment('Ancho');
+            $table->boolean('pocket_fabric')->default(false)->comment('Tela de bolsillo');
+            $table->enum('priority', ['1', '2', '3', '4', '5'])->default('3')->comment('Prioridad');
+            $table->text('observation')->nullable()->comment('Observación');
             $table->json('settings')->default(new Expression('(JSON_OBJECT())'))->comment('Configuraciones');
-            $table->enum('status', ['Pendiente', 'Cancelado', 'Aprobado'])->default('Pendiente');
-            $table->timestamps();
-            $table->softDeletes();
+            $table->enum('status', ['Pendiente', 'Cancelado', 'Aprobado'])->default('Pendiente')->comment('Estado');
+            $table->timestamp('created_at')->nullable()->comment('Fecha de creación');
+            $table->timestamp('updated_at')->nullable()->comment('Fecha de actualización');
+            $table->softDeletes()->comment('Fecha de desactivación');
         });
 
         DB::unprepared('DROP PROCEDURE IF EXISTS generate_production_order_consecutive');

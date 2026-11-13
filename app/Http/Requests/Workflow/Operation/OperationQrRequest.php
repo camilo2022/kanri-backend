@@ -31,14 +31,6 @@ class OperationQrRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'exists' => 'No hay ningún registro activo.',
-        ];
-    }
-
     public function attributes(): array
     {
         return [

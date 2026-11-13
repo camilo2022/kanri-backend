@@ -51,13 +51,21 @@ class ProductionOrderDetail extends Model implements Auditable
         return $this->hasMany(ProductionOrderDetailQuantities::class);
     }
 
+    /**
+     * Movimientos del destino en los procesos (ingresos y salidas del lote-destino en cada proceso).
+     */
+    public function movements(): HasMany
+    {
+        return $this->hasMany(Movement::class);
+    }
+
 
     public function scopeSearch(Builder $query, ?string $search = null): Builder
     {
         $search = trim((string) $search);
         if ($search === '') return $query;
-
-        $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
+         
+        $terms = [preg_replace('/\s+/', ' ', $search)];
 
         return $query->where(function (Builder $q) use ($terms) {
             foreach ($terms as $term) {

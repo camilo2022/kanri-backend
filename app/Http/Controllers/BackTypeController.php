@@ -124,7 +124,7 @@ class BackTypeController extends Controller
     public function all(BackTypeAllRequest $request)
     {
         try {
-            $back_types = BackType::when($request->filled('search'), function ($query) use ($request) {
+            $back_types = BackType::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {

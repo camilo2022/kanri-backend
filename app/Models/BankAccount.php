@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -42,25 +41,5 @@ class BankAccount extends Model implements Auditable
     public function bank_certificate(): MorphOne
     {
         return $this->morphOne(File::class, 'model');
-    }
-
-    public function scopeSearch(Builder $query, ?string $search = null): Builder
-    {
-        $search = trim((string) $search);
-        if ($search === '') {
-            return $query;
-        }
-
-        $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
-
-        return $query->where(function (Builder $q) use ($terms) {
-            foreach ($terms as $term) {
-                $q->orWhere(function (Builder $sq) use ($term) {
-                    $sq->orWhere('name', 'LIKE', '%'.$term.'%')
-                        ->orWhere('title', 'LIKE', '%'.$term.'%')
-                        ->orWhere('description', 'LIKE', '%'.$term.'%');
-                });
-            }
-        });
     }
 }

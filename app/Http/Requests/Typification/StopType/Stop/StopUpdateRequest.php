@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Typification\StopType\Stop;
 
 use App\Models\Stop;
-use App\Models\StopType;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -31,27 +30,14 @@ class StopUpdateRequest extends FormRequest
             'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,'.$this->route('id').',id,item_id,'.Stop::ITEM_ID],
             'description' => ['required', 'uppercase', 'string', 'max:255'],
             'settings' => ['sometimes', 'array'],
-            'settings.range_time' => ['sometimes', 'numeric', 'min:1'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.',
-            'exists' => 'No está registrado.',
-            'uppercase' => 'Debe de ingresar mayúsculas.',
+            'settings.range_time' => ['nullable', 'numeric', 'min:1'],
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador del subtipo de arhivo',
+            'id' => 'Identificador de la parada',
             'name' => 'Nombre',
             'description' => 'Descripción',
         ];
@@ -59,7 +45,8 @@ class StopUpdateRequest extends FormRequest
 
     public function withValidator($validator)
     {
-        $stop_type = StopType::find($this->input('stop_type_id'));
+        // El tipo es el que la parada ya tiene: editar no lo cambia
+        $stop_type = Stop::with(['stop_type'])->find($this->route('id'))?->stop_type->first();
 
         $has_defined_time_range = (bool) data_get($stop_type?->settings, 'has_defined_time_range', false);
 
@@ -75,5 +62,13 @@ class StopUpdateRequest extends FormRequest
     protected function prepareForValidation()
     {
         $this->merge(['id' => $this->route('id')]);
+    }
+
+    protected function passedValidation()
+    {
+        // waiting_units la pone el sistema (parada de espera automática del registro de trabajo): editar no la quita
+        if (data_get(Stop::find($this->route('id'))?->settings, 'waiting_units')) {
+            $this->merge(['settings' => array_merge($this->input('settings') ?? [], ['waiting_units' => true])]);
+        }
     }
 }

@@ -12,15 +12,11 @@ class PermissionResource extends JsonResource
         return [
             'permission' => [
                 'id' => $this->id,
-                'item_id' => $this->item_id,
                 'name' => $this->name,
                 'title' => $this->title,
                 'description' => $this->description,
-                'settings' => $this->settings,
                 'created_at' => $this->formatDate($this->created_at),
                 'updated_at' => $this->formatDate($this->updated_at),
-                'deleted_at' => $this->formatDate($this->deleted_at),
-                'item' => $this->item,
                 'roles' => $this->roles,
             ]
         ];

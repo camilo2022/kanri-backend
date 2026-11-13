@@ -34,9 +34,7 @@ class PositionAuthorizationAssignRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'required' => 'Es obligatorio.',
-            'numeric' => 'Debe ser un número.',
-            'exists' => 'No hay ningún registro.'
+            'permission_id.unique' => 'El cargo ya tiene este permiso.',
         ];
     }
 

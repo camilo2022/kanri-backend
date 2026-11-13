@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Typification\YokeType;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class YokeTypeCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\YokeType::class, $this->collection->pluck('id')->all());
         return [
-            'yoke_types' => $this->collection->map(function ($yoke_type) {
+            'yoke_types' => $this->collection->map(function ($yoke_type) use ($audited) {
                 return [
                     'id' => $yoke_type->id,
+                    'has_audits' => isset($audited[$yoke_type->id]),
                     'item_id' => $yoke_type->item_id,
                     'name' => $yoke_type->name,
                     'description' => $yoke_type->description,

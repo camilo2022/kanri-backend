@@ -66,9 +66,12 @@ use App\Traits\ApiResponser;
  *     @OA\Property(
  *         property="subprocess",
  *         type="array",
- *         description="Subproceso al que pertenece (con `pivot`). Solo en `all`.",
+ *         description="Subproceso al que pertenece (con `pivot`).",
  *         @OA\Items(ref="#/components/schemas/Subitem")
- *     )
+ *     ),
+ *     @OA\Property(property="before_operations", type="array", description="Operaciones anteriores del mismo subproceso.", @OA\Items(ref="#/components/schemas/Subitem")),
+ *     @OA\Property(property="after_operations", type="array", description="Operaciones siguientes del mismo subproceso.", @OA\Items(ref="#/components/schemas/Subitem")),
+ *     @OA\Property(property="after_subprocesses", type="array", description="Subprocesos siguientes en la cadena del proceso: la operación sale de su subproceso y abre una línea (RESINA → LAVADO RESINA).", @OA\Items(ref="#/components/schemas/Subitem"))
  * )
  *
  * @OA\Schema(
@@ -104,6 +107,9 @@ use App\Traits\ApiResponser;
  *     @OA\Property(property="subprocess_id", type="integer", description="Subproceso al que pertenece la operación.", example=342),
  *     @OA\Property(property="name", type="string", minLength=4, maxLength=50, description="Nombre en MAYÚSCULAS. Único entre las operaciones.", example="PEGAR PRETINA"),
  *     @OA\Property(property="description", type="string", maxLength=255, description="Descripción en MAYÚSCULAS.", example="PEGAR LA PRETINA AL CUERPO DEL JEAN"),
+ *     @OA\Property(property="after_operations", type="array", description="Operaciones siguientes: solo si el subproceso tiene `settings.operation_flow = sequence`, del mismo subproceso, distintas de ella misma y sin formar ciclos. En `update`, si no se envía, se conservan las guardadas.", @OA\Items(type="integer", example=361)),
+ *     @OA\Property(property="before_operations", type="array", description="«Depende de»: solo si el subproceso tiene `settings.operation_flow = parallel`. Operaciones del mismo subproceso que deben estar hechas antes (RELOJERA depende de PARCHE), distintas de ella misma y sin formar ciclos. Es obligatoria aunque la ficha técnica no la traiga. En `update`, si no se envía, se conservan las guardadas.", @OA\Items(type="integer", example=343)),
+ *     @OA\Property(property="after_subprocesses", type="array", description="Subprocesos siguientes en la cadena del proceso: solo si el proceso tiene `settings.subprocess_flow = sequence`, del mismo proceso y distintos del subproceso de la operación. La operación deja de esperar lo anterior de su subproceso y abre una línea. En `update`, si no se envía, se conservan los guardados.", @OA\Items(type="integer", example=1301)),
  *     @OA\Property(
  *         property="settings",
  *         type="object",
@@ -162,7 +168,7 @@ class OperationController extends Controller
     public function all(OperationAllRequest $request, $subprocess_id)
     {
         try {
-            $operations = Operation::with(['subprocess'])
+            $operations = Operation::with(['item', 'subprocess', 'before_operations', 'after_operations', 'after_subprocesses'])
                 ->whereHas('subprocess', fn ($r) => $r->where('id', $subprocess_id))
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
@@ -214,7 +220,7 @@ class OperationController extends Controller
     public function find(OperationFindRequest $request, $id)
     {
         try {
-            $operation = Operation::with(['subprocess'])
+            $operation = Operation::with(['subprocess', 'before_operations', 'after_operations', 'after_subprocesses'])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -276,7 +282,16 @@ class OperationController extends Controller
 
             $operation->save();
 
+            // Operación nueva: sync no toca cadenas de nadie (ver Operation::subprocess)
             $operation->auditSync('subprocess', $request->integer('subprocess_id'));
+            $operation->auditAttach('after_operations', $request->array('after_operations'));
+            $operation->auditAttach('after_subprocesses', $request->array('after_subprocesses'));
+
+            // «Depende de» se guarda en la operación de la que depende (su siguiente): por este lado la tabla compartida no
+            // toca el subproceso ni las reglas de la operación
+            foreach ($request->array('before_operations') as $id) {
+                Operation::find($id)?->auditAttach('after_operations', [$operation->id]);
+            }
 
             return $this->successResponse(
                 new OperationResource($operation),
@@ -299,7 +314,7 @@ class OperationController extends Controller
      *     path="/workflow/processes/subprocesses/operations/update/{id}",
      *     tags={"Workflow › Operations"},
      *     summary="Editar una operación",
-     *     description="Cambia nombre, descripción y `settings` (reemplaza el objeto completo, incluido el `schema`). No cambia el subproceso. Responde 201, no 200.",
+     *     description="Cambia nombre, descripción y `settings` (reemplaza el objeto completo, incluido el `schema`). No cambia el subproceso.",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
@@ -310,7 +325,7 @@ class OperationController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=201,
+     *         response=200,
      *         description="Operación editada correctamente",
      *         @OA\JsonContent(ref="#/components/schemas/OperationResponse")
      *     ),
@@ -340,10 +355,33 @@ class OperationController extends Controller
 
             $operation->save();
 
+            // Solo si se envían: un cliente que no los maneja no borra las cadenas guardadas
+            if ($request->has('after_operations')) {
+                $operation->auditSync('after_operations', $request->array('after_operations'));
+            }
+
+            if ($request->has('after_subprocesses')) {
+                $operation->auditSync('after_subprocesses', $request->array('after_subprocesses'));
+            }
+
+            // «Depende de»: se agrega o se quita en la operación de la que depende (ver store)
+            if ($request->has('before_operations')) {
+                $current = $operation->before_operations()->pluck('subitems.id')->map(fn ($id) => (int) $id);
+                $wanted = collect($request->array('before_operations'))->map(fn ($id) => (int) $id);
+
+                foreach ($wanted->diff($current) as $id) {
+                    Operation::find($id)?->auditAttach('after_operations', [$operation->id]);
+                }
+
+                foreach ($current->diff($wanted) as $id) {
+                    Operation::find($id)?->auditDetach('after_operations', [$operation->id]);
+                }
+            }
+
             return $this->successResponse(
                 new OperationResource($operation),
                 $this->getMessage('Success'),
-                201
+                200
             );
         } catch (\Throwable $e) {
             return $this->errorResponse(

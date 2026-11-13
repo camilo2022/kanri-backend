@@ -3,16 +3,19 @@
 namespace App\Http\Resources\OrganizationalStructure\Area;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class AreaCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Area::class, $this->collection->pluck('id')->all());
         return [
-            'areas' => $this->collection->map(function ($area) {
+            'areas' => $this->collection->map(function ($area) use ($audited) {
                 return [
                     'id' => $area->id,
+                    'has_audits' => isset($audited[$area->id]),
                     'item_id' => $area->item_id,
                     'name' => $area->name,
                     'description' => $area->description,

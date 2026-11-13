@@ -69,7 +69,7 @@ use App\Traits\ApiResponser;
  *     schema="CompensationFundRequest",
  *     type="object",
  *     required={"name", "description"},
- *     @OA\Property(property="name", type="string", minLength=4, maxLength=50, description="Nombre en MAYÚSCULAS. Único entre las cajas de compensación.", example="CAFAM"),
+ *     @OA\Property(property="name", type="string", minLength=4, maxLength=100, description="Nombre en MAYÚSCULAS. Único entre las cajas de compensación.", example="CAFAM"),
  *     @OA\Property(property="description", type="string", maxLength=255, description="Descripción en MAYÚSCULAS.", example="CAJA DE COMPENSACION FAMILIAR CAFAM")
  * )
  */
@@ -121,7 +121,7 @@ class CompensationFundController extends Controller
     public function all(CompensationFundAllRequest $request)
     {
         try {
-            $compensation_funds = CompensationFund::when($request->filled('search'), function ($query) use ($request) {
+            $compensation_funds = CompensationFund::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {

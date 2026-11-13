@@ -34,20 +34,6 @@ class WaistbandTypeUpdateRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.',
-            'exists' => 'No está registrado.',
-            'uppercase' => 'Debe de ingresar mayúsculas.',
-            'digits_between' => 'Debe tener entre 2 y 5 dígitos.',
-        ];
-    }
-
     public function attributes(): array
     {
         return [
@@ -67,7 +53,7 @@ class WaistbandTypeUpdateRequest extends FormRequest
                 return;
             }
 
-            $exists = WaistbandType::query()
+            $exists = WaistbandType::withTrashed()
                 ->where('settings->code', $this->input('settings.code'))
                 ->whereKeyNot($this->route('id'))
                 ->exists();

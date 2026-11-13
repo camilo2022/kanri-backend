@@ -262,7 +262,7 @@ class ColorController extends Controller
      *     path="/colors/update/{id}",
      *     tags={"Color"},
      *     summary="Editar un color",
-     *     description="Reemplaza nombre, descripción y `settings` completo. Responde 201, no 200.",
+     *     description="Reemplaza nombre, descripción y `settings` completo.",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
@@ -273,7 +273,7 @@ class ColorController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=201,
+     *         response=200,
      *         description="Color editado correctamente",
      *         @OA\JsonContent(ref="#/components/schemas/ColorResponse")
      *     ),
@@ -307,7 +307,7 @@ class ColorController extends Controller
             return $this->successResponse(
                 new ColorResource($color),
                 $this->getMessage('Success'),
-                201
+                200
             );
         } catch (\Throwable $e) {
             return $this->errorResponse(

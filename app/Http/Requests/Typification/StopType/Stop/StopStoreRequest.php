@@ -32,26 +32,14 @@ class StopStoreRequest extends FormRequest
             'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.Stop::ITEM_ID],
             'description' => ['required', 'uppercase', 'string', 'max:255'],
             'settings' => ['sometimes', 'array'],
-            'settings.range_time' => ['sometimes', 'numeric', 'min:1'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.',
-            'uppercase' => 'Debe de ingresar mayúsculas.',
+            'settings.range_time' => ['nullable', 'numeric', 'min:1'],
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'stop_type_id' => 'Identificador del tipo de archivo',
+            'stop_type_id' => 'Tipo de parada',
             'name' => 'Nombre',
             'description' => 'Descripción',
         ];

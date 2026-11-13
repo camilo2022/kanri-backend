@@ -123,7 +123,7 @@ class ProductController extends Controller
                     'product' => $product
                 ],
                 $this->getMessage('Success'),
-                201
+                200
             );
         } catch (\Throwable $e) {
             return $this->errorResponse(

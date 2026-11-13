@@ -28,7 +28,10 @@ use App\Models\Position;
 use App\Models\Process;
 use App\Models\Report;
 use App\Models\RiskManager;
+use App\Models\Rule;
 use App\Models\Size;
+use App\Models\Stop;
+use App\Models\StopType;
 use App\Models\Subcategory;
 use App\Models\Subgroup;
 use App\Models\Subprocess;
@@ -49,6 +52,7 @@ class ItemsAndSubitemsSeeder extends Seeder
     {
 
         $item = new Item;
+        $item->id = FileType::ITEM_ID;
         $item->name = 'Tipos de archivos';
         $item->description = 'Clasificación estandarizada de archivos según su naturaleza, uso y propósito dentro de procesos administrativos, legales o documentales.';
         $item->save();
@@ -60,6 +64,7 @@ class ItemsAndSubitemsSeeder extends Seeder
         ]);
 
         $item = new Item;
+        $item->id = FileSubtype::ITEM_ID;
         $item->name = 'Subtipos de archivos';
         $item->description = 'Clasificación específica de archivos según su contenido y función.';
         $item->save();
@@ -79,6 +84,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Áreas
         $item = new Item;
+        $item->id = Area::ITEM_ID;
         $item->name = 'Áreas';
         $item->description = 'Listado de áreas disponibles en la organización.';
         $item->save();
@@ -90,6 +96,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Cargos
         $item = new Item;
+        $item->id = Position::ITEM_ID;
         $item->name = 'Cargos';
         $item->description = 'Listado de cargos disponibles en la organización.';
         $item->save();
@@ -104,6 +111,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Géneros
         $item = new Item;
+        $item->id = Gender::ITEM_ID;
         $item->name = 'Géneros';
         $item->description = 'Listado de géneros disponibles.';
         $item->save();
@@ -115,6 +123,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Tipos de Sangre
         $item = new Item;
+        $item->id = BloodType::ITEM_ID;
         $item->name = 'Tipos de sangre';
         $item->description = 'Listado de tipos de sangre.';
         $item->save();
@@ -126,6 +135,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Administradoras de Riesgos
         $item = new Item;
+        $item->id = RiskManager::ITEM_ID;
         $item->name = 'Administradora de Riesgos';
         $item->description = 'Listado de administradoras de riesgos laborales.';
         $item->save();
@@ -137,6 +147,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Entidades de Salud
         $item = new Item;
+        $item->id = HealthEntity::ITEM_ID;
         $item->name = 'Entidades de Salud';
         $item->description = 'Listado de entidades promotoras de salud.';
         $item->save();
@@ -148,6 +159,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Fondos de Pensión
         $item = new Item;
+        $item->id = PensionFund::ITEM_ID;
         $item->name = 'Fondos de pensión';
         $item->description = 'Listado de fondos de pensión.';
         $item->save();
@@ -159,6 +171,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Cajas de Compensación
         $item = new Item;
+        $item->id = CompensationFund::ITEM_ID;
         $item->name = 'Cajas de compensación';
         $item->description = 'Listado de cajas de compensación.';
         $item->save();
@@ -170,6 +183,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Categorías
         $item = new Item;
+        $item->id = Category::ITEM_ID;
         $item->name = 'Categorías';
         $item->description = 'Listado de categorías.';
         $item->save();
@@ -185,6 +199,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Subcategorías
         $item = new Item;
+        $item->id = Subcategory::ITEM_ID;
         $item->name = 'Subcategorías';
         $item->description = 'Listado de subcategorías.';
         $item->save();
@@ -244,6 +259,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Grupos
         $item = new Item;
+        $item->id = Group::ITEM_ID;
         $item->name = 'Grupos';
         $item->description = 'Listado de grupos.';
         $item->save();
@@ -260,6 +276,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Subgrupos
         $item = new Item;
+        $item->id = Subgroup::ITEM_ID;
         $item->name = 'Subgrupos';
         $item->description = 'Listado de subgrupos.';
         $item->save();
@@ -271,6 +288,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Marcas
         $item = new Item;
+        $item->id = Trademark::ITEM_ID;
         $item->name = 'Marcas';
         $item->description = 'Listado de marcas.';
         $item->save();
@@ -833,12 +851,24 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Tallas
         $item = new Item;
+        $item->id = Size::ITEM_ID;
         $item->name = 'Tallas';
         $item->description = 'Listado de tallas.';
+        // Formato de nombre, descripción y código; se cambia en Tallas → Configurar
         $item->settings = (object) [
-            'finished_product' => (object) [
-                'name' => 'regex:/^(?:\d[02468]|XS|S|M|L|XL|XXL)$/',
-                'description' => 'regex:/^T\d{2,}$/',
+            'formats' => (object) [
+                'name' => (object) [
+                    'regex' => '/^T{talla}$/',
+                    'message' => 'Debe ser "T" seguido de la talla (talla XXL → TXXL).',
+                ],
+                'description' => (object) [
+                    'regex' => '/^TALLA {talla}$/',
+                    'message' => 'Debe ser "Talla" seguido de la talla (talla XXL → Talla XXL).',
+                ],
+                'code' => (object) [
+                    'regex' => '/^(?:\d[02468]|XXS|XS|S|M|L|XL|XXL|U)$/',
+                    'message' => 'Debe ser la talla: un número par de 2 dígitos o XXS, XS, S, M, L, XL, XXL o U.',
+                ],
             ],
         ];
 
@@ -851,6 +881,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Tipos de Prenda
         $item = new Item;
+        $item->id = GarmentType::ITEM_ID;
         $item->name = 'Tipos de Prenda';
         $item->description = 'Listado de tipos de prenda.';
         $item->save();
@@ -875,6 +906,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Tipos de Bota
         $item = new Item;
+        $item->id = BootType::ITEM_ID;
         $item->name = 'Tipos de Bota';
         $item->description = 'Listado de tipos de bota.';
         $item->save();
@@ -909,6 +941,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Tipos de Cotilla
         $item = new Item;
+        $item->id = YokeType::ITEM_ID;
         $item->name = 'Tipos de Cotilla';
         $item->description = 'Listado de tipos de cotilla.';
         $item->save();
@@ -930,6 +963,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Tipos de Trasero
         $item = new Item;
+        $item->id = BackType::ITEM_ID;
         $item->name = 'Tipos de Trasero';
         $item->description = 'Listado de tipos de trasero.';
         $item->save();
@@ -951,6 +985,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Tipos de Pretina
         $item = new Item;
+        $item->id = WaistbandType::ITEM_ID;
         $item->name = 'Tipos de Pretina';
         $item->description = 'Listado de tipos de pretina.';
         $item->save();
@@ -972,6 +1007,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Colores
         $item = new Item;
+        $item->id = Color::ITEM_ID;
         $item->name = 'Colores';
         $item->description = 'Listado de colores.';
         $item->save();
@@ -1035,6 +1071,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Tonos de Lavado
         $item = new Item;
+        $item->id = WashTone::ITEM_ID;
         $item->name = 'Tonos de Lavado';
         $item->description = 'Listado de tonos de lavado.';
         $item->save();
@@ -1073,6 +1110,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Procesos
         $item = new Item;
+        $item->id = Process::ITEM_ID;
         $item->name = 'Procesos';
         $item->description = 'Listado de procesos.';
         $item->save();
@@ -1104,6 +1142,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Subprocesos
         $item = new Item;
+        $item->id = Subprocess::ITEM_ID;
         $item->name = 'Subprocesos';
         $item->description = 'Listado de subprocesos.';
         $item->save();
@@ -1115,6 +1154,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Operaciones
         $item = new Item;
+        $item->id = Operation::ITEM_ID;
         $item->name = 'Operaciones';
         $item->description = 'Listado de operaciones.';
         $item->save();
@@ -1126,6 +1166,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Tipos de Proveedores
         $item = new Item;
+        $item->id = SupplierType::ITEM_ID;
         $item->name = 'Tipos de Proveedores';
         $item->description = 'Listado de tipos de proveedores.';
         $item->save();
@@ -1140,6 +1181,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Tipos de Insumo
         $item = new Item;
+        $item->id = SupplyType::ITEM_ID;
         $item->name = 'Tipos de Insumo';
         $item->description = 'Listado de tipos de insumo.';
         $item->save();
@@ -1162,6 +1204,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Insumos
         $item = new Item;
+        $item->id = Supply::ITEM_ID;
         $item->name = 'Insumos';
         $item->description = 'Listado de insumos.';
         $item->save();
@@ -1190,6 +1233,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Proveedores
         $item = new Item;
+        $item->id = Supplier::ITEM_ID;
         $item->name = 'Proveedores';
         $item->description = 'Listado de proveedores.';
         $item->save();
@@ -1216,6 +1260,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Colecciones
         $item = new Item;
+        $item->id = Collection::ITEM_ID;
         $item->name = 'Colección';
         $item->description = 'Listado de colecciones.';
         $item->save();
@@ -1278,6 +1323,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Piezas
         $item = new Item;
+        $item->id = Piece::ITEM_ID;
         $item->name = 'Piezas';
         $item->description = 'Listado de piezas.';
         $item->save();
@@ -1289,6 +1335,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Tipos de Personas
         $item = new Item;
+        $item->id = PersonType::ITEM_ID;
         $item->name = 'Tipos de Personas';
         $item->description = 'Listado de tipos de personas.';
         $item->save();
@@ -1300,6 +1347,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Tipos de Documentos
         $item = new Item;
+        $item->id = DocumentType::ITEM_ID;
         $item->name = 'Tipos de Documentos';
         $item->description = 'Listado de tipos de documentos.';
         $item->save();
@@ -1311,6 +1359,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Bancos
         $item = new Item;
+        $item->id = Bank::ITEM_ID;
         $item->name = 'Bancos';
         $item->description = 'Listado de bancos.';
         $item->save();
@@ -1322,6 +1371,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Tipos de Cuenta
         $item = new Item;
+        $item->id = AccountType::ITEM_ID;
         $item->name = 'Tipos de Cuenta';
         $item->description = 'Listado de tipos de cuenta.';
         $item->save();
@@ -1333,6 +1383,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Reportes
         $item = new Item;
+        $item->id = Report::ITEM_ID;
         $item->name = 'Reportes';
         $item->description = 'Listado de reportes.';
         $item->save();
@@ -1344,6 +1395,7 @@ class ItemsAndSubitemsSeeder extends Seeder
 
         // Tipologías
         $item = new Item;
+        $item->id = Typology::ITEM_ID;
         $item->name = 'Tipologías';
         $item->description = 'Listado de tipologías.';
         $item->save();
@@ -1352,5 +1404,32 @@ class ItemsAndSubitemsSeeder extends Seeder
         $typology->name = 'No aplica';
         $typology->description = 'No aplica';
         $typology->save();
+
+        // Tipos de parada, paradas y reglas: catálogos que se llenan desde la aplicación
+        $item = new Item;
+        $item->id = StopType::ITEM_ID;
+        $item->name = 'Tipos de Parada';
+        $item->description = 'Listado de tipos de parada';
+        $item->save();
+
+        $item = new Item;
+        $item->id = Stop::ITEM_ID;
+        $item->name = 'Parada';
+        $item->description = 'Listado paradas';
+        $item->save();
+
+        $item = new Item;
+        $item->id = Rule::ITEM_ID;
+        $item->name = 'Reglas';
+        $item->description = 'Estándares de tiempo por proceso, subproceso u operación';
+        $item->settings = [
+            'scope' => [
+                ['key' => 'process', 'required' => true],
+                ['key' => 'subprocess', 'required' => false],
+                ['key' => 'operation', 'required' => false],
+            ],
+            'weights' => ['group' => 2, 'category' => 3, 'trademark' => 1, 'subcategory' => 4],
+        ];
+        $item->save();
     }
 }

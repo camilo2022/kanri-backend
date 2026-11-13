@@ -6,18 +6,22 @@ use App\Models\BackType;
 use App\Models\BootType;
 use App\Models\Collection;
 use App\Models\Color;
+use App\Models\File;
 use App\Models\GarmentType;
 use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\Subcategory;
 use App\Models\Subgroup;
+use App\Models\Supply;
 use App\Models\SupplyType;
 use App\Models\TechnicalSheet;
 use App\Models\Trademark;
-use App\Models\Supply;
+use App\Models\Typology;
 use App\Models\WaistbandType;
 use App\Models\WashTone;
 use App\Models\YokeType;
+use App\Services\ProductivityDetailService;
+use App\Services\ProductionOrderCurveService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -45,7 +49,11 @@ class TransformationStoreRequest extends FormRequest
         return [
             'technical_sheet_id' => ['required', 'exists:technical_sheets,id'],
             'reasigned_curve' => ['nullable', 'boolean'],
-            'production_order_id' => ['required_if:reasigned_curve,true'],
+            'reassigned_origins' => ['nullable', 'required_if:reasigned_curve,true', 'array', 'min:1'],
+            'reassigned_origins.*.production_order_id' => ['required', 'integer', 'exists:production_orders,id'],
+            'reassigned_origins.*.selected_rows' => ['required', 'array', 'min:1'],
+            'reassigned_origins.*.selected_rows.*' => ['string', 'in:NACIONAL,MEDELLIN,STARA'],
+            'reassigned_origins.*.reassigned_details' => ['required', 'array', 'min:1'],
             'product' => ['required', 'array'],
             'product.code' => ['required', 'string', 'unique:products,code'],
             'product.trademark_id' => ['required', 'exists:subitems,id,item_id,' . Trademark::ITEM_ID],
@@ -57,7 +65,7 @@ class TransformationStoreRequest extends FormRequest
             'technical_sheet' => ['required', 'array'],
             'technical_sheet.date' => ['required', 'date_format:Y-m-d', 'before_or_equal:now'],
             'technical_sheet.status' =>  ['required', 'in:' . implode(',', [TechnicalSheet::PENDING, TechnicalSheet::REVIEW, TechnicalSheet::APPROVED, TechnicalSheet::CANCELLED])],
-            'technical_sheet.code' => ['required', 'unique:technical_sheets,code,' . $this->input('id') . ',id'],
+            'technical_sheet.code' => ['required', 'string', 'max:11', 'unique:technical_sheets,code,' . $this->input('id') . ',id'],
             'technical_sheet.collection_id' => ['required', 'exists:subitems,id,item_id,' . Collection::ITEM_ID . ',deleted_at,NULL'],
             'technical_sheet.garment_type_id' => ['required', 'exists:subitems,id,item_id,' . GarmentType::ITEM_ID . ',deleted_at,NULL'],
             'technical_sheet.subgroup_id' => ['required', 'exists:subitems,id,item_id,' . Subgroup::ITEM_ID . ',deleted_at,NULL'],
@@ -74,12 +82,13 @@ class TransformationStoreRequest extends FormRequest
             'technical_sheet.observation' =>  ['nullable', 'string', 'max:1000'],
             'technical_sheet.description' =>  ['nullable', 'string', 'max:1000'],
             'technical_sheet.photo_d' => ['required', 'array'],
-            'technical_sheet.photo_d.file' => ['sometimes', 'image', 'max:2048'],
+            'technical_sheet.photo_d.file' => ['sometimes', 'image', 'max:2048', 'dimensions:max_width='.File::MAX_IMAGE_SIDE.',max_height='.File::MAX_IMAGE_SIDE],
             'technical_sheet.photo_t' => ['required', 'array'],
-            'technical_sheet.photo_t.file' => ['sometimes', 'image', 'max:2048'],
+            'technical_sheet.photo_t.file' => ['sometimes', 'image', 'max:2048', 'dimensions:max_width='.File::MAX_IMAGE_SIDE.',max_height='.File::MAX_IMAGE_SIDE],
             'technical_sheet.supplies' => ['required', 'array'],
             'technical_sheet.technical_sheet_details' => ['required', 'array'],
             'technical_sheet.technical_sheet_details.*' => ['sometimes', 'array'],
+            'technical_sheet.technical_sheet_details.*.typology' => ['nullable', 'exists:subitems,id,item_id,'.Typology::ITEM_ID.',deleted_at,NULL'],
             'technical_sheet.technical_sheet_details.*.settings' => ['sometimes', 'array'],
             'technical_sheet.technical_sheet_details.*.settings.dinamic' => ['sometimes', 'array'],
             'technical_sheet.technical_sheet_details.*.settings.dinamic.values' => ['sometimes', 'array'],
@@ -93,15 +102,6 @@ class TransformationStoreRequest extends FormRequest
             'production_order.production_order_details.*.model_type' => ['required',  'in:' . Product::class],
             'production_order.production_order_details.*.model_id' => ['nullable', 'numeric'],
             'production_order.production_order_details.*.destination' => ['nullable', 'string', 'in:NACIONAL,MEDELLIN,STARA'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'exists' => 'No registrado en el sistema.',
-            'unique' => 'Ya está registrado.',
         ];
     }
 
@@ -165,6 +165,29 @@ class TransformationStoreRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            if ($this->boolean('reasigned_curve')) {
+                $started_orders = app(ProductionOrderCurveService::class)->startedOrderIds();
+
+                foreach ($this->input('reassigned_origins') ?? [] as $index => $origin) {
+                    if (in_array((int) ($origin['production_order_id'] ?? 0), $started_orders, true)) {
+                        $validator->errors()->add(
+                            "reassigned_origins.$index.production_order_id",
+                            'No se puede reasignar curva de un lote que ya se empezó a trabajar o está programado.'
+                        );
+                    }
+                }
+            }
+
+            // Lo que va en secuencia (operaciones o subprocesos) necesita en la ficha alguno de sus anteriores
+            $keys = collect($this->input('technical_sheet.technical_sheet_details', []))
+                ->map(fn ($detail) => ($detail['model_type'] ?? '').':'.($detail['model_id'] ?? ''))
+                ->unique()
+                ->values();
+
+            foreach (app(ProductivityDetailService::class)->sheetSequenceErrors($keys, $this->integer('technical_sheet.wash_tone_id') ?: null) as $id => $message) {
+                $validator->errors()->add("technical_sheet.technical_sheet_details.$id", $message);
+            }
+
             $trademark_id = $this->input('product.trademark_id');
             $code = $this->input('product.code');
 
@@ -173,26 +196,59 @@ class TransformationStoreRequest extends FormRequest
 
                 $is_valid = false;
                 $messages = [];
+                $expected_code = null;
 
                 foreach ($trademark?->settings?->validations ?? [] as $item) {
-                    if (preg_match($item->regex, $code)) {
+                    if (! empty($item->deleted_at)) {
+                        continue;
+                    }
+
+                    // En transformaciones no hay muestras: la referencia es la real, sin guion
+                    if (! str_contains($code, '-') && preg_match($item->regex, $code)) {
                         $is_valid = true;
+
+                        // El formato de la marca dice el prefijo y los números: el guion va entre los dos
+                        preg_match_all('/([A-Za-z0-9]+)(?:\[0-9\]|\\\\d)\{(\d+)\}/', $item->regex, $formats, PREG_SET_ORDER);
+
+                        foreach ($formats as [, $prefix, $digits]) {
+                            if (str_starts_with($code, $prefix) && strlen($code) === strlen($prefix) + (int) $digits) {
+                                $expected_code = $prefix.'-'.substr($code, strlen($prefix));
+                                break;
+                            }
+                        }
+
                         break;
                     }
 
                     $messages[] = $item->message;
                 }
 
-                if (!$is_valid) {
+                if (! $is_valid) {
                     $validator->errors()->add(
                         'product.code',
                         "No cumple con ninguna de las validaciones:\n• " .
                             implode("\n• ", $messages)
                     );
+                } elseif ($expected_code && $this->input('technical_sheet.code') !== $expected_code) {
+                    $validator->errors()->add(
+                        'technical_sheet.code',
+                        "El código de la ficha técnica debe ser {$expected_code}."
+                    );
                 }
             }
 
             $product_stara = $this->input('product_stara');
+
+            if (!empty($product_stara) && filled($product_stara['code'] ?? null)) {
+                $validations = collect(Trademark::find($product_stara['trademark_id'] ?? null)?->settings?->validations ?? []);
+
+                if (!$validations->contains(fn ($item) => preg_match($item->regex, $product_stara['code']))) {
+                    $validator->errors()->add(
+                        'product_stara.code',
+                        "No cumple con ninguna de las validaciones:\n• " . $validations->pluck('message')->implode("\n• ")
+                    );
+                }
+            }
 
             if (!empty($product_stara)) {
 
@@ -590,5 +646,12 @@ class TransformationStoreRequest extends FormRequest
         $this->merge(['technical_sheet' => $technical_sheet]);
         $this->merge(['technical_sheet.physical_sample' => $this->boolean('technical_sheet.physical_sample')]);
         $this->merge(['reasigned_curve' => $this->boolean('reasigned_curve')]);
+
+        // El producto STARA de una transformación siempre es de la marca STARA DENIM
+        if (filled($this->input('product_stara'))) {
+            $this->merge(['product_stara' => array_merge($this->input('product_stara'), [
+                'trademark_id' => Trademark::where('name', 'STARA DENIM')->value('id'),
+            ])]);
+        }
     }
 }

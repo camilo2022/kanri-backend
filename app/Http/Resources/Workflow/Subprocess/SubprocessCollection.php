@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Workflow\Subprocess;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class SubprocessCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Subprocess::class, $this->collection->pluck('id')->all());
         return [
-            'subprocesses' => $this->collection->map(function ($subprocess) {
+            'subprocesses' => $this->collection->map(function ($subprocess) use ($audited) {
                 return [
                     'id' => $subprocess->id,
+                    'has_audits' => isset($audited[$subprocess->id]),
                     'item_id' => $subprocess->item_id,
                     'name' => $subprocess->name,
                     'description' => $subprocess->description,
@@ -22,6 +25,8 @@ class SubprocessCollection extends ResourceCollection
                     'settings' => $subprocess->settings,
                     'item' => $subprocess->item,
                     'process' => $subprocess->process,
+                    'before_subprocesses' => $subprocess->before_subprocesses,
+                    'after_subprocesses' => $subprocess->after_subprocesses,
                 ];
             }),
             'meta' => [

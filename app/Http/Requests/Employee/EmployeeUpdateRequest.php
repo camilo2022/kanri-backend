@@ -2,11 +2,15 @@
 
 namespace App\Http\Requests\Employee;
 
-use App\Models\RiskManager;
 use App\Models\CompensationFund;
 use App\Models\HealthEntity;
+use App\Models\Operation;
 use App\Models\PensionFund;
 use App\Models\Position;
+use App\Models\Process;
+use App\Models\RiskManager;
+use App\Models\Subitem;
+use App\Models\Subprocess;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -18,7 +22,7 @@ class EmployeeUpdateRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -31,32 +35,44 @@ class EmployeeUpdateRequest extends FormRequest
     {
         return [
             'id' => ['required', 'exists:employees,id'],
-            'person_id' => ['required', 'numeric', 'exists:people,id,deleted_at,NULL', 'unique:employees,person_id,' . $this->route('id') . ',id'],
+            'person_id' => ['required', 'numeric', 'exists:people,id,deleted_at,NULL', 'unique:employees,person_id,'.$this->route('id').',id'],
             'operation_center' => ['nullable', 'string'],
-            'position_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Position::ITEM_ID . ',deleted_at,NULL'],
-            'risk_manager_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . RiskManager::ITEM_ID . ',deleted_at,NULL'],
-            'health_entity_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . HealthEntity::ITEM_ID . ',deleted_at,NULL'],
-            'pension_fund_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . PensionFund::ITEM_ID . ',deleted_at,NULL'],
-            'compensation_fund_id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . CompensationFund::ITEM_ID . ',deleted_at,NULL'],
+            'position_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.Position::ITEM_ID.',deleted_at,NULL'],
+            'risk_manager_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.RiskManager::ITEM_ID.',deleted_at,NULL'],
+            'health_entity_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.HealthEntity::ITEM_ID.',deleted_at,NULL'],
+            'pension_fund_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.PensionFund::ITEM_ID.',deleted_at,NULL'],
+            'compensation_fund_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.CompensationFund::ITEM_ID.',deleted_at,NULL'],
             'start_date' => ['required', 'date', 'date_format:Y-m-d'],
-            'end_date' => ['nullable', 'date', 'date_format:Y-m-d', 'after:start_date']
+            'end_date' => ['nullable', 'date', 'date_format:Y-m-d', 'after:start_date'],
+            'workstation_id' => ['nullable', 'integer', 'exists:subitems,id,deleted_at,NULL'],
         ];
     }
 
-    public function messages(): array
+    public function withValidator($validator): void
     {
-        return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.',
-            'regex' => "Formato inválido:\n- Solo letras.",
-            'exists' => 'No hay ningún registro.',
-            'date' => 'Debe ser una fecha válida.',
-            'date_format' => 'Formato inválido. Permitido :format.',
-            'after' => 'Debe ser una fecha posterior a :date.'
-        ];
+        $validator->after(function ($validator) {
+            if ($this->workstation_id && ! Subitem::where('id', $this->workstation_id)
+                ->whereIn('item_id', [Process::ITEM_ID, Subprocess::ITEM_ID, Operation::ITEM_ID])
+                ->exists()) {
+                $validator->errors()->add('workstation_id', 'El puesto debe ser un proceso, subproceso u operación.');
+            }
+
+            if ($validator->errors()->isNotEmpty() || ! $this->filled('workstation_id')) {
+                return;
+            }
+
+            $workstation = Operation::find($this->integer('workstation_id')) ?? Subprocess::find($this->integer('workstation_id')) ?? Process::find($this->integer('workstation_id'));
+
+            $children = match (true) {
+                $workstation instanceof Process && $workstation->subprocesses()->exists() => 'subprocesos',
+                $workstation instanceof Subprocess && $workstation->operations()->exists() => 'operaciones',
+                default => null,
+            };
+
+            if ($children) {
+                $validator->errors()->add('workstation_id', "{$workstation->name} tiene {$children}; elige uno de ellos.");
+            }
+        });
     }
 
     public function attributes(): array
@@ -71,7 +87,8 @@ class EmployeeUpdateRequest extends FormRequest
             'pension_fund_id' => 'Fondo de pensión',
             'compensation_fund_id' => 'Caja de compensación',
             'start_date' => 'Fecha inicio',
-            'end_date' => 'Fecha fin'
+            'end_date' => 'Fecha fin',
+            'workstation_id' => 'Puesto de trabajo',
         ];
     }
 

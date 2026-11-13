@@ -29,15 +29,6 @@ class TechnicalSheetExportPDFRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'numeric' => 'Debe ser un valor numérico.',
-            'exists' => 'No hay ningún registro.',
-        ];
-    }
-
     public function attributes(): array
     {
         return [

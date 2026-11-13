@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Typification\StopType;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class StopTypeCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\StopType::class, $this->collection->pluck('id')->all());
         return [
-            'stop_types' => $this->collection->map(function ($stop_type) {
+            'stop_types' => $this->collection->map(function ($stop_type) use ($audited) {
                 return [
                     'id' => $stop_type->id,
+                    'has_audits' => isset($audited[$stop_type->id]),
                     'item_id' => $stop_type->item_id,
                     'name' => $stop_type->name,
                     'settings' => $stop_type->settings,

@@ -25,15 +25,7 @@ class EmployeeFindRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'exists:people,id'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'exists' => 'No hay ningún registro.'
+            'id' => ['required', 'exists:employees,id,deleted_at,NULL'],
         ];
     }
 

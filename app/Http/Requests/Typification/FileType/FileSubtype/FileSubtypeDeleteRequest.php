@@ -30,18 +30,10 @@ class FileSubtypeDeleteRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'exists' => 'No hay ningún registro.',
-        ];
-    }
-
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador del subtipo de arhivo',
+            'id' => 'Identificador del subtipo de archivo',
         ];
     }
 

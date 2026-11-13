@@ -156,7 +156,7 @@ class TrademarkController extends Controller
     public function all(TrademarkAllRequest $request)
     {
         try {
-            $trademakers = Trademark::with(['group', 'logo', 'cover'])
+            $trademakers = Trademark::with(['item', 'group', 'logo', 'cover'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -265,6 +265,7 @@ class TrademarkController extends Controller
             $trademark = new Trademark;
             $trademark->name = $request->input('name');
             $trademark->description = $request->input('description');
+            $trademark->settings = $request->input('settings');
             $trademark->save();
 
             $trademark->auditSync('group', [$request->integer('group_id')]);

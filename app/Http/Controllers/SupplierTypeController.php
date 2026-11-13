@@ -131,7 +131,7 @@ class SupplierTypeController extends Controller
     public function all(SupplierTypeAllRequest $request)
     {
         try {
-            $supplier_type_types = SupplierType::when($request->filled('search'), function ($query) use ($request) {
+            $supplier_type_types = SupplierType::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {

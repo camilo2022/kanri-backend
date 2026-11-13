@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Classification\Subgroup;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class SubgroupCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Subgroup::class, $this->collection->pluck('id')->all());
         return [
-            'subgroups' => $this->collection->map(function ($subgroup) {
+            'subgroups' => $this->collection->map(function ($subgroup) use ($audited) {
                 return [
                     'id' => $subgroup->id,
+                    'has_audits' => isset($audited[$subgroup->id]),
                     'item' => $subgroup->item,
                     'name' => $subgroup->name,
                     'description' => $subgroup->description,

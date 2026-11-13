@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Classification\Group;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class GroupCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Group::class, $this->collection->pluck('id')->all());
         return [
-            'groups' => $this->collection->map(function ($group) {
+            'groups' => $this->collection->map(function ($group) use ($audited) {
                 return [
                     'id' => $group->id,
+                    'has_audits' => isset($audited[$group->id]),
                     'item_id' => $group->item_id,
                     'name' => $group->name,
                     'description' => $group->description,

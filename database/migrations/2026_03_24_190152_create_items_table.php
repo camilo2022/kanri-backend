@@ -13,12 +13,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('items', function (Blueprint $table) {
-            $table->id();
+            $table->id()->comment('Identificador');
             $table->string('name')->unique()->comment('Nombre');
-            $table->text('description')->comment('Descripcion');
+            $table->text('description')->comment('Descripción');
             $table->json('settings')->default(new Expression('(JSON_OBJECT())'))->comment('Configuraciones');
-            $table->timestamps();
-            $table->softDeletes();
+            $table->timestamp('created_at')->nullable()->comment('Fecha de creación');
+            $table->timestamp('updated_at')->nullable()->comment('Fecha de actualización');
+            $table->softDeletes()->comment('Fecha de desactivación');
         });
     }
 

@@ -132,7 +132,7 @@ class AccountTypeController extends Controller
     public function all(AccountTypeAllRequest $request)
     {
         try {
-            $account_types = AccountType::when($request->filled('search'), function ($query) use ($request) {
+            $account_types = AccountType::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {

@@ -28,22 +28,10 @@ class UserWorkflowRemoveRequest extends FormRequest
 
     public function rules(): array
     {
-        logger($this);
-
         return [
             'id' => ['required', 'numeric', 'exists:users,id'],
             'model_type' => ['required', 'string', 'in:'.implode(',', [Process::class, Subprocess::class, Operation::class])],
             'model_id' => ['required', 'numeric'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'numeric' => 'Debe ser un número.',
-            'exists' => 'No hay ningún registro.',
-            'unique' => 'Ya registrado.',
         ];
     }
 
@@ -59,6 +47,10 @@ class UserWorkflowRemoveRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
+            // Si los datos básicos ya fallaron no hay nada coherente que validar a fondo (evita errores 500 con datos vacíos)
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
 
             $exists = $this->input('model_type')::whereKey($this->input('model_id'))->exists();
 

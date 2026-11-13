@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -55,26 +54,6 @@ class TechnicalSheetDetail extends Model implements Auditable
     public function typology(): MorphToMany
     {
         return $this->morphToMany(Typology::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
-    }
-
-    public function scopeSearch(Builder $query, ?string $search = null): Builder
-    {
-        $search = trim((string) $search);
-        if ($search === '') {
-            return $query;
-        }
-
-        $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
-
-        return $query->where(function (Builder $q) use ($terms) {
-            foreach ($terms as $term) {
-                $q->orWhere(function (Builder $sq) use ($term) {
-                    $sq->orWhere('name', 'LIKE', '%'.$term.'%')
-                        ->orWhere('title', 'LIKE', '%'.$term.'%')
-                        ->orWhere('description', 'LIKE', '%'.$term.'%');
-                });
-            }
-        });
     }
 
     public static function statuses()

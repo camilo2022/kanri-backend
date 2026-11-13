@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Piece;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class PieceCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Piece::class, $this->collection->pluck('id')->all());
         return [
-            'pieces' => $this->collection->map(function ($piece) {
+            'pieces' => $this->collection->map(function ($piece) use ($audited) {
                 return [
                     'id' => $piece->id,
+                    'has_audits' => isset($audited[$piece->id]),
                     'item_id' => $piece->item_id,
                     'name' => $piece->name,
                     'description' => $piece->description,

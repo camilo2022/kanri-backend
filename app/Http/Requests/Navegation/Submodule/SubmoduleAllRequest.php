@@ -26,7 +26,7 @@ class SubmoduleAllRequest extends FormRequest
     {
         return [
             'module_id' => ['required', 'exists:modules,id'],
-            'per_page' => ['nullable', 'numeric'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'search' => ['nullable', 'string'],
             'column' => ['nullable', 'string', 'in:id,name,icon,created_at,updated_at'],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
@@ -37,25 +37,23 @@ class SubmoduleAllRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'required' => 'Es obligatorio.',
-            'module_id.exists' => 'No hay ningún registro. ',
-            'per_page.numeric' => 'Debe ser un valor numérico.',
-            'search.string' => 'Debe ser un registro válido de busqueda. ',
-            'column.string' => 'Debe ser una columna válida. ',
-            'column.in' => 'El valor de la columna no es válido. ',
-            'dir.string' => 'Debe ser un valor de orden válido. ',
-            'dir.in' => 'El valor del orden no es válido. ',
+            'module_id.exists' => 'No hay ningún registro.',
+            'search.string' => 'Debe ser un registro válido de busqueda.',
+            'column.string' => 'Debe ser una columna válida.',
+            'column.in' => 'El valor de la columna no es válido.',
+            'dir.string' => 'Debe ser un valor de orden válido.',
+            'dir.in' => 'El valor del orden no es válido.',
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'module_id' => 'Identificador del módulo. ',
-            'per_page' => 'Registros por pagina. ',
-            'search' => 'Filtro de Busqueda. ',
-            'column' => 'Columna a ordenar. ',
-            'dir' => 'Sentido del orden. ',
+            'module_id' => 'Identificador del módulo.',
+            'per_page' => 'Registros por pagina.',
+            'search' => 'Filtro de Busqueda.',
+            'column' => 'Columna a ordenar.',
+            'dir' => 'Sentido del orden.',
             'with_trashed' => 'Registros inactivos'
 
         ];

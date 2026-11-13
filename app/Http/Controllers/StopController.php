@@ -87,13 +87,13 @@ class StopController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/typification/stop_types/stops/all/{file_type_id}",
+     *     path="/typification/stop_types/stops/all/{stop_type_id}",
      *     tags={"Typification › Stops"},
      *     summary="Listar las paradas de un tipo de parada",
      *     description="Cada parada trae su `item` y `settings`; no trae `item_id` ni el tipo de parada.",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
-     *         name="file_type_id",
+     *         name="stop_type_id",
      *         in="path",
      *         required=true,
      *         description="Identificador del **tipo de parada** (el nombre del parámetro en la ruta está copiado de tipos de archivo). No se valida: un id que no existe devuelve la lista vacía.",
@@ -139,11 +139,11 @@ class StopController extends Controller
      *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
-    public function all(StopAllRequest $request, $stop_type_id)
+    public function all(StopAllRequest $request, $stop_type_id = null)
     {
         try {
-            $stops = Stop::with(['stop_type'])
-                ->whereHas('stop_type', fn ($r) => $r->where('id', $stop_type_id))
+            $stops = Stop::with(['item', 'stop_type'])
+                ->when($stop_type_id, fn ($query) => $query->whereHas('stop_type', fn ($r) => $r->where('id', $stop_type_id)))
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })

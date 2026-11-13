@@ -40,7 +40,6 @@ use App\Traits\ApiResponser;
  *     @OA\Property(property="in_technical_sheet", type="boolean", description="Aplica a la ficha técnica.", example=false),
  *     @OA\Property(property="in_production_order", type="boolean", description="Aplica a la orden de producción.", example=true),
  *     @OA\Property(property="paragraph", type="string", nullable=true, enum={"fabric", "roll"}, description="Apartado de la orden de producción: `fabric` (tela) o `roll` (rollos). Obligatorio si `in_production_order` es `true`.", example="roll"),
- *     @OA\Property(property="has_variants", type="boolean", description="Presente en los datos; no lo validan `store` ni `update`.", example=true),
  *     @OA\Property(property="form", type="array", description="Formulario de sus insumos (lo escribe `setting`).", @OA\Items(ref="#/components/schemas/SupplyFormField"))
  * )
  *
@@ -177,7 +176,7 @@ class SupplyTypeController extends Controller
     public function all(SupplyTypeAllRequest $request)
     {
         try {
-            $supply_types = SupplyType::with(['supplies'])
+            $supply_types = SupplyType::with(['item', 'supplies'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -468,7 +467,7 @@ class SupplyTypeController extends Controller
      *             type="object",
      *             required={"settings"},
      *             @OA\Property(property="settings", ref="#/components/schemas/SupplyTypeSettings"),
-     *             example={"settings": {"has_supplies": true, "in_technical_sheet": false, "in_production_order": true, "paragraph": "roll", "has_variants": true, "form": {{"id": 1, "field": "width", "label": "ANCHO", "type": "number", "rules": {"numeric", "required"}}, {"id": 2, "field": "meters", "label": "METROS", "type": "number", "rules": {"numeric", "required"}}, {"id": 3, "field": "supplier_id", "label": "PROVEEDOR", "type": "selectdinamic", "model": "App\Models\Supplier", "param": "App\Models\SupplierType", "supplier_type_id": "424", "path": "name", "cardinality": "single", "rules": {"exists:subitems,id,item_id,App\Models\Supplier::ITEM_ID", "required"}}}}}
+     *             example={"settings": {"has_supplies": true, "in_technical_sheet": false, "in_production_order": true, "paragraph": "roll", "form": {{"id": 1, "field": "width", "label": "ANCHO", "type": "number", "rules": {"numeric", "required"}}, {"id": 2, "field": "meters", "label": "METROS", "type": "number", "rules": {"numeric", "required"}}, {"id": 3, "field": "supplier_id", "label": "PROVEEDOR", "type": "selectdinamic", "model": "App\Models\Supplier", "param": "App\Models\SupplierType", "supplier_type_id": "424", "path": "name", "cardinality": "single", "rules": {"exists:subitems,id,item_id,App\Models\Supplier::ITEM_ID", "required"}}}}}
      *         )
      *     ),
      *     @OA\Response(

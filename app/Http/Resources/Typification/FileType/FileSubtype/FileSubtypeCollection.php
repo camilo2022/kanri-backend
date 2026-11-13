@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Typification\FileType\FileSubtype;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class FileSubtypeCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\FileSubtype::class, $this->collection->pluck('id')->all());
         return [
-            'file_subtypes' => $this->collection->map(function ($file_subtype) {
+            'file_subtypes' => $this->collection->map(function ($file_subtype) use ($audited) {
                 return [
                     'id' => $file_subtype->id,
+                    'has_audits' => isset($audited[$file_subtype->id]),
                     'item' => $file_subtype->item,
                     'name' => $file_subtype->name,
                     'description' => $file_subtype->description,

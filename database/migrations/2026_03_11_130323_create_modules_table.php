@@ -12,11 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('modules', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique();
-            $table->string('icon');
-            $table->timestamps();
-            $table->softDeletes();
+            $table->id()->comment('Identificador');
+            $table->string('name')->unique()->comment('Nombre');
+            $table->string('icon')->comment('Icono');
+            $table->timestamp('created_at')->nullable()->comment('Fecha de creación');
+            $table->timestamp('updated_at')->nullable()->comment('Fecha de actualización');
+            $table->softDeletes()->comment('Fecha de desactivación');
         });
     }
 

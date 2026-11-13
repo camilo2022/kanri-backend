@@ -6,10 +6,12 @@ use App\Http\Requests\Size\SizeAllRequest;
 use App\Http\Requests\Size\SizeDeleteRequest;
 use App\Http\Requests\Size\SizeFindRequest;
 use App\Http\Requests\Size\SizeRestoreRequest;
+use App\Http\Requests\Size\SizeSettingRequest;
 use App\Http\Requests\Size\SizeStoreRequest;
 use App\Http\Requests\Size\SizeUpdateRequest;
 use App\Http\Resources\Size\SizeCollection;
 use App\Http\Resources\Size\SizeResource;
+use App\Models\Item;
 use App\Models\Size;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -25,7 +27,7 @@ use App\Traits\ApiResponser;
  *     type="object",
  *     required={"finished_product"},
  *     description="Configuración de la talla. Se guarda tal cual llega (reemplaza la anterior).",
- *     @OA\Property(property="code", type="string", pattern="^[0-9]{2,5}$", description="Código numérico de 2 a 5 dígitos. Obligatorio al crear.", example="24"),
+ *     @OA\Property(property="code", type="string", description="Código único de la talla. Su formato lo da `formats.code` del ítem 16 (Tallas → Configurar).", example="T24"),
  *     @OA\Property(property="finished_product", type="boolean", description="Es talla de producto terminado.", example=true)
  * )
  *
@@ -69,6 +71,7 @@ use App\Traits\ApiResponser;
  *         property="data",
  *         type="object",
  *         @OA\Property(property="sizes", type="array", @OA\Items(ref="#/components/schemas/Size")),
+ *         @OA\Property(property="item", type="object", nullable=true, description="Ítem de tallas (id 16) con `settings.formats`, para la pantalla Configurar."),
  *         @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
  *     ),
  *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
@@ -79,8 +82,8 @@ use App\Traits\ApiResponser;
  *     schema="SizeRequest",
  *     type="object",
  *     required={"name", "description", "settings"},
- *     @OA\Property(property="name", type="string", minLength=2, maxLength=50, description="Única entre las tallas. Si es de producto terminado, debe ser un número par de 2 dígitos o XS, S, M, L, XL, XXL (regla guardada en el ítem 16, `settings.finished_product.name`).", example="24"),
- *     @OA\Property(property="description", type="string", maxLength=50, description="Si es de producto terminado, debe ser T seguida de al menos 2 dígitos (regla en `settings.finished_product.description` del ítem 16).", example="T24"),
+ *     @OA\Property(property="name", type="string", maxLength=50, description="Única entre las tallas. Si es de producto terminado, debe cumplir `settings.formats.name` del ítem 16 (Tallas → Configurar). Al editar solo se revisa si cambia.", example="T24"),
+ *     @OA\Property(property="description", type="string", maxLength=50, description="Si es de producto terminado, debe cumplir `settings.formats.description` del ítem 16. Al editar solo se revisa si cambia.", example="TALLA 24"),
  *     @OA\Property(property="settings", ref="#/components/schemas/SizeSettings")
  * )
  */
@@ -139,7 +142,7 @@ class SizeController extends Controller
     public function all(SizeAllRequest $request)
     {
         try {
-            $sizes = Size::when($request->filled('search'), function ($query) use ($request) {
+            $sizes = Size::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {
@@ -155,7 +158,7 @@ class SizeController extends Controller
             $sizes = $sizes->paginate($request->integer('per_page', $sizes->count()));
 
             return $this->successResponse(
-                new SizeCollection($sizes),
+                new SizeCollection($sizes, Item::find(Size::ITEM_ID)),
                 $this->getMessage('Success'),
                 200
             );
@@ -397,6 +400,70 @@ class SizeController extends Controller
 
             return $this->successResponse(
                 new SizeResource($size),
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/sizes/setting/{id}",
+     *     tags={"Sizes"},
+     *     summary="Configurar el formato de las tallas",
+     *     description="Guarda en el ítem de tallas (`items` id 16, `settings.formats`) el regex y el mensaje de error del nombre, la descripción y el código. Los tres solo se revisan en tallas de producto terminado. El regex de nombre y descripción puede usar `{talla}`, que se reemplaza por el código enviado (`/^T{talla}$/`). Un regex vacío deja ese campo sin revisión de formato. Las demás llaves de `settings` del ítem se conservan.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, description="Debe ser 16 (ítem de tallas).", @OA\Schema(type="integer", example=16)),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"settings"},
+     *             example={"settings": {"formats": {
+     *                 "name": {"regex": "/^(?:T\\d[02468]|XXS|XS|S|M|L|XL|XXL|U)$/", "message": "Debe ser T y un número par de 2 dígitos."},
+     *                 "description": {"regex": "/^TALLA (?:\\d[02468]|XXS|XS|S|M|L|XL|XXL|U)$/", "message": "Debe ser Talla seguido del código."},
+     *                 "code": {"regex": "/^[A-Z0-9]{1,5}$/", "message": "Solo letras mayúsculas y números, máximo 5."}
+     *             }}}
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Formatos guardados. Devuelve el id del ítem y su `settings` completo.",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object", @OA\Property(property="id", type="integer", example=16), @OA\Property(property="settings", type="object")),
+     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+     *             @OA\Property(property="error", type="boolean", example=false)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Regex inválido, falta el mensaje o el ítem no es el de tallas.",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={"message": "Error de validación.", "errors": {"settings.formats.code.regex": {"Debe ser una expresión regular válida, con delimitadores (por ejemplo /^T\\d{2}$/)."}}}
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     */
+    public function setting(SizeSettingRequest $request, $id)
+    {
+        try {
+            $item = Item::findOrFail($id);
+            $item->settings = [...(array) ($item->settings ?? []), 'formats' => $request->input('settings.formats')];
+            $item->save();
+
+            return $this->successResponse(
+                ['id' => $item->id, 'settings' => $item->settings],
                 $this->getMessage('Success'),
                 200
             );

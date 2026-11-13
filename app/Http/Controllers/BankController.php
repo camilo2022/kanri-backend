@@ -120,7 +120,7 @@ class BankController extends Controller
     public function all(BankAllRequest $request)
     {
         try {
-            $bank = Bank::when($request->filled('search'), function ($query) use ($request) {
+            $bank = Bank::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {

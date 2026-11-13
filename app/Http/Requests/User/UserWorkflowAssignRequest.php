@@ -35,16 +35,6 @@ class UserWorkflowAssignRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'numeric' => 'Debe ser un número.',
-            'exists' => 'No hay ningún registro.',
-            'unique' => 'Ya registrado.',
-        ];
-    }
-
     public function attributes(): array
     {
         return [

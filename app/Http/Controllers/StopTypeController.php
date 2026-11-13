@@ -125,7 +125,7 @@ class StopTypeController extends Controller
     public function all(StopTypeAllRequest $request)
     {
         try {
-            $stop_types = StopType::when($request->filled('search'), function ($query) use ($request) {
+            $stop_types = StopType::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {

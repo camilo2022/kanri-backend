@@ -2,8 +2,9 @@
 
 namespace App\Http\Requests\Trademark;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Models\Trademark;
 use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 class TrademarkSettingRequest extends FormRequest
@@ -13,7 +14,7 @@ class TrademarkSettingRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -25,6 +26,7 @@ class TrademarkSettingRequest extends FormRequest
     public function rules()
     {
         return [
+            'id' => ['required', 'exists:subitems,id,item_id,'.Trademark::ITEM_ID],
             'settings' => ['required', 'array'],
             'settings.validations' => ['required', 'array', 'min:1'],
             'settings.validations.*' => ['required', 'array'],
@@ -33,22 +35,7 @@ class TrademarkSettingRequest extends FormRequest
             'settings.validations.*.message' => ['required', 'string', 'max:255'],
             'settings.validations.*.created_at' => ['required', 'date'],
             'settings.validations.*.updated_at' => ['nullable', 'date'],
-            'settings.validations.*.deleted_at' => ['nullable', 'date']
-        ];
-    }
-
-    public function messages()
-    {
-        return [
-            'required' => 'Es requerido.',
-            'string' => 'Debe ser una cadena de caracteres.',
-            'distinct'  => 'Ya ha sido tomado en otra validación.',
-            'unique' => 'Ya ha sido tomado.',
-            'numeric' => 'Debe ser un valor numérico.',
-            'date' => 'Debe ser una fecha válida.',
-            'array' => 'Debe ser una lista de datos.',
-            'max' => 'No debe exceder los :max caracteres.',
-            'min' => 'Debe tener minimo :min elementos.',
+            'settings.validations.*.deleted_at' => ['nullable', 'date'],
         ];
     }
 
@@ -69,7 +56,7 @@ class TrademarkSettingRequest extends FormRequest
         return [
             'settings' => 'Configuración',
             'settings.validations' => 'Validaciones',
-            ...$attributes
+            ...$attributes,
         ];
     }
 
@@ -78,7 +65,7 @@ class TrademarkSettingRequest extends FormRequest
         $validator->after(function ($validator) {
             foreach ($this->input('settings.validations', []) as $i => $v) {
                 $regex = $v['regex'] ?? null;
-                if (!is_string($regex) || @preg_match($regex, '') === false) {
+                if (! is_string($regex) || @preg_match($regex, '') === false) {
                     $validator->errors()->add(
                         "settings.validations.$i.regex",
                         'Debe ser una expresión regular válida.'
@@ -87,7 +74,7 @@ class TrademarkSettingRequest extends FormRequest
             }
             $seen = [];
             foreach ($this->input('settings.validations', []) as $i => $v) {
-                if (!array_key_exists('regex', $v)) {
+                if (! array_key_exists('regex', $v)) {
                     continue;
                 }
                 $regex = (string) $v['regex'];
@@ -102,5 +89,16 @@ class TrademarkSettingRequest extends FormRequest
                 }
             }
         });
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->merge(['id' => $this->route('id')]);
+    }
+
+    protected function passedValidation()
+    {
+        $settings = (array) (Trademark::find($this->route('id'))?->settings ?? []);
+        $this->merge(['settings' => array_merge($settings, ['validations' => $this->input('settings.validations')])]);
     }
 }

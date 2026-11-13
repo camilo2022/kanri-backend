@@ -24,6 +24,7 @@ use App\Traits\ApiResponser;
  *     schema="EmployeeUser",
  *     type="object",
  *     description="Usuario del empleado (incluye usuarios desactivados), con sus roles y permisos directos. `null` si el empleado no tiene usuario.",
+ *
  *     @OA\Property(property="id", type="integer", example=15),
  *     @OA\Property(property="employee_id", type="integer", example=42),
  *     @OA\Property(property="email", type="string", example="laura.gomez@kanri.test"),
@@ -37,6 +38,7 @@ use App\Traits\ApiResponser;
  * @OA\Schema(
  *     schema="Employee",
  *     type="object",
+ *
  *     @OA\Property(property="id", type="integer", example=42),
  *     @OA\Property(property="person_id", type="integer", example=57),
  *     @OA\Property(property="operation_center", type="string", nullable=true, description="Código del centro de operaciones (texto libre).", example="050"),
@@ -56,12 +58,15 @@ use App\Traits\ApiResponser;
  *     @OA\Property(property="risk_manager", description="Administradora de riesgos laborales (ARL).", allOf={@OA\Schema(ref="#/components/schemas/Subitem")}),
  *     @OA\Property(property="health_entity", description="Entidad de salud (EPS).", allOf={@OA\Schema(ref="#/components/schemas/Subitem")}),
  *     @OA\Property(property="pension_fund", description="Fondo de pensión.", allOf={@OA\Schema(ref="#/components/schemas/Subitem")}),
- *     @OA\Property(property="compensation_fund", description="Caja de compensación.", allOf={@OA\Schema(ref="#/components/schemas/Subitem")})
+ *     @OA\Property(property="compensation_fund", description="Caja de compensación.", allOf={@OA\Schema(ref="#/components/schemas/Subitem")}),
+ *     @OA\Property(property="workstation_id", type="integer", nullable=true, description="Puesto de trabajo (id en subitems).", example=602),
+ *     @OA\Property(property="workstation", nullable=true, description="Puesto de trabajo tal cual está en subitems: `item_id` dice si es proceso (24), subproceso (25) u operación (26). El frontend arma la ruta con la lista de procesos.", allOf={@OA\Schema(ref="#/components/schemas/Subitem")})
  * )
  *
  * @OA\Schema(
  *     schema="EmployeeResponse",
  *     type="object",
+ *
  *     @OA\Property(property="data", type="object", @OA\Property(property="employee", ref="#/components/schemas/Employee")),
  *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
  *     @OA\Property(property="error", type="boolean", example=false)
@@ -70,6 +75,7 @@ use App\Traits\ApiResponser;
  * @OA\Schema(
  *     schema="EmployeeListResponse",
  *     type="object",
+ *
  *     @OA\Property(
  *         property="data",
  *         type="object",
@@ -84,6 +90,7 @@ use App\Traits\ApiResponser;
  *     schema="EmployeeRequest",
  *     type="object",
  *     required={"person_id", "position_id", "risk_manager_id", "health_entity_id", "pension_fund_id", "compensation_fund_id", "start_date"},
+ *
  *     @OA\Property(property="person_id", type="integer", description="Persona activa. Una persona solo puede tener un empleado.", example=57),
  *     @OA\Property(property="operation_center", type="string", nullable=true, description="Centro de operaciones. Opcional.", example="050"),
  *     @OA\Property(property="position_id", type="integer", description="Cargo activo.", example=58),
@@ -92,7 +99,8 @@ use App\Traits\ApiResponser;
  *     @OA\Property(property="pension_fund_id", type="integer", description="Fondo de pensión activo.", example=152),
  *     @OA\Property(property="compensation_fund_id", type="integer", description="Caja de compensación activa.", example=163),
  *     @OA\Property(property="start_date", type="string", format="date", description="Formato Y-m-d.", example="2026-06-02"),
- *     @OA\Property(property="end_date", type="string", format="date", nullable=true, description="Formato Y-m-d, posterior a `start_date`. Opcional.", example=null)
+ *     @OA\Property(property="end_date", type="string", format="date", nullable=true, description="Formato Y-m-d, posterior a `start_date`. Opcional.", example=null),
+ *     @OA\Property(property="workstation_id", type="integer", nullable=true, description="Puesto de trabajo (opcional): id en subitems de un proceso sin subprocesos, un subproceso sin operaciones o una operación. Se guarda en `employees.workstation_id`; null lo quita.", example=602)
  * )
  */
 class EmployeeController extends Controller
@@ -106,55 +114,69 @@ class EmployeeController extends Controller
      *     summary="Listar los empleados",
      *     description="Cada empleado trae persona (con foto), cargo con área, usuario con roles y permisos, ARL, EPS, fondo de pensión y caja de compensación.",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         required=false,
      *         description="Texto a buscar. Cada palabra se busca en documento, nombres y apellidos de la persona, y en el nombre del cargo, área, ARL y EPS.",
+     *
      *         @OA\Schema(type="string", example="GOMEZ")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="position_id",
      *         in="query",
      *         required=false,
      *         description="Solo los empleados de este cargo. No se valida.",
+     *
      *         @OA\Schema(type="integer", example=58)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="with_user",
      *         in="query",
      *         required=false,
      *         description="`true`/`1`: solo empleados con usuario. `false`/`0`: solo sin usuario. Si no se envía, todos.",
+     *
      *         @OA\Schema(type="boolean", example=false)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
      *         required=false,
      *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *
      *         @OA\Schema(type="string", enum={"id", "person_id", "operation_center", "position_id", "risk_manager_id", "health_entity_id", "pension_fund_id", "compensation_fund_id", "start_date", "end_date", "created_at", "updated_at", "deleted_at"}, example="start_date")
      *     ),
+     *
      *     @OA\Parameter(ref="#/components/parameters/Dir"),
      *     @OA\Parameter(ref="#/components/parameters/PerPage"),
      *     @OA\Parameter(ref="#/components/parameters/Page"),
      *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Lista de empleados cargada correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/EmployeeListResponse")
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Parámetros de consulta inválidos.",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ValidationErrorResponse",
      *             example={
      *                 "message": "Error de validación.",
      *                 "attributes": {"per_page": "Registros por pagina.", "page": "N° de pagina.", "search": "Filtro de Busqueda.", "column": "Columna a ordenar.", "dir": "Sentido del orden.", "with_trashed": "Registros inactivos", "with_user": "Usuario asociado"},
-     *                 "errors": {"with_user": {"Deber ser verdadero o falso."}}
+     *                 "errors": {"with_user": {"Debe ser verdadero o falso."}}
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
      *     @OA\Response(response=500, ref="#/components/responses/ServerError")
@@ -163,10 +185,9 @@ class EmployeeController extends Controller
     public function all(EmployeeAllRequest $request)
     {
         try {
-            $employees = Employee::with(['person' => ['photo'], 'position' => ['area'], 'risk_manager', 'health_entity', 'pension_fund', 'compensation_fund', 'user' => function ($q) {
-                    $q->withTrashed()
-                        ->with(['roles', 'permissions']);
-                }])
+            $employees = Employee::with(['person' => ['photo'], 'position' => ['area'], 'risk_manager', 'health_entity', 'pension_fund', 'compensation_fund', 'workstation', 'user' => function ($q) {
+                $q->withTrashed()->with(['roles', 'permissions']);
+            }])
                 ->when($request->filled('position_id'), function ($query) use ($request) {
                     return $query->whereHas('position', function ($query) use ($request) {
                         return $query->where('id', $request->integer('position_id'));
@@ -198,7 +219,7 @@ class EmployeeController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -212,20 +233,26 @@ class EmployeeController extends Controller
      *     summary="Obtener un empleado",
      *     description="Ojo: hoy el `{id}` se valida contra la tabla de personas, no la de empleados (ver pendientes). Un id de empleado sin persona con ese mismo id da 422; uno que no es empleado pero sí persona da 404.",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Empleado cargado correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/EmployeeResponse")
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="El id existe como persona pero no como empleado.",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ServerErrorResponse",
      *             example={"error": {"message": "No se encontraron resultados para la búsqueda.", "error": "No query results for model [App\Models\Employee] 380."}}
      *         )
      *     ),
+     *
      *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
@@ -235,7 +262,7 @@ class EmployeeController extends Controller
     public function find(EmployeeFindRequest $request, $id)
     {
         try {
-            $employee = Employee::with(['person' => ['photo'], 'position' => ['area'], 'risk_manager', 'health_entity', 'pension_fund', 'compensation_fund', 'user' => ['roles', 'permissions']])
+            $employee = Employee::with(['person' => ['photo'], 'position' => ['area'], 'risk_manager', 'health_entity', 'pension_fund', 'compensation_fund', 'user' => ['roles', 'permissions'], 'workstation'])
                 ->findOrFail($id);
 
             return $this->successResponse(
@@ -247,7 +274,7 @@ class EmployeeController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -261,18 +288,24 @@ class EmployeeController extends Controller
      *     summary="Crear un empleado",
      *     description="Vincula una persona con su cargo y sus entidades de seguridad social.",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(ref="#/components/schemas/EmployeeRequest")
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Empleado creado correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/EmployeeResponse")
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Datos inválidos o la persona ya es empleado.",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ValidationErrorResponse",
      *             example={
@@ -282,6 +315,7 @@ class EmployeeController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
      *     @OA\Response(response=500, ref="#/components/responses/ServerError")
@@ -290,7 +324,7 @@ class EmployeeController extends Controller
     public function store(EmployeeStoreRequest $request)
     {
         try {
-            $employee = new Employee();
+            $employee = new Employee;
             $employee->person_id = $request->integer('person_id');
             $employee->operation_center = $request->input('operation_center', null);
             $employee->position_id = $request->integer('position_id');
@@ -298,12 +332,14 @@ class EmployeeController extends Controller
             $employee->health_entity_id = $request->integer('health_entity_id');
             $employee->pension_fund_id = $request->integer('pension_fund_id');
             $employee->compensation_fund_id = $request->integer('compensation_fund_id');
+            $employee->workstation_id = $request->integer('workstation_id') ?: null;
             $employee->start_date = $request->input('start_date');
             $employee->end_date = $request->input('end_date', null);
+
             $employee->save();
 
             return $this->successResponse(
-                new EmployeeResource($employee),
+                new EmployeeResource($employee->load('workstation')),
                 $this->getMessage('Success'),
                 201
             );
@@ -311,7 +347,7 @@ class EmployeeController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -325,22 +361,29 @@ class EmployeeController extends Controller
      *     summary="Editar un empleado",
      *     description="Reemplaza todos los campos. Si no se envía `operation_center` o `end_date`, quedan en `null`.",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/EmployeeRequest",
      *             example={"person_id": 57, "operation_center": "051", "position_id": 59, "risk_manager_id": 94, "health_entity_id": 101, "pension_fund_id": 152, "compensation_fund_id": 163, "start_date": "2026-06-02", "end_date": "2026-12-31"}
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Empleado editado correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/EmployeeResponse")
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Datos inválidos o empleado no registrado.",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ValidationErrorResponse",
      *             example={
@@ -350,6 +393,7 @@ class EmployeeController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
      *     @OA\Response(response=500, ref="#/components/responses/ServerError")
@@ -366,12 +410,14 @@ class EmployeeController extends Controller
             $employee->health_entity_id = $request->integer('health_entity_id');
             $employee->pension_fund_id = $request->integer('pension_fund_id');
             $employee->compensation_fund_id = $request->integer('compensation_fund_id');
+            $employee->workstation_id = $request->integer('workstation_id') ?: null;
             $employee->start_date = $request->input('start_date');
             $employee->end_date = $request->input('end_date', null);
+
             $employee->save();
 
             return $this->successResponse(
-                new EmployeeResource($employee),
+                new EmployeeResource($employee->load('workstation')),
                 $this->getMessage('Success'),
                 200
             );
@@ -379,7 +425,7 @@ class EmployeeController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -393,12 +439,16 @@ class EmployeeController extends Controller
      *     summary="Desactivar un empleado",
      *     description="Desactivación lógica (soft delete). Ojo: hoy el `{id}` se valida contra la tabla de personas activas, no la de empleados (ver pendientes).",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Empleado desactivado correctamente. `deleted_at` queda con la fecha de desactivación.",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/EmployeeResponse")
      *     ),
+     *
      *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
@@ -420,7 +470,7 @@ class EmployeeController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );
@@ -433,12 +483,16 @@ class EmployeeController extends Controller
      *     tags={"Employees"},
      *     summary="Restaurar un empleado desactivado",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Empleado restaurado correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/EmployeeResponse")
      *     ),
+     *
      *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
@@ -460,7 +514,7 @@ class EmployeeController extends Controller
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ],
                 $this->getCode(class_basename($e))
             );

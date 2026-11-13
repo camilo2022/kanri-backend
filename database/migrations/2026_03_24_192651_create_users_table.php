@@ -3,6 +3,7 @@
 use App\Models\Employee;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -13,21 +14,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->foreignIdFor(Employee::class)->unique()->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Item');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
-            $table->timestamps();
-            $table->softDeletes();
+            $table->id()->comment('Identificador');
+            $table->foreignIdFor(Employee::class)->unique()->comment('Empleado')->constrained()->onUpdate('cascade')->onDelete('cascade');
+            $table->string('username', 100)->unique()->comment('Nombre de usuario (generado por generate_username)');
+            $table->string('password')->comment('Contraseña');
+            $table->rememberToken()->comment('Token de sesión');
+            $table->timestamp('created_at')->nullable()->comment('Fecha de creación');
+            $table->timestamp('updated_at')->nullable()->comment('Fecha de actualización');
+            $table->softDeletes()->comment('Fecha de desactivación');
         });
 
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
-        });
+        DB::unprepared('DROP PROCEDURE IF EXISTS generate_username');
+        DB::unprepared(file_get_contents(database_path('procedures/generate_username.sql')));
 
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
@@ -44,8 +42,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        DB::unprepared('DROP PROCEDURE IF EXISTS generate_username');
         Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
     }
 };

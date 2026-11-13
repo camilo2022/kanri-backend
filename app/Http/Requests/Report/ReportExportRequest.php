@@ -57,8 +57,6 @@ class ReportExportRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'required' => 'Es obligatorio.',
-            'exists' => 'No hay ningún registro.',
             'fields.required' => 'Debe seleccionar al menos una columna.',
             'fields.array' => 'Las columnas deben enviarse como una lista.',
             'fields.min' => 'Debe seleccionar al menos una columna.',
@@ -84,6 +82,15 @@ class ReportExportRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
+
+            // Solo se aceptan los filtros configurados en el reporte
+            $configured = array_keys((array) (Report::find($this->route('id'))?->settings?->filters ?? []));
+
+            foreach (array_keys((array) $this->input('filters', [])) as $filter_key) {
+                if (! in_array($filter_key, $configured, true)) {
+                    $validator->errors()->add("filters.$filter_key", 'Este filtro no existe en el reporte.');
+                }
+            }
 
             $model_class = $this->input('model');
 

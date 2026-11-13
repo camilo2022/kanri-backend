@@ -26,31 +26,20 @@ class DocumentTypeAllRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'per_page' => ['nullable', 'numeric'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
             'column' => ['nullable', 'string', 'in:id,name,description,created_at,updated_at,deleted_at'],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
             'with_trashed' => ['required', 'boolean'],
-            'person_type_id' => ['nullable', 'numeric', 'exists:subitems,id,item_id,'.PersonType::ITEM_ID],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'numeric' => 'Debe ser un valor numérico.',
-            'in' => 'Valor inválido. Permitidos: :values.',
-            'boolean' => 'Deber ser verdadero o falso.',
-            'exists' => 'No hay ningún registro.',
+            'person_type_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.PersonType::ITEM_ID],
         ];
     }
 
     public function attributes(): array
     {
         return [
+            'person_type_id' => 'Tipo de persona',
             'per_page' => 'Registros por pagina.',
             'page' => 'N° de pagina.',
             'search' => 'Filtro de Busqueda.',
@@ -62,6 +51,9 @@ class DocumentTypeAllRequest extends FormRequest
 
     protected function prepareForValidation()
     {
-        $this->merge(['with_trashed' => $this->boolean('with_trashed')]);
+        $this->merge([
+            'person_type_id' => $this->route('person_type_id'),
+            'with_trashed' => $this->boolean('with_trashed'),
+        ]);
     }
 }

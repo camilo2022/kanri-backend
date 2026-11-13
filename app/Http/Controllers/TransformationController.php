@@ -17,6 +17,7 @@ use App\Models\ProductionOrderDetailQuantities;
 use App\Models\TechnicalSheet;
 use App\Models\TechnicalSheetDetail;
 use App\Services\FileService;
+use App\Services\ProductionOrderCurveService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 use Illuminate\Support\Facades\DB;
@@ -56,7 +57,7 @@ class TransformationController extends Controller
                     return $query->where('product_id', $request->integer('product_id'));
                 })
                 ->when($request->filled('uuid'), function ($query) use ($request) {
-                    return $query->where('uuid', $request->integer('uuid'));
+                    return $query->where('uuid', $request->input('uuid'));
                 })->firstOrFail();
 
             return $this->successResponse(
@@ -86,9 +87,12 @@ class TransformationController extends Controller
 
             $product->save();
 
+            $result = DB::select('CALL generate_technical_sheet_consecutive()');
             $technical_sheet = new TechnicalSheet();
 
             $technical_sheet->uuid = Str::uuid();
+            $technical_sheet->consecutive = $result[0]->consecutive;
+            $technical_sheet->status = $request->input('technical_sheet.status');
             $technical_sheet->date = $request->input('technical_sheet.date');
             $technical_sheet->product_id = $product->id;
             $technical_sheet->model_id = $request->input('technical_sheet_id');
@@ -111,6 +115,8 @@ class TransformationController extends Controller
             $technical_sheet->observation = $request->input('technical_sheet.observation');
 
             $technical_sheet->save();
+
+            $technical_sheet->auditSync('supplies', $request->input('technical_sheet.supplies', []));
 
             if ($request->hasFile('technical_sheet.photo_d.file')) {
                 app(FileService::class)->save(
@@ -176,16 +182,12 @@ class TransformationController extends Controller
                 $product_stara->auditAttach('technical_sheets', $technical_sheet->id);
             }
 
-            $result = DB::select("CALL generate_production_order_code()");
+            $result = DB::select("CALL generate_production_order_consecutive()");
             $production_order = new ProductionOrder();
             $consecutive = $result[0]->consecutive;
 
             $production_order->uuid = Str::uuid();
             $production_order->consecutive = $consecutive;
-            if ($request->boolean('reasigned_curve')) {
-                $production_order->model_id = $request->input('production_order_id');
-                $production_order->model_type = ProductionOrder::class;
-            }
             $production_order->technical_sheet_id = $technical_sheet->id;
             $production_order->cut = $request->input('production_order.cut');
             $production_order->status = $request->input('production_order.status');
@@ -193,6 +195,10 @@ class TransformationController extends Controller
             $production_order->save();
 
             $this->save_details_production_order($request->input('production_order.production_order_details', []), $production_order->id, $product->id, $product_stara?->id);
+
+            if ($request->boolean('reasigned_curve')) {
+                app(ProductionOrderCurveService::class)->reassign($request->input('reassigned_origins', []), $production_order->id);
+            }
 
             return $this->successResponse(
                 new ProductResource($product),
@@ -266,7 +272,7 @@ class TransformationController extends Controller
             return $this->successResponse(
                 new TechnicalSheetResource($technical_sheet),
                 $this->getMessage('Success'),
-                201
+                200
             );
         } catch (\Throwable $e) {
             return $this->errorResponse(
@@ -281,28 +287,23 @@ class TransformationController extends Controller
 
     private function save(array $technical_sheet_details, int $technical_sheet_id)
     {
-        try {
-            foreach ($technical_sheet_details as $technical_sheet_detail) {
-                TechnicalSheetDetail::updateOrCreate(
-                    [
-                        'technical_sheet_id' => $technical_sheet_id,
-                        'model_type' => $technical_sheet_detail['model_type'],
-                        'model_id' => $technical_sheet_detail['model_id'],
-                    ],
-                    [
-                        'status' => $technical_sheet_detail['status'],
-                        'settings' => $technical_sheet_detail['settings'] ?? (object) [],
-                    ]
-                );
-            }
-        } catch (\Throwable $e) {
-            return $this->errorResponse(
+        // Sin try/catch propio: si falla, el error llega al de store/update y la respuesta no dice «éxito»
+        foreach ($technical_sheet_details as $technical_sheet_detail) {
+            $detail = TechnicalSheetDetail::updateOrCreate(
                 [
-                    'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage()
+                    'technical_sheet_id' => $technical_sheet_id,
+                    'model_type' => $technical_sheet_detail['model_type'],
+                    'model_id' => $technical_sheet_detail['model_id'],
                 ],
-                $this->getCode(class_basename($e))
+                [
+                    'status' => $technical_sheet_detail['status'],
+                    'settings' => $technical_sheet_detail['settings'] ?? (object) [],
+                ]
             );
+
+            if (isset($technical_sheet_detail['typology'])) {
+                $detail->auditSync('typology', $technical_sheet_detail['typology']);
+            }
         }
     }
 
@@ -467,7 +468,7 @@ class TransformationController extends Controller
             $production_order = ProductionOrder::with([
                 'technical_sheet' => ['product' => ['trademark' => ['group', 'sizes'], 'subcategory' => ['category']], 'products', 'photo_d', 'photo_t', 'garment_type', 'collection'],
                 'production_order_details' => ['production_order_detail_quantities', 'model'],
-                'fabric.model',
+                'fabric' => ['model'],
                 'pieces',
                 'rolls'
             ])->where('id', $request->production_order_id)

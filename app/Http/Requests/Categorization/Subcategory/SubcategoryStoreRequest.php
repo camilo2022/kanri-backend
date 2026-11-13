@@ -27,27 +27,16 @@ class SubcategoryStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'category_id' => ['required', 'exists:subitems,id,item_id,' . Category::ITEM_ID . ',deleted_at,NULL'],
             'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,' . Subcategory::ITEM_ID],
             'description' => ['required', 'uppercase', 'string', 'max:255']
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'exists' => 'No está registrado.',
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.',
-            'uppercase' => 'Debe de ingresar mayúsculas.'
         ];
     }
 
     public function attributes(): array
     {
         return [
+            'category_id' => 'Categoría',
             'name' => 'Nombre',
             'description' => 'Descripción'
         ];

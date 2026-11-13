@@ -26,27 +26,20 @@ class CollectionUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required', 'numeric', 'string', 'exists:subitems,id,item_id,' . Collection::ITEM_ID],
-            'name' => ['required', 'regex:/^C\d(19\d{2}|20([0-1]\d|2[0-6]))$/', 'string', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Collection::ITEM_ID],
+            'id' => ['required', 'numeric', 'exists:subitems,id,item_id,' . Collection::ITEM_ID],
+            'name' => ['required', 'regex:/^C\d(19|20)\d{2}$/', 'string', 'unique:subitems,name,' . $this->route('id') . ',id,item_id,' . Collection::ITEM_ID],
             'description' => ['required', 'string', 'max:255', 'uppercase'],
+            'settings' => ['required', 'array'],
             'settings.code' => ['required', 'numeric', 'digits_between:2,5'],
             'settings.start_date' => ['required', 'date', 'date_format:Y-m-d'],
-            'settings.end_date' => ['required', 'date', 'date_format:Y-m-d', 'after:start_date'],
+            'settings.end_date' => ['required', 'date', 'date_format:Y-m-d', 'after:settings.start_date'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'required' => 'Es obligatorio.',
-            'array' => 'Debe ser una lista de datos.',
-            'numeric' => 'Debe ser un dato númerico.',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.',
-            'uppercase' => 'Debe de ingresar mayúsculas.',
-            'regex' => 'Formato inválido. Debe iniciar con C y contener 5 números (los últimos 4 corresponden al año).'
+            'regex' => 'Formato inválido. Debe iniciar con C y contener 5 números (los últimos 4 corresponden al año).',
         ];
     }
 
@@ -77,7 +70,7 @@ class CollectionUpdateRequest extends FormRequest
             $startDate = $settings['start_date'] ?? null;
             $endDate = $settings['end_date'] ?? null;
 
-            $existsCode = Collection::query()
+            $existsCode = Collection::withTrashed()
                 ->where('item_id', Collection::ITEM_ID)
                 ->where('id', '!=', $this->route('id'))
                 ->where('settings->code', $code)
@@ -92,7 +85,7 @@ class CollectionUpdateRequest extends FormRequest
             }
             if ($startDate && $endDate) {
 
-                $crossingCollection = Collection::query()
+                $crossingCollection = Collection::withTrashed()
                     ->where('id', '!=', $this->route('id'))
                     ->where(function ($query) use ($startDate, $endDate) {
                         $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(settings, '$.start_date')) <= ?", [$endDate])

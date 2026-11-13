@@ -14,13 +14,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('subitems', function (Blueprint $table) {
-            $table->id();
-            $table->foreignIdFor(Item::class)->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Item');
+            $table->id()->comment('Identificador');
+            $table->foreignIdFor(Item::class)->comment('Catálogo')->constrained()->onUpdate('cascade')->onDelete('cascade');
             $table->text('name')->comment('Nombre');
-            $table->text('description')->nullable()->comment('Descripcion');
+            $table->text('description')->nullable()->comment('Descripción');
             $table->json('settings')->default(new Expression('(JSON_OBJECT())'))->comment('Configuraciones');
-            $table->timestamps();
-            $table->softDeletes();
+            $table->timestamp('created_at')->nullable()->comment('Fecha de creación');
+            $table->timestamp('updated_at')->nullable()->comment('Fecha de actualización');
+            $table->softDeletes()->comment('Fecha de desactivación');
         });
     }
 

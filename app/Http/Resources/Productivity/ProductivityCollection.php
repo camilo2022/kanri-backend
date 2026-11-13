@@ -19,12 +19,13 @@ class ProductivityCollection extends ResourceCollection
                     'start_time' => $productivity->start_time,
                     'end_time' => $productivity->end_time,
                     'settings' => $productivity->publicSettings(),
-                    'status' => $productivity->status(),
                     'duration_hours' => $productivity->duration_hours,
                     'goal_day' => $productivity->goal_day,
+                    'productivity_details' => $productivity->productivity_details,
                     'created_at' => $this->formatDate($productivity->created_at),
                     'updated_at' => $this->formatDate($productivity->updated_at),
                     'deleted_at' => $this->formatDate($productivity->deleted_at),
+                    'status' => $productivity->status,
                 ];
             }),
             'meta' => [

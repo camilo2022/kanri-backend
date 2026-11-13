@@ -4,14 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\TechnicalSheet\TechnicalSheetExportPDFRequest;
 use App\Http\Requests\TechnicalSheet\TechnicalSheetFindRequest;
+use App\Http\Requests\TechnicalSheet\TechnicalSheetProcessPdfRequest;
 use App\Http\Requests\TechnicalSheet\TechnicalSheetStoreRequest;
 use App\Http\Requests\TechnicalSheet\TechnicalSheetUpdateRequest;
 use App\Http\Resources\TechnicalSheet\TechnicalSheetResource;
 use App\Models\Process;
 use App\Models\ProductionOrder;
+use App\Models\Subprocess;
 use App\Models\TechnicalSheet;
 use App\Models\TechnicalSheetDetail;
 use App\Services\FileService;
+use App\Services\ProductivityDetailService;
 use App\Services\QrCodeService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -52,7 +55,7 @@ class TechnicalSheetController extends Controller
                     return $query->where('product_id', $request->integer('product_id'));
                 })
                 ->when($request->filled('uuid'), function ($query) use ($request) {
-                    return $query->where('uuid', $request->integer('uuid'));
+                    return $query->where('uuid', $request->input('uuid'));
                 })->firstOrFail();
 
             return $this->successResponse(
@@ -194,10 +197,23 @@ class TechnicalSheetController extends Controller
 
             $this->save($request->input('technical_sheet_details', []), $technical_sheet->id);
 
+            // Lo quitado de la ficha (ya validado): el subproceso con sus operaciones
+            foreach ($request->input('removed_details', []) as $item) {
+                $model = $item['model_type']::find($item['model_id']);
+                $removed = collect([$model])->concat($model instanceof Subprocess ? $model->operations : []);
+
+                TechnicalSheetDetail::where('technical_sheet_id', $technical_sheet->id)
+                    ->where(fn ($query) => $removed->each(fn ($item) => $query->orWhere(fn ($own) => $own
+                        ->where('model_type', $item::class)
+                        ->where('model_id', $item->id))))
+                    ->get()
+                    ->each->delete();
+            }
+
             return $this->successResponse(
                 new TechnicalSheetResource($technical_sheet),
                 $this->getMessage('Success'),
-                201
+                200
             );
         } catch (\Throwable $e) {
             return $this->errorResponse(
@@ -212,32 +228,23 @@ class TechnicalSheetController extends Controller
 
     private function save(array $technical_sheet_details, int $technical_sheet_id)
     {
-        try {
-            foreach ($technical_sheet_details as $technical_sheet_detail) {
-                $detail = TechnicalSheetDetail::updateOrCreate(
-                    [
-                        'technical_sheet_id' => $technical_sheet_id,
-                        'model_type' => $technical_sheet_detail['model_type'],
-                        'model_id' => $technical_sheet_detail['model_id'],
-                    ],
-                    [
-                        'status' => $technical_sheet_detail['status'],
-                        'settings' => $technical_sheet_detail['settings'] ?? (object) [],
-                    ]
-                );
-
-                if (isset($technical_sheet_detail['typology'])) {
-                    $detail->auditSync('typology', $technical_sheet_detail['typology']);
-                }
-            }
-        } catch (\Throwable $e) {
-            return $this->errorResponse(
+        // Sin try/catch propio: si falla, el error llega al de store/update y la respuesta no dice «éxito»
+        foreach ($technical_sheet_details as $technical_sheet_detail) {
+            $detail = TechnicalSheetDetail::updateOrCreate(
                 [
-                    'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage(),
+                    'technical_sheet_id' => $technical_sheet_id,
+                    'model_type' => $technical_sheet_detail['model_type'],
+                    'model_id' => $technical_sheet_detail['model_id'],
                 ],
-                $this->getCode(class_basename($e))
+                [
+                    'status' => $technical_sheet_detail['status'],
+                    'settings' => $technical_sheet_detail['settings'] ?? (object) [],
+                ]
             );
+
+            if (isset($technical_sheet_detail['typology'])) {
+                $detail->auditSync('typology', $technical_sheet_detail['typology']);
+            }
         }
     }
 
@@ -294,6 +301,12 @@ class TechnicalSheetController extends Controller
                             $definition = $body->firstWhere('field', $field);
 
                             if (! $definition) {
+                                continue;
+                            }
+
+                            if (is_object($value)) {
+                                $row->{$field} = $value->name ?? '-';
+
                                 continue;
                             }
 
@@ -372,7 +385,7 @@ class TechnicalSheetController extends Controller
                     'products' => ['trademark'],
                 ],
                 'production_order_details' => ['production_order_detail_quantities', 'model'],
-                'fabric.model',
+                'fabric' => ['model'],
                 'pieces',
                 'rolls',
                 'derivatives' => ['production_order' => ['technical_sheet' => ['product']]],
@@ -451,6 +464,59 @@ class TechnicalSheetController extends Controller
             );
         } catch (\Throwable $e) {
 
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage(),
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    /**
+     * Ficha de procesos en PDF: la ficha técnica sin orden de producción (sin lote, curva ni destinos), con sus procesos,
+     * subprocesos y operaciones y, al final, la línea de trabajo por la que pasa la referencia.
+     */
+    public function process_pdf(TechnicalSheetProcessPdfRequest $request, string $uuid)
+    {
+        try {
+            $technical_sheet = TechnicalSheet::with([
+                'collection',
+                'subgroup',
+                'color',
+                'waistband_type',
+                'garment_type',
+                'wash_tone',
+                'boot_type',
+                'yoke_type',
+                'back_type',
+                'technical_sheet_details' => ['typology'],
+                'pattern_maker' => ['person', 'position'],
+                'product' => ['trademark' => ['group'], 'subcategory' => ['category']],
+                'products' => ['trademark'],
+            ])->where('uuid', $uuid)->firstOrFail();
+
+            $line = app(ProductivityDetailService::class)->sheetLine($technical_sheet);
+
+            $technical_sheet->technical_sheet_details = $this->formatTechnicalSheetDetails($technical_sheet->technical_sheet_details);
+
+            $pdf = Pdf::loadView('pdf.TechnicalSheet.process', [
+                'technical_sheet' => $technical_sheet,
+                'processes' => Process::with(['subprocesses' => ['operations']])->where('settings->in_technical_sheet', true)->get(),
+                'line' => $line,
+                'qr' => app(QrCodeService::class)->generate(URL::signedRoute('technical_sheets.process_pdf', ['uuid' => $technical_sheet->uuid])),
+            ])->setPaper('a4', 'portrait');
+
+            $dompdf = $pdf->getDomPDF();
+            $dompdf->render();
+            $dompdf->getCanvas()->page_text(270, 815, 'Página {PAGE_NUM} de {PAGE_COUNT}', null, 9, [0, 0, 0]);
+
+            return response($dompdf->output(), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="FP-'.($technical_sheet->product->code ?? 'SIN-CODIGO').'.pdf"',
+            ]);
+        } catch (\Throwable $e) {
             return $this->errorResponse(
                 [
                     'message' => $this->getMessage(class_basename($e)),

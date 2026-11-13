@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Color;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class ColorCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Color::class, $this->collection->pluck('id')->all());
         return [
-            'colors' => $this->collection->map(function ($color) {
+            'colors' => $this->collection->map(function ($color) use ($audited) {
                 return [
                     'id' => $color->id,
+                    'has_audits' => isset($audited[$color->id]),
                     'item_id' => $color->item_id,
                     'name' => $color->name,
                     'description' => $color->description,

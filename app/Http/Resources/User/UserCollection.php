@@ -3,18 +3,21 @@
 namespace App\Http\Resources\User;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class UserCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\User::class, $this->collection->pluck('id')->all());
         return [
-            'users' => $this->collection->map(function ($user) {
+            'users' => $this->collection->map(function ($user) use ($audited) {
                 return [
                     'id' => $user->id,
+                    'has_audits' => isset($audited[$user->id]),
                     'employee_id' => $user->employee_id,
-                    'email' => $user->email,
+                    'username' => $user->username,
                     'created_at' => $this->formatDate($user->created_at),
                     'updated_at' => $this->formatDate($user->updated_at),
                     'deleted_at' => $this->formatDate($user->deleted_at),

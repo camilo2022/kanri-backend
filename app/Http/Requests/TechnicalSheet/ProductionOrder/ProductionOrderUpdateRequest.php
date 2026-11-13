@@ -7,9 +7,11 @@ use App\Models\Piece;
 use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
+use App\Models\ProductionOrderDetailQuantities;
 use App\Models\Size;
 use App\Models\Supplier;
 use App\Models\Supply;
+use App\Services\ProductionOrderCurveService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -65,17 +67,7 @@ class ProductionOrderUpdateRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'required' => 'Es obligatorio.', 'exists' => 'No registrado en el sistema.',
-            'boolean' => 'Debe ser un dato tipo si/no',
-            'numeric' => 'Debe ser un dato númerico',
-            'min' => 'El valor debe ser mayor o igual a :min',
             'production_order_details.max' => 'El valor debe ser menor o igual a :min',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'in' => 'Valor inválido. Permitidos: :values.',
-            'integer' => 'Debe ser un dato númerico',
-            'distinct' => 'Debe ser un valor unico',
-            'required_if' => 'Es obligatorio',
         ];
     }
 
@@ -105,6 +97,48 @@ class ProductionOrderUpdateRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            if ($this->boolean('reasigned_curve')) {
+                $started_orders = app(ProductionOrderCurveService::class)->startedOrderIds();
+
+                foreach ($this->input('reassigned_origins') ?? [] as $index => $origin) {
+                    if (in_array((int) ($origin['production_order_id'] ?? 0), $started_orders, true)) {
+                        $validator->errors()->add(
+                            "reassigned_origins.$index.production_order_id",
+                            'No se puede reasignar curva de un lote que ya se empezó a trabajar o está programado.'
+                        );
+                    }
+                }
+            }
+
+            // Si los datos básicos ya fallaron no hay nada coherente que validar a fondo (evita errores 500 con datos vacíos)
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            // Las filas de tela que llegan con id deben ser de esta orden (si no, se moverían de otra)
+            $row_ids = collect($this->input('production_order_details', []))
+                ->flatMap(fn ($detail) => collect($detail['rows'] ?? [])->flatMap(fn ($row) => collect($row['sizes'] ?? [])->pluck('id')))
+                ->filter()
+                ->unique();
+            $own_ids = ProductionOrderDetailQuantities::whereHas('production_order_detail', fn ($q) => $q->where('production_order_id', $this->route('id')))->pluck('id');
+            if ($row_ids->diff($own_ids)->isNotEmpty()) {
+                $validator->errors()->add('fabric_id', 'Hay cantidades de tela que no pertenecen a esta orden.');
+            }
+
+            // En un lote que ya se empezó a trabajar no se quitan destinos, piezas ni rollos
+            $removed = app(ProductionOrderCurveService::class)->removedDetails((int) $this->route('id'), $this->input('production_order_details', []));
+            if (in_array((int) $this->route('id'), app(ProductionOrderCurveService::class)->startedOrderIds(), true)) {
+                foreach (ProductionOrderDetail::whereIn('id', $removed['zero_products'])->pluck('destination') as $destination) {
+                    $validator->errors()->add('production_order_details.'.Product::class.".$destination.model_id", 'No se puede quitar este destino: el lote ya se empezó a trabajar.');
+                }
+                $deleted_types = ProductionOrderDetail::whereIn('id', $removed['delete'])->pluck('model_type');
+                if ($deleted_types->contains(Piece::class)) {
+                    $validator->errors()->add('pieces', 'No se pueden quitar piezas: el lote ya se empezó a trabajar.');
+                }
+                if ($deleted_types->contains(Supply::class)) {
+                    $validator->errors()->add('rolls', 'No se pueden quitar rollos: el lote ya se empezó a trabajar.');
+                }
+            }
             $exists = ProductionOrder::where('technical_sheet_id', $this->input('technical_sheet_id'))
                 ->where('cut', $this->input('cut'))
                 ->when($this->route('id'), function ($query) {
@@ -320,9 +354,7 @@ class ProductionOrderUpdateRequest extends FormRequest
 
                         $available_quantity = $supply_quantity - $used_quantity;
 
-                        logger()->debug('QUANTITIES', ['QUANTITY' => $quantity, 'SUPPLY_QUANTITY' => $supply_quantity, 'USED_QUANTITY' => $used_quantity, 'AVAIILABLE_QUANTITY' => $available_quantity]);
-
-                        if ($quantity > $available_quantity) {
+                       if ($quantity > $available_quantity) {
                             $validator->errors()->add(
                                 "production_order_details.$index.settings.quantity",
                                 "La cantidad solicitada ({$quantity}) supera la cantidad disponible del rollo ({$available_quantity})."

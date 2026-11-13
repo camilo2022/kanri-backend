@@ -17,6 +17,7 @@ use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderDetailQuantities;
 use App\Models\Supply;
 use App\Services\FileService;
+use App\Services\ProductionOrderCurveService;
 use App\Services\QrCodeService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -57,16 +58,26 @@ class ProductionOrderController extends Controller
 
                             if ($request->filled('start_date')) {
                                 $r->whereNotNull('settings->date')
-                                    ->where('settings->date', '>=', $request->date('start_date'));
+                                    ->where('settings->date', '>=', $request->date('start_date')->format('Y-m-d'));
                             }
 
                             if ($request->filled('end_date')) {
                                 $r->whereNotNull('settings->date')
-                                    ->where('settings->date', '<=', $request->date('end_date'));
+                                    ->where('settings->date', '<=', $request->date('end_date')->format('Y-m-d'));
                             }
                         });
                     }
                 )
+                ->when($request->boolean('with_typologies'), function ($query) {
+                    return $query->with(['technical_sheet' => ['technical_sheet_details_processes' => ['typology']]]);
+                })
+                ->when($request->filled('process_id'), function ($query) use ($request) {
+                    $workstation = $request->filled('model_type') ? $request->input('model_type')::find($request->integer('model_id')) : null;
+
+                    return $request->boolean('chain')
+                        ? $query->chainPending($request->integer('process_id'))
+                        : $query->programmableIn($request->integer('process_id'), $workstation, $request->boolean('pending_previous'));
+                })
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -122,7 +133,7 @@ class ProductionOrderController extends Controller
     public function store(ProductionOrderStoreRequest $request)
     {
         try {
-            $result = DB::select('CALL generate_production_order_code()');
+            $result = DB::select('CALL generate_production_order_consecutive()');
             $production_order = new ProductionOrder;
             $consecutive = $result[0]->consecutive;
 
@@ -176,7 +187,7 @@ class ProductionOrderController extends Controller
             $production_order->color()->sync([$request->input('color_id')]);
 
             if ($request->boolean('reasigned_curve')) {
-                $this->update_origin_curve($request->input('reassigned_origins', []), $production_order->id);
+                app(ProductionOrderCurveService::class)->reassign($request->input('reassigned_origins', []), $production_order->id);
             }
 
             $this->save_details($request->input('production_order_details', []), $production_order->id);
@@ -234,16 +245,22 @@ class ProductionOrderController extends Controller
 
             $production_order->color()->sync([$request->input('color_id')]);
 
+            // Lo que la edición quita (destino en 0, pieza o rollo quitado); el Request ya impidió hacerlo en un lote empezado
+            $removed = app(ProductionOrderCurveService::class)->removedDetails($production_order->id, $request->input('production_order_details', []));
+
             if ($request->boolean('reasigned_curve')) {
-                $this->update_origin_curve($request->input('reassigned_origins', []), $production_order->id);
+                app(ProductionOrderCurveService::class)->reassign($request->input('reassigned_origins', []), $production_order->id);
             }
 
             $this->save_details($request->input('production_order_details', []), $production_order->id);
 
+            ProductionOrderDetailQuantities::whereIn('production_order_detail_id', $removed['zero_products'])->update(['quantity' => 0]);
+            ProductionOrderDetail::whereIn('id', $removed['delete'])->get()->each->delete();
+
             return $this->successResponse(
                 new ProductionOrderResource($production_order),
                 $this->getMessage('Success'),
-                201
+                200
             );
         } catch (\Throwable $e) {
             return $this->errorResponse(
@@ -360,100 +377,6 @@ class ProductionOrderController extends Controller
         }
     }
 
-    public function update_origin_curve(array $reassigned_origins, int $production_order_id)
-    {
-        try {
-            foreach ($reassigned_origins as $reassigned_origin) {
-                logger($reassigned_origin['production_order_id']);
-                $production_order_origin = ProductionOrder::findOrFail($reassigned_origin['production_order_id']);
-
-                if (empty($reassigned_origin['selected_rows'])) {
-                    return;
-                }
-
-                $reassigned_by_size = [];
-
-                logger(['REASSIGNED DETAILS', $reassigned_origin['reassigned_details']]);
-
-                foreach ($reassigned_origin['reassigned_details'] as $detail) {
-
-                    logger(['DETAIL', $detail]);
-
-                    foreach ($detail['sizes'] ?? [] as $size) {
-
-                        $size_id = $size['size_id'];
-                        $quantity = (int) ($size['quantity'] ?? 0);
-
-                        if ($quantity <= 0) {
-                            continue;
-                        }
-
-                        $reassigned_by_size[$size_id] =
-                            ($reassigned_by_size[$size_id] ?? 0) + $quantity;
-                    }
-                }
-
-                $origin_details = ProductionOrderDetail::with('production_order_detail_quantities')
-                    ->where('production_order_id', $production_order_origin->id)
-                    ->where('model_type', Product::class)
-                    ->get();
-
-                logger($reassigned_by_size);
-
-                foreach ($reassigned_by_size as $size_id => $quantity_to_subtract) {
-
-                    $remaining = $quantity_to_subtract;
-
-                    foreach ($reassigned_origin['selected_rows'] as $location) {
-                        if ($remaining <= 0) {
-                            break;
-                        }
-
-                        $detail = $origin_details->first(function ($item) use ($location) {
-                            return $item->destination === $location;
-                        });
-
-                        if (! $detail) {
-                            continue;
-                        }
-
-                        $quantity = $detail->production_order_detail_quantities
-                            ->firstWhere('size_id', $size_id);
-
-                        if (! $quantity) {
-                            continue;
-                        }
-
-                        $available = (int) $quantity->quantity;
-
-                        if ($available <= 0) {
-                            continue;
-                        }
-
-                        $amount_to_subtract = min($available, $remaining);
-
-                        $quantity->quantity = $available - $amount_to_subtract;
-                        $quantity->save();
-
-                        $remaining -= $amount_to_subtract;
-                    }
-                }
-
-                ProductionOrderDetail::firstOrCreate(
-                    [
-                        'production_order_id' => $production_order_id,
-                        'model_type' => ProductionOrder::class,
-                        'model_id' => $production_order_origin->id,
-                        'destination' => null,
-                    ]
-                );
-            }
-
-        } catch (\Throwable $e) {
-            throw $e;
-        }
-    }
-
     public function pdf(ProductionOrderExportPDFRequest $request, string $uuid)
     {
         try {
@@ -475,7 +398,7 @@ class ProductionOrderController extends Controller
                     'products' => ['trademark'],
                 ],
                 'production_order_details' => ['production_order_detail_quantities', 'model'],
-                'fabric.model',
+                'fabric' => ['model'],
                 'pieces',
                 'rolls' => ['model' => ['supply_type', 'production_order_details']],
                 'derivatives' => ['production_order' => ['technical_sheet' => ['product']]],

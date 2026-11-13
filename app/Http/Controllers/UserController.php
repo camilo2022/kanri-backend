@@ -14,6 +14,7 @@ use App\Http\Requests\User\UserWorkflowAssignRequest;
 use App\Http\Requests\User\UserWorkflowRemoveRequest;
 use App\Http\Resources\User\UserCollection;
 use App\Http\Resources\User\UserResource;
+use App\Models\Employee;
 use App\Models\Operation;
 use App\Models\Permission;
 use App\Models\Process;
@@ -21,6 +22,7 @@ use App\Models\Subprocess;
 use App\Models\User;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -39,7 +41,7 @@ use Illuminate\Support\Facades\Hash;
  *     type="object",
  *
  *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="email", type="string", example="email_user_example"),
+ *     @OA\Property(property="username", type="string", example="juancarlospg", description="Generado por el procedimiento generate_username; en pantalla se muestra con @"),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
  *     @OA\Property(property="updated_at", type="string", format="date-time"),
  *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true),
@@ -151,7 +153,7 @@ class UserController extends Controller
      *         description="Columna a ordenar.",
      *         required=false,
      *
-     *         @OA\Schema(type="string", enum={"id","email","created_at", "updated_at"}, example="email")
+     *         @OA\Schema(type="string", enum={"id","username","created_at", "updated_at"}, example="username")
      *     ),
      *
      *     @OA\Parameter(
@@ -238,7 +240,7 @@ class UserController extends Controller
     public function all(UserAllRequest $request)
     {
         try {
-            $users = User::with(['employee' => ['person', 'position' => ['area']], 'roles', 'permissions'])
+            $users = User::with(['employee' => ['person' => ['photo'], 'position' => ['area']], 'roles', 'permissions'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -249,7 +251,7 @@ class UserController extends Controller
                     return $query->orderBy($request->input('column'), $request->input('dir'));
                 });
 
-            $users = $users->paginate($request->integer('per_page'), ['*'], 'page', $request->integer('page', 1));
+            $users = $users->paginate($request->integer('per_page', $users->count()), ['*'], 'page', $request->integer('page', 1));
 
             return $this->successResponse(
                 new UserCollection($users),
@@ -380,20 +382,13 @@ class UserController extends Controller
      *         required=true,
      *
      *         @OA\JsonContent(
-     *             required={"employee_id","email","password","password_confirmation"},
+     *             required={"employee_id","password","password_confirmation"},
      *
      *             @OA\Property(
      *                 property="employee_id",
      *                 type="string",
      *                 example="1",
      *                 description="Empleado"
-     *             ),
-     *             @OA\Property(
-     *                 property="email",
-     *                 type="string",
-     *                 format="email",
-     *                 example="user@example.com",
-     *                 description="Correo electrónico del usuario"
      *             ),
      *             @OA\Property(
      *                 property="password",
@@ -425,7 +420,7 @@ class UserController extends Controller
      *                     property= "user",
      *                     type="object",
      *                     @OA\Property(property="employee_id", type="integer", example=1),
-     *                     @OA\Property(property="email", type="string", example="email_user_example"),
+     *                     @OA\Property(property="username", type="string", example="juancarlospg", description="Generado por el procedimiento generate_username; en pantalla se muestra con @"),
      *                     @OA\Property(property="updated_at", type="string", format="date-time"),
      *                     @OA\Property(property="created_at", type="string", format="date-time"),
      *                     @OA\Property(property="id", type="integer", example=1),
@@ -468,7 +463,6 @@ class UserController extends Controller
      *                 property="attributes",
      *                 type="object",
      *                 @OA\Property(property="employee_id", type="string", example="Empleado"),
-     *                 @OA\Property(property="email", type="string", example="Correo electrónico del usuario"),
      *                 @OA\Property(property="password", type="string", example="Contraseña del usuario"),
      *                 @OA\Property(property="password_confirmation", type="string", example="Confirmación contraseña del usuario")
      *             ),
@@ -476,7 +470,7 @@ class UserController extends Controller
      *                 property="errors",
      *                 type="object",
      *                 @OA\Property(
-     *                     property="email",
+     *                     property="employee_id",
      *                     type="array",
      *
      *                     @OA\Items(type="string", example="Ya está registrado.")
@@ -509,7 +503,8 @@ class UserController extends Controller
         try {
             $user = new User;
             $user->employee_id = $request->input('employee_id');
-            $user->email = $request->input('email');
+            // El nombre de usuario lo arma el procedimiento: nombres completos + inicial de cada apellido (2, 3… si existe)
+            $user->username = DB::select('CALL generate_username(?)', [Employee::findOrFail($request->integer('employee_id'))->person_id])[0]->username;
             $user->password = Hash::make($request->input('password'));
             $user->save();
 
@@ -553,20 +548,13 @@ class UserController extends Controller
      *         required=true,
      *
      *         @OA\JsonContent(
-     *             required={"employee_id","email","password","password_confirmation"},
+     *             required={"employee_id","password","password_confirmation"},
      *
      *             @OA\Property(
      *                 property="employee_id",
      *                 type="string",
      *                 example="1",
      *                 description="Empleado"
-     *             ),
-     *             @OA\Property(
-     *                 property="email",
-     *                 type="string",
-     *                 format="email",
-     *                 example="user@example.com",
-     *                 description="Correo electrónico del usuario"
      *             ),
      *             @OA\Property(
      *                 property="password",
@@ -603,7 +591,7 @@ class UserController extends Controller
      *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="employee_id", type="integer", example=4),
-     *                         @OA\Property(property="email", type="string", example="email_user_example"),
+     *                         @OA\Property(property="username", type="string", example="juancarlospg", description="Generado por el procedimiento generate_username; en pantalla se muestra con @"),
      *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
      *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
      *                         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true)
@@ -626,7 +614,6 @@ class UserController extends Controller
      *                 property="attributes",
      *                 type="object",
      *                 @OA\Property(property="employee_id", type="string", example="Empleado"),
-     *                 @OA\Property(property="email", type="string", example="Correo electrónico del usuario"),
      *                 @OA\Property(property="password", type="string", example="Contraseña del usuario"),
      *                 @OA\Property(property="password_confirmation", type="string", example="Confirmación contraseña del usuario")
      *             ),
@@ -634,7 +621,7 @@ class UserController extends Controller
      *                 property="errors",
      *                 type="object",
      *                 @OA\Property(
-     *                     property="email",
+     *                     property="employee_id",
      *                     type="array",
      *
      *                     @OA\Items(type="string", example="Ya está registrado.")
@@ -667,9 +654,15 @@ class UserController extends Controller
         try {
             $user = User::findorFail($id);
             $user->employee_id = $request->integer('employee_id');
-            $user->email = $request->input('email');
-            $user->password = Hash::make($request->input('password'));
+            // La contraseña solo cambia si se escribe una nueva
+            if ($request->filled('password')) {
+                $user->password = Hash::make($request->input('password'));
+            }
             $user->save();
+
+            if ($request->filled('password')) {
+                $user->tokens()->delete();
+            }
 
             return $this->successResponse(
                 new UserResource($user),
@@ -721,7 +714,7 @@ class UserController extends Controller
      *
      *                         @OA\Property(property="id", type="integer", example=14),
      *                         @OA\Property(property="employee_id", type="integer", example=1),
-     *                         @OA\Property(property="email", type="string", example="email_user_example"),
+     *                         @OA\Property(property="username", type="string", example="juancarlospg", description="Generado por el procedimiento generate_username; en pantalla se muestra con @"),
      *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
      *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-03-12 20:01:03"),
      *                         @OA\Property(property="deleted_at", type="string", format="date-time", example="2026-03-12 20:01:03")
@@ -780,12 +773,8 @@ class UserController extends Controller
     public function delete(UserDeleteRequest $request, $id)
     {
         try {
-            $user = User::with(['roles', 'permissions'])
-                ->findOrFail($id);
-            $user->syncRoles([]);
-            $user->permissions->each(function ($permission) use ($user) {
-                $user->revokePermissionTo($permission);
-            });
+            // Conserva roles y permisos: al activarlo vuelve como estaba (desactivado no puede entrar)
+            $user = User::findOrFail($id);
             $user->delete();
 
             return $this->successResponse(
@@ -834,7 +823,7 @@ class UserController extends Controller
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="employee_id", type="integer", example=1),
-     *                     @OA\Property(property="email", type="string", example="email_user_example"),
+     *                     @OA\Property(property="username", type="string", example="juancarlospg", description="Generado por el procedimiento generate_username; en pantalla se muestra con @"),
      *                     @OA\Property(property="updated_at", type="string", format="date-time"),
      *                     @OA\Property(property="created_at", type="string", format="date-time"),
      *                     @OA\Property(
@@ -914,10 +903,6 @@ class UserController extends Controller
         try {
             $user = User::withTrashed()->findOrFail($id);
             $user->restore();
-
-            $user->load(['employee' => ['position' => ['area', 'roles', 'permissions']]]);
-            $user->syncRoles($user->employee->position->roles);
-            $user->syncPermissions($user->employee->position->permissions);
 
             return $this->successResponse(
                 new UserResource($user),
@@ -1108,7 +1093,7 @@ class UserController extends Controller
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="email", type="string", example="email_user_example"),
+     *                 @OA\Property(property="username", type="string", example="juancarlospg", description="Generado por el procedimiento generate_username; en pantalla se muestra con @"),
      *                 @OA\Property(property="created_at", type="string", format="date-time"),
      *                 @OA\Property(property="updated_at", type="string", format="date-time"),
      *                 @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true),
@@ -1338,48 +1323,34 @@ class UserController extends Controller
 
             if ($request->input('model_type') === Process::class) {
 
-                $process = Process::findOrFail($request->integer('model_id'));
+                $process = Process::with(['subprocesses' => ['operations']])->findOrFail($request->integer('model_id'));
 
-                $user->processes()->syncWithoutDetaching([$process->id]);
-
-                if ($process->subprocesses) {
-                    foreach ($process->subprocesses as $subprocess) {
-                        $user->subprocesses()->syncWithoutDetaching([$subprocess->id]);
-                        if ($subprocess->operations) {
-                            foreach ($subprocess->operations as $operation) {
-                                $user->operations()->syncWithoutDetaching([$operation->id]);
-                            }
-                        }
-                    }
-                }
+                $user->auditAttach('processes', collect([$process->id])->diff($user->processes()->pluck('subitems.id'))->all());
+                $user->auditAttach('subprocesses', $process->subprocesses->pluck('id')->diff($user->subprocesses()->pluck('subitems.id'))->all());
+                $user->auditAttach('operations', $process->subprocesses->flatMap->operations->pluck('id')->diff($user->operations()->pluck('subitems.id'))->all());
 
             } elseif ($request->input('model_type') === Subprocess::class) {
 
                 $subprocess = Subprocess::with('process', 'operations')->findOrFail($request->integer('model_id'));
 
                 if ($subprocess->process) {
-                    $user->processes()->syncWithoutDetaching([$subprocess->process->first()->id]);
+                    $user->auditAttach('processes', collect([$subprocess->process->first()->id])->diff($user->processes()->pluck('subitems.id'))->all());
                 }
 
-                $user->subprocesses()->syncWithoutDetaching([$subprocess->id]);
-
-                if ($subprocess->operations) {
-                    foreach ($subprocess->operations as $operation) {
-                        $user->operations()->syncWithoutDetaching([$operation->id]);
-                    }
-                }
+                $user->auditAttach('subprocesses', collect([$subprocess->id])->diff($user->subprocesses()->pluck('subitems.id'))->all());
+                $user->auditAttach('operations', $subprocess->operations->pluck('id')->diff($user->operations()->pluck('subitems.id'))->all());
 
             } elseif ($request->input('model_type') === Operation::class) {
 
                 $operation = Operation::with(['subprocess'])->findOrFail($request->integer('model_id'));
 
                 if ($operation->subprocess->first()->process) {
-                    $user->processes()->syncWithoutDetaching([$operation->subprocess->first()->process->first()->id]);
+                    $user->auditAttach('processes', collect([$operation->subprocess->first()->process->first()->id])->diff($user->processes()->pluck('subitems.id'))->all());
                 } if ($operation->subprocess) {
-                    $user->subprocesses()->syncWithoutDetaching([$operation->subprocess->first()->id]);
+                    $user->auditAttach('subprocesses', collect([$operation->subprocess->first()->id])->diff($user->subprocesses()->pluck('subitems.id'))->all());
                 }
 
-                $user->operations()->syncWithoutDetaching([$operation->id]);
+                $user->auditAttach('operations', collect([$operation->id])->diff($user->operations()->pluck('subitems.id'))->all());
             }
 
             $user->load(['employee' => ['person', 'position' => ['area']], 'roles', 'permissions', 'processes', 'subprocesses', 'operations']);
@@ -1454,21 +1425,17 @@ class UserController extends Controller
                 $process = Process::with(['subprocesses' => ['operations']])
                     ->findOrFail($request->integer('model_id'));
 
-                foreach ($process->subprocesses as $subprocess) {
-                    if ($subprocess->operations->isNotEmpty()) {
-                        $user->operations()->detach(
-                            $subprocess->operations->pluck('id')->all()
-                        );
-                    }
+                $operation_ids = $process->subprocesses->flatMap->operations->pluck('id')->all();
+
+                if ($operation_ids) {
+                    $user->auditDetach('operations', $operation_ids);
                 }
 
                 if ($process->subprocesses->isNotEmpty()) {
-                    $user->subprocesses()->detach(
-                        $process->subprocesses->pluck('id')->all()
-                    );
+                    $user->auditDetach('subprocesses', $process->subprocesses->pluck('id')->all());
                 }
 
-                $user->processes()->detach($process->id);
+                $user->auditDetach('processes', $process->id);
 
             } elseif ($request->input('model_type') === Subprocess::class) {
 
@@ -1476,16 +1443,16 @@ class UserController extends Controller
                     ->findOrFail($request->integer('model_id'));
 
                 if ($subprocess->operations->isNotEmpty()) {
-                    $user->operations()->detach($subprocess->operations->pluck('id')->all());
+                    $user->auditDetach('operations', $subprocess->operations->pluck('id')->all());
                 }
 
-                $user->subprocesses()->detach($subprocess->id);
+                $user->auditDetach('subprocesses', $subprocess->id);
 
             } elseif ($request->input('model_type') === Operation::class) {
 
                 $operation = Operation::findOrFail($request->integer('model_id'));
 
-                $user->operations()->detach($operation->id);
+                $user->auditDetach('operations', $operation->id);
 
             } else {
                 return $this->errorResponse([

@@ -37,21 +37,6 @@ class DocumentTypeSettingsRequest extends FormRequest
         ];
     }
 
-    public function messages()
-    {
-        return [
-            'required' => 'Es requerido.',
-            'string' => 'Debe ser una cadena de caracteres.',
-            'distinct' => 'Ya ha sido tomado en otra validación.',
-            'unique' => 'Ya ha sido tomado.',
-            'numeric' => 'Debe ser un valor numérico.',
-            'date' => 'Debe ser una fecha válida.',
-            'array' => 'Debe ser una lista de datos.',
-            'max' => 'No debe exceder los :max caracteres.',
-            'min' => 'Debe tener minimo :min elementos.',
-        ];
-    }
-
     public function attributes()
     {
         $attributes = [];

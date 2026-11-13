@@ -37,23 +37,10 @@ class SupplyTypeUpdateRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.',
-            'exists' => 'No está registrado.',
-            'uppercase' => 'Debe de ingresar mayúsculas.'
-        ];
-    }
-
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador del tipo de tela',
+            'id' => 'Identificador del tipo de insumo',
             'name' => 'Nombre',
             'description' => 'Descripción',
             'settings' => 'Configuraciones',
@@ -91,5 +78,16 @@ class SupplyTypeUpdateRequest extends FormRequest
     protected function prepareForValidation()
     {
         $this->merge(['id' => $this->route('id')]);
+    }
+
+    protected function passedValidation()
+    {
+        // Editar cambia los indicadores; el formulario de los insumos lo escribe Configurar y aquí se conserva
+        $form = data_get(SupplyType::find($this->route('id'))?->settings, 'form');
+
+        $this->merge(['settings' => array_merge(
+            collect($this->input('settings'))->only(['has_supplies', 'in_technical_sheet', 'in_production_order', 'paragraph'])->all(),
+            $form !== null ? ['form' => $form] : []
+        )]);
     }
 }

@@ -68,10 +68,10 @@ use App\Traits\ApiResponser;
  * @OA\Schema(
  *     schema="GenderRequest",
  *     type="object",
- *     required={"name"},
- *     description="Sin regla de mayúsculas. `description` es obligatoria al crear y opcional al editar.",
+ *     required={"name", "description"},
+ *     description="Nombre y descripción en MAYÚSCULAS.",
  *     @OA\Property(property="name", type="string", minLength=1, maxLength=50, description="Abreviatura. Única entre los géneros.", example="O"),
- *     @OA\Property(property="description", type="string", maxLength=255, example="Otro")
+ *     @OA\Property(property="description", type="string", maxLength=255, example="OTRO")
  * )
  */
 class GenderController extends Controller
@@ -122,7 +122,7 @@ class GenderController extends Controller
     public function all(GenderAllRequest $request)
     {
         try {
-            $genders = Gender::when($request->filled('search'), function ($query) use ($request) {
+            $genders = Gender::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {
@@ -254,7 +254,6 @@ class GenderController extends Controller
      *     path="/genders/update/{id}",
      *     tags={"Genders"},
      *     summary="Editar un género",
-     *     description="`description` es opcional: si no se envía, queda en `null`.",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(

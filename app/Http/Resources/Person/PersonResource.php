@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Person;
 
+use App\Services\PersonService;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -15,8 +16,13 @@ class PersonResource extends JsonResource
                 'document' => $this->document,
                 'names' => $this->names,
                 'last_names' => $this->last_names,
+                'email' => $this->email,
                 'birth_date' => $this->birth_date?->format('Y-m-d'),
+                'location_type' => array_search($this->location_type, PersonService::LOCATION_TYPES, true) ?: null,
+                'location' => $this->location,
                 'address' => $this->address,
+                'neighborhood' => $this->neighborhood,
+                'phone_country' => $this->phone_country,
                 'phone' => $this->phone,
                 'created_at' => $this->formatDate($this->created_at),
                 'updated_at' => $this->formatDate($this->updated_at),

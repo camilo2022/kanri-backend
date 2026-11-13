@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Categorization\Category;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class CategoryCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Category::class, $this->collection->pluck('id')->all());
         return [
-            'categories' => $this->collection->map(function ($category) {
+            'categories' => $this->collection->map(function ($category) use ($audited) {
                 return [
                     'id' => $category->id,
+                    'has_audits' => isset($audited[$category->id]),
                     'item_id' => $category->item_id,
                     'name' => $category->name,
                     'description' => $category->description,

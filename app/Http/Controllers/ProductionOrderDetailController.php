@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Movement\ProductionOrderDetail\ProductionOrderDetailAllRequest;
 use App\Http\Resources\Movement\ProductionOrderDetail\ProductionOrderDetailCollection;
+use App\Models\Product;
 use App\Models\ProductionOrderDetail;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class ProductionOrderDetailController extends Controller
 {
@@ -76,7 +78,7 @@ class ProductionOrderDetailController extends Controller
     public function all(ProductionOrderDetailAllRequest $request)
     {
         try {
-            $production_order_details = ProductionOrderDetail::with(['production_order', 'model' => ['trademark' => ['sizes']]])
+            $production_order_details = ProductionOrderDetail::with(['production_order', 'model' => fn (MorphTo $morph) => $morph->morphWith([Product::class => ['trademark' => ['sizes']]])])
                 ->when($request->filled('production_order_detail_id'),
                     function ($query) use ($request) {
                         return $query->where('id', '!=', $request->input('production_order_detail_id'));

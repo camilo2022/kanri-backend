@@ -13,7 +13,6 @@ class ProductionOrderResource extends JsonResource
     {
 
         $rolls = $this->rolls->map(function ($roll) {
-            logger(['roll', $roll]);
             $relations = collect($roll->model->supply_type->first()?->settings?->form ?? [])
                 ->where('type', 'selectdinamic')
                 ->mapWithKeys(function ($field) use ($roll) {
@@ -49,9 +48,6 @@ class ProductionOrderResource extends JsonResource
         return [
             'production_order' => [
                 'id' => $this->id,
-                'model_id' => $this->model_id,
-                'model_type' => $this->model_type,
-                'model' => $this->model,
                 'technical_sheet_id' => $this->technical_sheet_id,
                 'consecutive' => $this->consecutive,
                 'efficiency' => $this->efficiency,
@@ -61,6 +57,7 @@ class ProductionOrderResource extends JsonResource
                 'observation' => $this->observation,
                 'settings' => $this->settings,
                 'status' => $this->status,
+                'priority' => $this->priority,
                 'production_place' => $this->production_place,
                 'supplier_id' => $this->supplier_id ?? null,
                 'created_at' => $this->formatDate($this->created_at),
@@ -70,7 +67,7 @@ class ProductionOrderResource extends JsonResource
                 'strokes' => $this->strokes,
                 'production_order_details' => $this->production_order_details,
                 'fabric' => $this->fabric,
-                'fabric_id' => $this->fabric->id,
+                'fabric_id' => $this->fabric?->id,
                 'color' => $this->color,
                 'pieces' => $this->pieces,
                 'rolls' => $rolls,

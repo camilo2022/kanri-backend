@@ -135,7 +135,7 @@ class FileTypeController extends Controller
     public function all(FileTypeAllRequest $request)
     {
         try {
-            $file_types = FileType::with(['file_subtypes'])
+            $file_types = FileType::with(['item', 'file_subtypes'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -169,7 +169,7 @@ class FileTypeController extends Controller
      *     path="/typification/file_types/find/{id}",
      *     tags={"Typification › File Types"},
      *     summary="Obtener un tipo de archivo",
-     *     description="No incluye `file_subtypes` (el Resource no los devuelve, aunque se cargan).",
+     *     description="No incluye `file_subtypes`: los subtipos tienen su propia lista.",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\Response(
@@ -186,8 +186,7 @@ class FileTypeController extends Controller
     public function find(FileTypeFindRequest $request, $id)
     {
         try {
-            $file_type = FileType::with(['file_subtypes'])
-                ->findOrFail($id);
+            $file_type = FileType::with(['item'])->findOrFail($id);
 
             return $this->successResponse(
                 new FileTypeResource($file_type),

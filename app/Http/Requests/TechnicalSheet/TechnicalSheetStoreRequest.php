@@ -6,6 +6,7 @@ use App\Models\BackType;
 use App\Models\BootType;
 use App\Models\Collection;
 use App\Models\Color;
+use App\Models\File;
 use App\Models\GarmentType;
 use App\Models\Product;
 use App\Models\Subgroup;
@@ -15,6 +16,7 @@ use App\Models\Typology;
 use App\Models\WaistbandType;
 use App\Models\WashTone;
 use App\Models\YokeType;
+use App\Services\ProductivityDetailService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -40,7 +42,7 @@ class TechnicalSheetStoreRequest extends FormRequest
     {
         return [
             'date' => ['required', 'date_format:Y-m-d', 'before_or_equal:now'],
-            'code' => ['required', 'unique:technical_sheets,code'],
+            'code' => ['required', 'string', 'max:11', 'unique:technical_sheets,code'],
             'product_id' => ['required', 'exists:products,id', 'unique:technical_sheets,product_id'],
             'collection_id' => ['required', 'exists:subitems,id,item_id,'.Collection::ITEM_ID.',deleted_at,NULL'],
             'garment_type_id' => ['required', 'exists:subitems,id,item_id,'.GarmentType::ITEM_ID.',deleted_at,NULL'],
@@ -58,9 +60,9 @@ class TechnicalSheetStoreRequest extends FormRequest
             'observation' => ['nullable', 'string', 'max:1000'],
             'description' => ['nullable', 'string', 'max:1000'],
             'photo_d' => ['required', 'array'],
-            'photo_d.file' => ['required', 'image', 'max:2048'],
+            'photo_d.file' => ['required', 'image', 'max:2048', 'dimensions:max_width='.File::MAX_IMAGE_SIDE.',max_height='.File::MAX_IMAGE_SIDE],
             'photo_t' => ['required', 'array'],
-            'photo_t.file' => ['required', 'image', 'max:2048'],
+            'photo_t.file' => ['required', 'image', 'max:2048', 'dimensions:max_width='.File::MAX_IMAGE_SIDE.',max_height='.File::MAX_IMAGE_SIDE],
             'technical_sheet_details' => ['nullable', 'array'],
             'technical_sheet_details.*' => ['nullable', 'array'],
             'technical_sheet_details.*.typology' => ['nullable', 'exists:subitems,id,item_id,'.Typology::ITEM_ID.',deleted_at,NULL'],
@@ -78,19 +80,7 @@ class TechnicalSheetStoreRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'required' => 'Es obligatorio.',
-            'date_format' => 'Formato inválido. Permitido :format.',
             'date.before_or_equal' => 'No puede ser posterior a '.now()->format('Y-d-m').'.',
-            'exists' => 'No registrado en el sistema.',
-            'unique' => 'Ya está registrado.',
-            'boolean' => 'Debe ser un dato tipo si/no',
-            'numeric' => 'Debe ser un dato númerico',
-            'min' => 'El valor debe ser mayor o igual a :min',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'array' => 'Debe ser un arreglo de datos',
-            'image' => 'Debe ser una imagen.',
-            'mimes' => 'Extensión inválida. Permitidas :values.',
             'photo.max' => 'Se permite máximo :max KB.',
         ];
     }
@@ -167,6 +157,16 @@ class TechnicalSheetStoreRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            // Lo que va en secuencia (operaciones o subprocesos) necesita en la ficha alguno de sus anteriores
+            $keys = collect($this->input('technical_sheet_details', []))
+                ->map(fn ($detail) => ($detail['model_type'] ?? '').':'.($detail['model_id'] ?? ''))
+                ->unique()
+                ->values();
+
+            foreach (app(ProductivityDetailService::class)->sheetSequenceErrors($keys, $this->integer('wash_tone_id') ?: null) as $id => $message) {
+                $validator->errors()->add("technical_sheet_details.$id", $message);
+            }
+
             $product = Product::find($this->integer('product_id'));
             $supply_types = SupplyType::with('supplies')
                 ->where('settings->in_technical_sheet', true)->get();

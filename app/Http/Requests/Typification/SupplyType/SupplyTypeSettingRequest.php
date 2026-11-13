@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Typification\SupplyType;
 
+use App\Models\SupplyType;
+use App\Traits\ModelTypes;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
@@ -9,6 +11,8 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 
 class SupplyTypeSettingRequest extends FormRequest
 {
+    use ModelTypes;
+
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json([
@@ -26,6 +30,7 @@ class SupplyTypeSettingRequest extends FormRequest
     public function rules()
     {
         return [
+            'id' => ['required', 'exists:subitems,id,item_id,'.SupplyType::ITEM_ID],
             'settings' => ['required', 'array'],
             'settings.form' => ['required'],
             'settings.form.*.field' => ['required', 'string', 'regex:/^[a-z]+(_[a-z]+)*$/'],
@@ -38,17 +43,6 @@ class SupplyTypeSettingRequest extends FormRequest
     public function messages()
     {
         return [
-            'required' => 'Es requerido.',
-            'required_with' => 'Es requerido.',
-            'string' => 'Debe ser una cadena de caracteres.',
-            'distinct'  => 'Ya ha sido tomado en otra validación.',
-            'unique' => 'Ya ha sido tomado.',
-            'numeric' => 'Debe ser un valor numérico.',
-            'array' => 'Debe ser una lista de datos.',
-            'max' => 'No debe exceder los :max caracteres.',
-            'min' => 'Debe tener minimo :min elementos.',
-            'uppercase' => 'El campo debe estar en mayúsculas.',
-            'lowercase' => 'El campo debe estar en mayúsculas.',
             'regex' => 'Formato inválido. Solo letras minúsculas y guiones bajos (_).',
         ];
     }
@@ -57,38 +51,18 @@ class SupplyTypeSettingRequest extends FormRequest
     {
         $attributes = [];
 
-        $schema = $this->input('settings.configuration', []);
-
-        if (!empty($schema)) {
-
-            foreach ($schema['configuration']['body'] as $i => $field) {
-
-                $n = $i + 1;
-
-                $base = "settings.configuration.body.$i";
-
-                $attributes["$base.id"] = "Id (dinamic n° $n)";
-                $attributes["$base.field"] = "Nombre del campo (dinamic n° $n)";
-                $attributes["$base.label"] = "Nombre visible del campo (dinamic n° $n)";
-                $attributes["$base.type"] = "Tipo de campo (dinamic n° $n)";
-                $attributes["$base.rules"] = "Reglas del campo (dinamic n° $n)";
-
-                if (!empty($field['rules'])) {
-
-                    foreach ($field['rules'] as $rIndex => $rule) {
-
-                        $attributes["$base.rules.$rIndex"] =
-                            "Regla #" . ($rIndex + 1) . " (dinamic n° $n)";
-                    }
-                }
-            }
+        foreach ($this->input('settings.form', []) as $i => $field) {
+            $n = $i + 1;
+            $attributes["settings.form.$i.field"] = "Campo n° $n: nombre";
+            $attributes["settings.form.$i.label"] = "Campo n° $n: etiqueta";
+            $attributes["settings.form.$i.type"] = "Campo n° $n: tipo de dato";
+            $attributes["settings.form.$i.rules"] = "Campo n° $n: reglas";
         }
 
         return [
+            'id' => 'Identificador del tipo de insumo',
             'settings' => 'Configuración',
-            'settings.schema' => 'Esquema',
-            'settings.schema.dinamic' => 'Estructura dinámica',
-            'settings.schema.static' => 'Estructura estática',
+            'settings.form' => 'Formulario de los insumos',
             ...$attributes,
         ];
     }
@@ -98,6 +72,7 @@ class SupplyTypeSettingRequest extends FormRequest
         $validator->after(function ($validator) {
 
             $schema = $this->input('settings.form', []);
+            $models = collect($this->getModelTypes());
 
             $seenFields = [];
             $seenLabels = [];
@@ -342,8 +317,31 @@ class SupplyTypeSettingRequest extends FormRequest
                             'Valor requerido.'
                         );
                     }
+
+                    $param = $models->firstWhere('model', $models->firstWhere('model', $s['model'] ?? null)['param'] ?? null);
+
+                    if ($param && ! $param['model']::whereKey($s[$param['field']] ?? null)->exists()) {
+                        $validator->errors()->add(
+                            "$basePath.{$param['field']}",
+                            'Valor requerido.'
+                        );
+                    }
                 }
             }
         });
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->merge(['id' => $this->route('id')]);
+    }
+
+    protected function passedValidation()
+    {
+        // Configurar cambia el formulario de los insumos; los indicadores los escribe Editar y aquí se conservan
+        $settings = (array) (SupplyType::find($this->route('id'))?->settings ?? []);
+        unset($settings['has_variants']);
+
+        $this->merge(['settings' => array_merge($settings, ['form' => $this->input('settings.form')])]);
     }
 }

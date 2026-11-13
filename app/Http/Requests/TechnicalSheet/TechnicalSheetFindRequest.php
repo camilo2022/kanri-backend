@@ -31,16 +31,6 @@ class TechnicalSheetFindRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'numeric' => 'Debe ser un valor numérico.',
-            'exists' => 'No hay ningún registro.',
-            'required_without_all' => 'Es requerido cuando :values no estan presentes.',
-            'uuid' => 'Debe ser un código uudid.',
-        ];
-    }
-
     public function attributes(): array
     {
         return [

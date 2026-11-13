@@ -30,20 +30,11 @@ class BuilderDeleteRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-        ];
-    }
-
     public function attributes(): array
     {
         return [
-            'trademark_id' => 'Marcas',
-            'category_id' => 'Categorías',
-            'subcategory_id' => 'Subcategorías',
-            'percentages' => 'Porcentajes'
+            'uuid' => 'Constructor',
+            'builder' => 'Constructor'
         ];
     }
 

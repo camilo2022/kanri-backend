@@ -20,7 +20,7 @@ class SubcategoryResource extends JsonResource
                 'updated_at' => $this->formatDate($this->updated_at),
                 'deleted_at' => $this->formatDate($this->deleted_at),
                 'item' => $this->item,
-                'categories' => $this->categories,
+                'category' => $this->category,
             ]
         ];
     }

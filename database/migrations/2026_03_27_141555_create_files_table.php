@@ -12,18 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('files', function (Blueprint $table) {
-            $table->id();
-            $table->morphs('model');
-            $table->string('name');
-            $table->foreignIdFor(FileType::class)->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Tipo de archivo');
-            $table->foreignIdFor(FileSubtype::class)->constrained()->onUpdate('cascade')->onDelete('cascade')->comment('Subtipo de archivo');
-            $table->string('path');
-            $table->string('mime')->nullable();
-            $table->string('extension')->nullable();
-            $table->float('size')->nullable();
-            $table->json('metadata')->default(new Expression('(JSON_OBJECT())'));
+            $table->id()->comment('Identificador');
+            $table->string('model_type')->comment('Tipo de registro asociado');
+            $table->unsignedBigInteger('model_id')->comment('Registro asociado');
+            $table->index(['model_type', 'model_id']);
+            $table->string('name')->comment('Nombre del archivo');
+            $table->foreignIdFor(FileType::class)->comment('Tipo de archivo')->constrained()->onUpdate('cascade')->onDelete('cascade');
+            $table->foreignIdFor(FileSubtype::class)->comment('Subtipo de archivo')->constrained()->onUpdate('cascade')->onDelete('cascade');
+            $table->string('path')->comment('Ubicación');
+            $table->string('mime')->nullable()->comment('Formato');
+            $table->string('extension')->nullable()->comment('Extensión');
+            $table->float('size')->nullable()->comment('Tamaño del archivo');
+            $table->json('metadata')->default(new Expression('(JSON_OBJECT())'))->comment('Metadatos');
             $table->json('settings')->default(new Expression('(JSON_OBJECT())'))->comment('Configuraciones');
-            $table->timestamps();
+            $table->timestamp('created_at')->nullable()->comment('Fecha de creación');
+            $table->timestamp('updated_at')->nullable()->comment('Fecha de actualización');
         });
     }
 

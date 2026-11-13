@@ -2,19 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use OwenIt\Auditing\Auditable as Auditing;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class TechnicalSheet extends Model implements Auditable
 {
-    use Auditing;
+    use Auditing, SoftDeletes;
 
     protected $table = 'technical_sheets';
 
@@ -47,6 +47,7 @@ class TechnicalSheet extends Model implements Auditable
         'number_of_buttons',
         'description',
         'observation',
+        'pattern_maker_id',
         'status',
     ];
 
@@ -71,6 +72,7 @@ class TechnicalSheet extends Model implements Auditable
         'number_of_buttons',
         'description',
         'observation',
+        'pattern_maker_id',
         'status',
     ];
 
@@ -176,7 +178,7 @@ class TechnicalSheet extends Model implements Auditable
 
     public function supplies(): MorphToMany
     {
-        return $this->morphedByMany(Supply::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id')->withTrashed();
+        return $this->morphToMany(Supply::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id')->withTrashed();
     }
 
     public function technical_sheet_details(): HasMany
@@ -193,26 +195,6 @@ class TechnicalSheet extends Model implements Auditable
     public function production_orders(): HasMany
     {
         return $this->hasMany(ProductionOrder::class);
-    }
-
-    public function scopeSearch(Builder $query, ?string $search = null): Builder
-    {
-        $search = trim((string) $search);
-        if ($search === '') {
-            return $query;
-        }
-
-        $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
-
-        return $query->where(function (Builder $q) use ($terms) {
-            foreach ($terms as $term) {
-                $q->orWhere(function (Builder $sq) use ($term) {
-                    $sq->orWhere('name', 'LIKE', '%'.$term.'%')
-                        ->orWhere('title', 'LIKE', '%'.$term.'%')
-                        ->orWhere('description', 'LIKE', '%'.$term.'%');
-                });
-            }
-        });
     }
 
     public static function statuses()

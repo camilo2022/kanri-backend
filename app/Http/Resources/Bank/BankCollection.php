@@ -3,16 +3,19 @@
 namespace App\Http\Resources\Bank;
 
 use Carbon\Carbon;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class BankCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Bank::class, $this->collection->pluck('id')->all());
         return [
-            'banks' => $this->collection->map(function ($bank) {
+            'banks' => $this->collection->map(function ($bank) use ($audited) {
                 return [
                     'id' => $bank->id,
+                    'has_audits' => isset($audited[$bank->id]),
                     'item_id' => $bank->item_id,
                     'name' => $bank->name,
                     'description' => $bank->description,

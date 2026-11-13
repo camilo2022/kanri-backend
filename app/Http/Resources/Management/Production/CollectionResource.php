@@ -26,6 +26,11 @@ class CollectionResource extends JsonResource
                 'item' => $this->item,
                 'technical_sheets' => $this->technical_sheets,
             ],
+            'unworked_dates' => $this->unworked_dates ?? [],
+            // Procesos donde el lote ya tiene trabajo: su fecha queda bloqueada
+            'worked_processes' => $this->worked_processes ?? [],
+            // Lotes de la colección listos para ponerles fecha en el primer proceso (no dependen de la búsqueda)
+            'ready_references' => $this->ready_references ?? [],
             'status_production_order' => ProductionOrder::statuses(),
             'checks' => $this->getPriorityChecks(),
             'rules' => $this->getPriorityRules(),

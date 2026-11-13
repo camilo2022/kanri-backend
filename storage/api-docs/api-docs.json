@@ -963,7 +963,7 @@
                     "Auth"
                 ],
                 "summary": "Iniciar sesión",
-                "description": "Devuelve el usuario y un token nuevo, que se envía en `Authorization: Bearer <token>` (botón Authorize). **Cierra las demás sesiones**: borra todos los tokens anteriores del usuario. No requiere token.",
+                "description": "Devuelve el usuario y un token nuevo, que se envía en `Authorization: Bearer <token>` (botón Authorize). Cada inicio de sesión crea su propio token: las sesiones abiertas en otros equipos (web, app móvil) siguen activas. No requiere token.",
                 "operationId": "8cb7742ae98d0990acb2907c4e00bf24",
                 "requestBody": {
                     "required": true,
@@ -1090,7 +1090,7 @@
                     "Auth"
                 ],
                 "summary": "Cerrar sesión",
-                "description": "Borra **todos** los tokens del usuario: cierra la sesión en todos los dispositivos.",
+                "description": "Borra solo el token con el que se hace la petición: cierra la sesión en este equipo; las de otros equipos siguen activas.",
                 "operationId": "0d29c740dc06d77602af8095bf4654cc",
                 "responses": {
                     "200": {
@@ -12299,6 +12299,32 @@
                                         "description": "Descripción del proceso",
                                         "type": "string",
                                         "example": "MEDIA"
+                                    },
+                                    "after_processes": {
+                                        "description": "Procesos siguientes.",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer",
+                                            "example": 206
+                                        }
+                                    },
+                                    "settings": {
+                                        "properties": {
+                                            "subprocesses": {
+                                                "type": "boolean",
+                                                "example": true
+                                            },
+                                            "subprocess_flow": {
+                                                "description": "Obligatorio si `subprocesses` es verdadero. En `sequence` los subprocesos se encadenan con `after_subprocesses`; al guardar otro valor se borran esas cadenas.",
+                                                "type": "string",
+                                                "enum": [
+                                                    "sequence",
+                                                    "parallel"
+                                                ],
+                                                "example": "sequence"
+                                            }
+                                        },
+                                        "type": "object"
                                     }
                                 },
                                 "type": "object"
@@ -12474,6 +12500,32 @@
                                         "description": "Descripción del proceso",
                                         "type": "string",
                                         "example": "MEDIA"
+                                    },
+                                    "after_processes": {
+                                        "description": "Procesos siguientes.",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer",
+                                            "example": 206
+                                        }
+                                    },
+                                    "settings": {
+                                        "properties": {
+                                            "subprocesses": {
+                                                "type": "boolean",
+                                                "example": true
+                                            },
+                                            "subprocess_flow": {
+                                                "description": "Obligatorio si `subprocesses` es verdadero. En `sequence` los subprocesos se encadenan con `after_subprocesses`; al guardar otro valor se borran esas cadenas.",
+                                                "type": "string",
+                                                "enum": [
+                                                    "sequence",
+                                                    "parallel"
+                                                ],
+                                                "example": "sequence"
+                                            }
+                                        },
+                                        "type": "object"
                                     }
                                 },
                                 "type": "object"
@@ -13342,7 +13394,7 @@
                     "Productivities"
                 ],
                 "summary": "Consultar un turno activo",
-                "description": "Devuelve el turno con su estado (Por iniciar, En curso o Terminado), la meta por hora y las paradas programadas. Lo usa el modal de editar turno.",
+                "description": "Devuelve el turno con su estado (Por iniciar, En curso o Terminado) y la meta por hora. Lo usa el modal de editar turno.",
                 "operationId": "39209f4eb21f99533231a8c1fddd08ca",
                 "parameters": [
                     {
@@ -13404,143 +13456,13 @@
                 ]
             }
         },
-        "/productivity/work_logs/{id}": {
-            "get": {
-                "tags": [
-                    "Productivities"
-                ],
-                "summary": "Lo que se trabajó en un turno",
-                "description": "Trabajos del turno ordenados por hora de inicio. Los finalizados traen referencia, lote, puesto, regla, inicio, fin, personas, minutos (duración, paradas, trabajado y estándar), eficiencia, paradas, unidades y sus destinos con las cantidades por talla y el estado del ingreso (Pendiente, Aprobado…). Los que están en curso traen status «En curso», su inicio y sus paradas, sin unidades ni eficiencia.",
-                "operationId": "517240c6cccb5a9eee255d838d6e72b2",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Trabajos del turno",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "properties": {
-                                                "productivity": {
-                                                    "$ref": "#/components/schemas/Productivity"
-                                                },
-                                                "work_logs": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "status": {
-                                                                "type": "string",
-                                                                "example": "Aprobado"
-                                                            },
-                                                            "workstation": {
-                                                                "type": "string",
-                                                                "example": "CORTE"
-                                                            },
-                                                            "production_order": {
-                                                                "properties": {
-                                                                    "code": {
-                                                                        "type": "string",
-                                                                        "example": "PO260928005"
-                                                                    },
-                                                                    "lot": {
-                                                                        "type": "string",
-                                                                        "example": "D"
-                                                                    }
-                                                                },
-                                                                "type": "object"
-                                                            },
-                                                            "reference": {
-                                                                "type": "string",
-                                                                "example": "BO125478"
-                                                            },
-                                                            "start": {
-                                                                "type": "string",
-                                                                "example": "2026-10-24 07:00:00"
-                                                            },
-                                                            "end": {
-                                                                "type": "string",
-                                                                "example": "2026-10-24 13:38:33",
-                                                                "nullable": true
-                                                            },
-                                                            "people": {
-                                                                "type": "integer",
-                                                                "example": 4
-                                                            },
-                                                            "efficiency": {
-                                                                "type": "number",
-                                                                "example": 80,
-                                                                "nullable": true
-                                                            },
-                                                            "units": {
-                                                                "type": "integer",
-                                                                "example": 770,
-                                                                "nullable": true
-                                                            },
-                                                            "destinations": {
-                                                                "type": "array",
-                                                                "items": {
-                                                                    "type": "object"
-                                                                }
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Operación completada con éxito."
-                                        },
-                                        "error": {
-                                            "type": "boolean",
-                                            "example": false
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/RecordNotFound"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/ServerError"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
         "/productivity/update/{id}": {
             "put": {
                 "tags": [
                     "Productivities"
                 ],
                 "summary": "Editar un turno",
-                "description": "Por iniciar: se puede cambiar fecha, horario, meta por hora y paradas programadas. En curso: solo la hora de fin (posterior a la hora actual; lo demás se ignora). Terminado o desactivado: 422. En todos los casos no puede cruzarse con otro turno del proceso y las paradas deben caber en el turno. Conserva el trabajo en curso de los puestos.",
+                "description": "Por iniciar: se puede cambiar fecha, horario y meta por hora. En curso: solo la hora de fin (posterior a la hora actual; lo demás se ignora). Terminado o desactivado: 422. En todos los casos no puede cruzarse con otro turno del proceso. Las paradas ya no son del turno: se registran en cada registro de trabajo.",
                 "operationId": "ce430f079d02d457be4c555bf6b7839f",
                 "parameters": [
                     {
@@ -13577,22 +13499,6 @@
                                             "goal_hour": {
                                                 "type": "number",
                                                 "example": 300
-                                            },
-                                            "stops": {
-                                                "type": "array",
-                                                "items": {
-                                                    "properties": {
-                                                        "stop_id": {
-                                                            "type": "integer",
-                                                            "example": 478
-                                                        },
-                                                        "start_time": {
-                                                            "type": "string",
-                                                            "example": "12:00"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                }
                                             }
                                         },
                                         "type": "object"
@@ -13788,14 +13694,89 @@
                 ]
             }
         },
-        "/productivity/workstation/{token}": {
+        "/productivity/details/all/{productivity_id}": {
             "get": {
                 "tags": [
-                    "Productivities"
+                    "Productivities › Details"
+                ],
+                "summary": "Registros de trabajo de un turno",
+                "description": "Registros del turno ordenados por hora de inicio (ojito de la tabla de turnos). Los finalizados traen referencia, lote, puesto, regla, empleados, inicio oficial, hora de escaneo, fin, personas, minutos (duración, paradas, trabajado y estándar), eficiencia, paradas, unidades (ingresos que creó en Corte o lo que sumó con el +1 en procesos por unidades) y, si creó ingresos, sus destinos con las cantidades por talla y el estado del ingreso. Los que están en curso traen status «En curso», su inicio y sus paradas. Los puestos que no crean ingresos ni cuentan unidades traen status «Terminado» y `units` null.",
+                "operationId": "5da2fc81eee8d50ee0663297e8a48b54",
+                "parameters": [
+                    {
+                        "name": "productivity_id",
+                        "in": "path",
+                        "description": "Turno",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Registros del turno",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "productivity_details": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/PaginationMeta"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/details/workstation/{token}": {
+            "get": {
+                "tags": [
+                    "Productivities › Details"
                 ],
                 "summary": "Resolver el QR de un puesto de trabajo",
                 "description": "Lo llama la pantalla de Productividad al escanear el QR del puesto. Devuelve el puesto (proceso, subproceso u operación, siempre el nivel más bajo y activo), su proceso y el turno abierto de ese proceso en este momento. Responde 422 si el código no existe, si el puesto no es del nivel más bajo o si no hay turno abierto.",
-                "operationId": "230e05c5a72fc7451d037da177848c49",
+                "operationId": "233f32294a695a624f9964987fd7328d",
                 "parameters": [
                     {
                         "name": "token",
@@ -13835,6 +13816,11 @@
                                                         "path": {
                                                             "type": "string",
                                                             "example": "Confección › Delanteros › Pegar bolsillo"
+                                                        },
+                                                        "creates_ingress": {
+                                                            "description": "Al finalizar pide unidades y crea los ingresos",
+                                                            "type": "boolean",
+                                                            "example": false
                                                         }
                                                     },
                                                     "type": "object"
@@ -13875,13 +13861,26 @@
                                                             "example": {
                                                                 "goal_hour": 120
                                                             }
-                                                        },
-                                                        "stops": {
-                                                            "description": "Paradas programadas del turno",
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "productivity_detail": {
+                                                    "oneOf": [
+                                                        {
+                                                            "$ref": "#/components/schemas/ProductivityDetailInProgress"
+                                                        }
+                                                    ],
+                                                    "nullable": true
+                                                },
+                                                "stops": {
+                                                    "description": "Catálogo de paradas para registrar durante el trabajo",
+                                                    "properties": {
+                                                        "programmed": {
                                                             "type": "array",
                                                             "items": {
                                                                 "properties": {
-                                                                    "stop_id": {
+                                                                    "id": {
                                                                         "type": "integer",
                                                                         "example": 478
                                                                     },
@@ -13889,17 +13888,25 @@
                                                                         "type": "string",
                                                                         "example": "ALMUERZO"
                                                                     },
-                                                                    "type": {
-                                                                        "type": "string",
-                                                                        "example": "programmed"
+                                                                    "minutes": {
+                                                                        "type": "integer",
+                                                                        "example": 30
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "unprogrammed": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 480
                                                                     },
-                                                                    "start": {
+                                                                    "name": {
                                                                         "type": "string",
-                                                                        "example": "2026-10-24 12:00:00"
-                                                                    },
-                                                                    "end": {
-                                                                        "type": "string",
-                                                                        "example": "2026-10-24 12:30:00"
+                                                                        "example": "PARO MECANICO"
                                                                     }
                                                                 },
                                                                 "type": "object"
@@ -13907,31 +13914,6 @@
                                                         }
                                                     },
                                                     "type": "object"
-                                                },
-                                                "work": {
-                                                    "oneOf": [
-                                                        {
-                                                            "$ref": "#/components/schemas/WorkInProgress"
-                                                        }
-                                                    ],
-                                                    "nullable": true
-                                                },
-                                                "unprogrammed_stops": {
-                                                    "description": "Paradas no programadas del catálogo",
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 480
-                                                            },
-                                                            "name": {
-                                                                "type": "string",
-                                                                "example": "PARO MECANICO"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
                                                 }
                                             },
                                             "type": "object"
@@ -13970,14 +13952,14 @@
                 ]
             }
         },
-        "/productivity/workstation/{token}/reference/{uuid}": {
+        "/productivity/details/workstation/{token}/reference/{uuid}": {
             "get": {
                 "tags": [
-                    "Productivities"
+                    "Productivities › Details"
                 ],
                 "summary": "Resolver la ficha técnica escaneada en un puesto de trabajo",
                 "description": "Recibe el uuid del QR del puesto y el uuid de la orden de producción (sacado del QR de la ficha técnica impresa). Valida el puesto y el turno abierto como el endpoint del puesto, y devuelve la orden (código y lote), la referencia y la regla estándar que aplica: la del proceso del puesto, que coincide con su subproceso u operación si los tiene y con todos sus maestros, y que suma más puntos según los pesos configurados. Si ninguna aplica, `rule` es null.",
-                "operationId": "3b1e4cf2b3764a48ce14f346ca15e74d",
+                "operationId": "da486230b24dbcf2e91768397e0fe433",
                 "parameters": [
                     {
                         "name": "token",
@@ -14090,6 +14072,99 @@
                                                     },
                                                     "type": "object",
                                                     "nullable": true
+                                                },
+                                                "employees": {
+                                                    "description": "Empleados que se pueden elegir: asignados al puesto, activos y sin otro registro en curso",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 15
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "ANA PÉREZ"
+                                                            },
+                                                            "document": {
+                                                                "type": "string",
+                                                                "example": "1090123456"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "creates_ingress": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "sequence": {
+                                                    "description": "Cadena en secuencia: el lote debe haber terminado en los puestos anteriores (vacío si el puesto es el primero o su padre va en paralelo)",
+                                                    "properties": {
+                                                        "ready": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "message": {
+                                                            "type": "string",
+                                                            "example": "El lote BO001-A aún se está trabajando en EXTENDIDO.",
+                                                            "nullable": true
+                                                        },
+                                                        "previous": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "EXTENDIDO"
+                                                                    },
+                                                                    "status": {
+                                                                        "type": "string",
+                                                                        "enum": [
+                                                                            "finished",
+                                                                            "in_progress",
+                                                                            "missing"
+                                                                        ],
+                                                                        "example": "finished"
+                                                                    },
+                                                                    "end": {
+                                                                        "type": "string",
+                                                                        "example": "2026-10-26 07:40:00",
+                                                                        "nullable": true
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "previous_end": {
+                                                            "type": "string",
+                                                            "example": "2026-10-26 07:40:00",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "registered": {
+                                                    "description": "Proceso por lotes: el lote ya se trabajó en este puesto (no se puede volver a iniciar). end null si sigue en curso",
+                                                    "properties": {
+                                                        "start": {
+                                                            "type": "string",
+                                                            "example": "2026-10-27 09:00:00"
+                                                        },
+                                                        "end": {
+                                                            "type": "string",
+                                                            "example": "2026-10-27 10:00:00",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "start": {
+                                                    "description": "Hora oficial a la que iniciaría el trabajo si se inicia ahora",
+                                                    "type": "string",
+                                                    "example": "2026-10-26 07:40:00",
+                                                    "nullable": true
                                                 }
                                             },
                                             "type": "object"
@@ -14128,14 +14203,14 @@
                 ]
             }
         },
-        "/productivity/workstation/{token}/start": {
+        "/productivity/details/workstation/{token}/start": {
             "post": {
                 "tags": [
-                    "Productivities"
+                    "Productivities › Details"
                 ],
                 "summary": "Iniciar trabajo en un puesto",
-                "description": "Inicia el trabajo del puesto con la orden escaneada. Por ahora solo en el primer proceso de la producción medido por lotes (Corte). El inicio es la hora de inicio del turno si es el primer trabajo del puesto en el turno o, si no, la hora en que terminó el anterior. El trabajo en curso queda en el turno (settings.work_in_progress) hasta finalizarlo. Responde 422 si el puesto ya tiene un trabajo en curso, si no hay regla estándar que aplique, si la orden no tiene curva por destino o si el lote ya se registró o se está trabajando en otro puesto.",
-                "operationId": "da85103a7f6230f49a313bc494411f33",
+                "description": "Crea el registro de trabajo (productivity_details) del puesto con la orden escaneada y sus empleados. Solo en procesos medidos por lotes. El inicio oficial es lo más tardío entre la hora de inicio del turno, el fin del registro anterior del puesto en el turno y, en una cadena en secuencia, el fin del lote en el puesto anterior; la hora real queda en settings.scanned_at. En una cadena en secuencia el lote debe haber terminado en los puestos anteriores. Responde 422 si el puesto ya tiene un trabajo en curso, si el turno ya terminó, si el primer proceso trabaja sus hijos en paralelo, si no hay regla estándar que aplique, si el puesto crea ingresos y la orden no tiene curva por destino, si el lote ya se trabajó en el puesto o si la regla no tiene capacidad para las personas del puesto (por lotes, una capacidad con ese número exacto; por unidades, la de 1 persona multiplicada).",
+                "operationId": "293c9135b12ff7defc3bb54a357fd7b1",
                 "parameters": [
                     {
                         "name": "token",
@@ -14154,13 +14229,22 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "production_order"
+                                    "production_order",
+                                    "employees"
                                 ],
                                 "properties": {
                                     "production_order": {
                                         "description": "uuid de la orden de producción escaneada",
                                         "type": "string",
                                         "format": "uuid"
+                                    },
+                                    "employees": {
+                                        "description": "Empleados del puesto que trabajan (se pueden retirar los que no vinieron); la capacidad de la regla sale de cuántos son",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer",
+                                            "example": 15
+                                        }
                                     }
                                 },
                                 "type": "object"
@@ -14169,14 +14253,19 @@
                     }
                 },
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Trabajo en curso",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/components/schemas/WorkInProgress"
+                                            "properties": {
+                                                "productivity_detail": {
+                                                    "$ref": "#/components/schemas/ProductivityDetailInProgress"
+                                                }
+                                            },
+                                            "type": "object"
                                         },
                                         "message": {
                                             "type": "string",
@@ -14212,14 +14301,14 @@
                 ]
             }
         },
-        "/productivity/workstation/{token}/stops": {
+        "/productivity/details/workstation/{token}/stops": {
             "post": {
                 "tags": [
-                    "Productivities"
+                    "Productivities › Details"
                 ],
-                "summary": "Iniciar una parada no programada",
-                "description": "Registra que el trabajo en curso del puesto se detuvo ahora por una parada no programada (paro mecánico, falta de insumos…). Solo una a la vez y nunca dentro de una parada programada del turno; las programadas se definen en el turno.",
-                "operationId": "2a7ab8f211a7be8e8183abaa9d974a18",
+                "summary": "Registrar una parada",
+                "description": "Registra que el trabajo en curso del puesto se detuvo ahora. La parada programada (almuerzo, pausa activa…) termina sola con la duración del catálogo; la no programada (paro mecánico, falta de insumos…) queda abierta hasta «Terminar parada». Una a la vez y solo mientras el turno no haya terminado. Responde 422 si la programada terminaría después del fin del turno.",
+                "operationId": "0b5574bc8227fb1670d8afe3cda4fbf1",
                 "parameters": [
                     {
                         "name": "token",
@@ -14242,7 +14331,7 @@
                                 ],
                                 "properties": {
                                     "stop_id": {
-                                        "description": "Parada de tipo no programada",
+                                        "description": "Parada del catálogo, programada o no programada",
                                         "type": "integer",
                                         "example": 480
                                     }
@@ -14260,7 +14349,12 @@
                                 "schema": {
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/components/schemas/WorkInProgress"
+                                            "properties": {
+                                                "productivity_detail": {
+                                                    "$ref": "#/components/schemas/ProductivityDetailInProgress"
+                                                }
+                                            },
+                                            "type": "object"
                                         },
                                         "message": {
                                             "type": "string",
@@ -14296,13 +14390,13 @@
                 ]
             }
         },
-        "/productivity/workstation/{token}/stops/end": {
+        "/productivity/details/workstation/{token}/stops/end": {
             "post": {
                 "tags": [
-                    "Productivities"
+                    "Productivities › Details"
                 ],
                 "summary": "Terminar la parada no programada en curso",
-                "operationId": "90d2a7a94d49536ac70845eff767e5ee",
+                "operationId": "3ebe1c33be19590362e8cc07e23811e1",
                 "parameters": [
                     {
                         "name": "token",
@@ -14323,7 +14417,12 @@
                                 "schema": {
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/components/schemas/WorkInProgress"
+                                            "properties": {
+                                                "productivity_detail": {
+                                                    "$ref": "#/components/schemas/ProductivityDetailInProgress"
+                                                }
+                                            },
+                                            "type": "object"
                                         },
                                         "message": {
                                             "type": "string",
@@ -14359,14 +14458,152 @@
                 ]
             }
         },
-        "/productivity/workstation/{token}/finish": {
+        "/productivity/details/workstation/{token}/plus": {
             "post": {
                 "tags": [
-                    "Productivities"
+                    "Productivities › Details"
+                ],
+                "summary": "Sumar una unidad (+1)",
+                "description": "Proceso medido por unidades: suma una unidad en el contador del primer detalle recibido del lote que no esté lleno (Nacional, luego Medellín, luego Stara; dentro de cada destino por orden de llegada) y en el registro (settings.produced). El contador es una fila de movement_detail_quantities sin talla dentro del detalle recibido; su tope es lo recibido en ese detalle. 422 si el turno terminó, si hay una parada en curso o si el lote está completo.",
+                "operationId": "c9c95c103fb9d07fc0585abfa5c39eda",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "description": "uuid del puesto de trabajo (de su QR)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trabajo en curso con los contadores actualizados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "productivity_detail": {
+                                                    "$ref": "#/components/schemas/ProductivityDetailInProgress"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/details/workstation/{token}/minus": {
+            "post": {
+                "tags": [
+                    "Productivities › Details"
+                ],
+                "summary": "Quitar una unidad (−1)",
+                "description": "Quita la última unidad que sumó este mismo registro (por si se tocó de más); no toca lo de otros registros. 422 si el registro no tiene unidades.",
+                "operationId": "27914e2bb14391529ab0a8fde11c6a9e",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "description": "uuid del puesto de trabajo (de su QR)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trabajo en curso con los contadores actualizados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "productivity_detail": {
+                                                    "$ref": "#/components/schemas/ProductivityDetailInProgress"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/details/workstation/{token}/finish": {
+            "post": {
+                "tags": [
+                    "Productivities › Details"
                 ],
                 "summary": "Finalizar el trabajo en curso",
-                "description": "Termina el trabajo ahora (cierra la parada abierta, si hay), calcula tiempos y eficiencia y crea un ingreso por destino: un detalle de movimiento cuyo origen es el turno, en estado Pendiente, en el movimiento del proceso y destino (se crea si no existe), con las unidades por talla y la regla enlazada. El proceso lo aprueba en Movimientos y la curva de la orden se ajusta.",
-                "operationId": "b871afda7b025415bb1753762697e7a5",
+                "description": "Termina el registro: el fin oficial es ahora o, si ya pasó, la hora de fin del turno (la real queda en settings.finished_at) y calcula tiempos y eficiencia. Responde 422 si hay una parada en curso (programada o no programada): primero debe terminar. Solo el último puesto de la cadena del primer proceso (creates_ingress) envía `quantities` y crea un ingreso por destino: un detalle de movimiento cuyo origen es el registro de trabajo, en estado Pendiente, en el movimiento del proceso y destino (se crea si no existe), con las unidades por talla. El proceso lo aprueba en Movimientos y la curva de la orden se ajusta. Los demás puestos no envían unidades.",
+                "operationId": "0d1f3da1a1741f6c38753f02dd315dce",
                 "parameters": [
                     {
                         "name": "token",
@@ -14380,13 +14617,10 @@
                     }
                 ],
                 "requestBody": {
-                    "required": true,
+                    "required": false,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "quantities"
-                                ],
                                 "properties": {
                                     "quantities": {
                                         "type": "array",
@@ -14518,14 +14752,14 @@
                 ]
             }
         },
-        "/productivity/stops": {
+        "/productivity/details/stops": {
             "get": {
                 "tags": [
-                    "Productivities"
+                    "Productivities › Details"
                 ],
                 "summary": "Paradas del catálogo para productividad",
-                "description": "Paradas programadas (con su duración en minutos, para agregarlas al turno) y no programadas (las que se registran durante un trabajo). Lo usa el modal de programar turno.",
-                "operationId": "dbc1b24e4c042c49caaf888725d33143",
+                "description": "Paradas programadas (con su duración en minutos; terminan solas) y no programadas (hasta «Terminar parada»). Las dos se registran durante un trabajo, desde el puesto.",
+                "operationId": "99b9c4cc749d559a84c9a76af539271b",
                 "responses": {
                     "200": {
                         "description": "Paradas por tipo",
@@ -19091,6 +19325,36 @@
                                         "description": "Descripción del subproceso",
                                         "type": "string",
                                         "example": "MEDIA"
+                                    },
+                                    "process_id": {
+                                        "type": "integer",
+                                        "example": 205
+                                    },
+                                    "after_subprocesses": {
+                                        "description": "Subprocesos siguientes: solo si el proceso tiene `settings.subprocess_flow = sequence`, del mismo proceso, distintos de él mismo y sin formar ciclos. En `update`, si no se envía, se conservan los guardados.",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer",
+                                            "example": 342
+                                        }
+                                    },
+                                    "settings": {
+                                        "properties": {
+                                            "operations": {
+                                                "type": "boolean",
+                                                "example": true
+                                            },
+                                            "operation_flow": {
+                                                "description": "Obligatorio si `operations` es verdadero. Al guardar un valor distinto de `sequence` se borran las cadenas entre sus operaciones.",
+                                                "type": "string",
+                                                "enum": [
+                                                    "sequence",
+                                                    "parallel"
+                                                ],
+                                                "example": "parallel"
+                                            }
+                                        },
+                                        "type": "object"
                                     }
                                 },
                                 "type": "object"
@@ -19266,6 +19530,36 @@
                                         "description": "Descripción del subproceso",
                                         "type": "string",
                                         "example": "MEDIA"
+                                    },
+                                    "process_id": {
+                                        "type": "integer",
+                                        "example": 205
+                                    },
+                                    "after_subprocesses": {
+                                        "description": "Subprocesos siguientes: solo si el proceso tiene `settings.subprocess_flow = sequence`, del mismo proceso, distintos de él mismo y sin formar ciclos. En `update`, si no se envía, se conservan los guardados.",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer",
+                                            "example": 342
+                                        }
+                                    },
+                                    "settings": {
+                                        "properties": {
+                                            "operations": {
+                                                "type": "boolean",
+                                                "example": true
+                                            },
+                                            "operation_flow": {
+                                                "description": "Obligatorio si `operations` es verdadero. Al guardar un valor distinto de `sequence` se borran las cadenas entre sus operaciones.",
+                                                "type": "string",
+                                                "enum": [
+                                                    "sequence",
+                                                    "parallel"
+                                                ],
+                                                "example": "parallel"
+                                            }
+                                        },
+                                        "type": "object"
                                     }
                                 },
                                 "type": "object"
@@ -21096,7 +21390,7 @@
                     "Typification › Supplies"
                 ],
                 "summary": "Importar insumos desde Excel",
-                "description": "Lee el archivo (mismo formato que la exportación), valida todas las filas y, si no hay errores, crea o actualiza cada insumo por su nombre dentro de una transacción. Si hay errores, responde 422 con un reporte en texto (`file`, ruta en el disco `public`). **Hoy siempre responde 422**: el controlador valida la lista con la clave `supplys` y las reglas esperan `supplies` (ver pendientes). El archivo no se valida y el `{supply_type_id}` inexistente responde 404.",
+                "description": "Lee el archivo (mismo formato que la exportación), valida todas las filas y, si no hay errores, crea o actualiza cada insumo por su nombre. Si hay errores, responde 422 con un reporte en texto (`file`, ruta en el disco `public`). **Hoy siempre responde 422**: el controlador valida la lista con la clave `supplys` y las reglas esperan `supplies` (ver pendientes). El archivo no se valida y el `{supply_type_id}` inexistente responde 404.",
                 "operationId": "b64672328e5dd740837b458ddc1572f2",
                 "parameters": [
                     {
@@ -26096,7 +26390,7 @@
                 "additionalProperties": true
             },
             "AuditListItem": {
-                "description": "Registro como lo entrega `AuditCollection` (all). No incluye `user_id`, `auditable_id` ni `user_agent`.",
+                "description": "Registro como lo entrega `AuditCollection` (all). No incluye `user_id` ni `auditable_id`.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -26128,6 +26422,23 @@
                     "ip_address": {
                         "type": "string",
                         "example": "192.168.1.25"
+                    },
+                    "user_agent": {
+                        "description": "Navegador o cliente que hizo el cambio.",
+                        "type": "string",
+                        "example": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0",
+                        "nullable": true
+                    },
+                    "resolved": {
+                        "description": "Nombre actual de los registros a los que apuntan los campos `*_id` de `old_values`/`new_values`: {campo: {id: nombre}}. Incluye desactivados.",
+                        "type": "object",
+                        "example": {
+                            "wash_tone_id": {
+                                "189": "MEDIO",
+                                "191": "OSCURO PD"
+                            }
+                        },
+                        "additionalProperties": true
                     },
                     "tags": {
                         "description": "Etiqueta de la relación afectada en attach/detach/sync.",
@@ -28505,6 +28816,16 @@
                                 "$ref": "#/components/schemas/Subitem"
                             }
                         ]
+                    },
+                    "workstation": {
+                        "description": "Puesto de trabajo asignado: un proceso sin subprocesos, un subproceso sin operaciones o una operación. `parent` dice de dónde cuelga («CONFECCION › EMBONADO» para una operación, «CORTE» para un subproceso, null para un proceso).",
+                        "type": "object",
+                        "example": {
+                            "model_type": "App\\\\Models\\\\Subprocess",
+                            "model_id": 602,
+                            "name": "EXTENDIDO"
+                        },
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -28615,6 +28936,26 @@
                         "type": "string",
                         "format": "date",
                         "example": null,
+                        "nullable": true
+                    },
+                    "workstation": {
+                        "description": "Puesto de trabajo (opcional): un solo elemento del último nivel de la cadena. Al editar reemplaza el anterior; null lo quita.",
+                        "properties": {
+                            "model_type": {
+                                "type": "string",
+                                "enum": [
+                                    "App\\Models\\Process",
+                                    "App\\Models\\Subprocess",
+                                    "App\\Models\\Operation"
+                                ],
+                                "example": "App\\Models\\Subprocess"
+                            },
+                            "model_id": {
+                                "type": "integer",
+                                "example": 602
+                            }
+                        },
+                        "type": "object",
                         "nullable": true
                     }
                 },
@@ -30214,7 +30555,7 @@
                         "example": 905
                     },
                     "consecutive": {
-                        "description": "Generado por el procedimiento `generate_production_order_code()` al crear.",
+                        "description": "Generado por el procedimiento `generate_production_order_consecutive()` al crear.",
                         "type": "string",
                         "example": "PO261022001"
                     },
@@ -31774,7 +32115,21 @@
                         "type": "object"
                     },
                     "subprocess": {
-                        "description": "Subproceso al que pertenece (con `pivot`). Solo en `all`.",
+                        "description": "Subproceso al que pertenece (con `pivot`).",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Subitem"
+                        }
+                    },
+                    "before_operations": {
+                        "description": "Operaciones anteriores del mismo subproceso.",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Subitem"
+                        }
+                    },
+                    "after_operations": {
+                        "description": "Operaciones siguientes del mismo subproceso.",
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/Subitem"
@@ -31870,6 +32225,14 @@
                         "type": "string",
                         "maxLength": 255,
                         "example": "PEGAR LA PRETINA AL CUERPO DEL JEAN"
+                    },
+                    "after_operations": {
+                        "description": "Operaciones siguientes: solo si el subproceso tiene `settings.operation_flow = sequence`, del mismo subproceso, distintas de ella misma y sin formar ciclos. En `update`, si no se envía, se conservan las guardadas.",
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "example": 361
+                        }
                     },
                     "settings": {
                         "description": "Se guarda tal cual: reemplaza todo `settings`, incluido el `schema` configurado con `setting`.",
@@ -33493,23 +33856,58 @@
                 },
                 "type": "object"
             },
-            "WorkInProgress": {
-                "description": "Trabajo en curso de un puesto: tiempos, paradas no programadas, la orden que se trabaja (con su referencia y regla) y sus destinos con la curva actual.",
+            "ProductivityDetailInProgress": {
+                "description": "Registro de trabajo en curso de un puesto (productivity_details): tiempos, empleados, paradas, la orden que se trabaja (con su referencia y regla) y, si el puesto crea ingresos, sus destinos con la curva actual.",
                 "properties": {
+                    "id": {
+                        "description": "Registro de trabajo",
+                        "type": "integer",
+                        "example": 12
+                    },
                     "start": {
-                        "description": "Inicio: la hora de inicio del turno o el fin del trabajo anterior del puesto",
+                        "description": "Inicio oficial: la hora de inicio del turno o el fin del registro anterior del puesto",
                         "type": "string",
                         "example": "2026-10-24 07:00:00"
                     },
-                    "started_at": {
-                        "description": "Momento en que se tocó Iniciar",
+                    "scanned_at": {
+                        "description": "Hora real en que se inició",
                         "type": "string",
                         "example": "2026-10-24 07:12:40"
                     },
-                    "stops": {
+                    "shift_end": {
+                        "description": "Fin del turno: si se finaliza después, el fin oficial es este",
+                        "type": "string",
+                        "example": "2026-10-24 17:00:00"
+                    },
+                    "employees": {
                         "type": "array",
                         "items": {
                             "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 15
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "ANA PÉREZ"
+                                },
+                                "document": {
+                                    "type": "string",
+                                    "example": "1090123456"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "stops": {
+                        "description": "Paradas registradas (productivity_detail_models)",
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 40
+                                },
                                 "stop_id": {
                                     "type": "integer",
                                     "example": 480
@@ -33518,11 +33916,20 @@
                                     "type": "string",
                                     "example": "PARO MECANICO"
                                 },
+                                "type": {
+                                    "type": "string",
+                                    "enum": [
+                                        "programmed",
+                                        "unprogrammed"
+                                    ],
+                                    "example": "unprogrammed"
+                                },
                                 "start": {
                                     "type": "string",
                                     "example": "2026-10-24 08:05:00"
                                 },
                                 "end": {
+                                    "description": "La programada trae su fin (inicio + duración del catálogo); la no programada abierta, null",
                                     "type": "string",
                                     "example": null,
                                     "nullable": true
@@ -33532,7 +33939,70 @@
                         }
                     },
                     "open_stop": {
-                        "description": "Parada no programada sin terminar",
+                        "description": "Parada en curso: no programada sin fin o programada que aún no termina",
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "creates_ingress": {
+                        "description": "Al finalizar pide unidades y crea los ingresos (último puesto de la cadena del primer proceso)",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "measurement": {
+                        "type": "string",
+                        "enum": [
+                            "lots",
+                            "units"
+                        ],
+                        "example": "units"
+                    },
+                    "produced": {
+                        "description": "Unidades que lleva este registro con el +1",
+                        "type": "integer",
+                        "example": 35
+                    },
+                    "counters": {
+                        "description": "Solo por unidades: contadores del lote en el proceso",
+                        "properties": {
+                            "details": {
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "movement_detail_id": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "destination": {
+                                            "type": "string",
+                                            "example": "NACIONAL"
+                                        },
+                                        "received": {
+                                            "type": "integer",
+                                            "example": 700
+                                        },
+                                        "produced": {
+                                            "type": "integer",
+                                            "example": 520
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "received": {
+                                "type": "integer",
+                                "example": 1100
+                            },
+                            "produced": {
+                                "type": "integer",
+                                "example": 520
+                            },
+                            "current": {
+                                "description": "Detalle que se está llenando; null si el lote está completo",
+                                "type": "integer",
+                                "example": 200,
+                                "nullable": true
+                            }
+                        },
                         "type": "object",
                         "nullable": true
                     },
@@ -33578,7 +34048,7 @@
                         }
                     },
                     "preview": {
-                        "description": "Resumen si se finalizara en este momento: start, end, people, duration_minutes, stop_minutes, available_minutes, dead_minutes, worked_minutes, standard_minutes, efficiency y stops (cada una con name, type, start, end y minutes, recortadas al trabajo)",
+                        "description": "Resumen si se finalizara en este momento (con el fin oficial): start, end, people, duration_minutes, stop_minutes, available_minutes, dead_minutes, worked_minutes, standard_minutes, efficiency y stops (cada una con name, type, start, end y minutes, recortadas al trabajo)",
                         "type": "object",
                         "nullable": true
                     },
@@ -38234,6 +38704,10 @@
         {
             "name": "Productivities",
             "description": "Endpoints para gestionar productividades"
+        },
+        {
+            "name": "Productivities › Details",
+            "description": "Endpoints para gestionar los registros de trabajo de los turnos"
         },
         {
             "name": "Reports",

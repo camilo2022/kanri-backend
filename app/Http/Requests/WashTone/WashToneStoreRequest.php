@@ -33,20 +33,6 @@ class WashToneStoreRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'numeric' => 'Debe ser un dato númerico.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'min' => 'Se permite mínimo :min caracteres.',
-            'unique' => 'Ya está registrado.',
-            'uppercase' => 'Debe de ingresar mayúsculas.',
-            'digits_between' => 'Debe tener entre 2 y 5 dígitos.',
-        ];
-    }
-
     public function attributes(): array
     {
         return [
@@ -55,5 +41,26 @@ class WashToneStoreRequest extends FormRequest
             'settings' => 'Configuraciones',
             'settings.code' => 'Código'
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+
+            if (!$this->filled('settings.code')) {
+                return;
+            }
+
+            $exists = WashTone::withTrashed()
+                ->where('settings->code', $this->input('settings.code'))
+                ->exists();
+
+            if ($exists) {
+                $validator->errors()->add(
+                    'settings.code',
+                    'El código ya se encuentra registrado.'
+                );
+            }
+        });
     }
 }

@@ -25,23 +25,12 @@ class PersonTypeAllRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'per_page' => ['nullable', 'numeric'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
             'column' => ['nullable', 'string', 'in:id,name,description,created_at,updated_at,deleted_at'],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
             'with_trashed' => ['required', 'boolean'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'string' => 'Debe ser una cadena de texto.',
-            'numeric' => 'Debe ser un valor numérico.',
-            'in' => 'Valor inválido. Permitidos: :values.',
-            'boolean' => 'Deber ser verdadero o falso.',
         ];
     }
 
@@ -54,7 +43,6 @@ class PersonTypeAllRequest extends FormRequest
             'column' => 'Columna a ordenar.',
             'dir' => 'Sentido del orden.',
             'with_trashed' => 'Registros inactivos',
-            'in_technical_sheet' => 'Aplica a Ficha Técnica',
         ];
     }
 

@@ -4,8 +4,13 @@ namespace App\Http\Requests\Management\TechnicalSheet;
 
 use App\Models\BootType;
 use App\Models\Collection;
+use App\Models\File;
 use App\Models\GarmentType;
+use App\Models\Operation;
+use App\Models\Process;
+use App\Models\Product;
 use App\Models\Subcategory;
+use App\Models\Subprocess;
 use App\Models\Supply;
 use App\Models\SupplyType;
 use App\Models\TechnicalSheet;
@@ -13,6 +18,7 @@ use App\Models\TechnicalSheetDetail;
 use App\Models\Trademark;
 use App\Models\Typology;
 use App\Models\WashTone;
+use App\Services\ProductivityDetailService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -38,7 +44,7 @@ class TechnicalSheetSaveRequest extends FormRequest
 
         return [
             'id' => ['sometimes', 'exists:technical_sheets,id'],
-            'code' => ['nullable', 'required_unless:status,'.TechnicalSheetDetail::PENDING, 'unique:technical_sheets,code,'.$this->input('id').',id'],
+            'code' => ['nullable', 'required_unless:status,'.TechnicalSheetDetail::PENDING, 'string', 'max:11', 'unique:technical_sheets,code,'.$this->input('id').',id'],
             'collection_id' => ['required', 'exists:subitems,id,item_id,'.Collection::ITEM_ID],
             'garment_type_id' => ['required', 'exists:subitems,id,item_id,'.GarmentType::ITEM_ID],
             'wash_tone_id' => ['required', 'exists:subitems,id,item_id,'.WashTone::ITEM_ID],
@@ -53,33 +59,22 @@ class TechnicalSheetSaveRequest extends FormRequest
             'technical_sheet_details' => ['required', 'array'],
             'technical_sheet_details.*' => ['required', 'array'],
             'technical_sheet_details.*.id' => ['sometimes', 'exists:technical_sheet_details,id'],
-            'technical_sheet_details.*.model_type' => ['required'],
+            'technical_sheet_details.*.model_type' => ['required', 'in:'.implode(',', [Process::class, Subprocess::class, Operation::class])],
             'technical_sheet_details.*.model_id' => ['required', 'exists:subitems,id'],
             'technical_sheet_details.*.typology' => ['nullable', 'exists:subitems,id,item_id,'.Typology::ITEM_ID.',deleted_at,NULL'],
             'technical_sheet_details.*.status' => ['required', 'in:'.implode(',', [TechnicalSheetDetail::PENDING, TechnicalSheetDetail::REVIEW, TechnicalSheetDetail::APPROVED])],
             'supplies' => ['required', 'array'],
             'supplies.*' => ['sometimes', 'numeric', 'exists:subitems,id,item_id,'.Supply::ITEM_ID],
             'photo_d' => ['required', 'array'],
-            'photo_d.file' => ['sometimes', 'image', 'max:2048'],
+            'photo_d.file' => ['sometimes', 'image', 'max:2048', 'dimensions:max_width='.File::MAX_IMAGE_SIDE.',max_height='.File::MAX_IMAGE_SIDE],
             'photo_t' => ['required', 'array'],
-            'photo_t.file' => ['sometimes', 'image', 'max:2048'],
+            'photo_t.file' => ['sometimes', 'image', 'max:2048', 'dimensions:max_width='.File::MAX_IMAGE_SIDE.',max_height='.File::MAX_IMAGE_SIDE],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'required' => "Es obligatorio.\n",
-            'required_unless' => 'Es obligatorio',
-            'exists' => 'No registrado en el sistema.',
-            'unique' => 'El registro debe ser unico.',
-            'string' => 'Debe ser una cadena de caracteres.',
-            'max' => 'No debe exceder los :max caracteres.',
-            'in' => 'Valor inválido. Permitidos: :values.',
-            'array' => 'Debe ser una lista de datos.',
-            'boolean' => 'Debe se un valor falso/verdadero',
-            'numeric' => 'Debe ser un valor numérico.',
-            'image' => 'Debe ser una imagen.',
             'photo_d.max' => 'Se permite máximo :max KB.',
             'photo_t.max' => 'Se permite máximo :max KB.',
         ];
@@ -128,30 +123,56 @@ class TechnicalSheetSaveRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            // Lo que va en secuencia (operaciones o subprocesos) necesita en la ficha alguno de sus anteriores
+            $keys = collect($this->input('technical_sheet_details', []))
+                ->map(fn ($detail) => ($detail['model_type'] ?? '').':'.($detail['model_id'] ?? ''))
+                ->merge($this->input('id') ? TechnicalSheetDetail::where('technical_sheet_id', $this->input('id'))->get()->map(fn ($detail) => $detail->model_type.':'.$detail->model_id) : [])
+                ->unique()
+                ->values();
+
+            foreach (app(ProductivityDetailService::class)->sheetSequenceErrors($keys, $this->integer('wash_tone_id') ?: null) as $id => $message) {
+                $validator->errors()->add("technical_sheet_details.$id", $message);
+            }
+
             $trademark = Trademark::find($this->input('product.trademark_id'));
             $code = $this->input('product.code');
             $isValid = false;
             $messages = [];
 
+            // El formato se exige al crear o cambiar la referencia; las que ya existen y no cambian (las antiguas del Siver) se conservan
+            $product = Product::find($this->input('product.id'));
+            $code_unchanged = $product
+                && $product->code === $code
+                && (int) $product->trademark_id === $this->integer('product.trademark_id');
+
             if ($this->input('status') === TechnicalSheet::PENDING) {
+                // Una ficha Pendiente es una muestra: sus procesos no cambian de estado hasta que gerencia la pase a En revisión
+                foreach ($this->input('technical_sheet_details', []) as $index => $detail) {
+                    if (($detail['status'] ?? null) !== TechnicalSheetDetail::PENDING) {
+                        $validator->errors()->add(
+                            "technical_sheet_details.$index",
+                            'El proceso no puede cambiar de estado mientras la ficha esté Pendiente.'
+                        );
+                    }
+                }
 
                 $trademark_code = data_get($trademark, 'settings.code');
 
-                if (! $trademark_code) {
+                if (! $code_unchanged && ! $trademark_code) {
                     $validator->errors()->add(
                         'product.trademark_id',
                         'La marca seleccionada no tiene un código configurado.'
                     );
-                } elseif (! $code || ! preg_match(
+                } elseif (! $code_unchanged && (! $code || ! preg_match(
                     '/^'.preg_quote($trademark_code, '/').'-\d{6}$/',
                     $code
-                )) {
+                ))) {
                     $validator->errors()->add(
                         'product.code',
                         "El código debe tener el formato {$trademark_code}- seguido de 6 números."
                     );
                 }
-            } else {
+            } elseif (! $code_unchanged) {
                 foreach ($trademark?->settings?->validations ?? [] as $item) {
                     if (! empty($item->deleted_at)) {
                         continue;
@@ -187,11 +208,25 @@ class TechnicalSheetSaveRequest extends FormRequest
 
             $supply_type_ids = [];
 
-            foreach ($this->input('supplies', []) as $key => $supply_id) {
-                $supply = Supply::with('supply_type')->find($supply_id);
+            foreach ($this->input('supplies', []) as $supply_id) {
+                $supply_type_id = Supply::with('supply_type')->find($supply_id)?->supply_type->first()?->id;
 
-                if (in_array($supply?->supply_type->first()?->id, $supply_type_ids)) {
-                    $validator->errors()->add("supplies.$key", 'El insumo pertenece a un tipo de insumo ya registrado.');
+                if ($supply_type_id && in_array($supply_type_id, $supply_type_ids)) {
+                    $validator->errors()->add("supply.$supply_type_id", 'Solo se permite un insumo de este tipo.');
+                }
+
+                $supply_type_ids[] = $supply_type_id;
+            }
+
+            // Una ficha solo queda Aprobado si todos sus procesos están Aprobado (los que llegan y los que ya tenía)
+            if ($this->input('status') === TechnicalSheet::APPROVED) {
+                $statuses = TechnicalSheetDetail::where('technical_sheet_id', $this->input('id'))->get()
+                    ->mapWithKeys(fn ($detail) => [$detail->model_type.':'.$detail->model_id => $detail->status])
+                    ->merge(collect($this->input('technical_sheet_details', []))
+                        ->mapWithKeys(fn ($detail) => [($detail['model_type'] ?? '').':'.($detail['model_id'] ?? '') => $detail['status'] ?? null]));
+
+                if ($statuses->contains(fn ($status) => $status !== TechnicalSheetDetail::APPROVED)) {
+                    $validator->errors()->add('status', 'La ficha solo puede quedar Aprobado si todos sus procesos están Aprobado.');
                 }
             }
 

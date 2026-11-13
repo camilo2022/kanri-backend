@@ -69,7 +69,7 @@ use App\Traits\ApiResponser;
  *     schema="PensionFundRequest",
  *     type="object",
  *     required={"name", "description"},
- *     @OA\Property(property="name", type="string", minLength=4, maxLength=50, description="Único entre los fondos de pensión. A diferencia de otros catálogos, no exige mayúsculas.", example="SKANDIA"),
+ *     @OA\Property(property="name", type="string", minLength=4, maxLength=100, description="Nombre en MAYÚSCULAS. Único entre los fondos de pensión.", example="SKANDIA"),
  *     @OA\Property(property="description", type="string", maxLength=255, description="Descripción en MAYÚSCULAS.", example="SKANDIA PENSIONES Y CESANTÍAS S.A.")
  * )
  */
@@ -121,7 +121,7 @@ class PensionFundController extends Controller
     public function all(PensionFundAllRequest $request)
     {
         try {
-            $pension_funds = PensionFund::when($request->filled('search'), function ($query) use ($request) {
+            $pension_funds = PensionFund::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {

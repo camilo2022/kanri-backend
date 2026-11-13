@@ -31,14 +31,6 @@ class SubcategoryRestoreRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'exists' => 'No hay ningún registro.'
-        ];
-    }
-
     public function attributes(): array
     {
         return [

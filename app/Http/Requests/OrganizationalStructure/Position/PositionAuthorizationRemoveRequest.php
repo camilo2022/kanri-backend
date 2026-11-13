@@ -31,16 +31,6 @@ class PositionAuthorizationRemoveRequest extends FormRequest
         ];
     }
 
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'numeric' => 'Debe ser un número.',
-            'exists' => 'No hay ningún registro.'
-        ];
-    }
-
     public function attributes(): array
     {
         return [

@@ -116,7 +116,7 @@ class GroupController extends Controller
     public function all(GroupAllRequest $request)
     {
         try {
-            $groups = Group::when($request->filled('search'), function ($query) use ($request) {
+            $groups = Group::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {

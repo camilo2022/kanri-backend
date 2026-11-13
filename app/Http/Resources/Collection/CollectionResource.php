@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources\Collection;
 
-use App\Models\ProductionOrder;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -22,9 +21,7 @@ class CollectionResource extends JsonResource
                 'updated_at' => $this->formatDate($this->updated_at),
                 'deleted_at' => $this->formatDate($this->deleted_at),
                 'item' => $this->item,
-                'technical_sheets' => $this->technical_sheets
             ],
-            'status_production_order' => ProductionOrder::statuses(),
         ];
     }
 

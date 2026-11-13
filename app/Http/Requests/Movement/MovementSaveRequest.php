@@ -6,6 +6,7 @@ use App\Models\Movement;
 use App\Models\MovementDetail;
 use App\Models\Process;
 use App\Models\Size;
+use App\Services\ProductivityDetailService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -28,8 +29,6 @@ class MovementSaveRequest extends FormRequest
 
     public function rules(): array
     {
-        logger($this);
-
         return [
             'movement_origin_id' => ['required', 'exists:movements,id'],
             'movement_detail_id' => ['sometimes', 'exists:movement_details,id'],
@@ -61,24 +60,6 @@ class MovementSaveRequest extends FormRequest
             'redistributions.*.quantity' => ['required', 'integer', 'min:1'],
             'status' => ['sometimes', 'in:'.implode(',', MovementDetail::statuses())],
             'observation' => ['nullable', 'string', 'max:255'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'required_with' => 'Es obligatorio cuando se proporciona :values.',
-            'exists' => 'No registrado en el sistema.',
-            'boolean' => 'Debe ser un dato tipo sí/no.',
-            'numeric' => 'Debe ser un dato numérico.',
-            'integer' => 'Debe ser un número entero.',
-            'min' => 'El valor debe ser mayor o igual a :min.',
-            'string' => 'Debe ser una cadena de texto.',
-            'max' => 'Se permite máximo :max caracteres.',
-            'in' => 'Valor inválido. Permitidos: :values.',
-            'distinct' => 'Debe ser un valor único.',
-            'array' => 'Debe ser una lista o estructura válida.',
         ];
     }
 
@@ -166,7 +147,7 @@ class MovementSaveRequest extends FormRequest
                     if ($movement_detail->status !== MovementDetail::PENDING) {
                         $validator->errors()->add(
                             'status',
-                            'Solo se pueden aprobar movimientos que estén pendientes.'
+                            'Solo se pueden guardar movimientos que estén pendientes.'
                         );
                     }
 
@@ -216,6 +197,20 @@ class MovementSaveRequest extends FormRequest
                             }
                         }
                     }
+                }
+            }
+
+            // Un traslado nuevo a otro proceso solo lleva lo que ya pasó por todos los pasos que exige la ficha (el menor
+            // de ellos) menos lo ya trasladado: no se traslada lo que no se ha producido
+            if (! $this->filled('movement_detail_id') && $origin_id && $destination_id && (int) $origin_id !== (int) $destination_id) {
+                $origin = Movement::find($this->input('movement_origin_id'));
+                $transferable = $origin ? app(ProductivityDetailService::class)->transferable($origin) : null;
+                $requested = collect($this->input('quantities', []))->sum(fn ($quantity) => (int) ($quantity['quantity'] ?? 0));
+
+                if ($transferable !== null && $requested > $transferable) {
+                    $validator->errors()->add('quantities', $transferable > 0
+                        ? "Solo se pueden trasladar {$transferable} unidades: las que ya pasaron por todos los puestos que exige la ficha."
+                        : 'Aún no hay unidades para trasladar: el lote no ha pasado por todos los puestos que exige la ficha.');
                 }
             }
 

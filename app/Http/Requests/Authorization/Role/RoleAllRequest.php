@@ -25,7 +25,7 @@ class RoleAllRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'per_page' => ['nullable', 'numeric'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'search' => ['nullable', 'string'],
             'column' => ['nullable', 'string', 'in:id,name,title,description,created_at,updated_at'],
             'dir' => ['nullable', 'string', 'in:asc,desc']
@@ -35,7 +35,6 @@ class RoleAllRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'per_page.numeric' => 'Debe ser un valor numérico.',
             'search.string' => 'Debe ser un registro válido de busqueda.',
             'column.string' => 'Debe ser una columna válida.',
             'column.in' => 'El valor de la columna no es válido.',

@@ -32,14 +32,6 @@ class ProductivityFindRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'exists' => 'El turno no existe o está desactivado.',
-        ];
-    }
-
     public function attributes(): array
     {
         return [

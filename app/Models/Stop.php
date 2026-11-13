@@ -67,16 +67,16 @@ class Stop extends Model implements Auditable
         if ($search === '') {
             return $query;
         }
-
-        $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
+         
+        $terms = [preg_replace('/\s+/', ' ', $search)];
 
         return $query->where(function (Builder $q) use ($terms) {
             foreach ($terms as $term) {
                 $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $term).'%';
 
                 $q->where(function (Builder $sq) use ($like) {
-                    $sq->orWhere('name', 'ILIKE', $like)
-                        ->orWhere('description', 'ILIKE', $like);
+                    $sq->orWhere('name', 'LIKE', $like)
+                        ->orWhere('description', 'LIKE', $like);
                 });
             }
         });

@@ -2,9 +2,7 @@
 
 namespace App\Http\Requests\Trademark;
 
-use App\Models\Category;
 use App\Models\Size;
-use App\Models\Subcategory;
 use App\Models\Trademark;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -34,21 +32,11 @@ class TrademarkSizeRemoveRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'required' => 'Es obligatorio.',
-            'numeric' => 'Debe ser un número.',
-            'exists' => 'No hay ningún registro.',
-            'unique' => 'Ya registrado.'
-        ];
-    }
-
     public function attributes(): array
     {
         return [
-            'id' => 'Identificador de la categoría',
-            'subcategory_id' => 'Identificador de la subcategoría'
+            'id' => 'Identificador de la marca',
+            'size_id' => 'Identificador de la talla'
         ];
     }
 

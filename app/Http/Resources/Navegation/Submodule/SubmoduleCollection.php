@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Navegation\Submodule;
 
 use Illuminate\Http\Request;
+use App\Support\AuditResolver;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Carbon;
 
@@ -10,10 +11,12 @@ class SubmoduleCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $audited = AuditResolver::auditedIds(\App\Models\Submodule::class, $this->collection->pluck('id')->all());
         return [
-            'submodules' => $this->collection->map(function ($submodule) {
+            'submodules' => $this->collection->map(function ($submodule) use ($audited) {
                 return [
                     'id' => $submodule->id,
+                    'has_audits' => isset($audited[$submodule->id]),
                     'name' => $submodule->name,
                     'url' => $submodule->url,
                     'icon' => $submodule->icon,

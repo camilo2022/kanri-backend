@@ -150,7 +150,7 @@ class SupplyImportBuilder
             ->value('id');
     }
 
-    public function duplicateSupplys(): array
+    public function duplicateSupplies(): array
     {
         return array_unique($this->duplicates);
     }

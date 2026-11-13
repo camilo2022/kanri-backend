@@ -167,7 +167,7 @@ class RuleController extends Controller
     public function all(RuleAllRequest $request)
     {
         try {
-            $rules = Rule::query()
+            $rules = Rule::with(['item'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
