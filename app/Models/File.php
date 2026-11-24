@@ -45,6 +45,7 @@ class File extends Model implements Auditable
 
     protected $casts = [
         'metadata' => 'object',
+        'settings' => 'object',
     ];
 
     public function getPathAttribute($value): ?string

@@ -6,6 +6,7 @@ use App\Http\Requests\Bank\BankAllRequest;
 use App\Http\Requests\Bank\BankDeleteRequest;
 use App\Http\Requests\Bank\BankFindRequest;
 use App\Http\Requests\Bank\BankRestoreRequest;
+use App\Http\Requests\Bank\BankSettingRequest;
 use App\Http\Requests\Bank\BankStoreRequest;
 use App\Http\Requests\Bank\BankUpdateRequest;
 use App\Http\Resources\Bank\BankCollection;
@@ -27,7 +28,12 @@ use App\Traits\ApiResponser;
  *     @OA\Property(property="item_id", type="integer", example=38),
  *     @OA\Property(property="name", type="string", example="BANCO AGRARIO DE COLOMBIA"),
  *     @OA\Property(property="description", type="string", example="BANCO AGRARIO DE COLOMBIA S.A."),
- *     @OA\Property(property="settings", type="object", nullable=true, example=null),
+ *     @OA\Property(
+ *         property="settings",
+ *         type="object",
+ *         description="`validations`: regla del número de cuenta por cada tipo de cuenta que el banco maneja (los tipos asociados al banco). Un tipo sin regla no lo maneja; un banco sin reglas no recibe cuentas.",
+ *         example={"validations": {{"account_type_id": 452, "regex": "/^\d{11}$/", "message": "La cuenta de ahorros de Bancolombia tiene 11 dígitos."}}}
+ *     ),
  *     @OA\Property(property="created_at", type="string", example="2026-05-14 11:20:00"),
  *     @OA\Property(property="updated_at", type="string", example="2026-05-14 11:20:00"),
  *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
@@ -127,7 +133,7 @@ class BankController extends Controller
                     return $query->withTrashed();
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                    return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
             $bank = $bank->paginate($request->integer('per_page', $bank->count()));
@@ -370,6 +376,64 @@ class BankController extends Controller
         try {
             $bank = Bank::withTrashed()->findOrFail($id);
             $bank->restore();
+
+            return $this->successResponse(
+                new BankResource($bank),
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage(),
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/banks/setting/{id}",
+     *     tags={"Bank"},
+     *     summary="Configurar las reglas de las cuentas del banco",
+     *     description="Reemplaza `settings.validations` del banco: una fila por cada tipo de cuenta que el banco maneja, con el regex y el mensaje del número de cuenta (los tres obligatorios). Un tipo que no esté en la lista no lo maneja el banco. Las cuentas de proveedores se validan con la regla de su banco y su tipo; una lista vacía deja al banco sin recibir cuentas.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"settings"},
+     *             example={"settings": {"validations": {
+     *                 {"account_type_id": 452, "regex": "/^\d{11}$/", "message": "La cuenta de ahorros de Bancolombia tiene 11 dígitos."}
+     *             }}}
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Reglas guardadas",
+     *         @OA\JsonContent(ref="#/components/schemas/BankResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Falta el tipo, el regex o el mensaje de una fila, el regex no es válido o el tipo de cuenta no existe o se repite.",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={"message": "Error de validación.", "errors": {"settings.validations.0.regex": {"Debe ser una expresión regular válida, con delimitadores (por ejemplo /^\d{11}$/)."}}}
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     */
+    public function setting(BankSettingRequest $request, $id)
+    {
+        try {
+            $bank = Bank::findOrFail($id);
+            $bank->settings = $request->input('settings');
+            $bank->save();
 
             return $this->successResponse(
                 new BankResource($bank),

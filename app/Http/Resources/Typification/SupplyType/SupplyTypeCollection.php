@@ -13,7 +13,7 @@ class SupplyTypeCollection extends ResourceCollection
         $audited = AuditResolver::auditedIds(\App\Models\SupplyType::class, $this->collection->pluck('id')->all());
         return [
             'supply_types' => $this->collection->map(function ($supply_type) use ($audited) {
-                return [
+                $data = [
                     'id' => $supply_type->id,
                     'has_audits' => isset($audited[$supply_type->id]),
                     'item' => $supply_type->item,
@@ -23,8 +23,14 @@ class SupplyTypeCollection extends ResourceCollection
                     'updated_at' => $this->formatDate($supply_type->updated_at),
                     'deleted_at' => $this->formatDate($supply_type->deleted_at),
                     'settings' => $supply_type->settings,
-                    'supplies' => $supply_type->supplies
                 ];
+
+                // Solo si la consulta los cargó; leerlos sin cargar haría una consulta por tipo
+                if ($supply_type->relationLoaded('supplies')) {
+                    $data['supplies'] = $supply_type->supplies;
+                }
+
+                return $data;
             }),
             'meta' => [
                 'pagination' => $this->paginationMeta(),

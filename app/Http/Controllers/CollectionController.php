@@ -6,11 +6,13 @@ use App\Http\Requests\Collection\CollectionAllRequest;
 use App\Http\Requests\Collection\CollectionDeleteRequest;
 use App\Http\Requests\Collection\CollectionFindRequest;
 use App\Http\Requests\Collection\CollectionRestoreRequest;
+use App\Http\Requests\Collection\CollectionSettingRequest;
 use App\Http\Requests\Collection\CollectionStoreRequest;
 use App\Http\Requests\Collection\CollectionUpdateRequest;
 use App\Http\Resources\Collection\CollectionCollection;
 use App\Http\Resources\Collection\CollectionResource;
 use App\Models\Collection;
+use App\Models\Item;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 
@@ -149,13 +151,13 @@ class CollectionController extends Controller
                     return $query->withTrashed();
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                    return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
             $collections = $collections->paginate($request->integer('per_page', $collections->count()));
 
             return $this->successResponse(
-                new CollectionCollection($collections),
+                new CollectionCollection($collections, Item::find(Collection::ITEM_ID)),
                 $this->getMessage('Success'),
                 200
             );
@@ -406,6 +408,70 @@ class CollectionController extends Controller
                 [
                     'message' => $this->getMessage(class_basename($e)),
                     'error' => $e->getMessage(),
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/collections/setting/{id}",
+     *     tags={"Collections"},
+     *     summary="Configurar el formato de las colecciones",
+     *     description="Guarda en el ítem de colecciones (`items` id 30, `settings.formats`) el regex y el mensaje de error del nombre, la descripción y el código. El regex del nombre define partes con nombre, `(?<numero>…)` y `(?<anio>…)`, que la descripción y el código usan como `{numero}` y `{anio}`. Con esas dos partes, el número también debe ser consecutivo dentro del año. Un regex vacío deja ese campo sin revisión de formato. Las demás llaves de `settings` del ítem se conservan.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, description="Debe ser 30 (ítem de colecciones).", @OA\Schema(type="integer", example=30)),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"settings"},
+     *             example={"settings": {"formats": {
+     *                 "name": {"regex": "/^C(?<numero>\\d)(?<anio>(?:19|20)\\d{2})$/", "message": "Debe ser C, un número de una cifra y el año (C52026)."},
+     *                 "description": {"regex": "/^.+ {anio}$/", "message": "Debe terminar en el año del nombre (COLOMBIA MODA 2026)."},
+     *                 "code": {"regex": "/^0{numero}{anio}$/", "message": "Debe ser 0, el número y el año del nombre (C52026 → 052026)."}
+     *             }}}
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Formatos guardados. Devuelve el id del ítem y su `settings` completo.",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object", @OA\Property(property="id", type="integer", example=30), @OA\Property(property="settings", type="object")),
+     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+     *             @OA\Property(property="error", type="boolean", example=false)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Regex inválido, marcador sin parte en el nombre, falta el mensaje o el ítem no es el de colecciones.",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={"message": "Error de validación.", "errors": {"settings.formats.code.regex": {"El regex del nombre no tiene la parte {numero}: defínela con (?<numero>…)."}}}
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     */
+    public function setting(CollectionSettingRequest $request, $id)
+    {
+        try {
+            $item = Item::findOrFail($id);
+            $item->settings = [...(array) ($item->settings ?? []), 'formats' => $request->input('settings.formats')];
+            $item->save();
+
+            return $this->successResponse(
+                ['id' => $item->id, 'settings' => $item->settings],
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage()
                 ],
                 $this->getCode(class_basename($e))
             );

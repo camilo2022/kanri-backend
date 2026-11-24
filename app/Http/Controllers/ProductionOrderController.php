@@ -16,12 +16,13 @@ use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderDetailQuantities;
 use App\Models\Supply;
+use App\Services\ChromePdfService;
 use App\Services\FileService;
+use App\Services\PdfLinkService;
 use App\Services\ProductionOrderCurveService;
 use App\Services\QrCodeService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
@@ -85,7 +86,7 @@ class ProductionOrderController extends Controller
                     return $query->withTrashed();
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                    return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
             $production_orders = $production_orders->paginate($request->integer('per_page', $production_orders->count()));
@@ -380,6 +381,11 @@ class ProductionOrderController extends Controller
     public function pdf(ProductionOrderExportPDFRequest $request, string $uuid)
     {
         try {
+            // La dirección firmada que pidió el sistema entrega el PDF que ya se generó (ver PdfLinkService)
+            if ($request->routeIs('production_orders.technical_sheets.pdf') && ($cached = app(PdfLinkService::class)->cached('production_orders.technical_sheets.pdf', $uuid, $request->route('name')))) {
+                return $cached;
+            }
+
             $production_order = ProductionOrder::with([
                 'technical_sheet' => [
                     'collection',
@@ -403,6 +409,7 @@ class ProductionOrderController extends Controller
                 'rolls' => ['model' => ['supply_type', 'production_order_details']],
                 'derivatives' => ['production_order' => ['technical_sheet' => ['product']]],
                 'reassignments' => ['model' => ['technical_sheet' => ['product']]],
+                'supplier',
             ])->where('uuid', $uuid)->firstOrFail();
 
             $pdfUrl = URL::signedRoute(
@@ -414,27 +421,25 @@ class ProductionOrderController extends Controller
 
             $qr = app(QrCodeService::class)->generate($pdfUrl);
 
-            $pdf = Pdf::loadView(
-                'pdf.ProductionOrder.pdf',
-                [
+            // El documento se llama PO- + la referencia con su lote
+            $name = 'PO-'.($production_order->technical_sheet->product->code ?? '-').'-'.($production_order->cut ?? '-');
+
+            // Se imprime con Chrome en A4 horizontal, con el diseño de las fichas; los trazos se pegan después con FPDI
+            $image = fn (string $path) => 'data:image/png;base64,'.base64_encode(file_get_contents(public_path($path)));
+            $output = app(ChromePdfService::class)->render(
+                view('pdf.ProductionOrder.pdf', [
                     'production_order' => $production_order,
+                    'logo' => $image('images/logo.png'),
                     'qr' => $qr,
+                    'name' => $name,
+                ])->render(),
+                [
+                    'footer' => view('pdf.ProductionOrder.pdf', ['footer' => true, 'kanri' => $image('images/logo-kanri-dark.png'), 'code' => 'GP-FR-05', 'version' => '02'])->render(),
+                    'margin_top' => 12,
+                    'margin_bottom' => 22,
+                    'margin_side' => 20,
+                    'landscape' => true,
                 ]
-            )->setPaper('a4', 'landscape');
-
-            $dompdf = $pdf->getDomPDF();
-
-            $dompdf->render();
-
-            $canvas = $dompdf->getCanvas();
-
-            $canvas->page_text(
-                730,
-                565,
-                'Página {PAGE_NUM} de {PAGE_COUNT}',
-                null,
-                9,
-                [0, 0, 0]
             );
 
             $tempDir = storage_path('app/temp');
@@ -447,7 +452,7 @@ class ProductionOrderController extends Controller
 
             file_put_contents(
                 $mainPdf,
-                $dompdf->output()
+                $output
             );
 
             $fpdi = new Fpdi;
@@ -502,24 +507,15 @@ class ProductionOrderController extends Controller
 
             @unlink($mainPdf);
 
-            $has_stara = $production_order->production_order_details->contains(
-                fn ($item) => $item->destination === 'STARA'
-            );
+            // FPDI arma un PDF nuevo, así que el título se vuelve a poner aquí
+            $fileName = $name.'.pdf';
 
-            $fileName = 'PO-'.
-                ($production_order->technical_sheet->product->code ?? 'SIN-CODIGO').
-                '-'.
-                ($production_order->cut ?? 'SIN-LOTE');
+            $fpdi->SetTitle($name, true);
 
-            if ($has_stara) {
-                $staraReference = optional($production_order->technical_sheet->products->first())->code;
-
-                if ($staraReference) {
-                    $fileName .= ', '.$staraReference.'-'.($production_order->cut ?? 'SIN-LOTE');
-                }
+            // Desde el sistema (ruta con sesión) se guarda y se devuelve la dirección firmada que termina en el nombre
+            if (! $request->routeIs('production_orders.technical_sheets.pdf')) {
+                return $this->successResponse(['url' => app(PdfLinkService::class)->store('production_orders.technical_sheets.pdf', $uuid, $fileName, $fpdi->Output('S'))]);
             }
-
-            $fileName .= '.pdf';
 
             return response(
                 $fpdi->Output('S'),

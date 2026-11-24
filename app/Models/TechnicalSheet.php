@@ -159,7 +159,7 @@ class TechnicalSheet extends Model implements Auditable
     {
         return $this->morphOne(File::class, 'model')
             ->where('file_type_id', 3)
-            ->where('file_subtype_id', 9)
+            ->where('file_subtype_id', 11)
             ->where('name', 'like', '%-D');
     }
 
@@ -167,7 +167,7 @@ class TechnicalSheet extends Model implements Auditable
     {
         return $this->morphOne(File::class, 'model')
             ->where('file_type_id', 3)
-            ->where('file_subtype_id', 9)
+            ->where('file_subtype_id', 11)
             ->where('name', 'like', '%-T');
     }
 

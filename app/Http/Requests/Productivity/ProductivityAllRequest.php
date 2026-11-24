@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Productivity;
 
+use App\Models\Productivity;
+
 use App\Models\Operation;
 use App\Models\Process;
 use App\Models\Subprocess;
@@ -42,7 +44,7 @@ class ProductivityAllRequest extends FormRequest
             'date_from' => ['nullable', 'date_format:Y-m-d'],
             'date_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'page' => ['nullable', 'numeric'],
-            'column' => ['nullable', 'string', 'in:id,date,start_time,end_time,created_at,updated_at'],
+            'column' => ['nullable', 'string', 'in:'.implode(',', array_keys(Productivity::sortable_columns()))],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
         ];
     }

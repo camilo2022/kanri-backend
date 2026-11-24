@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Person;
 
+use App\Models\Person;
+
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -28,7 +30,7 @@ class PersonAllRequest extends FormRequest
             'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
-            'column' => ['nullable', 'string', 'in:id,document,names,last_names,gender_id,birth_date,blood_type_id,address,phone,created_at,updated_at,deleted_at'],
+            'column' => ['nullable', 'string', 'in:'.implode(',', array_keys(Person::sortable_columns()))],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
             'with_trashed' => ['required', 'boolean'],
             'with_employee' => ['nullable', 'boolean']

@@ -194,7 +194,7 @@ class PersonController extends Controller
                         : $query->whereDoesntHave('employee', fn ($q) => $q->withTrashed());
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                    return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
             $people = $people->paginate($request->integer('per_page', $people->count()));

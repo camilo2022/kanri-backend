@@ -123,7 +123,7 @@ class GroupController extends Controller
                     return $query->withTrashed();
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                    return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
             $groups = $groups->paginate($request->integer('per_page', $groups->count()));

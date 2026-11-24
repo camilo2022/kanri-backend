@@ -7,9 +7,11 @@ use App\Models\MovementDetail;
 use App\Models\Operation;
 use App\Models\Process;
 use App\Models\ProductionOrder;
+use App\Models\ProductionOrderDetail;
 use App\Models\ProductivityDetail;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Builder;
+use Closure;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 
 /**
@@ -32,54 +34,172 @@ class TraceabilityReportService
 
     public const SUBTOTAL = ['background' => '#D9E1F2'];
 
-    public const TOTAL = ['background' => '#FCE4D6'];
+    public const TOTAL = ['background' => '#C2C2C2'];
+
+    /**
+     * Movimientos por proceso de los destinos del reporte, traídos de una vez: [«destino-proceso» => movimientos].
+     */
+    protected Collection $movements;
+
+    /**
+     * Registros de trabajo escaneados de los lotes del reporte, traídos de una vez: [«lote-modelo-id» => registros].
+     */
+    protected Collection $records;
+
+    /**
+     * Lotes que se arman juntos con una sola consulta de movimientos y registros.
+     */
+    public const CHUNK = 200;
+
+    /**
+     * Columnas que calcula el servicio (values de cada fila); las demás se leen del destino por su data_key. Las tallas
+     * van aparte (values.sizes).
+     */
+    public const COLUMNS = ['reference', 'date', 'process', 'subprocess', 'operation', 'curve', 'received', 'dispatched', 'result', 'status'];
+
+    /**
+     * Opciones del filtro calculado inventory: destinos con inventario en un proceso anterior al último (en proceso) o solo
+     * en el último (en bodega, ya terminado).
+     */
+    public const IN_PROCESS = 'in_process';
+
+    public const IN_WAREHOUSE = 'in_warehouse';
 
     public function __construct(protected ProductivityDetailService $service) {}
 
-    public function rows(array $filters): array
+    /**
+     * Filas del reporte y total de lotes. Con $page solo arma los lotes de esa página (en pantalla); sin ella, todos (Excel).
+     * $filters trae solo los filtros que calcula el servicio (fecha de ingreso y procesos a mostrar); los demás llegan en
+     * $scope, que los aplica por su data_key sobre los destinos (production_order_details). Cada fila lleva en model su
+     * destino, del que ReportController lee las columnas descriptivas por su data_key.
+     *
+     * @return array{rows: array, lots: int}
+     */
+    public function rows(array $filters, ?int $page = null, int $per_page = 50, ?Closure $scope = null): array
     {
-        $processes = Process::orderBy('id')->get();
+        $process_ids = $filters[Process::class] ?? null;
+        $processes = Process::orderBy('id')->when($process_ids, fn ($query) => $query->whereIn('id', $process_ids))->get();
+        $from = data_get($filters, 'date.from');
+        $to = data_get($filters, 'date.to');
+        // Destinos que cumplen los filtros por data_key y el de inventario (null: todos)
+        $allowed = $scope ? $scope(ProductionOrderDetail::query())->pluck('id')->flip() : null;
 
-        $orders = $this->filtered(ProductionOrder::query(), $filters)
-            ->with(['technical_sheet' => ['product', 'color'], 'production_order_details_product' => ['model' => ['trademark', 'subcategory' => ['category']]]])
+        if ($filters['inventory'] ?? null) {
+            $stock = $this->stockDestinations($filters['inventory']);
+            $allowed = $allowed === null ? $stock : $allowed->intersectByKeys($stock);
+        }
+
+        $orders = ProductionOrder::query()
+            ->with(['technical_sheet' => ['product', 'color']])
             ->whereHas('production_order_details.movements')
+            ->when($allowed !== null, fn ($lots) => $lots->whereHas('production_order_details', fn ($pod) => $pod->whereIn('id', $allowed->keys())))
+            // Con fechas o procesos, solo los lotes con algún ingreso aprobado que los cumpla (inRange y los procesos elegidos
+            // deciden luego por destino): así las páginas no quedan vacías
+            ->when($from || $to || $process_ids, fn ($lots) => $lots->whereHas('production_order_details.movements', fn ($movement) => $movement
+                ->where('model_type', Process::class)
+                ->when($process_ids, fn ($query) => $query->whereIn('model_id', $process_ids))
+                ->whereHas('movement_details_input', fn ($detail) => $detail
+                    ->where('status', MovementDetail::APPROVED)
+                    ->when($from, fn ($query) => $query->whereDate('updated_at', '>=', $from))
+                    ->when($to, fn ($query) => $query->whereDate('updated_at', '<=', $to)))))
             ->get()
             ->sortBy(fn (ProductionOrder $order) => collect([data_get($order, 'technical_sheet.product.code'), $order->cut])->filter()->implode('-'))
             ->values();
 
+        $lots = $orders->count();
+
+        if ($page) {
+            $orders = $orders->forPage($page, $per_page)->values();
+        }
+
         $rows = [];
 
-        foreach ($orders as $order) {
-            foreach ($this->service->destinations($order) as $destination) {
-                array_push($rows, ...$this->destinationRows($order, $destination, $processes, $filters['date'] ?? null));
+        // Por bloques de lotes: una consulta por tipo de dato para cada bloque (en vez de una por destino, proceso y paso) y
+        // se suelta antes del siguiente, para que el reporte completo (Excel) no se quede sin memoria
+        foreach ($orders->chunk(self::CHUNK) as $chunk) {
+            $chunk->load(['production_order_details_product' => ['model' => ['trademark', 'subcategory' => ['category']]]]);
+
+            $this->movements = Movement::with([
+                'movement_details_input' => fn ($query) => $query->where('status', MovementDetail::APPROVED)->with('movement_detail_quantities'),
+                'movement_details_output' => fn ($query) => $query->whereIn('status', [MovementDetail::APPROVED, MovementDetail::PENDING])->with('movement_detail_quantities'),
+            ])
+                ->where('model_type', Process::class)
+                ->whereIn('production_order_detail_id', $chunk->flatMap->production_order_details_product->pluck('id'))
+                ->get()
+                ->groupBy(fn (Movement $movement) => $movement->production_order_detail_id.'-'.$movement->model_id);
+
+            $this->records = ProductivityDetail::whereIn('production_order_id', $chunk->pluck('id'))
+                ->whereNotNull('settings->scanned_at')
+                ->get(['id', 'production_order_id', 'model_type', 'model_id', 'start', 'end'])
+                ->groupBy(fn (ProductivityDetail $record) => $record->production_order_id.'-'.$record->model_type.'-'.$record->model_id);
+
+            foreach ($chunk as $order) {
+                foreach ($this->service->destinations($order) as $destination) {
+                    if ($allowed !== null && ! $allowed->has($destination['production_order_detail_id'])) {
+                        continue;
+                    }
+
+                    array_push($rows, ...$this->destinationRows($order, $destination, $processes, $filters['date'] ?? null));
+                }
+
+                $order->unsetRelation('production_order_details_product');
             }
         }
 
-        return $rows;
+        $this->movements = collect();
+        $this->records = collect();
+
+        return ['rows' => $rows, 'lots' => $lots];
     }
 
     /**
-     * Lotes por marca, categoría y colección (los mismos catálogos de los demás reportes).
+     * Destinos con inventario según las opciones elegidas, de una vez en la base: por movimiento de proceso, lo recibido
+     * (ingresos aprobados) contra lo despachado (salidas aprobadas y pendientes), las mismas cuentas de stage(). El último
+     * proceso es el del final del flujo: tiene procesos anteriores y ninguno siguiente (BODEGA).
+     *
+     * @return Collection<int, int> [destino => índice]
      */
-    protected function filtered(Builder $query, array $filters): Builder
+    protected function stockDestinations(array $options): Collection
     {
-        return $query
-            ->when($filters['App\Models\Trademark'] ?? null, fn ($lots, $ids) => $lots->whereHas('technical_sheet.product', fn ($product) => $product->whereIn('trademark_id', $ids)))
-            ->when($filters['App\Models\Category'] ?? null, fn ($lots, $ids) => $lots->whereHas('technical_sheet.product.subcategory.category', fn ($category) => $category->whereIn($category->getModel()->getQualifiedKeyName(), $ids)))
-            ->when($filters['App\Models\Collection'] ?? null, fn ($lots, $ids) => $lots->whereHas('technical_sheet', fn ($sheet) => $sheet->whereIn('collection_id', $ids)));
+        $last = Process::get()
+            ->filter(fn (Process $process) => $process->before_processes()->exists() && ! $process->after_processes()->exists())
+            ->modelKeys();
+
+        $quantities = DB::table('movement_detail_quantities')
+            ->whereNotNull('size_id')
+            ->groupBy('movement_detail_id')
+            ->select('movement_detail_id', DB::raw('SUM(quantity) AS units'));
+        $received = DB::table('movement_details')
+            ->joinSub($quantities, 'quantities', 'quantities.movement_detail_id', '=', 'movement_details.id')
+            ->where('status', MovementDetail::APPROVED)
+            ->groupBy('movement_id')
+            ->select('movement_id', DB::raw('SUM(units) AS units'));
+        $dispatched = DB::table('movement_details')
+            ->joinSub($quantities, 'quantities', 'quantities.movement_detail_id', '=', 'movement_details.id')
+            ->where('model_type', Movement::class)
+            ->whereIn('status', [MovementDetail::APPROVED, MovementDetail::PENDING])
+            ->groupBy('model_id')
+            ->select('model_id', DB::raw('SUM(units) AS units'));
+
+        $stock = DB::table('movements')
+            ->joinSub($received, 'received', 'received.movement_id', '=', 'movements.id')
+            ->leftJoinSub($dispatched, 'dispatched', 'dispatched.model_id', '=', 'movements.id')
+            ->where('movements.model_type', Process::class)
+            ->whereRaw('received.units > COALESCE(dispatched.units, 0)')
+            ->get(['movements.production_order_detail_id', 'movements.model_id'])
+            ->groupBy('production_order_detail_id')
+            ->map(fn ($movements) => $movements->pluck('model_id')->diff($last)->isNotEmpty() ? self::IN_PROCESS : self::IN_WAREHOUSE);
+
+        return $stock->filter(fn ($place) => in_array($place, $options, true))->keys()->flip();
     }
 
     protected function destinationRows(ProductionOrder $order, array $destination, Collection $processes, mixed $date): array
     {
         $pod = $order->production_order_details_product->firstWhere('id', $destination['production_order_detail_id']);
         $curve = (int) collect($destination['sizes'])->sum('quantity');
-        $base = [
-            'reference' => collect([$destination['reference'], $order->cut])->filter()->implode('-'),
-            'destination' => $destination['destination'],
-            'category' => data_get($pod, 'model.subcategory.category.0.name'),
-            'trademark' => data_get($pod, 'model.trademark.name'),
-            'color' => data_get($order, 'technical_sheet.color.name'),
-        ];
+        $base = ['reference' => collect([$destination['reference'], $order->cut])->filter()->implode('-')];
+        // El destino es el registro de las columnas descriptivas (production_order.technical_sheet…, model…)
+        $pod->setRelation('production_order', $order);
 
         $stages = $processes->map(fn (Process $process) => $this->stage($process, $pod->id))->filter()->values();
 
@@ -122,7 +242,6 @@ class TraceabilityReportService
         $rows[] = [
             'values' => [
                 'reference' => $base['reference'],
-                'destination' => $base['destination'],
                 'process' => 'TOTAL EN PROCESO',
                 'result' => (int) $stages->sum(fn ($stage) => max(0, $stage['received'] - $stage['dispatched'])),
                 'sizes' => $stages->reduce(function ($sizes, $stage) {
@@ -137,7 +256,7 @@ class TraceabilityReportService
             'level' => 0,
         ];
 
-        return $rows;
+        return array_map(fn (array $row) => $row + ['model' => $pod], $rows);
     }
 
     /**
@@ -159,14 +278,7 @@ class TraceabilityReportService
      */
     protected function stage(Process $process, int $pod_id): ?array
     {
-        $movements = Movement::with([
-            'movement_details_input' => fn ($query) => $query->where('status', MovementDetail::APPROVED)->with('movement_detail_quantities'),
-            'movement_details_output' => fn ($query) => $query->whereIn('status', [MovementDetail::APPROVED, MovementDetail::PENDING])->with('movement_detail_quantities'),
-        ])
-            ->where('model_type', Process::class)
-            ->where('model_id', $process->id)
-            ->where('production_order_detail_id', $pod_id)
-            ->get();
+        $movements = $this->movements->get($pod_id.'-'.$process->id, collect());
 
         $inputs = $movements->flatMap->movement_details_input->sortBy('id')->values();
 
@@ -238,22 +350,19 @@ class TraceabilityReportService
                     return null;
                 }
 
-                $records = ProductivityDetail::where('production_order_id', $order->id)
-                    ->where('model_type', $workstation::class)
-                    ->where('model_id', $workstation->id)
-                    ->whereNotNull('settings->scanned_at');
-                $first = (clone $records)->min('start');
+                $records = $this->records->get($order->id.'-'.$workstation::class.'-'.$workstation->id, collect());
+                $first = $records->min('start');
 
                 if (! $first) {
                     return null;
                 }
 
-                $finished = (clone $records)->whereNotNull('end')->exists();
+                $finished = $records->whereNotNull('end')->isNotEmpty();
                 // El paso que registró el ingreso del destino guardó lo que produjo por talla
                 $produced = MovementDetail::with('movement_detail_quantities')
                     ->whereIn('id', $stage['entry_ids'])
                     ->where('model_type', ProductivityDetail::class)
-                    ->whereIn('model_id', (clone $records)->pluck('id'))
+                    ->whereIn('model_id', $records->pluck('id'))
                     ->get();
 
                 $done = $this->service->programmable($process, $workstation)
@@ -262,7 +371,7 @@ class TraceabilityReportService
                 $complete = $done >= $stage['received'];
 
                 return [
-                    'subprocess' => $step instanceof Operation ? $step->subprocess()->first()?->name : $step->name,
+                    'subprocess' => $step instanceof Operation ? $this->service->subprocessOf($step)?->name : $step->name,
                     'operation' => $step instanceof Operation ? $step->name : null,
                     'date' => $first ? Carbon::parse($first)->format('Y-m-d') : null,
                     'received' => $stage['received'],

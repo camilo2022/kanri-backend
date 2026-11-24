@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\TechnicalSheet\ProductionOrder;
 
+use App\Models\ProductionOrder;
+
 use App\Models\Operation;
 use App\Models\Process;
 use App\Models\Subprocess;
@@ -32,7 +34,7 @@ class ProductionOrderAllRequest extends FormRequest
             'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
-            'column' => ['nullable', 'string', 'in:id,consecutive,cut,created_at,updated_at,deleted_at'],
+            'column' => ['nullable', 'string', 'in:'.implode(',', array_keys(ProductionOrder::sortable_columns()))],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
             'with_trashed' => ['required', 'boolean'],
             'technical_sheet_id' => ['nullable', 'numeric', 'exists:technical_sheets,id'],

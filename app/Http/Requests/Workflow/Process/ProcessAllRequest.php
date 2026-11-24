@@ -29,13 +29,14 @@ class ProcessAllRequest extends FormRequest
             'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
-            'column' => ['nullable', 'string', 'in:id,name,description,created_at,updated_at,deleted_at'],
+            'column' => ['nullable', 'string', 'in:'.implode(',', array_keys(Process::sortable_columns()))],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
             'with_trashed' => ['required', 'boolean'],
             'process_id' => ['nullable', 'numeric', 'exists:subitems,id,item_id,' . Process::ITEM_ID],
             'in_technical_sheet' => ['nullable', 'boolean'],
             'in_production_order' => ['nullable', 'boolean'],
             'with_typologies' => ['nullable', 'boolean'],
+            'with_trashed_children' => ['nullable', 'boolean'],
         ];
     }
 
@@ -55,6 +56,7 @@ class ProcessAllRequest extends FormRequest
             'column' => 'Columna a ordenar.',
             'dir' => 'Sentido del orden.',
             'with_trashed' => 'Registros inactivos',
+            'with_trashed_children' => 'Subprocesos y operaciones inactivos',
             'process_id' => 'Identificador del proceso.',
             'in_technical_sheet' => 'Aplica a Ficha Técnica'
         ];
@@ -68,6 +70,9 @@ class ProcessAllRequest extends FormRequest
         }
         if ($this->has('in_production_order')) {
             $this->merge(['in_production_order' => $this->boolean('in_production_order')]);
+        }
+        if ($this->has('with_trashed_children')) {
+            $this->merge(['with_trashed_children' => $this->boolean('with_trashed_children')]);
         }
     }
 }

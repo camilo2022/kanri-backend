@@ -18,9 +18,11 @@ use App\Imports\ImportErrorReport;
 use App\Imports\SupplyImport;
 use App\Models\Supply;
 use App\Models\SupplyType;
+use App\Services\SupplyService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -28,8 +30,8 @@ use Maatwebsite\Excel\Facades\Excel;
  * @OA\Schema(
  *     schema="SupplySettings",
  *     type="object",
- *     description="Configuración del insumo. Se guarda tal cual llega. El frontend guarda en `values` los campos simples del formulario de su tipo (los `selectdinamic` van como relaciones, no aquí).",
- *     @OA\Property(property="values", type="object", additionalProperties=true, example={"width": 150, "heigth": 1200})
+ *     description="Configuración del insumo. La arma el Request: en `values` van los campos simples del formulario de su tipo y las listas «asociado a» (`[{origin_id, ids}]`: por cada elemento del campo de origen, los ids elegidos). Los `selectdinamic` van como relaciones y las fotos como archivos (`files`), no aquí.",
+ *     @OA\Property(property="values", type="object", additionalProperties=true, example={"width": 150, "tallas": {{"origin_id": 512, "ids": {30, 31}}, {"origin_id": 515, "ids": {30}}}})
  * )
  *
  * @OA\Schema(
@@ -99,12 +101,14 @@ use Maatwebsite\Excel\Facades\Excel;
  *     schema="SupplyRequest",
  *     type="object",
  *     required={"supply_type_id", "name", "description"},
- *     description="Además de los campos fijos, se validan los del formulario del tipo de insumo (`settings.form`) con sus propias reglas: los campos simples en `values.<campo>` y los `selectdinamic` en `class.<campo>` (un id, o una lista si son `multiple`).",
+ *     description="Se envía como `multipart/form-data`. Además de los campos fijos, se validan los del formulario del tipo de insumo (`settings.form`) con sus propias reglas: los campos simples en `values.<campo>`, los `selectdinamic` en `class.<campo>` (un id, o una lista si son `multiple`), las listas «asociado a» en `values.<campo>` como `[{origin_id, ids[]}]` (el `origin_id` debe estar elegido en el campo de origen) y las fotos en `photos.<campo>[]` (foto general) o `photos.<campo>.<origin_id>[]` (foto asociada), JPG o PNG de máximo 2 MB. Con «una sola foto», la nueva reemplaza la anterior.",
  *     @OA\Property(property="supply_type_id", type="integer", description="Tipo de insumo. Al crear se asocia; al editar no es obligatorio, pero sin él no se validan los campos del formulario.", example=218),
  *     @OA\Property(property="name", type="string", minLength=4, maxLength=50, description="Nombre en MAYÚSCULAS. Único entre los insumos.", example="DENIM STRETCH 12 OZ"),
  *     @OA\Property(property="description", type="string", maxLength=255, description="Descripción en MAYÚSCULAS.", example="DENIM AZUL ÍNDIGO CON ELASTANO"),
  *     @OA\Property(property="values", type="object", additionalProperties=true, description="Campos simples del formulario (se validan, pero no se guardan por sí solos: el frontend los copia a `settings.values`).", example={"width": 150, "heigth": 1200}),
  *     @OA\Property(property="class", type="object", additionalProperties=true, description="Campos `selectdinamic`: se guardan como relaciones del insumo.", example={"supplier_id": 470, "color_id": {512, 515}}),
+ *     @OA\Property(property="photos", type="object", additionalProperties=true, description="Fotos nuevas por campo: `photos[foto_general][]` o `photos[foto][512][]`."),
+ *     @OA\Property(property="deleted_files", type="array", @OA\Items(type="integer"), description="Al editar: ids de fotos del insumo que se borran.", example={901}),
  *     @OA\Property(property="settings", ref="#/components/schemas/SupplySettings")
  * )
  */
@@ -117,7 +121,7 @@ class SupplyController extends Controller
      *     path="/typification/supply_types/supplies/all/{supply_type_id}",
      *     tags={"Typification › Supplies"},
      *     summary="Listar los insumos de un tipo de insumo",
-     *     description="Cada insumo trae `item`, `settings`, sus detalles de órdenes de producción y sus relaciones dinámicas. También la pueden consultar quienes configuran procesos, subprocesos u operaciones. Hoy responde **500** si el tipo de insumo tiene campos `selectdinamic` (TELA, ROLLO…), porque el modelo `Supply` no tiene el método `related()` (ver pendientes).",
+     *     description="Cada insumo trae `item`, `settings`, sus detalles de órdenes de producción y sus relaciones dinámicas. También la pueden consultar quienes configuran procesos, subprocesos u operaciones. Con `supply_id` trae solo los relacionados con ese insumo (los rollos de una tela, en la orden de producción).",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
      *         name="supply_type_id",
@@ -138,6 +142,13 @@ class SupplyController extends Controller
      *     @OA\Parameter(ref="#/components/parameters/PerPage"),
      *     @OA\Parameter(ref="#/components/parameters/Page"),
      *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
+     *     @OA\Parameter(
+     *         name="supply_id",
+     *         in="query",
+     *         required=false,
+     *         description="Solo los insumos relacionados con este insumo (por ejemplo, los rollos de una tela).",
+     *         @OA\Schema(type="integer", example=26029)
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Lista de insumos cargada correctamente",
@@ -161,6 +172,11 @@ class SupplyController extends Controller
         try {
             $supplies = Supply::with(['supply_type', 'production_order_details'])
                 ->whereHas('supply_type', fn ($r) => $r->where('id', $supply_type_id))
+                // Relacionados con otro insumo (los rollos de una tela): la fila de model_has_subitems va del insumo listado al otro
+                ->when($request->filled('supply_id'), fn ($query) => $query->whereIn('subitems.id', DB::table('model_has_subitems')
+                    ->where('model_type', Supply::class)
+                    ->where('model_id', $request->integer('supply_id'))
+                    ->select('subitem_id')))
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -168,7 +184,7 @@ class SupplyController extends Controller
                     return $query->withTrashed();
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                    return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
             $supplies = $supplies->paginate($request->integer('per_page', $supplies->count()));
@@ -211,7 +227,7 @@ class SupplyController extends Controller
     public function find(SupplyFindRequest $request, $id)
     {
         try {
-            $supply = Supply::with(['supply_type'])->findOrFail($id);
+            $supply = Supply::with(['supply_type', 'files'])->findOrFail($id);
 
             return $this->successResponse(
                 new SupplyResource($supply),
@@ -234,13 +250,13 @@ class SupplyController extends Controller
      *     path="/typification/supply_types/supplies/store",
      *     tags={"Typification › Supplies"},
      *     summary="Crear un insumo",
-     *     description="Crea el insumo, lo asocia a su tipo y guarda como relaciones los campos `selectdinamic` que lleguen en `class`. Hoy responde **500** si el tipo de insumo tiene campos `selectdinamic` (TELA, ROLLO…), porque el modelo `Supply` no tiene el método `related()` (ver pendientes).",
+     *     description="Crea el insumo, lo asocia a su tipo, guarda como relaciones los campos `selectdinamic` que lleguen en `class` y sube las fotos (siempre con el subtipo FOTO INSUMO, `Supply::PHOTO_FILE_SUBTYPE_ID`, carpeta `storage/supply`).",
      *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/SupplyRequest",
-     *             example={"supply_type_id": 218, "name": "DENIM STRETCH 12 OZ", "description": "DENIM AZUL ÍNDIGO CON ELASTANO", "values": {"width": 150, "heigth": 1200}, "class": {"supplier_id": 470, "color_id": {512, 515}}, "settings": {"values": {"width": 150, "heigth": 1200}}}
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(ref="#/components/schemas/SupplyRequest")
      *         )
      *     ),
      *     @OA\Response(
@@ -287,6 +303,10 @@ class SupplyController extends Controller
                     }
                 });
 
+            app(SupplyService::class)->syncFiles($supply, $request, $supply->supply_type->first()?->settings?->form ?? []);
+
+            $supply->load(['files']);
+
             return $this->successResponse(
                 new SupplyResource($supply),
                 $this->getMessage('Success'),
@@ -308,14 +328,14 @@ class SupplyController extends Controller
      *     path="/typification/supply_types/supplies/update/{id}",
      *     tags={"Typification › Supplies"},
      *     summary="Editar un insumo",
-     *     description="Reemplaza nombre, descripción y `settings`, y sincroniza las relaciones de `class` que lleguen. No cambia el tipo de insumo. Hoy responde **500** si el tipo de insumo tiene campos `selectdinamic` (TELA, ROLLO…), porque el modelo `Supply` no tiene el método `related()` (ver pendientes).",
+     *     description="Reemplaza nombre, descripción y `settings`, sincroniza las relaciones de `class` que lleguen y actualiza las fotos: sube las nuevas, borra las de `deleted_files` y las de elementos del origen que ya no están elegidos. No cambia el tipo de insumo. El frontend lo envía por POST con `_method=PUT` porque lleva archivos.",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/SupplyRequest",
-     *             example={"supply_type_id": 218, "name": "DENIM STRETCH 12 OZ", "description": "DENIM AZUL ÍNDIGO CON ELASTANO Y LAVADO OSCURO", "values": {"width": 150, "heigth": 1000}, "class": {"supplier_id": 470, "color_id": {512}}, "settings": {"values": {"width": 150, "heigth": 1000}}}
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(ref="#/components/schemas/SupplyRequest")
      *         )
      *     ),
      *     @OA\Response(
@@ -360,6 +380,10 @@ class SupplyController extends Controller
                             ->sync(Arr::wrap($request->input("class.$relationship->field")));
                     }
                 });
+
+            app(SupplyService::class)->syncFiles($supply, $request, $supply->supply_type->first()?->settings?->form ?? []);
+
+            $supply->load(['files']);
 
             return $this->successResponse(
                 new SupplyResource($supply),
@@ -593,12 +617,17 @@ class SupplyController extends Controller
                 ], 422);
             }
 
+            // El Excel no trae las listas «asociado a»: las que el insumo ya tenía se conservan
+            $associated = collect(app(SupplyService::class)->associatedListFields($supply_type->settings->form ?? []))->pluck('field')->all();
+
             foreach ($supplies as $item) {
+                $kept = Arr::only((array) (Supply::firstWhere('name', $item['name'])?->settings?->values ?? []), $associated);
+
                 $supply = Supply::updateOrCreate(
                     ['name' => $item['name']],
                     [
                         'description' => $item['description'],
-                        'settings' => $item['settings'] ?? (object) [],
+                        'settings' => ['values' => array_merge($item['settings']['values'] ?? [], $kept)],
                     ]
                 );
 

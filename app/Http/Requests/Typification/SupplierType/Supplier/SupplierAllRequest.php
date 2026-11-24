@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Typification\SupplierType\Supplier;
 
+use App\Models\Supplier;
+
 use App\Models\SupplierType;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -30,7 +32,7 @@ class SupplierAllRequest extends FormRequest
             'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
-            'column' => ['nullable', 'string', 'in:id,name,description,created_at,updated_at,deleted_at'],
+            'column' => ['nullable', 'string', 'in:'.implode(',', array_keys(Supplier::sortable_columns()))],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
             'with_trashed' => ['required', 'boolean'],
         ];

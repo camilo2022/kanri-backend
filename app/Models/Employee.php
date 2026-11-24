@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\SortableByRelation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +14,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 class Employee extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
+    use SortableByRelation;
 
     protected $table = 'employees';
 
@@ -134,5 +136,27 @@ class Employee extends Model implements Auditable
                 });
             }
         });
+    }
+
+    public static function sortable_columns(): array
+    {
+        return [
+            'id' => 'id',
+            'operation_center' => 'operation_center',
+            'start_date' => 'start_date',
+            'end_date' => 'end_date',
+            'document' => 'person.document',
+            'name' => ['person.names', 'person.last_names'],
+            'position' => 'position.name',
+            'area' => 'position.area.name',
+            'workstation' => 'workstation.name',
+            'risk_manager' => 'risk_manager.name',
+            'health_entity' => 'health_entity.name',
+            'pension_fund' => 'pension_fund.name',
+            'compensation_fund' => 'compensation_fund.name',
+            'created_at' => 'created_at',
+            'updated_at' => 'updated_at',
+            'deleted_at' => 'deleted_at',
+        ];
     }
 }

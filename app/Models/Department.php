@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\SortableByRelation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Department extends Model
 {
+    use SortableByRelation;
+
     protected $table = 'departments';
 
     protected $fillable = [
@@ -40,5 +43,13 @@ class Department extends Model
         $search = trim((string) $search);
 
         return $search === '' ? $query : $query->where('name', 'LIKE', '%'.$search.'%');
+    }
+
+    public static function sortable_columns(): array
+    {
+        return [
+            'id' => 'id',
+            'name' => 'name',
+        ];
     }
 }

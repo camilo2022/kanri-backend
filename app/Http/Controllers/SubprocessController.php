@@ -28,8 +28,8 @@ use App\Traits\ApiResponser;
  *     type="object",
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="item_id", type="integer", example=10),
- *     @OA\Property(property="name", type="string", example="No Aplica"),
- *     @OA\Property(property="description", type="string", example="No Aplica"),
+ *     @OA\Property(property="name", type="string", example="NO APLICA"),
+ *     @OA\Property(property="description", type="string", example="NO APLICA"),
  *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
  *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
@@ -137,11 +137,11 @@ class SubprocessController extends Controller
      *     )
      * )
      */
-    public function all(SubprocessAllRequest $request, $process_id)
+    public function all(SubprocessAllRequest $request, $process_id = null)
     {
         try {
             $subprocesses = Subprocess::with(['item', 'process', 'before_subprocesses', 'after_subprocesses'])
-                ->whereHas('process', fn($r) => $r->where('id', $process_id))
+                ->when($process_id, fn ($query) => $query->whereHas('process', fn ($r) => $r->where('id', $process_id)))
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -149,7 +149,7 @@ class SubprocessController extends Controller
                     return $query->withTrashed();
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                    return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
             $subprocesses = $subprocesses->paginate($request->integer('per_page', $subprocesses->count()));

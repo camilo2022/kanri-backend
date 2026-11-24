@@ -70,6 +70,57 @@ class FileService
         );
     }
 
+    // A diferencia de save, siempre crea un archivo nuevo: un registro puede tener varios del mismo subtipo y settings dice a qué pertenece cada uno
+    public function add($model, $file, $file_type_id, $file_subtype_id, array $settings, $disk = 'public', $folder = 'files', ?string $file_name = null)
+    {
+        if (str_starts_with($file->getMimeType(), 'image/')) {
+            $file = $this->process_image($file);
+        }
+
+        $path = $file_name
+            ? Storage::disk($disk)->putFileAs($folder, $file, $file_name.'.'.$file->getClientOriginalExtension())
+            : Storage::disk($disk)->putFile($folder, $file);
+        $storage_path = storage_path($disk.'/storage/'.$path);
+        $this->corregirOrientacion($storage_path);
+
+        $metadata = [
+            'original_name' => $file->getClientOriginalName(),
+            'original_extension' => $file->getClientOriginalExtension(),
+            'client_mime' => $file->getClientMimeType(),
+            'mime' => $file->getMimeType(),
+            'extension' => $file->getClientOriginalExtension(),
+            'size' => $file->getSize(),
+            'hash_md5' => md5_file($file->getPathname()),
+            'hash_sha256' => hash_file('sha256', $file->getPathname()),
+            'uploaded_at' => now()->toDateTimeString(),
+        ];
+
+        if (str_starts_with($file->getMimeType(), 'image/')) {
+            [$width, $height] = getimagesize($file->getPathname());
+            $metadata['image'] = compact('width', 'height');
+        }
+
+        return File::create([
+            'model_id' => $model->id,
+            'model_type' => get_class($model),
+            'file_type_id' => $file_type_id,
+            'file_subtype_id' => $file_subtype_id,
+            'name' => $file_name ?? pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+            'path' => $path,
+            'mime' => $file->getMimeType(),
+            'extension' => $file->getClientOriginalExtension(),
+            'size' => $file->getSize(),
+            'metadata' => $metadata,
+            'settings' => $settings,
+        ]);
+    }
+
+    public function remove(File $file, $disk = 'public')
+    {
+        Storage::disk($disk)->delete($file->getRawOriginal('path'));
+        $file->delete();
+    }
+
     public function save_document($model, $file, $file_type_id, $file_subtype_id, $disk = 'public', $folder = 'files')
     {
         if (str_starts_with($file->getMimeType(), 'image/')) {

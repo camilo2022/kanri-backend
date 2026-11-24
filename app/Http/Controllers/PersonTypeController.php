@@ -143,7 +143,7 @@ class PersonTypeController extends Controller
                     return $query->withTrashed();
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                    return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
             $person_types = $person_types->paginate($request->integer('per_page', $person_types->count()));

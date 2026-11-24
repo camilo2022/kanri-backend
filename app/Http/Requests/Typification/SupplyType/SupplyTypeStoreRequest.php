@@ -32,7 +32,7 @@ class SupplyTypeStoreRequest extends FormRequest
             'settings.has_supplies' => ['required', 'boolean'],
             'settings.in_technical_sheet' => ['required', 'boolean'],
             'settings.in_production_order' => ['required', 'boolean'],
-            'settings.paragraph' => ['required_if:settings.in_production_order,true', 'in:fabric,roll'],
+            'settings.paragraph' => ['nullable', 'required_if:settings.in_production_order,true', 'in:fabric,roll'],
         ];
     }
 
@@ -43,8 +43,20 @@ class SupplyTypeStoreRequest extends FormRequest
             'description' => 'Descripción',
             'settings' => 'Configuraciones',
             'settings.has_supplies' => 'Tiene insumos',
-            'settings.in_technical_sheet' => 'Aplica a Ficha Técnica'
+            'settings.in_technical_sheet' => 'Aplica a Ficha Técnica',
+            'settings.in_production_order' => 'Aplica a Orden de Producción',
+            'settings.paragraph' => 'Apartado',
         ];
+    }
+
+    protected function prepareForValidation()
+    {
+        // Un indicador que no llega (tipos sin configurar, por ejemplo los que trajo la migración) vale falso
+        $this->merge(['settings' => array_merge((array) $this->input('settings', []), [
+            'has_supplies' => $this->boolean('settings.has_supplies'),
+            'in_technical_sheet' => $this->boolean('settings.in_technical_sheet'),
+            'in_production_order' => $this->boolean('settings.in_production_order'),
+        ])]);
     }
 
     public function withValidator($validator)
@@ -64,7 +76,7 @@ class SupplyTypeStoreRequest extends FormRequest
 
             if ($exist) {
                 $validator->errors()->add(
-                    'paragraph',
+                    'settings.paragraph',
                     "Ya existe un tipo de insumo configurado con este apartado. Solo puede existir uno por apartado."
                 );
             }

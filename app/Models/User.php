@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\SortableByRelation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +18,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements Auditable
 {
     use Auditing, HasApiTokens, HasFactory, HasRoles, Notifiable, SoftDeletes;
+    use SortableByRelation;
 
     protected $table = 'users';
 
@@ -114,5 +116,16 @@ class User extends Authenticatable implements Auditable
         }
 
         return $data;
+    }
+
+    public static function sortable_columns(): array
+    {
+        return [
+            'id' => 'id',
+            'username' => 'username',
+            'name' => ['employee.person.names', 'employee.person.last_names'],
+            'created_at' => 'created_at',
+            'updated_at' => 'updated_at',
+        ];
     }
 }

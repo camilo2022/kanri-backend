@@ -10,6 +10,7 @@ use App\Models\FileSubtype;
 use App\Models\Gender;
 use App\Models\Supplier;
 use App\Models\SupplierType;
+use App\Services\BankAccountService;
 use App\Services\PersonService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -40,7 +41,7 @@ class SupplierStoreRequest extends FormRequest
             'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,NULL,id,item_id,'.Supplier::ITEM_ID],
             'description' => ['required', 'uppercase', 'string', 'max:255'],
             'settings' => ['required', 'array'],
-            'settings.code' => ['required', 'numeric', 'digits_between:2,5'],
+            'settings.code' => ['required', 'numeric', 'digits_between:1,5'],
         ];
 
         if ($supplier_type?->settings?->has_person) {
@@ -48,7 +49,7 @@ class SupplierStoreRequest extends FormRequest
             $rules['person'] = ['required', 'array'];
             $rules['person.document_type_id'] = ['required', 'numeric', 'exists:subitems,id,item_id,'.DocumentType::ITEM_ID.',deleted_at,NULL'];
             $rules['person.document'] = ['required', 'string', 'max:30', 'unique:people,document'];
-            $rules['person.email'] = ['required', 'string', 'email', 'max:255', 'unique:people,email'];
+            $rules['person.email'] = ['nullable', 'string', 'email', 'max:255', 'unique:people,email'];
             $rules['person.names'] = ['required', 'string', 'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/'];
             $rules['person.last_names'] = ['required', 'string', 'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/'];
             $rules['person.gender_id'] = ['required', 'numeric', 'exists:subitems,id,item_id,'.Gender::ITEM_ID.',deleted_at,NULL'];
@@ -67,7 +68,7 @@ class SupplierStoreRequest extends FormRequest
 
             $rules['account_bank'] = ['required', 'array'];
             $rules['account_bank.bank_id'] = ['required', 'numeric', 'exists:subitems,id,item_id,'.Bank::ITEM_ID.',deleted_at,NULL'];
-            $rules['account_bank.account_number'] = ['required', 'numeric', 'digits:10'];
+            $rules['account_bank.account_number'] = ['required', 'string', 'max:30'];
             $rules['account_bank.account_type_id'] = ['required', 'numeric', 'exists:subitems,id,item_id,'.AccountType::ITEM_ID.',deleted_at,NULL'];
             $rules['account_bank.bank_certificate'] = ['required', 'array'];
             $rules['account_bank.bank_certificate.file'] = ['required', 'file', 'mimes:pdf', 'max:10240'];
@@ -123,11 +124,6 @@ class SupplierStoreRequest extends FormRequest
                     && ($error = $service->locationError((string) $this->input('person.location_type'), $this->integer('person.location_id')))) {
                     $validator->errors()->add('person.location_id', $error);
                 }
-
-                if (! $validator->errors()->has('person.location_id') && ! $validator->errors()->has('person.phone_country_id')
-                    && $service->locationCountryId((string) $this->input('person.location_type'), $this->integer('person.location_id')) !== $this->integer('person.phone_country_id')) {
-                    $validator->errors()->add('person.phone_country_id', 'El indicativo del teléfono debe ser el del país de la ubicación.');
-                }
             }
 
             $supplier_type = SupplierType::find(
@@ -136,6 +132,12 @@ class SupplierStoreRequest extends FormRequest
 
             if (! $supplier_type?->settings?->has_account_bank) {
                 return;
+            }
+
+            // Número de cuenta según la regla de su banco para ese tipo de cuenta
+            if (! $validator->errors()->hasAny(['account_bank.bank_id', 'account_bank.account_type_id', 'account_bank.account_number'])
+                && ($error = app(BankAccountService::class)->accountError($this->integer('account_bank.bank_id'), $this->integer('account_bank.account_type_id'), (string) $this->input('account_bank.account_number')))) {
+                $validator->errors()->add('account_bank.'.$error[0], $error[1]);
             }
 
             $file = $this->file('account_bank.bank_certificate.file');

@@ -20,6 +20,12 @@ use App\Services\ProductivityReportService;
 use App\Services\TraceabilityReportService;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
+use App\Traits\ModelTypes;
+use App\Traits\ReportValues;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Maatwebsite\Excel\Facades\Excel;
 
 /**
@@ -39,8 +45,8 @@ use Maatwebsite\Excel\Facades\Excel;
  *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="item_id", type="integer", example=21),
- *     @OA\Property(property="name", type="string", example="No Aplica"),
- *     @OA\Property(property="description", type="string", example="No Aplica"),
+ *     @OA\Property(property="name", type="string", example="NO APLICA"),
+ *     @OA\Property(property="description", type="string", example="NO APLICA"),
  *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
  *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
@@ -59,7 +65,7 @@ use Maatwebsite\Excel\Facades\Excel;
  */
 class ReportController extends Controller
 {
-    use ApiMessage, ApiResponser;
+    use ApiMessage, ApiResponser, ModelTypes, ReportValues;
 
     /**
      * @OA\Get(
@@ -178,7 +184,7 @@ class ReportController extends Controller
                     return $query->withTrashed();
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                    return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
             $reports = $reports->paginate($request->integer('per_page', $reports->count()));
@@ -249,8 +255,6 @@ class ReportController extends Controller
         }
 
         if ($data === 'processes') {
-            // Camino hasta la ficha según el data_key: en fichas es directo; en detalles de orden pasa por
-            // production_order.technical_sheet
             $sheet_path = array_values(array_diff($parts, ['technical_sheet_details']));
             $processes_relation = implode('.', [...$sheet_path, 'technical_sheet_details_processes']);
 
@@ -297,42 +301,168 @@ class ReportController extends Controller
     }
 
     /**
-     * Filas de un reporte con settings.source (trazabilidad, productividad): las arma su servicio y aquí se proyectan a
-     * las columnas elegidas, con la forma de DataCollection (data: [etiqueta => [value, style]], fields: etiquetas).
+     * Filas de un reporte con settings.source (trazabilidad, productividad), con la forma de DataCollection (data:
+     * [etiqueta => [value, style]], fields: etiquetas, levels, pagination). El servicio arma las filas y sus valores
+     * calculados (sus COLUMNS y las tallas); las demás columnas se leen del registro de cada fila (model) por su data_key,
+     * con el formato elegido, igual que en los reportes por modelo. Los filtros con calculated los aplica el servicio; los
+     * demás, por su data_key sobre el modelo del reporte.
      */
-    private function sourceRows(Report $report, $request): array
+    private function source_rows(Report $report, $request): array
     {
-        $labels = collect($report->settings->fields ?? [])
-            ->flatMap(fn ($group) => collect(data_get($group, 'fields', [])))
-            ->mapWithKeys(fn ($field) => [data_get($field, 'data_key') => data_get($field, 'label')]);
+        $service = match ($report->settings->source) {
+            'traceability' => app(TraceabilityReportService::class),
+            'productivity' => app(ProductivityReportService::class),
+        };
+
+        // values(): varios grupos usan la misma clave (date en Recorrido y en Ficha Técnica) y se pisarían
+        $configured_fields = collect($report->settings->fields ?? [])
+            ->flatMap(fn ($group) => collect(data_get($group, 'fields', []))->values())
+            ->filter(fn ($field) => filled(data_get($field, 'data_key')))
+            ->keyBy(fn ($field) => data_get($field, 'data_key'));
+
+        $calculated_filters = [];
+        $path_filters = [];
+
+        foreach ($request->validated('filters', []) as $filter_key => $values) {
+            $config = data_get($report->settings->filters ?? [], $filter_key);
+
+            if (! $config || empty($values)) {
+                continue;
+            }
+
+            if (data_get($config, 'calculated')) {
+                $calculated_filters[$filter_key] = $values;
+            } else {
+                $path_filters[] = [data_get($config, 'data'), data_get($config, 'data_key'), $values, data_get($config, 'type', 'select')];
+            }
+        }
+
+        $scope = $path_filters ? function ($query) use ($path_filters) {
+            foreach ($path_filters as [$data, $data_key, $values, $type]) {
+                $query = $this->apply_filter($query, (string) $data, (string) $data_key, $values, $type);
+            }
+
+            return $query;
+        } : null;
+
+        // En pantalla llega page y se arma solo esa página de lotes; el Excel (export) no la envía y lleva todo
+        $page = $request->validated('page');
+        $per_page = $request->integer('per_page', 50);
+        $result = $service->rows($calculated_filters, $page, $per_page, $scope);
+        $rows = $result['rows'];
+
         // Las columnas dinámicas de tallas llegan como «id_nombre» (374_T04), igual que en los demás reportes
         $columns = collect($request->validated('fields', []))
-            ->map(function ($item) use ($labels) {
-                $key = data_get($item, 'data_key');
+            ->map(function ($item) use ($configured_fields, $service) {
+                $data_key = (string) data_get($item, 'data_key');
 
-                return preg_match('/^(\d+)_(.+)$/', (string) $key, $size)
-                    ? ['label' => $size[2], 'size' => (int) $size[1]]
-                    : ($labels->has($key) ? ['label' => $labels[$key], 'key' => $key] : null);
+                if (preg_match('/^(\d+)_(.+)$/', $data_key, $size)) {
+                    return ['label' => $size[2], 'size' => (int) $size[1]];
+                }
+
+                $configured_field = $this->report_configured_field($configured_fields, $data_key);
+
+                if (! $configured_field) {
+                    return null;
+                }
+
+                return [
+                    'label' => data_get($configured_field, 'label', $data_key),
+                    'item' => $item,
+                    'configured_field' => $configured_field,
+                    'calculated' => in_array($data_key, $service::COLUMNS, true),
+                ];
             })
             ->filter()
             ->values();
 
-        $rows = match ($report->settings->source) {
-            'traceability' => app(TraceabilityReportService::class)->rows($request->validated('filters', [])),
-            'productivity' => app(ProductivityReportService::class)->rows($request->validated('filters', [])),
-        };
+        $this->report_load(collect($rows)->pluck('model'), $columns->reject(fn ($column) => isset($column['size']) || $column['calculated'])->pluck('item.data_key')->all());
 
         return [
             'data' => collect($rows)
                 ->map(fn ($row) => $columns->mapWithKeys(fn ($column) => [$column['label'] => [
-                    'value' => isset($column['size']) ? ($row['values']['sizes'][$column['size']] ?? null) : ($row['values'][$column['key']] ?? null),
+                    'value' => match (true) {
+                        isset($column['size']) => $row['values']['sizes'][$column['size']] ?? null,
+                        $column['calculated'] => $row['values'][data_get($column, 'item.data_key')] ?? null,
+                        default => $this->report_value($row['model'] ?? null, $column['item'], $column['configured_field']),
+                    },
                     'style' => $row['style'] ?? null,
                 ]])->all())
                 ->all(),
             'fields' => $columns->pluck('label')->all(),
             // Agrupación de filas en el Excel (+ / −): detalle 2, subtotal 1, franja y total 0
             'levels' => collect($rows)->map(fn ($row) => $row['level'] ?? 0)->all(),
+            'pagination' => $page ? [
+                'total' => $result['lots'],
+                'per_page' => $per_page,
+                'current_page' => (int) $page,
+                'total_pages' => max(1, (int) ceil($result['lots'] / $per_page)),
+            ] : null,
         ];
+    }
+
+    /**
+     * Carga de una vez las relaciones que recorren los data_key pedidos en los registros de las filas (sin una consulta
+     * por fila): de cada camino toma los tramos que son relaciones del modelo (production_order.technical_sheet.color.name
+     * → production_order.technical_sheet.color). En una polimórfica (el producto del destino) se detiene y sigue con el resto
+     * del camino sobre los registros ya cargados.
+     */
+    private function report_load($models, $data_keys): void
+    {
+        $models = collect($models)
+            ->flatMap(fn ($model) => $model instanceof \Illuminate\Support\Collection ? $model->all() : [$model])
+            ->filter(fn ($model) => $model instanceof Model)
+            ->unique(fn ($model) => $model::class.':'.$model->getKey());
+
+        foreach ($models->groupBy(fn ($model) => $model::class) as $class => $group) {
+            $relations = [];
+            $morphs = [];
+
+            foreach ($data_keys as $data_key) {
+                $model = new $class;
+                $path = [];
+                $segments = explode('.', (string) $data_key);
+
+                foreach ($segments as $index => $segment) {
+                    if (is_numeric($segment)) {
+                        continue;
+                    }
+
+                    try {
+                        $relation = method_exists($model, $segment) ? $model->{$segment}() : null;
+                    } catch (\Throwable) {
+                        $relation = null;
+                    }
+
+                    if (! $relation instanceof Relation) {
+                        break;
+                    }
+
+                    $path[] = $segment;
+
+                    if ($relation instanceof MorphTo) {
+                        $morphs[implode('.', $path)][] = implode('.', array_slice($segments, $index + 1));
+                        break;
+                    }
+
+                    $model = $relation->getRelated();
+                }
+
+                if ($path) {
+                    $relations[] = implode('.', $path);
+                }
+            }
+
+            $collection = EloquentCollection::make($group->values());
+
+            if ($relations) {
+                $collection->loadMissing(array_values(array_unique($relations)));
+            }
+
+            foreach ($morphs as $prefix => $rest) {
+                $this->report_load($collection->map(fn ($model) => data_get($model, $prefix)), array_filter(array_unique($rest)));
+            }
+        }
     }
 
     public function generate(ReportGenerateRequest $request, $id)
@@ -342,7 +472,7 @@ class ReportController extends Controller
 
             // Reporte con filas calculadas (settings.source): las arma su servicio con la misma forma (data y fields)
             if ($report->settings->source ?? null) {
-                return $this->successResponse($this->sourceRows($report, $request), $this->getMessage('Success'), 200);
+                return $this->successResponse($this->source_rows($report, $request), $this->getMessage('Success'), 200);
             }
 
             $fields = $request->validated('fields', []);
@@ -432,7 +562,7 @@ class ReportController extends Controller
 
             // Reporte con filas calculadas (settings.source): mismas filas que generate, mismo Excel
             if ($report->settings->source ?? null) {
-                $rows = $this->sourceRows($report, $request);
+                $rows = $this->source_rows($report, $request);
 
                 return Excel::download(new SourceReportExport($rows['data'], $rows['fields'], $rows['levels']), 'report.xlsx');
             }

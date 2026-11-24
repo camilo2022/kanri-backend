@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\SortableByRelation;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Builder;
 use Spatie\Permission\Models\Permission as SpatiePermission;
@@ -11,6 +12,7 @@ use OwenIt\Auditing\Auditable as Auditing;
 class Permission extends SpatiePermission implements Auditable
 {
     use Auditing;
+    use SortableByRelation;
 
     protected $table = 'permissions';
 
@@ -69,5 +71,17 @@ class Permission extends SpatiePermission implements Auditable
                 });
             }
         });
+    }
+
+    public static function sortable_columns(): array
+    {
+        return [
+            'id' => 'id',
+            'name' => 'name',
+            'title' => 'title',
+            'description' => 'description',
+            'created_at' => 'created_at',
+            'updated_at' => 'updated_at',
+        ];
     }
 }

@@ -90,8 +90,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $area = new Area;
-        $area->name = 'No aplica';
-        $area->description = 'No aplica';
+        $area->name = 'NO APLICA';
+        $area->description = 'NO APLICA';
         $area->save();
 
         // Cargos
@@ -102,8 +102,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $position = new Position;
-        $position->name = 'No aplica';
-        $position->description = 'No aplica';
+        $position->name = 'NO APLICA';
+        $position->description = 'NO APLICA';
         $position->save();
 
         // Asociado el cargo con el área
@@ -117,8 +117,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $gender = new Gender;
-        $gender->name = 'No aplica';
-        $gender->description = 'No aplica';
+        $gender->name = 'NO APLICA';
+        $gender->description = 'NO APLICA';
         $gender->save();
 
         // Tipos de Sangre
@@ -129,8 +129,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $blood_type = new BloodType;
-        $blood_type->name = 'No aplica';
-        $blood_type->description = 'No aplica';
+        $blood_type->name = 'NO APLICA';
+        $blood_type->description = 'NO APLICA';
         $blood_type->save();
 
         // Administradoras de Riesgos
@@ -141,8 +141,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $risk_manager = new RiskManager;
-        $risk_manager->name = 'No aplica';
-        $risk_manager->description = 'No aplica';
+        $risk_manager->name = 'NO APLICA';
+        $risk_manager->description = 'NO APLICA';
         $risk_manager->save();
 
         // Entidades de Salud
@@ -153,8 +153,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $health_entity = new HealthEntity;
-        $health_entity->name = 'No aplica';
-        $health_entity->description = 'No aplica';
+        $health_entity->name = 'NO APLICA';
+        $health_entity->description = 'NO APLICA';
         $health_entity->save();
 
         // Fondos de Pensión
@@ -165,8 +165,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $pension_fund = new PensionFund;
-        $pension_fund->name = 'No aplica';
-        $pension_fund->description = 'No aplica';
+        $pension_fund->name = 'NO APLICA';
+        $pension_fund->description = 'NO APLICA';
         $pension_fund->save();
 
         // Cajas de Compensación
@@ -177,8 +177,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $compensation_fund = new CompensationFund;
-        $compensation_fund->name = 'No aplica';
-        $compensation_fund->description = 'No aplica';
+        $compensation_fund->name = 'NO APLICA';
+        $compensation_fund->description = 'NO APLICA';
         $compensation_fund->save();
 
         // Categorías
@@ -282,8 +282,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $subcategory = new Subgroup;
-        $subcategory->name = 'No aplica';
-        $subcategory->description = 'No aplica';
+        $subcategory->name = 'NO APLICA';
+        $subcategory->description = 'NO APLICA';
         $subcategory->save();
 
         // Marcas
@@ -875,8 +875,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $size = new Size;
-        $size->name = 'No aplica';
-        $size->description = 'No aplica';
+        $size->name = 'NO APLICA';
+        $size->description = 'NO APLICA';
         $size->save();
 
         // Tipos de Prenda
@@ -1148,8 +1148,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $subprocess = new Subprocess;
-        $subprocess->name = 'No aplica';
-        $subprocess->description = 'No aplica';
+        $subprocess->name = 'NO APLICA';
+        $subprocess->description = 'NO APLICA';
         $subprocess->save();
 
         // Operaciones
@@ -1160,8 +1160,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $operation = new Operation;
-        $operation->name = 'No aplica';
-        $operation->description = 'No aplica';
+        $operation->name = 'NO APLICA';
+        $operation->description = 'NO APLICA';
         $operation->save();
 
         // Tipos de Proveedores
@@ -1263,6 +1263,23 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->id = Collection::ITEM_ID;
         $item->name = 'Colección';
         $item->description = 'Listado de colecciones.';
+        // Formato de nombre, descripción y código; se cambia en Colecciones → Configurar
+        $item->settings = (object) [
+            'formats' => (object) [
+                'name' => (object) [
+                    'regex' => '/^C(?<numero>\d)(?<anio>(?:19|20)\d{2})$/',
+                    'message' => 'Debe ser "C", un número de una cifra y el año (C52026).',
+                ],
+                'description' => (object) [
+                    'regex' => '/^.+ {anio}$/',
+                    'message' => 'Debe terminar en el año del nombre (COLOMBIA MODA 2026).',
+                ],
+                'code' => (object) [
+                    'regex' => '/^0{numero}{anio}$/',
+                    'message' => 'Debe ser 0, el número y el año del nombre: 6 cifras (C52026 → 052026).',
+                ],
+            ],
+        ];
         $item->save();
 
         $collections = [
@@ -1329,8 +1346,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $piece = new Piece;
-        $piece->name = 'No aplica';
-        $piece->description = 'No aplica';
+        $piece->name = 'NO APLICA';
+        $piece->description = 'NO APLICA';
         $piece->save();
 
         // Tipos de Personas
@@ -1341,8 +1358,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $person_type = new PersonType;
-        $person_type->name = 'No aplica';
-        $person_type->description = 'No aplica';
+        $person_type->name = 'NO APLICA';
+        $person_type->description = 'NO APLICA';
         $person_type->save();
 
         // Tipos de Documentos
@@ -1353,8 +1370,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $document_type = new DocumentType;
-        $document_type->name = 'No aplica';
-        $document_type->description = 'No aplica';
+        $document_type->name = 'NO APLICA';
+        $document_type->description = 'NO APLICA';
         $document_type->save();
 
         // Bancos
@@ -1365,8 +1382,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $bank = new Bank;
-        $bank->name = 'No aplica';
-        $bank->description = 'No aplica';
+        $bank->name = 'NO APLICA';
+        $bank->description = 'NO APLICA';
         $bank->save();
 
         // Tipos de Cuenta
@@ -1377,8 +1394,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $account_type = new AccountType;
-        $account_type->name = 'No aplica';
-        $account_type->description = 'No aplica';
+        $account_type->name = 'NO APLICA';
+        $account_type->description = 'NO APLICA';
         $account_type->save();
 
         // Reportes
@@ -1389,8 +1406,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $report = new Report;
-        $report->name = 'No aplica';
-        $report->description = 'No aplica';
+        $report->name = 'NO APLICA';
+        $report->description = 'NO APLICA';
         $report->save();
 
         // Tipologías
@@ -1401,8 +1418,8 @@ class ItemsAndSubitemsSeeder extends Seeder
         $item->save();
 
         $typology = new Typology;
-        $typology->name = 'No aplica';
-        $typology->description = 'No aplica';
+        $typology->name = 'NO APLICA';
+        $typology->description = 'NO APLICA';
         $typology->save();
 
         // Tipos de parada, paradas y reglas: catálogos que se llenan desde la aplicación

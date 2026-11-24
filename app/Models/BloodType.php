@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\SortableByRelation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,7 @@ use OwenIt\Auditing\Auditable as Auditing;
 class BloodType extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
+    use SortableByRelation;
 
     public const ITEM_ID = 6;
 
@@ -72,5 +74,17 @@ class BloodType extends Model implements Auditable
                 });
             }
         });
+    }
+
+    public static function sortable_columns(): array
+    {
+        return [
+            'id' => 'id',
+            'name' => 'name',
+            'description' => 'description',
+            'created_at' => 'created_at',
+            'updated_at' => 'updated_at',
+            'deleted_at' => 'deleted_at',
+        ];
     }
 }

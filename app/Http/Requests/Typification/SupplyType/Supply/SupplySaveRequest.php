@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Typification\SupplyType\Supply;
 
 use App\Models\SupplyType;
+use App\Services\SupplyService;
 use App\Traits\ModelTypes;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -96,7 +97,7 @@ class SupplySaveRequest extends FormRequest
 
             $field = $column->field ?? null;
 
-            if (! $field) {
+            if (! $field || in_array($column->type ?? null, SupplyService::SPECIAL_TYPES)) {
                 continue;
             }
 

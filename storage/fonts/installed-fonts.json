@@ -1,11 +1,16 @@
 {
     "poppins": {
-        "normal": "poppins_normal_32236434c45084bff38eef99b39cf94e"
+        "normal": "C:\\laragon\\www\\kanri-backend\\storage\\fonts\/poppins_normal_32236434c45084bff38eef99b39cf94e",
+        "bold": "poppins_bold_3955523b4c3a602e22f586d46ef7d919"
     },
     "roboto": {
         "normal": "roboto_normal_33961ea870e905938d19861539a71866"
     },
     "super-bouncer": {
         "normal": "super_bouncer_normal_5081b5f399356bd383810c1dade99d5a"
+    },
+    "inter": {
+        "normal": "C:\\laragon\\www\\kanri-backend\\storage\\fonts\/inter_normal_70d1f2bc0f97c2d5cfec4bf507f4a74a",
+        "bold": "inter_bold_2f29bb9356520f1a79d6c149956a4cb3"
     }
 }

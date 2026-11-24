@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Typification\SupplyType;
 
+use App\Models\Size;
 use App\Models\SupplyType;
 use App\Traits\ModelTypes;
 use Carbon\Carbon;
@@ -32,7 +33,7 @@ class SupplyTypeSettingRequest extends FormRequest
         return [
             'id' => ['required', 'exists:subitems,id,item_id,'.SupplyType::ITEM_ID],
             'settings' => ['required', 'array'],
-            'settings.form' => ['required'],
+            'settings.form' => ['present', 'array'],
             'settings.form.*.field' => ['required', 'string', 'regex:/^[a-z]+(_[a-z]+)*$/'],
             'settings.form.*.label' => ['required', 'string', 'uppercase'],
             'settings.form.*.type' => ['required', 'string'],
@@ -300,6 +301,41 @@ class SupplyTypeSettingRequest extends FormRequest
                     }
                 }
 
+                if ($type === 'associated') {
+                    $origin = collect($schema)->first(fn ($other, $o) => $o !== $t && ($other['field'] ?? null) === ($s['associated_to'] ?? null));
+
+                    // Solo de un campo de varios valores: si el campo es de uno, lo asociado es del insumo (para eso está Foto)
+                    if (! $origin || in_array($origin['type'] ?? null, ['photo', 'associated']) || ($origin['cardinality'] ?? 'single') !== 'multiple') {
+                        $validator->errors()->add(
+                            "$basePath.associated_to",
+                            'Debe ser otro campo del formulario de varios valores.'
+                        );
+                    }
+
+                    if (isset($s['model']) && ! $models->where('model', $s['model'])->whereNull('param')->count()) {
+                        $validator->errors()->add(
+                            "$basePath.model",
+                            'Debe ser un catálogo de la lista.'
+                        );
+                    }
+                }
+
+                if ($type === 'photo' || ($type === 'associated' && ! isset($s['model']))) {
+                    if (! in_array($s['cardinality'] ?? null, ['single', 'multiple'])) {
+                        $validator->errors()->add(
+                            "$basePath.cardinality",
+                            'Valor requerido.'
+                        );
+                    }
+                }
+
+                if (array_key_exists('finished_product', $s) && (($s['model'] ?? null) !== Size::class || ! is_bool($s['finished_product']))) {
+                    $validator->errors()->add(
+                        "$basePath.finished_product",
+                        'Solo aplica a las tallas.'
+                    );
+                }
+
                 if (in_array($type, ['selectdinamic'])) {
 
                     $array = [];
@@ -342,6 +378,9 @@ class SupplyTypeSettingRequest extends FormRequest
         $settings = (array) (SupplyType::find($this->route('id'))?->settings ?? []);
         unset($settings['has_variants']);
 
-        $this->merge(['settings' => array_merge($settings, ['form' => $this->input('settings.form')])]);
+        // El subtipo de las fotos es fijo (Supply::PHOTO_FILE_SUBTYPE_ID): no se guarda en el campo
+        $form = collect($this->input('settings.form'))->map(fn ($field) => collect($field)->except('file_subtype_id')->all())->all();
+
+        $this->merge(['settings' => array_merge($settings, ['form' => $form])]);
     }
 }

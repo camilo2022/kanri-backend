@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\SortableByRelation;
 use App\Services\ProductionPlanService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -15,6 +16,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 class Productivity extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
+    use SortableByRelation;
 
     public const PENDING = 'Por iniciar';
 
@@ -113,5 +115,17 @@ class Productivity extends Model implements Auditable
 
         return $plan->plannedOrders($this->model, $date, $this->endsAt()->min(now()))
             ->each(fn (ProductionOrder $production_order) => $production_order->setAttribute('plan_progress', $plan->progress($production_order, $this->model, $date)));
+    }
+
+    public static function sortable_columns(): array
+    {
+        return [
+            'id' => 'id',
+            'date' => 'date',
+            'start_time' => 'start_time',
+            'end_time' => 'end_time',
+            'created_at' => 'created_at',
+            'updated_at' => 'updated_at',
+        ];
     }
 }

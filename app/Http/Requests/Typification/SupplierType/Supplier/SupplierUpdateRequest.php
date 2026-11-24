@@ -10,6 +10,7 @@ use App\Models\FileSubtype;
 use App\Models\Gender;
 use App\Models\Supplier;
 use App\Models\SupplierType;
+use App\Services\BankAccountService;
 use App\Services\PersonService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -42,7 +43,7 @@ class SupplierUpdateRequest extends FormRequest
             'name' => ['required', 'uppercase', 'string', 'min:4', 'max:50', 'unique:subitems,name,'.$this->route('id').',id,item_id,'.Supplier::ITEM_ID],
             'description' => ['required', 'uppercase', 'string', 'max:255'],
             'settings' => ['required', 'array'],
-            'settings.code' => ['required', 'numeric', 'digits_between:2,5'],
+            'settings.code' => ['required', 'numeric', 'digits_between:1,5'],
         ];
 
         if ($supplier_type?->settings?->has_person) {
@@ -51,7 +52,7 @@ class SupplierUpdateRequest extends FormRequest
             $rules['person.id'] = ['nullable', 'exists:people,id'];
             $rules['person.document_type_id'] = ['required', 'numeric', 'exists:subitems,id,item_id,'.DocumentType::ITEM_ID.',deleted_at,NULL'];
             $rules['person.document'] = ['required', 'string', 'max:30', 'unique:people,document,'.$this->input('person.id')];
-            $rules['person.email'] = ['required', 'string', 'email', 'max:255', 'unique:people,email,'.$this->input('person.id')];
+            $rules['person.email'] = ['nullable', 'string', 'email', 'max:255', 'unique:people,email,'.$this->input('person.id')];
             $rules['person.names'] = ['required', 'string', 'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/'];
             $rules['person.last_names'] = ['required', 'string', 'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/'];
             $rules['person.gender_id'] = ['required', 'numeric', 'exists:subitems,id,item_id,'.Gender::ITEM_ID.',deleted_at,NULL'];
@@ -69,7 +70,7 @@ class SupplierUpdateRequest extends FormRequest
         if ($supplier_type?->settings?->has_account_bank) {
             $rules['account_bank'] = ['required', 'array'];
             $rules['account_bank.bank_id'] = ['required', 'numeric', 'exists:subitems,id,item_id,'.Bank::ITEM_ID.',deleted_at,NULL'];
-            $rules['account_bank.account_number'] = ['required', 'numeric', 'digits:10'];
+            $rules['account_bank.account_number'] = ['required', 'string', 'max:30'];
             $rules['account_bank.account_type_id'] = ['required', 'numeric', 'exists:subitems,id,item_id,'.AccountType::ITEM_ID.',deleted_at,NULL'];
             // El certificado nuevo llega en new_bank_certificate (se agrega a la cuenta)
             $rules['account_bank.new_bank_certificate'] = ['nullable', 'array'];
@@ -128,11 +129,6 @@ class SupplierUpdateRequest extends FormRequest
                     && ($error = $service->locationError((string) $this->input('person.location_type'), $this->integer('person.location_id')))) {
                     $validator->errors()->add('person.location_id', $error);
                 }
-
-                if (! $validator->errors()->has('person.location_id') && ! $validator->errors()->has('person.phone_country_id')
-                    && $service->locationCountryId((string) $this->input('person.location_type'), $this->integer('person.location_id')) !== $this->integer('person.phone_country_id')) {
-                    $validator->errors()->add('person.phone_country_id', 'El indicativo del teléfono debe ser el del país de la ubicación.');
-                }
             }
 
             $supplier_type = SupplierType::find(
@@ -141,6 +137,20 @@ class SupplierUpdateRequest extends FormRequest
 
             if (! $supplier_type?->settings?->has_account_bank) {
                 return;
+            }
+
+            // Número de cuenta según la regla de su banco para ese tipo de cuenta; solo si cambió banco, tipo o número,
+            // para no bloquear la edición de proveedores con cuentas registradas antes de configurar el banco
+            $current_account = Supplier::find($this->route('id'))?->bank_account()->first();
+            $account_changed = ! $current_account
+                || (int) $current_account->bank_id !== $this->integer('account_bank.bank_id')
+                || (int) $current_account->account_type_id !== $this->integer('account_bank.account_type_id')
+                || (string) $current_account->account_number !== (string) $this->input('account_bank.account_number');
+
+            if ($account_changed
+                && ! $validator->errors()->hasAny(['account_bank.bank_id', 'account_bank.account_type_id', 'account_bank.account_number'])
+                && ($error = app(BankAccountService::class)->accountError($this->integer('account_bank.bank_id'), $this->integer('account_bank.account_type_id'), (string) $this->input('account_bank.account_number')))) {
+                $validator->errors()->add('account_bank.'.$error[0], $error[1]);
             }
 
             $supplier = Supplier::find($this->route('id'));

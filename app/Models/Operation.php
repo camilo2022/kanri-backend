@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\SortableByRelation;
 use App\Casts\SettingsWithUuid;
 use App\Traits\HasSettingsUuid;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,6 +18,7 @@ use Spatie\Permission\Traits\HasRoles;
 class Operation extends Model implements Auditable
 {
     use Auditing, HasRoles, HasSettingsUuid, SoftDeletes;
+    use SortableByRelation;
 
     public const ITEM_ID = 26;
 
@@ -105,5 +107,17 @@ class Operation extends Model implements Auditable
                 });
             }
         });
+    }
+
+    public static function sortable_columns(): array
+    {
+        return [
+            'id' => 'id',
+            'name' => 'name',
+            'description' => 'description',
+            'created_at' => 'created_at',
+            'updated_at' => 'updated_at',
+            'deleted_at' => 'deleted_at',
+        ];
     }
 }

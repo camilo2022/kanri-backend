@@ -40,7 +40,7 @@ class ProductionOrderUpdateRequest extends FormRequest
             'efficiency' => ['required', 'numeric', 'min:1'],
             'cut' => ['required', 'string', 'uppercase', 'max:2'],
             'fabric_id' => ['required', 'exists:subitems,id,item_id,'.Supply::ITEM_ID.',deleted_at,NULL'],
-            'color_id' => ['required', 'exists:subitems,id,item_id,'.Color::ITEM_ID.',deleted_at,NULL'],
+            'color_id' => ['required', 'exists:subitems,id,item_id,'.Color::ITEM_ID],
             'width' => ['required', 'numeric', 'decimal:0,2', 'min:1', 'max:999999.99'],
             'pocket_fabric' => ['required', 'boolean'],
             'observation' => ['nullable', 'string', 'max:1000'],
@@ -157,14 +157,20 @@ class ProductionOrderUpdateRequest extends FormRequest
                 $supply = Supply::with('supply_type')->find($this->fabric_id);
                 $settings = $supply->supply_type->first()->settings;
 
-                // Valido que el color este asociado con la tela
+                // Valido que el color este asociado con la tela; la orden que ya tenía esa tela y ese color los conserva aunque
+                // después se haya quitado la relación o desactivado el color
                 if (! empty($this->color_id)) {
                     $exists = $supply
                         ->related(Color::class)
                         ->where('id', $this->color_id)
                         ->exists();
 
-                    if (! $exists) {
+                    $order = ProductionOrder::with(['fabric'])->find($this->route('id'));
+                    $unchanged = $order
+                        && (int) $order->fabric?->model_id === (int) $this->fabric_id
+                        && $order->color()->withTrashed()->where('subitems.id', $this->color_id)->exists();
+
+                    if (! $exists && ! $unchanged) {
                         $validator->errors()->add(
                             'color_id',
                             'El color seleccionado no esta asociado a la tela.'

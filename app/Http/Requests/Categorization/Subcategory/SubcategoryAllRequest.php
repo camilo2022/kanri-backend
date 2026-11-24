@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Categorization\Subcategory;
 
+use App\Models\Subcategory;
+
 use App\Models\Category;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -30,7 +32,7 @@ class SubcategoryAllRequest extends FormRequest
             'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
-            'column' => ['nullable', 'string', 'in:id,name,description,created_at,updated_at,deleted_at'],
+            'column' => ['nullable', 'string', 'in:'.implode(',', array_keys(Subcategory::sortable_columns()))],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
             'with_trashed' => ['required', 'boolean']
         ];

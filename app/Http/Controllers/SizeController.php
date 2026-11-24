@@ -103,7 +103,7 @@ class SizeController extends Controller
      *         name="is_finished_product",
      *         in="query",
      *         required=false,
-     *         description="`true`/`1`: solo las tallas de producto terminado. `false` o sin enviar: todas.",
+     *         description="`true`/`1`: solo las tallas de producto terminado. `false`/`0`: solo las que no lo son (tallas de insumo). Sin enviar: todas.",
      *         @OA\Schema(type="boolean", example=true)
      *     ),
      *     @OA\Parameter(
@@ -148,11 +148,11 @@ class SizeController extends Controller
                 ->when($request->boolean('with_trashed'), function ($query) {
                     return $query->withTrashed();
                 })
-                ->when($request->boolean('is_finished_product'), function ($query) {
-                    return $query->where('settings->finished_product', true);
+                ->when($request->has('is_finished_product'), function ($query) use ($request) {
+                    return $query->where('settings->finished_product', $request->boolean('is_finished_product'));
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                    return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
             $sizes = $sizes->paginate($request->integer('per_page', $sizes->count()));

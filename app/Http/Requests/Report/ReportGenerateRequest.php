@@ -51,6 +51,8 @@ class ReportGenerateRequest extends FormRequest
             'filters' => ['nullable', 'array'],
             'filters.*' => ['array'],
             'filters.*.*' => ['nullable'],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:200'],
         ];
     }
 
@@ -76,6 +78,8 @@ class ReportGenerateRequest extends FormRequest
             'filters' => 'filtros',
             'filters.*' => 'filtro',
             'filters.*.*' => 'valor del filtro',
+            'page' => 'página',
+            'per_page' => 'lotes por página',
         ];
     }
 

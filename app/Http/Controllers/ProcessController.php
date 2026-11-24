@@ -29,8 +29,8 @@ use App\Traits\ApiResponser;
  *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="item_id", type="integer", example=10),
- *     @OA\Property(property="name", type="string", example="No Aplica"),
- *     @OA\Property(property="description", type="string", example="No Aplica"),
+ *     @OA\Property(property="name", type="string", example="NO APLICA"),
+ *     @OA\Property(property="description", type="string", example="NO APLICA"),
  *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-30T13:17:29.000000Z"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-06T15:21:16.000000Z"),
  *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, example=null),
@@ -160,7 +160,12 @@ class ProcessController extends Controller
     public function all(ProcessAllRequest $request)
     {
         try {
-            $processes = Process::with(['item', 'before_processes', 'after_processes', 'subprocesses' => ['after_subprocesses', 'operations' => ['after_operations', 'after_subprocesses']]])
+            $processes = Process::with(['item', 'before_processes', 'after_processes'])
+                ->when($request->boolean('with_trashed_children'), function ($query) {
+                    return $query->with(['subprocesses_with_trashed' => ['after_subprocesses', 'operations_with_trashed' => ['after_operations', 'after_subprocesses']]]);
+                }, function ($query) {
+                    return $query->with(['subprocesses' => ['after_subprocesses', 'operations' => ['after_operations', 'after_subprocesses']]]);
+                })
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -180,7 +185,7 @@ class ProcessController extends Controller
                     return $query->where('id', '<>', $request->integer('process_id'));
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                    return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
             $processes = $processes->paginate($request->integer('per_page', $processes->count()));

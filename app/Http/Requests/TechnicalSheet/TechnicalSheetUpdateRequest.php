@@ -50,16 +50,16 @@ class TechnicalSheetUpdateRequest extends FormRequest
             'status' => ['required', 'in:'.implode(',', [TechnicalSheet::PENDING, TechnicalSheet::REVIEW, TechnicalSheet::APPROVED, TechnicalSheet::CANCELLED])],
             'code' => ['required', 'string', 'max:11', 'unique:technical_sheets,code,'.$this->input('id').',id'],
             'product_id' => ['required', 'exists:products,id', 'unique:technical_sheets,product_id,'.$this->route('id').',id'],
-            'collection_id' => ['required', 'exists:subitems,id,item_id,'.Collection::ITEM_ID.',deleted_at,NULL'],
-            'garment_type_id' => ['required', 'exists:subitems,id,item_id,'.GarmentType::ITEM_ID.',deleted_at,NULL'],
-            'subgroup_id' => ['required', 'exists:subitems,id,item_id,'.Subgroup::ITEM_ID.',deleted_at,NULL'],
-            'wash_tone_id' => ['required', 'exists:subitems,id,item_id,'.WashTone::ITEM_ID.',deleted_at,NULL'],
-            'color_id' => ['required', 'exists:subitems,id,item_id,'.Color::ITEM_ID.',deleted_at,NULL'],
-            'waistband_type_id' => ['required', 'exists:subitems,id,item_id,'.WaistbandType::ITEM_ID.',deleted_at,NULL'],
+            'collection_id' => ['required', 'exists:subitems,id,item_id,'.Collection::ITEM_ID],
+            'garment_type_id' => ['required', 'exists:subitems,id,item_id,'.GarmentType::ITEM_ID],
+            'subgroup_id' => ['required', 'exists:subitems,id,item_id,'.Subgroup::ITEM_ID],
+            'wash_tone_id' => ['required', 'exists:subitems,id,item_id,'.WashTone::ITEM_ID],
+            'color_id' => ['required', 'exists:subitems,id,item_id,'.Color::ITEM_ID],
+            'waistband_type_id' => ['required', 'exists:subitems,id,item_id,'.WaistbandType::ITEM_ID],
             'measure_of_waistband' => ['required', 'numeric', 'min:1'],
-            'boot_type_id' => ['required', 'exists:subitems,id,item_id,'.BootType::ITEM_ID.',deleted_at,NULL'],
-            'yoke_type_id' => ['required', 'exists:subitems,id,item_id,'.YokeType::ITEM_ID.',deleted_at,NULL'],
-            'back_type_id' => ['required', 'exists:subitems,id,item_id,'.BackType::ITEM_ID.',deleted_at,NULL'],
+            'boot_type_id' => ['required', 'exists:subitems,id,item_id,'.BootType::ITEM_ID],
+            'yoke_type_id' => ['required', 'exists:subitems,id,item_id,'.YokeType::ITEM_ID],
+            'back_type_id' => ['required', 'exists:subitems,id,item_id,'.BackType::ITEM_ID],
             'pattern_maker_id' => ['required',  'exists:employees,id,deleted_at,NULL'],
             'physical_sample' => ['required', 'boolean'],
             'number_of_buttons' => ['required', 'numeric', 'min:1'],
@@ -169,7 +169,15 @@ class TechnicalSheetUpdateRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            // Quitar de la ficha: ni lo automático ni lo que algún lote ya trabajó; quitar un subproceso quita sus operaciones
+            // Estado de cada puesto en la ficha: el que llega y, si no llega, el guardado
+            $stored = $this->route('id')
+                ? TechnicalSheetDetail::where('technical_sheet_id', $this->route('id'))->get()->mapWithKeys(fn ($detail) => [$detail->model_type.':'.$detail->model_id => $detail->status])
+                : collect();
+            $statuses = $stored->merge(collect($this->input('technical_sheet_details', []))
+                ->mapWithKeys(fn ($detail) => [($detail['model_type'] ?? '').':'.($detail['model_id'] ?? '') => $detail['status'] ?? null])
+                ->filter());
+
+            // Quitar de la ficha: ni lo automático, ni lo Aprobado, ni lo que algún lote ya trabajó; quitar un subproceso quita sus operaciones
             $removed = collect();
 
             foreach ($this->input('removed_details', []) as $i => $item) {
@@ -177,6 +185,12 @@ class TechnicalSheetUpdateRequest extends FormRequest
 
                 if (! $model) {
                     $validator->errors()->add("removed_details.$i", 'El subproceso u operación no existe.');
+
+                    continue;
+                }
+
+                if ($statuses->get($model::class.':'.$model->id) === TechnicalSheetDetail::APPROVED) {
+                    $validator->errors()->add("removed_details.$i", "No se puede quitar {$model->name} de la ficha: está Aprobado.");
 
                     continue;
                 }
@@ -189,6 +203,23 @@ class TechnicalSheetUpdateRequest extends FormRequest
 
                 $removed = $removed->push($model::class.':'.$model->id)
                     ->merge($model instanceof Subprocess ? $model->operations->map(fn ($operation) => Operation::class.':'.$operation->id) : []);
+            }
+
+            // A un proceso o subproceso Aprobado no se le agregan subprocesos ni operaciones
+            foreach ($this->input('technical_sheet_details', []) as $id => $detail) {
+                $type = $detail['model_type'] ?? null;
+
+                if (! in_array($type, [Subprocess::class, Operation::class], true) || $stored->has($type.':'.($detail['model_id'] ?? ''))) {
+                    continue;
+                }
+
+                $model = $type::with($type === Subprocess::class ? 'process' : 'subprocess')->find($detail['model_id'] ?? null);
+                $parent = collect($type === Subprocess::class ? $model?->process : $model?->subprocess)
+                    ->first(fn ($parent) => $statuses->get($parent::class.':'.$parent->id) === TechnicalSheetDetail::APPROVED);
+
+                if ($parent) {
+                    $validator->errors()->add("technical_sheet_details.$id", "No se puede agregar {$model->name}: {$parent->name} está Aprobado.");
+                }
             }
 
             // Lo que va en secuencia necesita en la ficha alguno de sus anteriores (contando lo que queda tras quitar)

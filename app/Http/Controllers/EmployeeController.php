@@ -10,6 +10,8 @@ use App\Http\Requests\Employee\EmployeeStoreRequest;
 use App\Http\Requests\Employee\EmployeeUpdateRequest;
 use App\Http\Resources\Employee\EmployeeCollection;
 use App\Http\Resources\Employee\EmployeeResource;
+use App\Models\City;
+use App\Models\Department;
 use App\Models\Employee;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
@@ -205,7 +207,7 @@ class EmployeeController extends Controller
                         : $query->whereDoesntHave('user');
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                    return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
             $employees = $employees->paginate($request->integer('per_page', $employees->count()));
@@ -262,8 +264,9 @@ class EmployeeController extends Controller
     public function find(EmployeeFindRequest $request, $id)
     {
         try {
-            $employee = Employee::with(['person' => ['photo'], 'position' => ['area'], 'risk_manager', 'health_entity', 'pension_fund', 'compensation_fund', 'user' => ['roles', 'permissions'], 'workstation'])
+            $employee = Employee::with(['person' => ['photo', 'gender', 'blood_type', 'document_type', 'phone_country'], 'position' => ['area'], 'risk_manager', 'health_entity', 'pension_fund', 'compensation_fund', 'user' => ['roles', 'permissions'], 'workstation'])
                 ->findOrFail($id);
+            $employee->person?->loadMorph('location', [City::class => ['department' => ['country']], Department::class => ['country']]);
 
             return $this->successResponse(
                 new EmployeeResource($employee),

@@ -73,22 +73,6 @@ class PersonService
         return null;
     }
 
-    /**
-     * País de una ubicación (el propio país, el del departamento o el del departamento de la ciudad).
-     */
-    public function locationCountryId(string $type, int $id): ?int
-    {
-        $class = self::LOCATION_TYPES[$type] ?? null;
-        $location = $class ? $class::find($id) : null;
-
-        return match (true) {
-            $location instanceof Country => $location->id,
-            $location instanceof Department => $location->country_id,
-            $location instanceof City => $location->department?->country_id,
-            default => null,
-        };
-    }
-
     private function activeValidations($validations)
     {
         return collect($validations ?? [])->filter(fn ($item) => empty($item->deleted_at ?? null) && filled($item->regex ?? null));

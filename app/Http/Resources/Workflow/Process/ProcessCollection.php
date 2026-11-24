@@ -27,7 +27,7 @@ class ProcessCollection extends ResourceCollection
                     'settings' => $process->settings,
                     'before_processes' => $process->before_processes,
                     'after_processes' => $process->after_processes,
-                    'subprocesses' => $process->subprocesses,
+                    'subprocesses' => $request->boolean('with_trashed_children') ? $this->subprocessesWithTrashed($process) : $process->subprocesses,
                     'item' => $process->item,
                     // Cronograma de producción: leyenda y filtro con las tipologías de cada proceso
                     ...($request->boolean('with_typologies') ? ['typologies' => $process->typologies] : []),
@@ -37,6 +37,17 @@ class ProcessCollection extends ResourceCollection
                 'pagination' => $this->paginationMeta(),
             ],
         ];
+    }
+
+    /**
+     * Subprocesos y operaciones con los desactivados, con las mismas claves de siempre (subprocesses y operations).
+     */
+    protected function subprocessesWithTrashed($process)
+    {
+        return $process->subprocesses_with_trashed->each(function ($subprocess) {
+            $subprocess->setRelation('operations', $subprocess->operations_with_trashed);
+            $subprocess->unsetRelation('operations_with_trashed');
+        });
     }
 
     protected function formatDate($date)

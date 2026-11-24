@@ -9,6 +9,7 @@
         "php": "^8.2",
         "bacon/bacon-qr-code": "^3.1",
         "barryvdh/laravel-dompdf": "^3.1",
+        "chrome-php/chrome": "^1.16",
         "darkaonline/l5-swagger": "^9.0",
         "dompdf/dompdf": "^3.1",
         "intervention/image": "^4.4",

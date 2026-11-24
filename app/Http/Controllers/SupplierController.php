@@ -26,7 +26,7 @@ use App\Traits\ApiResponser;
  *     type="object",
  *     required={"code"},
  *     description="Configuración del proveedor. Se guarda tal cual llega (reemplaza la anterior).",
- *     @OA\Property(property="code", type="string", pattern="^[0-9]{2,5}$", description="Código numérico de 2 a 5 dígitos.", example="1045")
+ *     @OA\Property(property="code", type="string", pattern="^[0-9]{1,5}$", description="Código numérico de 1 a 5 dígitos.", example="1045")
  * )
  *
  * @OA\Schema(
@@ -148,7 +148,7 @@ use App\Traits\ApiResponser;
  *         description="Cuenta bancaria.",
  *         @OA\Property(property="bank_id", type="integer", example=452),
  *         @OA\Property(property="account_type_id", type="integer", example=3),
- *         @OA\Property(property="account_number", type="string", description="10 dígitos.", example="4508123967"),
+ *         @OA\Property(property="account_number", type="string", description="Debe cumplir la regla (`settings.validations`) de su banco para su tipo de cuenta; un banco sin reglas o sin regla para ese tipo no se acepta.", example="45081239671"),
  *         @OA\Property(
  *             property="bank_certificate",
  *             type="object",
@@ -226,7 +226,7 @@ class SupplierController extends Controller
                     return $query->withTrashed();
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                    return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
             $suppliers = $suppliers->paginate($request->integer('per_page', $suppliers->count()));
@@ -313,7 +313,7 @@ class SupplierController extends Controller
      *             example={
      *                 "message": "Error de validación.",
      *                 "attributes": {"name": "Nombre", "description": "Descripción", "settings": "Configuraciones", "settings.code": "Código"},
-     *                 "errors": {"settings.code": {"Debe tener entre 2 y 5 dígitos."}, "account_bank.bank_certificate.file": {"Es obligatorio."}}
+     *                 "errors": {"settings.code": {"Debe tener entre 1 y 5 dígitos."}, "account_bank.bank_certificate.file": {"Es obligatorio."}}
      *             }
      *         )
      *     ),

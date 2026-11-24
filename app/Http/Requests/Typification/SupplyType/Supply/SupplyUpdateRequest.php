@@ -4,6 +4,7 @@ namespace App\Http\Requests\Typification\SupplyType\Supply;
 
 use App\Models\SupplyType;
 use App\Models\Supply;
+use App\Services\SupplyService;
 use App\Traits\ModelTypes;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -91,7 +92,7 @@ class SupplyUpdateRequest extends FormRequest
 
                 $field = $column->field ?? null;
 
-                if (!$field) {
+                if (!$field || in_array($column->type ?? null, SupplyService::SPECIAL_TYPES)) {
                     continue;
                 }
 
@@ -152,22 +153,37 @@ class SupplyUpdateRequest extends FormRequest
                     }
                 }
             }
+
+            app(SupplyService::class)->validate($validator, $this, $supply_type?->settings?->form ?? [], Supply::with(['files'])->find($this->route('id')));
         });
     }
 
     protected function prepareForValidation()
     {
         $this->merge(['id' => $this->route('id')]);
+
+        // Por FormData una lista vacía no llega: se vuelve [] para que se pueda dejar sin elementos
+        $form = collect(data_get(Supply::with(['supply_type'])->find($this->route('id'))?->supply_type->first(), 'settings.form', []));
+
+        foreach ($form->where('type', 'selectdinamic')->where('cardinality', 'multiple') as $column) {
+            if ($this->input("class.$column->field") === null) {
+                $this->merge(['class' => array_merge($this->input('class', []), [$column->field => []])]);
+            }
+        }
     }
 
     protected function passedValidation()
     {
         // settings guarda solo los valores ya validados de los campos del formulario que no son de catálogo
-        $fields = collect(data_get(Supply::with(['supply_type'])->find($this->route('id'))?->supply_type->first(), 'settings.form', []))
-            ->filter(fn ($column) => ! isset($column->model))
+        $form = collect(data_get(Supply::with(['supply_type'])->find($this->route('id'))?->supply_type->first(), 'settings.form', []));
+        $fields = $form
+            ->filter(fn ($column) => ! isset($column->model) && ! in_array($column->type, SupplyService::SPECIAL_TYPES))
             ->pluck('field')
             ->all();
+        $associated = collect(app(SupplyService::class)->associatedListFields($form))
+            ->mapWithKeys(fn ($column) => [$column->field => app(SupplyService::class)->associatedRows($this->input("values.$column->field"))])
+            ->all();
 
-        $this->merge(['settings' => ['values' => Arr::only($this->input('values', []), $fields)]]);
+        $this->merge(['settings' => ['values' => array_merge(Arr::only($this->input('values', []), $fields), $associated)]]);
     }
 }

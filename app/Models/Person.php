@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\SortableByRelation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,6 +17,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 class Person extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
+    use SortableByRelation;
 
     protected $table = 'people';
 
@@ -124,5 +126,23 @@ class Person extends Model implements Auditable
                 });
             }
         });
+    }
+
+    public static function sortable_columns(): array
+    {
+        return [
+            'id' => 'id',
+            'document' => 'document',
+            'names' => 'names',
+            'last_names' => 'last_names',
+            'birth_date' => 'birth_date',
+            'address' => 'address',
+            'phone' => 'phone',
+            'gender' => 'gender.name',
+            'blood_type' => 'blood_type.name',
+            'created_at' => 'created_at',
+            'updated_at' => 'updated_at',
+            'deleted_at' => 'deleted_at',
+        ];
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Location\Country;
 
+use App\Models\Country;
+
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -28,7 +30,7 @@ class CountryAllRequest extends FormRequest
             'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
-            'column' => ['nullable', 'string', 'in:id,name,iso2,phone_code'],
+            'column' => ['nullable', 'string', 'in:'.implode(',', array_keys(Country::sortable_columns()))],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
         ];
     }

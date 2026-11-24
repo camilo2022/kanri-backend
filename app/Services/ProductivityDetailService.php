@@ -57,6 +57,21 @@ class ProductivityDetailService
      */
     protected array $opens_line = [];
 
+    /**
+     * Catálogo ya consultado durante la petición (no cambia mientras se arma un reporte o se registra un +1):
+     * operaciones propias de cada subproceso, puestos de cada proceso, subproceso de cada operación y los anteriores de
+     * cada subproceso. [id => resultado].
+     */
+    protected array $own_operations = [];
+
+    protected array $workstation_models = [];
+
+    protected array $subprocess_of = [];
+
+    protected array $before_subprocesses = [];
+
+    protected array $before_operations = [];
+
     protected array $excluded_places = [];
 
     /**
@@ -368,7 +383,19 @@ class ProductivityDetailService
      */
     protected function ownOperations(Subprocess $subprocess): Collection
     {
-        return $subprocess->operations()->get()->reject(fn (Operation $operation) => $this->opensLine($operation))->values();
+        return $this->own_operations[$subprocess->id] ??= $subprocess->operations()->get()->reject(fn (Operation $operation) => $this->opensLine($operation))->values();
+    }
+
+    /**
+     * Subproceso de la operación, consultado una vez por petición.
+     */
+    public function subprocessOf(Operation $operation): ?Subprocess
+    {
+        if (! array_key_exists($operation->id, $this->subprocess_of)) {
+            $this->subprocess_of[$operation->id] = $operation->subprocess()->first();
+        }
+
+        return $this->subprocess_of[$operation->id];
     }
 
     /**
@@ -377,7 +404,7 @@ class ProductivityDetailService
      */
     public function beforeSubprocesses(Subprocess $subprocess, ?ProductionOrder $production_order = null, bool $returns = false): Collection
     {
-        return $subprocess->before_subprocesses()->get()
+        return ($this->before_subprocesses[$subprocess->id] ??= $subprocess->before_subprocesses()->get())
             ->filter(fn (Subprocess $previous) => $this->chainApplies($previous, $subprocess, $production_order)
                 && $this->chainReturns($previous, $subprocess) === $returns)
             ->values();
@@ -530,7 +557,19 @@ class ProductivityDetailService
         return $this->beforeSubprocesses($subprocess, $production_order)
             ->contains(fn (Subprocess $previous) => $this->subprocessApplies($production_order, $previous, $marked))
             // Una operación (la que abre la línea, p. ej. RESINA) cuenta solo si la ficha la trae: las operaciones se eligen siempre en la ficha
-            || $subprocess->before_operations()->get()->contains(fn (Operation $operation) => $marked->contains(Operation::class.':'.$operation->id));
+            || ($this->before_operations[$subprocess->id] ??= $subprocess->before_operations()->get())->contains(fn (Operation $operation) => $marked->contains(Operation::class.':'.$operation->id));
+    }
+
+    /**
+     * ¿La ficha lleva el subproceso? Lo mismo que subprocessApplies, pero con lo que trae la ficha (aún sin guardar) y sin
+     * un lote: un subproceso automático con «Solo si hace el anterior» solo va si la ficha trae alguno de sus anteriores
+     * (p. ej. LAVADO 3 solo con EFECTO TRAPO).
+     */
+    public function sheetSubprocessApplies(Subprocess $subprocess, Collection $keys, ?int $wash_tone_id): bool
+    {
+        $production_order = (new ProductionOrder)->setRelation('technical_sheet', (new TechnicalSheet)->forceFill(['wash_tone_id' => $wash_tone_id]));
+
+        return $this->subprocessApplies($production_order, $subprocess, $keys);
     }
 
     /**
@@ -1780,7 +1819,7 @@ class ProductivityDetailService
         }
 
         $parent = match (true) {
-            $workstation instanceof Operation => $workstation->subprocess()->first(),
+            $workstation instanceof Operation => $this->subprocessOf($workstation),
             $workstation instanceof Subprocess => $workstation->process()->first(),
             default => null,
         };
@@ -2392,7 +2431,7 @@ class ProductivityDetailService
 
         if ($workstation instanceof Operation) {
             if ($marked->contains(Operation::class.':'.$workstation->id)) {
-                $subprocess = $workstation->subprocess()->first();
+                $subprocess = $this->subprocessOf($workstation);
 
                 return ! $subprocess || ! ($subprocess->settings->only_after_previous ?? false) || $this->subprocessApplies($production_order, $subprocess, $marked)
                     ? $workstation
@@ -2404,8 +2443,11 @@ class ProductivityDetailService
                 return null;
             }
 
-            $subprocess = $workstation->subprocess()->first();
-            $marks_operations = $subprocess && $this->ownOperations($subprocess)
+            // La ficha manda: si marca operaciones del subproceso, el lote pasa solo por esas, también si después se
+            // desactivaron en el catálogo (fichas antiguas con LIJA RECARGADA o FIJADO RESINA). No se reemplazan por las
+            // operaciones activas de hoy
+            $subprocess = $this->subprocessOf($workstation);
+            $marks_operations = $subprocess && $subprocess->operations()->withTrashed()->get()
                 ->contains(fn (Operation $operation) => $marked->contains(Operation::class.':'.$operation->id));
 
             return $subprocess && ! $marks_operations ? $this->routeStep($production_order, $subprocess, $process, $marked) : null;
@@ -2431,6 +2473,7 @@ class ProductivityDetailService
     {
         $production_order = (new ProductionOrder)->forceFill(['technical_sheet_id' => $technical_sheet->id])->setRelation('technical_sheet', $technical_sheet);
         $associated = $technical_sheet->technical_sheet_details->where('model_type', Process::class)->pluck('model_id');
+        $marked = $this->markedInSheet($production_order);
 
         return Process::where('settings->in_production_order', true)
             ->get()
@@ -2439,15 +2482,57 @@ class ProductivityDetailService
                 'applies' => $associated->contains($process->id),
                 'sequence' => ($process->settings->subprocess_flow ?? Process::PARALLEL) === Process::SEQUENCE,
                 'any_workstation' => (bool) ($process->settings->any_workstation ?? false),
-                'steps' => $associated->contains($process->id)
-                    ? $this->workstations($process)
-                        ->filter(fn ($item) => $this->routeStep($production_order, $item['model_type']::find($item['model_id']), $process))
-                        ->map(fn ($item) => ['name' => $item['name'], 'group' => $item['group']])
-                        ->values()
-                        ->all()
-                    : [],
+                'steps' => $associated->contains($process->id) ? $this->sheetLineSteps($production_order, $process, $marked) : [],
             ])
             ->values();
+    }
+
+    /**
+     * Pasos de un proceso en la línea de trabajo de la ficha: sus subprocesos en el orden de la cadena (siguientes, sin
+     * regresos) que la ruta del lote lleva (marcados en la ficha, automáticos y flechas por tono) y, de cada uno, las
+     * operaciones que la ficha marca, también si se desactivaron en el catálogo después (la ficha las guarda por id). Si
+     * no marca ninguna, las que la ruta toma; un subproceso sin operaciones es un paso por sí mismo.
+     *
+     * @return array<int, array{name: string, group: ?string}>
+     */
+    protected function sheetLineSteps(ProductionOrder $production_order, Process $process, Collection $marked): array
+    {
+        $subprocesses = $process->subprocesses()->get();
+
+        if ($subprocesses->isEmpty()) {
+            return [];
+        }
+
+        // Orden de la cadena: cada subproceso después de todos sus anteriores (sin contar los regresos)
+        $ids = $subprocesses->pluck('id');
+        $previous = $subprocesses->mapWithKeys(fn (Subprocess $subprocess) => [
+            $subprocess->id => $this->beforeSubprocesses($subprocess, null)->pluck('id')->intersect($ids)->values(),
+        ]);
+        $ordered = collect();
+        while ($ordered->count() < $subprocesses->count()) {
+            $next = $subprocesses->first(fn (Subprocess $subprocess) => ! $ordered->contains('id', $subprocess->id)
+                && $previous[$subprocess->id]->diff($ordered->pluck('id'))->isEmpty())
+                ?? $subprocesses->first(fn (Subprocess $subprocess) => ! $ordered->contains('id', $subprocess->id));
+            $ordered->push($next);
+        }
+
+        return $ordered
+            ->filter(fn (Subprocess $subprocess) => $this->routeStep($production_order, $subprocess, $process, $marked))
+            ->flatMap(function (Subprocess $subprocess) use ($production_order, $process, $marked) {
+                $operations = $subprocess->operations()->withTrashed()->get();
+                $chosen = $operations->filter(fn (Operation $operation) => $marked->contains(Operation::class.':'.$operation->id));
+
+                if ($chosen->isEmpty()) {
+                    $chosen = $operations->whereNull('deleted_at')
+                        ->filter(fn (Operation $operation) => $this->routeStep($production_order, $operation, $process, $marked));
+                }
+
+                return $chosen->isEmpty()
+                    ? [['name' => $subprocess->name, 'group' => null]]
+                    : $chosen->map(fn (Operation $operation) => ['name' => $operation->name, 'group' => $subprocess->name])->all();
+            })
+            ->values()
+            ->all();
     }
 
     /**
@@ -2494,11 +2579,13 @@ class ProductivityDetailService
 
     protected function workstationModels(Process $process): Collection
     {
-        $subprocesses = $process->subprocesses()->with('operations')->get();
+        return $this->workstation_models[$process->id] ??= (function () use ($process) {
+            $subprocesses = $process->subprocesses()->with('operations')->get();
 
-        return $subprocesses->isEmpty()
-            ? collect([$process])
-            : $subprocesses->flatMap(fn ($subprocess) => $subprocess->operations->isEmpty() ? [$subprocess] : $subprocess->operations->all())->values();
+            return $subprocesses->isEmpty()
+                ? collect([$process])
+                : $subprocesses->flatMap(fn ($subprocess) => $subprocess->operations->isEmpty() ? [$subprocess] : $subprocess->operations->all())->values();
+        })();
     }
 
     /**

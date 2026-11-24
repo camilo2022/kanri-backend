@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Authorization\Permission;
 
+use App\Models\Permission;
+
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -28,7 +30,7 @@ class PermissionAllRequest extends FormRequest
             'role_id' => ['nullable', 'numeric', 'exists:roles,id'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'search' => ['nullable', 'string'],
-            'column' => ['nullable', 'string', 'in:id,name,title,description,created_at,updated_at'],
+            'column' => ['nullable', 'string', 'in:'.implode(',', array_keys(Permission::sortable_columns()))],
             'dir' => ['nullable', 'string', 'in:asc,desc']
         ];
     }

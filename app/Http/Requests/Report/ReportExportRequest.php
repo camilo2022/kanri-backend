@@ -83,8 +83,35 @@ class ReportExportRequest extends FormRequest
     {
         $validator->after(function ($validator) {
 
+            // Filtros que el reporte exige para descargar (settings: required_export) y, según la opción elegida, otro filtro
+            // que acote (requires_with: {opción: [filtros]}); así el Excel no pasa de lo que cabe en una petición
+            $report_filters = (array) (Report::find($this->route('id'))?->settings?->filters ?? []);
+            $chosen = fn ($key) => ! empty(data_get($this->input('filters', []), $key)) && collect(data_get($this->input('filters', []), $key))->filter()->isNotEmpty();
+
+            foreach ($report_filters as $key => $config) {
+                if (! data_get($config, 'required_export')) {
+                    continue;
+                }
+
+                if (! $chosen($key)) {
+                    $validator->errors()->add('filters', 'Para descargar el Excel elige una opción del filtro «'.data_get($config, 'label', $key).'».');
+
+                    continue;
+                }
+
+                foreach ((array) data_get($config, 'requires_with', []) as $option => $others) {
+                    if (! in_array($option, (array) data_get($this->input('filters', []), $key), true) || collect($others)->contains(fn ($other) => $chosen($other))) {
+                        continue;
+                    }
+
+                    $option_label = data_get(collect(data_get($config, 'options', []))->firstWhere('value', $option), 'label', $option);
+                    $others_labels = collect($others)->map(fn ($other) => data_get($report_filters, $other.'.label', $other))->implode(', ');
+                    $validator->errors()->add('filters', "Con «{$option_label}» elige también uno de estos filtros: {$others_labels}.");
+                }
+            }
+
             // Solo se aceptan los filtros configurados en el reporte
-            $configured = array_keys((array) (Report::find($this->route('id'))?->settings?->filters ?? []));
+            $configured = array_keys($report_filters);
 
             foreach (array_keys((array) $this->input('filters', [])) as $filter_key) {
                 if (! in_array($filter_key, $configured, true)) {

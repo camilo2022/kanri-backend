@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\SortableByRelation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +14,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 class Movement extends Model implements Auditable
 {
     use Auditing;
+    use SortableByRelation;
 
     protected $table = 'movements';
 
@@ -49,6 +51,26 @@ class Movement extends Model implements Auditable
     {
         return $this->hasMany(MovementDetail::class, 'model_id')
             ->where('model_type', Movement::class);
+    }
+
+    public static function sortable_columns(): array
+    {
+        $sheet = 'production_order_detail.production_order.technical_sheet';
+
+        return [
+            'id' => 'id',
+            'created_at' => 'created_at',
+            'updated_at' => 'updated_at',
+            'status' => 'status',
+            'trademark' => "{$sheet}.product.trademark.name",
+            'collection' => "{$sheet}.collection.name",
+            'garment_type' => "{$sheet}.garment_type.name",
+            'reference' => ["{$sheet}.product.code", 'production_order_detail.production_order.cut'],
+            'color' => "{$sheet}.color.name",
+            'category' => "{$sheet}.product.subcategory.category.name",
+            'destination' => 'production_order_detail.destination',
+            'process' => 'model:Process.name',
+        ];
     }
 
     public function scopeSearch(Builder $query, ?string $search = null): Builder
@@ -126,7 +148,7 @@ class Movement extends Model implements Auditable
             }
         }
 
-        // BÚSQUEDA NORMAL POR TÉRMINOS         
+        // BÚSQUEDA NORMAL POR TÉRMINOS
         $terms = [preg_replace('/\s+/', ' ', $search)];
 
         return $query->where(function (Builder $q) use ($terms) {

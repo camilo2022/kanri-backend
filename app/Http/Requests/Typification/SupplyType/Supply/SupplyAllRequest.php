@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Typification\SupplyType\Supply;
 
+use App\Models\Supply;
 use App\Models\SupplyType;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -29,10 +30,11 @@ class SupplyAllRequest extends FormRequest
             'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
-            'column' => ['nullable', 'string', 'in:id,name,description,created_at,updated_at,deleted_at'],
+            'column' => ['nullable', 'string', 'in:'.implode(',', array_keys(Supply::sortable_columns()))],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
             'with_trashed' => ['required', 'boolean'],
             'supply_type_id' => ['nullable', 'numeric', 'exists:subitems,id,item_id,'.SupplyType::ITEM_ID],
+            'supply_id' => ['nullable', 'integer', 'exists:subitems,id,item_id,'.Supply::ITEM_ID],
         ];
     }
 
@@ -45,6 +47,7 @@ class SupplyAllRequest extends FormRequest
             'column' => 'Columna a ordenar.',
             'dir' => 'Sentido del orden.',
             'with_trashed' => 'Registros inactivos',
+            'supply_id' => 'Insumo relacionado',
         ];
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\SortableByRelation;
 use App\Casts\SettingsWithUuid;
 use App\Traits\HasSettingsUuid;
 use Illuminate\Database\Eloquent\Builder;
@@ -16,6 +17,7 @@ use OwenIt\Auditing\Auditable as Auditing;
 class Subprocess extends Model implements Auditable
 {
     use Auditing, HasSettingsUuid, SoftDeletes;
+    use SortableByRelation;
 
     public const ITEM_ID = 25;
 
@@ -75,6 +77,11 @@ class Subprocess extends Model implements Auditable
         return $this->morphedByMany(Operation::class, 'model', 'model_has_subitems', 'subitem_id', 'model_id');
     }
 
+    public function operations_with_trashed(): MorphToMany
+    {
+        return $this->operations()->withTrashed();
+    }
+
     /**
      * Subprocesos siguientes del mismo proceso (cuando su flujo es en secuencia): este es subitem_id y el siguiente
      * model_id, igual que Process::after_processes.
@@ -121,5 +128,17 @@ class Subprocess extends Model implements Auditable
                 });
             }
         });
+    }
+
+    public static function sortable_columns(): array
+    {
+        return [
+            'id' => 'id',
+            'name' => 'name',
+            'description' => 'description',
+            'created_at' => 'created_at',
+            'updated_at' => 'updated_at',
+            'deleted_at' => 'deleted_at',
+        ];
     }
 }

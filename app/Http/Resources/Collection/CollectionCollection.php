@@ -8,6 +8,14 @@ use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class CollectionCollection extends ResourceCollection
 {
+    protected $item;
+
+    public function __construct($resource, $item = null)
+    {
+        parent::__construct($resource);
+        $this->item = $item;
+    }
+
     public function toArray($request)
     {
         $audited = AuditResolver::auditedIds(\App\Models\Collection::class, $this->collection->pluck('id')->all());
@@ -26,6 +34,7 @@ class CollectionCollection extends ResourceCollection
                     'item' => $collection->item,
                 ];
             }),
+            'item' => $this->item,
             'meta' => [
                 'pagination' => $this->paginationMeta(),
             ],

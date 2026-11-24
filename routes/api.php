@@ -154,6 +154,7 @@ Route::prefix('/banks')->group(function () {
         Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:banks.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:banks.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:banks.update']);
+        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:banks.settings']);
         Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:banks.delete']);
         Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:banks.restore']);
     });
@@ -229,6 +230,7 @@ Route::prefix('/collections')->group(function () {
         Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:collections.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:collections.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:collections.update']);
+        Route::put('/setting/{id}', 'setting')->middleware(['auth:sanctum', 'can:collections.settings']);
         Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum', 'can:collections.delete']);
         Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum', 'can:collections.restore']);
     });
@@ -533,9 +535,9 @@ Route::prefix('/technical_sheets')->group(function () {
         Route::get('/find', 'find')->middleware(['auth:sanctum', 'can:technical_sheets.find']);
         Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:technical_sheets.store']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:technical_sheets.update']);
-        Route::get('/pdf/{uuid}', 'pdf')->middleware(['signed'])->name('technical_sheets.pdf');
+        Route::get('/pdf/{uuid}/{name?}', 'pdf')->middleware(['signed'])->name('technical_sheets.pdf');
         Route::get('/download_pdf/{uuid}', 'pdf')->middleware(['auth:sanctum']);
-        Route::get('/process_pdf/{uuid}', 'process_pdf')->middleware(['signed'])->name('technical_sheets.process_pdf');
+        Route::get('/process_pdf/{uuid}/{name?}', 'process_pdf')->middleware(['signed'])->name('technical_sheets.process_pdf');
         Route::get('/download_process_pdf/{uuid}', 'process_pdf')->middleware(['auth:sanctum']);
     });
     Route::get('/audit/{id}', [AuditController::class, 'timeline'])->defaults('model', TechnicalSheet::class)->middleware(['auth:sanctum', 'can:audits.all']);
@@ -546,7 +548,7 @@ Route::prefix('/technical_sheets')->group(function () {
             Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.find']);
             Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.store']);
             Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:technical_sheets.production_orders.update']);
-            Route::get('/pdf/{uuid}', 'pdf')->middleware(['signed'])->name('production_orders.technical_sheets.pdf');
+            Route::get('/pdf/{uuid}/{name?}', 'pdf')->middleware(['signed'])->name('production_orders.technical_sheets.pdf');
             Route::get('/download_pdf/{uuid}', 'pdf')->middleware(['auth:sanctum']);
         });
         Route::get('/audit/{id}', [AuditController::class, 'timeline'])->defaults('model', ProductionOrder::class)->middleware(['auth:sanctum', 'can:audits.all']);
@@ -581,7 +583,7 @@ Route::prefix('/trademarks')->group(function () {
 Route::prefix('/typification')->group(function () {
     Route::prefix('/account_types')->group(function () {
         Route::controller(AccountTypeController::class)->group(function () {
-            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:account_types.all']);
+            Route::get('/all', 'all')->middleware(['auth:sanctum', 'can:account_types.all|banks.settings']);
             Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:account_types.find']);
             Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:account_types.store']);
             Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:account_types.update']);
@@ -848,7 +850,7 @@ Route::prefix('/workflow')->group(function () {
 
         Route::prefix('/subprocesses')->group(function () {
             Route::controller(SubprocessController::class)->group(function () {
-                Route::get('/all/{process_id}', 'all')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.all']);
+                Route::get('/all/{process_id?}', 'all')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.all']);
                 Route::get('/find/{id}', 'find')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.find']);
                 Route::post('/store', 'store')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.store']);
                 Route::put('/update/{id}', 'update')->middleware(['auth:sanctum', 'can:workflow.processes.subprocesses.update']);

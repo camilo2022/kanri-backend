@@ -81,7 +81,7 @@ use App\Traits\ApiResponser;
  *         property="data",
  *         type="object",
  *         @OA\Property(property="operation", ref="#/components/schemas/Operation"),
- *         @OA\Property(property="model_types", type="object", additionalProperties=true, description="Catálogo de tipos de dato (`ModelTypes::getModelTypes()`) para armar campos `selectdinamic` del formulario: etiqueta, modelo y URL de cada catálogo.", example={"trademarks": {"label": "Marcas", "model": "App\Models\Trademark", "url": "/trademarks/all", "value": "id", "option": "name"}})
+ *         @OA\Property(property="model_types", type="object", additionalProperties=true, description="Catálogo de tipos de dato (`ModelTypes::getModelTypes()`) para armar campos `selectdinamic` del formulario: etiqueta, modelo y URL de cada catálogo.", example={"trademarks": {"label": "MARCAS", "model": "App\Models\Trademark", "url": "/trademarks/all", "value": "id", "option": "name"}})
  *     ),
  *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
  *     @OA\Property(property="error", type="boolean", example=false)
@@ -169,7 +169,7 @@ class OperationController extends Controller
     {
         try {
             $operations = Operation::with(['item', 'subprocess', 'before_operations', 'after_operations', 'after_subprocesses'])
-                ->whereHas('subprocess', fn ($r) => $r->where('id', $subprocess_id))
+                ->whereHas('subprocess', fn ($r) => $r->when($request->boolean('with_trashed'), fn ($query) => $query->withTrashed())->where('id', $subprocess_id))
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -177,7 +177,7 @@ class OperationController extends Controller
                     return $query->withTrashed();
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                    return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
             $operations = $operations->paginate($request->integer('per_page', $operations->count()));

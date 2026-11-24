@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\SortableByRelation;
 use App\Services\ProductivityDetailService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +17,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 class ProductionOrder extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
+    use SortableByRelation;
 
     protected $table = 'production_orders';
 
@@ -95,9 +97,17 @@ class ProductionOrder extends Model implements Auditable
         return $this->morphToMany(Color::class, 'model', 'model_has_subitems', 'model_id', 'subitem_id');
     }
 
+    /**
+     * Tela de la orden: el detalle cuyo insumo es de un tipo marcado como tela (`settings.paragraph = fabric`). Los rollos
+     * también son detalles de insumo, así que sin ese filtro MySQL podía devolver un rollo.
+     */
     public function fabric(): HasOne
     {
-        return $this->hasOne(ProductionOrderDetail::class)->where('model_type', Supply::class);
+        return $this->hasOne(ProductionOrderDetail::class)
+            ->where('model_type', Supply::class)
+            ->whereIn('model_id', Supply::withTrashed()
+                ->whereHas('supply_type', fn (Builder $query) => $query->where('settings->paragraph', 'fabric'))
+                ->select('subitems.id'));
     }
 
     public function production_order_details(): HasMany
@@ -142,7 +152,7 @@ class ProductionOrder extends Model implements Auditable
     {
         return $this->morphOne(File::class, 'model')
             ->where('file_type_id', 3)
-            ->where('file_subtype_id', 13);
+            ->where('file_subtype_id', 15);
     }
 
     public function supplier(): BelongsTo
@@ -271,6 +281,19 @@ class ProductionOrder extends Model implements Auditable
             self::PRIORITY_MEDIUM,
             self::PRIORITY_HIGH,
             self::PRIORITY_VERY_HIGH,
+        ];
+    }
+
+    public static function sortable_columns(): array
+    {
+        return [
+            'id' => 'id',
+            'consecutive' => 'consecutive',
+            'cut' => 'cut',
+            'status' => 'status',
+            'created_at' => 'created_at',
+            'updated_at' => 'updated_at',
+            'deleted_at' => 'deleted_at',
         ];
     }
 }

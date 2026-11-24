@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Typification\PersonType\DocumentType;
 
+use App\Models\DocumentType;
+
 use App\Models\PersonType;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -29,7 +31,7 @@ class DocumentTypeAllRequest extends FormRequest
             'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
-            'column' => ['nullable', 'string', 'in:id,name,description,created_at,updated_at,deleted_at'],
+            'column' => ['nullable', 'string', 'in:'.implode(',', array_keys(DocumentType::sortable_columns()))],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
             'with_trashed' => ['required', 'boolean'],
             'person_type_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.PersonType::ITEM_ID],

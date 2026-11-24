@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Navegation\Submodule;
 
+use App\Models\Submodule;
+
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -28,7 +30,7 @@ class SubmoduleAllRequest extends FormRequest
             'module_id' => ['required', 'exists:modules,id'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'search' => ['nullable', 'string'],
-            'column' => ['nullable', 'string', 'in:id,name,icon,created_at,updated_at'],
+            'column' => ['nullable', 'string', 'in:'.implode(',', array_keys(Submodule::sortable_columns()))],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
             'with_trashed' => ['required', 'boolean']
         ];

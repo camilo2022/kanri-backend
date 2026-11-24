@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Models\MovementDetailQuantity;
 use App\Models\Operation;
+use App\Models\ProductionOrder;
 use App\Models\ProductivityDetail;
 use App\Models\Subprocess;
+use Closure;
 use Illuminate\Support\Collection;
 
 /**
@@ -20,28 +22,54 @@ use Illuminate\Support\Collection;
  */
 class ProductivityReportService
 {
+    /**
+     * Columnas que calcula el servicio (values de cada fila); las demás se leen del registro de trabajo por su data_key.
+     */
+    public const COLUMNS = ['reference', 'process', 'subprocess', 'operation', 'date', 'group', 'people', 'start', 'end', 'total_minutes',
+        'stop_minutes', 'worked_minutes', 'person_minutes', 'units', 'standard_unit', 'standard_earned', 'goal', 'efficiency', 'compliance'];
+
     public function __construct(protected ProductivityDetailService $service) {}
 
-    public function rows(array $filters): array
+    /**
+     * Filas del reporte y total de lotes. Con $page solo arma los lotes de esa página (en pantalla); sin ella, todos (Excel).
+     * $filters trae solo los filtros que calcula el servicio (fecha del turno); los demás llegan en $scope, que los aplica
+     * por su data_key sobre los registros de trabajo. Cada fila lleva en model su registro, del que ReportController lee
+     * las columnas descriptivas por su data_key.
+     *
+     * @return array{rows: array, lots: int}
+     */
+    public function rows(array $filters, ?int $page = null, int $per_page = 50, ?Closure $scope = null): array
     {
         $from = data_get($filters, 'date.from');
         $to = data_get($filters, 'date.to');
 
-        $details = ProductivityDetail::with([
-            'productivity' => ['model'],
-            'model',
-            'rule',
-            'employees' => ['person'],
-            'production_order' => ['technical_sheet' => ['product' => ['trademark', 'subcategory' => ['category']]]],
-        ])
+        $query = ProductivityDetail::query()
             ->whereNotNull('settings->scanned_at')
             ->whereHas('productivity', fn ($shift) => $shift
                 ->when($from, fn ($query) => $query->whereDate('date', '>=', $from))
                 ->when($to, fn ($query) => $query->whereDate('date', '<=', $to)))
-            ->whereHas('production_order', fn ($lots) => $lots
-                ->when($filters['App\Models\Trademark'] ?? null, fn ($query, $ids) => $query->whereHas('technical_sheet.product', fn ($product) => $product->whereIn('trademark_id', $ids)))
-                ->when($filters['App\Models\Category'] ?? null, fn ($query, $ids) => $query->whereHas('technical_sheet.product.subcategory.category', fn ($category) => $category->whereIn($category->getModel()->getQualifiedKeyName(), $ids)))
-                ->when($filters['App\Models\Collection'] ?? null, fn ($query, $ids) => $query->whereHas('technical_sheet', fn ($sheet) => $sheet->whereIn('collection_id', $ids))))
+            ->whereHas('production_order')
+            ->when($scope, fn ($details) => $scope($details));
+
+        // Lotes en el orden del reporte (referencia-lote); la página se arma solo con los registros de sus lotes
+        $lot_ids = ProductionOrder::with(['technical_sheet' => ['product']])
+            ->whereIn('id', (clone $query)->select('production_order_id'))
+            ->get()
+            ->sortBy(fn (ProductionOrder $order) => collect([data_get($order, 'technical_sheet.product.code'), $order->cut])->filter()->implode('-'))
+            ->pluck('id');
+        $lots = $lot_ids->count();
+
+        if ($page) {
+            $query->whereIn('production_order_id', $lot_ids->forPage($page, $per_page)->all());
+        }
+
+        $details = $query->with([
+            'productivity' => ['model'],
+            'model',
+            'rule',
+            'employees' => ['person'],
+            'production_order' => ['technical_sheet' => ['product' => ['trademark', 'subcategory' => ['category']], 'color']],
+        ])
             ->get()
             ->filter(fn (ProductivityDetail $detail) => $detail->model && $detail->productivity && $detail->production_order);
 
@@ -51,23 +79,20 @@ class ProductivityReportService
             array_push($rows, ...$this->lotRows($lot));
         }
 
-        return $rows;
+        return ['rows' => $rows, 'lots' => $lots];
     }
 
     protected function lotRows(Collection $lot): array
     {
         $first = $lot->first();
         $order = $first->production_order;
-        $base = [
-            'reference' => $this->label($first),
-            'category' => data_get($order, 'technical_sheet.product.subcategory.category.0.name'),
-            'trademark' => data_get($order, 'technical_sheet.product.trademark.name'),
-        ];
+        $base = ['reference' => $this->label($first)];
 
         $rows = [[
             'values' => array_merge($base, $this->place($lot->sortBy('start')->last())),
             'style' => TraceabilityReportService::HEADER,
             'level' => 0,
+            'model' => $first,
         ]];
         $all = collect();
 
@@ -79,13 +104,14 @@ class ProductivityReportService
             $all = $all->merge($metrics);
 
             foreach ($records->values() as $index => $detail) {
-                $rows[] = ['values' => array_merge($base, $this->place($detail), $this->display($metrics[$index])), 'style' => null, 'level' => 2];
+                $rows[] = ['values' => array_merge($base, $this->place($detail), $this->display($metrics[$index])), 'style' => null, 'level' => 2, 'model' => $detail];
             }
 
             $rows[] = [
                 'values' => array_merge($base, $this->display($this->sum($metrics)), ['process' => $records->first()->productivity->model->name, 'date' => $metrics->pluck('date')->filter()->min()]),
                 'style' => TraceabilityReportService::pastel(data_get($records->first()->productivity->model->settings, 'color')),
                 'level' => 1,
+                'model' => $records->first(),
             ];
         }
 
@@ -93,6 +119,7 @@ class ProductivityReportService
             'values' => array_merge(['reference' => $base['reference'], 'process' => 'TOTAL DE LA REFERENCIA'], $this->display($this->sum($all))),
             'style' => TraceabilityReportService::TOTAL,
             'level' => 0,
+            'model' => $first,
         ];
 
         return $rows;

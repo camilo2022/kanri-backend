@@ -203,9 +203,9 @@ class MovementController extends Controller
      *         name="column",
      *         in="query",
      *         required=false,
-     *         description="Columna para ordenar, junto con `dir`. ⚠️ `name`, `description` y `deleted_at` no existen en la tabla y producen error 500 (ver pendientes).",
+     *         description="Columna para ordenar, junto con `dir`. Son las columnas de la tabla del frontend; las que viven en otra tabla (marca, colección, categoría, proceso…) se resuelven con las relaciones de `Movement::sortable_columns()`. Las columnas calculadas (lote, cantidad, inventario, pendiente) no se pueden ordenar.",
      *
-     *         @OA\Schema(type="string", enum={"id", "name", "description", "created_at", "updated_at", "deleted_at"}, example="created_at")
+     *         @OA\Schema(type="string", enum={"id", "created_at", "updated_at", "status", "trademark", "collection", "garment_type", "reference", "color", "category", "destination", "process"}, example="created_at")
      *     ),
      *
      *     @OA\Parameter(ref="#/components/parameters/Dir"),
@@ -247,7 +247,7 @@ class MovementController extends Controller
                     return $query->search($request->input('search'));
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                    return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
             $movements = $movements->paginate($request->integer('per_page', $movements->count()));

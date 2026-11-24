@@ -37,7 +37,7 @@ class PersonStoreRequest extends FormRequest
             'gender_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.Gender::ITEM_ID.',deleted_at,NULL'],
             'birth_date' => ['required', 'date', 'date_format:Y-m-d', 'before:now'],
             'blood_type_id' => ['required', 'numeric', 'exists:subitems,id,item_id,'.BloodType::ITEM_ID.',deleted_at,NULL'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:people,email'],
+            'email' => ['nullable', 'string', 'email', 'max:255', 'unique:people,email'],
             'location_type' => ['required', 'string', 'in:'.implode(',', array_keys(PersonService::LOCATION_TYPES))],
             'location_id' => ['required', 'integer'],
             'address' => ['required', 'string', 'max:255'],
@@ -80,12 +80,6 @@ class PersonStoreRequest extends FormRequest
                 if ($error = $service->locationError((string) $this->input('location_type'), $this->integer('location_id'))) {
                     $validator->errors()->add('location_id', $error);
                 }
-            }
-
-            // El indicativo del teléfono es el del país de la ubicación
-            if (! $validator->errors()->has('location_id') && ! $validator->errors()->has('phone_country_id')
-                && $service->locationCountryId((string) $this->input('location_type'), $this->integer('location_id')) !== $this->integer('phone_country_id')) {
-                $validator->errors()->add('phone_country_id', 'El indicativo del teléfono debe ser el del país de la ubicación.');
             }
         });
     }

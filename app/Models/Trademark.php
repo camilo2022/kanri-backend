@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\SortableByRelation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +15,7 @@ use OwenIt\Auditing\Auditable as Auditing;
 class Trademark extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
+    use SortableByRelation;
 
     public const ITEM_ID = 15;
 
@@ -73,14 +75,14 @@ class Trademark extends Model implements Auditable
     {
         return $this->morphOne(File::class, 'model')
             ->where('file_type_id', 2)
-            ->where('file_subtype_id', 9);
+            ->where('file_subtype_id', 11);
     }
 
     public function cover(): MorphOne
     {
         return $this->morphOne(File::class, 'model')
             ->where('file_type_id', 2)
-            ->where('file_subtype_id', 10);
+            ->where('file_subtype_id', 12);
     }
 
     public function scopeSearch(Builder $query, ?string $search = null): Builder
@@ -100,5 +102,17 @@ class Trademark extends Model implements Auditable
                 });
             }
         });
+    }
+
+    public static function sortable_columns(): array
+    {
+        return [
+            'id' => 'id',
+            'name' => 'name',
+            'description' => 'description',
+            'created_at' => 'created_at',
+            'updated_at' => 'updated_at',
+            'deleted_at' => 'deleted_at',
+        ];
     }
 }

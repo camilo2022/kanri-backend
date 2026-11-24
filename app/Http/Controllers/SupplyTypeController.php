@@ -123,7 +123,7 @@ class SupplyTypeController extends Controller
      *     path="/typification/supply_types/all",
      *     tags={"Typification › Supply Types"},
      *     summary="Listar los tipos de insumo",
-     *     description="Cada tipo trae sus insumos (`supplies`). También la pueden consultar quienes configuran procesos, subprocesos u operaciones.",
+     *     description="Cada tipo trae sus insumos (`supplies`), salvo con `without_supplies`. También la pueden consultar quienes configuran procesos, subprocesos u operaciones.",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(ref="#/components/parameters/Search"),
      *     @OA\Parameter(
@@ -138,6 +138,13 @@ class SupplyTypeController extends Controller
      *         in="query",
      *         required=false,
      *         description="Filtra por `settings.in_production_order`. Si no se envía, no filtra.",
+     *         @OA\Schema(type="boolean", example=true)
+     *     ),
+     *     @OA\Parameter(
+     *         name="without_supplies",
+     *         in="query",
+     *         required=false,
+     *         description="Con `true`/`1` los tipos llegan sin `supplies`. Lo usa el catálogo de los campos `selectdinamic`, que solo muestra los tipos.",
      *         @OA\Schema(type="boolean", example=true)
      *     ),
      *     @OA\Parameter(
@@ -176,7 +183,11 @@ class SupplyTypeController extends Controller
     public function all(SupplyTypeAllRequest $request)
     {
         try {
-            $supply_types = SupplyType::with(['item', 'supplies'])
+            // Los insumos van anidados en cada tipo; el catálogo de las tablas de procesos los omite porque son miles
+            $supply_types = SupplyType::with(['item'])
+                ->when(! $request->boolean('without_supplies'), function ($query) {
+                    return $query->with(['supplies']);
+                })
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })
@@ -190,7 +201,7 @@ class SupplyTypeController extends Controller
                     return $query->where('settings->in_production_order', $request->boolean('in_production_order'));
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                    return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
             $supply_types = $supply_types->paginate($request->integer('per_page', $supply_types->count()));

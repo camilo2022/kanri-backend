@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Employee;
 
+use App\Models\Employee;
+
 use App\Models\Position;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -30,7 +32,7 @@ class EmployeeAllRequest extends FormRequest
             'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
-            'column' => ['nullable', 'string', 'in:id,person_id,operation_center,position_id,risk_manager_id,health_entity_id,pension_fund_id,compensation_fund_id,start_date,end_date,created_at,updated_at,deleted_at'],
+            'column' => ['nullable', 'string', 'in:'.implode(',', array_keys(Employee::sortable_columns()))],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
             'with_trashed' => ['required', 'boolean'],
             'with_user' => ['nullable', 'boolean']

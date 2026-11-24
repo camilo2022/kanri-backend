@@ -243,7 +243,7 @@ class ManagementProductionController extends Controller
      *     security={{"sanctum":{}}},
      *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
-     *     @OA\Parameter(name="search", in="query", required=false, description="Solo las fichas cuyo producto (o producto STARA asociado) contenga este código. `ready_references` no se filtra.", @OA\Schema(type="string", example="BO100000")),
+     *     @OA\Parameter(name="search", in="query", required=false, description="Solo las fichas cuya referencia empiece por este código. `ready_references` no se filtra.", @OA\Schema(type="string", example="BO100000")),
      *
      *     @OA\Response(
      *         response=200,
@@ -269,10 +269,9 @@ class ManagementProductionController extends Controller
                 'technical_sheets' => function ($query) use ($request, $lot) {
                     $query->where('status', '!=', TechnicalSheet::PENDING)
                         ->when($request->filled('search'), fn ($sheets) => $sheets->where(fn ($code) => $code
-                            ->whereHas('product', fn ($product) => $product->where('code', 'like', '%'.$request->input('search').'%'))
-                            ->orWhereHas('products', fn ($product) => $product->where('code', 'like', '%'.$request->input('search').'%'))
+                            ->whereHas('product', fn ($product) => $product->where('code', 'like', $request->input('search').'%'))
                             ->when($lot, fn ($by_lot) => $by_lot->orWhere(fn ($sheet) => $sheet
-                                ->whereHas('product', fn ($product) => $product->where('code', 'like', '%'.$lot[1].'%'))
+                                ->whereHas('product', fn ($product) => $product->where('code', 'like', $lot[1].'%'))
                                 ->whereHas('production_orders', fn ($order) => $order->where('cut', $lot[2]))))))
                         ->with(['technical_sheet_details' => ['typology'], 'product' => ['trademark' => ['sizes'], 'subcategory' => ['category']], 'garment_type', 'wash_tone', 'boot_type', 'photo_d', 'photo_t', 'products', 'production_orders' => ['production_order_details' => ['production_order_detail_quantities', 'model'], 'fabric' => ['model'], 'color', 'supplier', 'reassignments']]);
                 },

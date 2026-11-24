@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\SortableByRelation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +14,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 class Country extends Model implements Auditable
 {
     use Auditing;
+    use SortableByRelation;
 
     protected $table = 'countries';
 
@@ -62,5 +64,15 @@ class Country extends Model implements Auditable
                 ->orWhere('iso3', $search)
                 ->orWhere('phone_code', ltrim($search, '+'));
         });
+    }
+
+    public static function sortable_columns(): array
+    {
+        return [
+            'id' => 'id',
+            'name' => 'name',
+            'iso2' => 'iso2',
+            'phone_code' => 'phone_code',
+        ];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\SupplyType;
+use App\Services\SupplyService;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -38,7 +39,7 @@ class SupplySheet implements FromCollection, WithHeadings, WithMapping, WithTitl
             ->keyBy('field');
 
         foreach ($this->supply_type->settings->form ?? [] as $field) {
-            if (($field->cardinality ?? '') === 'multiple') {
+            if (($field->cardinality ?? '') === 'multiple' || in_array($field->type, SupplyService::SPECIAL_TYPES)) {
                 continue;
             }
 
@@ -63,7 +64,7 @@ class SupplySheet implements FromCollection, WithHeadings, WithMapping, WithTitl
 
         foreach ($this->supply_type->settings->form ?? [] as $field) {
 
-            if (($field->cardinality ?? '') === 'multiple') {
+            if (($field->cardinality ?? '') === 'multiple' || in_array($field->type, SupplyService::SPECIAL_TYPES)) {
                 continue;
             }
 

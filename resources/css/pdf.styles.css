@@ -1,0 +1,975 @@
+/* PDF impresos con Chrome (ChromePdfService): ficha técnica (TechnicalSheet/pdf), ficha de procesos (ProcessSheet/pdf)
+   y orden de producción (ProductionOrder/pdf).
+   El encabezado va solo en la página 1; el pie es una plantilla de Chrome aparte (sheet-footer) que se repite en cada
+   página. */
+
+:root {
+    --navy: #24247f;
+    --blue: #1857b6;
+    --blue-50: #eef3fb;
+    --blue-100: #dbe6f6;
+    --ink: #0f172a;
+    --ink2: #334155;
+    --muted: #64748b;
+    --line: #e2e8f0;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* El margen interno evita que Chrome pierda el borde derecho de los recuadros que llegan al ancho de la hoja */
+body {
+    margin: 0;
+    padding: 0 2px;
+    font-family: "Inter", sans-serif;
+    font-size: 11px;
+    color: var(--ink2);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+/* Encabezado de la página 1: logo, título y QR en una tarjeta de bordes grises suaves */
+.kh {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.kh td {
+    border-right: 1px solid #e2e8f0;
+    padding: 4px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.kh td:last-child {
+    border-right: none;
+}
+
+.kh img {
+    display: block;
+    margin: 0 auto;
+}
+
+.kh-title {
+    font-family: "Poppins", sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--navy);
+}
+
+/* Referencia, con marca y colección a la derecha */
+.hero {
+    margin-top: 26px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #cbd5e1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+}
+
+.hero-ref span,
+.hero-side span {
+    display: block;
+    font-size: 8px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.hero-ref b {
+    display: block;
+    font-weight: 800;
+    font-size: 24px;
+    color: var(--navy);
+    line-height: 1.1;
+    letter-spacing: 0.3px;
+}
+
+.hero-side {
+    display: flex;
+    gap: 26px;
+    text-align: right;
+}
+
+.hero-side b {
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--ink);
+}
+
+/* Secciones */
+.sec {
+    margin-top: 30px;
+}
+
+.sec-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 9px;
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    font-size: 12.5px;
+    color: var(--ink);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    break-after: avoid;
+}
+
+.sec-title::before {
+    content: "";
+    width: 3px;
+    height: 12px;
+    border-radius: 2px;
+    background: var(--navy);
+}
+
+.sec-title::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--navy);
+}
+
+.page-break {
+    break-before: page;
+}
+
+/* Página 1 y hoja del diagrama a la altura útil de la hoja (A4 menos márgenes y pie): en la página 1 las fotos se
+   achican si no caben (fotos verticales u origen y derivados) */
+.page-one,
+.page-graph {
+    height: 260mm;
+    display: flex;
+    flex-direction: column;
+}
+
+.sec-photos {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Información: etiqueta arriba y dato abajo, en 4 columnas. Cada cuadro lleva su línea superior e izquierda y se corre
+   1 px sobre su vecino (se pinta encima de él); en los bordes la tarjeta las esconde. Con el espacio de 1 px entre celdas
+   Chrome perdía líneas */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.kv {
+    margin: -1px 0 0 -1px;
+    padding: 8px 10px;
+    background: #ffffff;
+    border-left: 1px solid var(--line);
+    border-top: 1px solid var(--line);
+}
+
+.kv-span2 {
+    grid-column: span 2;
+}
+
+.kv-span3 {
+    grid-column: span 3;
+}
+
+.kv-wide {
+    grid-column: 1 / -1;
+}
+
+.kv span {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 8.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.kv b {
+    font-size: 12px;
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.kv b.badge {
+    margin-top: 2px;
+    font-size: 9px;
+    padding: 2px 10px;
+}
+
+/* Fotos: solo la foto, completa, en su proporción original y sin recortar (sin recuadro ni leyenda) */
+.photo-cards {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+}
+
+.photo-card {
+    max-height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.photo-card img {
+    flex: 0 1 auto;
+    min-height: 0;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    display: block;
+}
+
+/* Sin foto: un recuadro punteado en su lugar */
+.photo-card .photo-empty {
+    height: 200px;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+/* Diagrama de la línea de trabajo */
+.graph-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    break-inside: avoid;
+}
+
+.graph {
+    position: relative;
+    margin: 0 auto;
+}
+
+.edges {
+    position: absolute;
+    left: 0;
+    top: 0;
+    overflow: visible;
+}
+
+.edge {
+    fill: none;
+    stroke: #1857b6;
+    stroke-width: 1.3;
+    stroke-opacity: 0.75;
+}
+
+.group {
+    position: absolute;
+    border-radius: 12px;
+    background: rgba(24, 87, 182, 0.05);
+    border: 1.5px solid rgba(24, 87, 182, 0.35);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.g-head {
+    position: absolute;
+    left: 10px;
+    top: 6px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    font-size: 9px;
+    color: var(--navy);
+    letter-spacing: 0.6px;
+}
+
+.g-num {
+    background: var(--navy);
+    color: #ffffff;
+    border-radius: 10px;
+    min-width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Inter", sans-serif;
+    font-weight: 700;
+    font-size: 8px;
+    line-height: 1;
+}
+
+.g-flow {
+    white-space: nowrap;
+    margin-left: auto;
+    font-family: "Inter", sans-serif;
+    font-weight: 600;
+    font-size: 7px;
+    color: var(--blue);
+    background: #ffffff;
+    border: 1px solid var(--blue-100);
+    border-radius: 10px;
+    padding: 1px 6px;
+    text-transform: uppercase;
+}
+
+.node {
+    position: absolute;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--navy);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    padding: 5px 7px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    z-index: 2;
+}
+
+.node-muted {
+    border-left-color: #cbd5e1;
+    border-style: dashed;
+    border-left-style: solid;
+    background: #ffffffcc;
+}
+
+.node-muted .n-title {
+    color: #94a3b8;
+    font-family: "Inter", sans-serif;
+    font-weight: 500;
+    font-style: italic;
+}
+
+.n-title {
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    font-size: 8px;
+    color: var(--ink);
+    line-height: 1.15;
+}
+
+.n-step {
+    display: inline-block;
+    background: var(--blue-50);
+    color: var(--blue);
+    border-radius: 8px;
+    padding: 0 5px;
+    margin-right: 4px;
+    font-size: 7px;
+    font-weight: 700;
+}
+
+/* Operaciones del puesto: una etiqueta por operación */
+.n-ops {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 2px;
+}
+
+.n-op {
+    font-size: 6.5px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--blue);
+    background: var(--blue-50);
+    border: 1px solid var(--blue-100);
+    border-radius: 8px;
+    padding: 2px 5px;
+    text-transform: uppercase;
+}
+
+/* Procesos */
+/* Al partirse entre páginas la tarjeta no repite su borde redondeado en el corte: queda la línea recta de la última fila
+   (con el borde repetido se veía doble) */
+/* El borde de la tarjeta lo lleva cada renglón (cabecera, subprocesos, título y tabla) y no la tarjeta: así, si una
+   tabla se parte entre páginas, termina en su última fila sin líneas que bajen hasta el final de la hoja */
+.proc {
+    margin-bottom: 9px;
+}
+
+.proc > * {
+    border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+    background: #ffffff;
+}
+
+.proc > table.t {
+    border-left: 0;
+    border-right: 0;
+}
+
+.proc > :first-child {
+    border-top: 1px solid var(--line);
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+}
+
+.proc-keep,
+.proc-head {
+    break-inside: avoid;
+}
+
+/* Proceso sin subprocesos ni tablas: sin línea bajo la cabecera, para que no se vea doble con el borde de la tarjeta */
+.proc-head:last-child {
+    border-bottom: none;
+}
+
+.proc-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: #f8fafc;
+    border-bottom: 1px solid var(--line);
+    break-after: avoid;
+}
+
+/* Números en Inter: en Poppins las cifras quedan corridas hacia arriba dentro del círculo */
+.proc-num {
+    background: var(--navy);
+    color: #ffffff;
+    border-radius: 12px;
+    min-width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 9px;
+    line-height: 1;
+}
+
+.proc-name {
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--ink);
+    letter-spacing: 0.6px;
+}
+
+.proc-meta {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.muted {
+    color: #94a3b8;
+    font-style: italic;
+    font-size: 8.5px;
+}
+
+.badge {
+    display: inline-block;
+    font-size: 7.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.sub {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px 5px 26px;
+    border-bottom: 1px solid var(--line);
+    font-size: 9px;
+    break-inside: avoid;
+}
+
+.sub.op {
+    padding-left: 44px;
+}
+
+.sub .tag {
+    font-size: 6.5px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #ffffff;
+    background: #64748b;
+}
+
+.sub.op .tag {
+    background: #94a3b8;
+}
+
+.sub b {
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.sub .proc-meta {
+    font-size: 8px;
+}
+
+table.t {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9px;
+}
+
+table.t caption,
+.t-caption {
+    text-align: left;
+    padding: 5px 10px;
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    font-size: 8.5px;
+    color: var(--blue);
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+
+table.t th {
+    background: var(--navy);
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 6px 8px;
+    text-align: center;
+    border-right: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+table.t td {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+    color: var(--ink);
+}
+
+table.t th:last-child,
+table.t td:last-child {
+    border-right: none;
+}
+
+table.t tr {
+    break-inside: avoid;
+}
+
+table.t tr:nth-child(even) td {
+    background: #f8fafc;
+}
+
+/* Las tablas fijas son pequeñas: no se parten entre páginas, para que su título no quede solo. Sus etiquetas (presillas,
+   pasadores…) van en color sólido, como los encabezados de las dinámicas, y los valores en blanco */
+table.t.static {
+    break-inside: avoid;
+}
+
+table.t.static tr td {
+    background: #ffffff;
+    border-right: none;
+    border-bottom: 0.5px solid #eef2f6;
+}
+
+table.t.static tr td.label {
+    background: var(--navy);
+    color: #ffffff;
+    font-size: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border-bottom-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Tablas en tarjeta (sueltas o dentro de un proceso). Los bordes de afuera los llevan las celdas de la primera y la
+   última columna, la primera fila y la última, no la tabla ni el recuadro: en el PDF, lo que se parte entre páginas se
+   estira hasta el final de la hoja y dejaba líneas laterales debajo de la última fila. Así la tabla termina en su
+   última fila y en la página siguiente vuelve el encabezado */
+.tcard > table.t {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.tcard > table.t tr > :first-child,
+.proc > table.t tr > :first-child {
+    border-left: 1px solid var(--line);
+}
+
+table.t.t.t tr > :last-child {
+    border-right: 1px solid var(--line);
+}
+
+.tcard > table.t > thead > tr:first-child > *,
+.tcard > table.t > tbody:first-child > tr:first-child > * {
+    border-top: 1px solid var(--line);
+}
+
+/* Segunda fila del encabezado (las tallas) y filas que empiezan a mitad de la tabla (debajo de una celda que ocupa
+   varias filas): no son la orilla */
+.tcard > table.t > thead > tr + tr > :first-child,
+.tcard > table.t tr.cont > :first-child {
+    border-left: 0;
+}
+
+table.t.t.t > thead > tr + tr > :last-child {
+    border-right: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.tcard > table.t > thead > tr:first-child > :first-child,
+.tcard > table.t > tbody:first-child > tr:first-child > :first-child {
+    border-top-left-radius: 6px;
+}
+
+.tcard > table.t > thead > tr:first-child > :last-child,
+.tcard > table.t > tbody:first-child > tr:first-child > :last-child {
+    border-top-right-radius: 6px;
+}
+
+.tcard > table.t > tbody:last-child > tr:last-child > :first-child {
+    border-bottom-left-radius: 6px;
+}
+
+.tcard > table.t > tbody:last-child > tr:last-child > :last-child {
+    border-bottom-right-radius: 6px;
+}
+
+/* Ficha técnica: lote destacado y tablas de curva por talla (números centrados, total por fila y fila de totales) */
+.kv b.lot {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--navy);
+}
+
+table.t.sizes td {
+    text-align: center;
+}
+
+table.t.sizes td.name {
+    text-align: left;
+}
+
+table.t.sizes td.sum {
+    font-weight: 700;
+}
+
+table.t tr.total td {
+    font-weight: 700;
+    color: var(--navy);
+    background: var(--blue-50);
+    text-transform: uppercase;
+}
+
+/* Ficha técnica: la página 1 también mide el alto de la hoja (incluye tipos de insumo) y las fotos crecen hasta llenar
+   lo que sobra, para que nunca quede espacio antes del pie; lo que sigue continúa en la página 2 */
+.page-one.flow .hero {
+    margin-top: 20px;
+}
+
+.page-one.flow .sec,
+.page-one.flow ~ .sec {
+    margin-top: 18px;
+}
+
+.page-one.flow .photo-cards {
+    align-items: stretch;
+}
+
+.page-one.flow .photo-card img {
+    flex: 1 1 0;
+    min-height: 0;
+}
+
+/* Tabla de especificaciones de curva (estructura de la ficha anterior) */
+.tcard:has(table.t.curve) {
+    break-inside: avoid;
+}
+
+table.t.curve tr:nth-child(even) td {
+    background: transparent;
+}
+
+table.t.curve tr td.lbl {
+    background: #f8fafc;
+    color: var(--muted);
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: left;
+}
+
+table.t.curve th {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+table.t.curve td.strong {
+    font-weight: 600;
+    border-right: 1px solid var(--line);
+}
+
+table.t.curve td.obs,
+table.t.curve tr td.lbl.obs,
+table.t.curve tr td.lbl.mid {
+    text-align: center;
+    vertical-align: middle;
+}
+
+table.t.curve tr.total td {
+    background: var(--blue-50);
+}
+
+/* Orden de producción (ProductionOrder/pdf.blade.php, A4 horizontal): página 1 a la altura útil de la hoja (210 mm
+   menos márgenes y pie), con la información a la izquierda y las fotos a la derecha llenando el alto */
+.po-page-one {
+    height: 174mm;
+    display: flex;
+    flex-direction: column;
+}
+
+.po-page-one .hero {
+    margin-top: 14px;
+}
+
+.po-cols {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 18px;
+}
+
+.po-cols .sec {
+    margin-top: 10px;
+}
+
+/* Columna izquierda de la página 1: el espacio que sobra (p. ej. sin origen y derivados) se reparte entre las secciones,
+   así no queda en blanco abajo y las cifras llegan al final */
+.po-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.po-info.roomy .po-grid .kv {
+    padding: 9px 10px;
+}
+
+.po-info.roomy .metric {
+    padding: 10px 14px;
+}
+
+.po-grid .kv {
+    padding: 4px 10px;
+}
+
+.po-photos {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.po-photos .photo-card {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+}
+
+/* Las fotos de la orden ya vienen en recuadros iguales (con fondo desenfocado): llenan su espacio */
+.po-photos .photo-card img {
+    flex: 1 1 0;
+    min-height: 0;
+    object-fit: cover;
+}
+
+/* Cifras de tela */
+.metrics {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.metric {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 6px 12px;
+    background: #f8fafc;
+}
+
+.metric span {
+    display: block;
+    font-size: 8px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.metric b {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--navy);
+}
+
+.metric.alert {
+    background: #fee2e2;
+    border-color: #fecaca;
+}
+
+.metric.alert b,
+.metric.alert span {
+    color: #b91c1c;
+}
+
+/* Curva: tinte suave por destino y diferencia en colores */
+table.t tr.dest-nacional td {
+    background: #f5f8ff;
+}
+
+table.t tr.dest-medellin td {
+    background: #f3fbf6;
+}
+
+table.t tr.dest-stara td {
+    background: #fffbeb;
+}
+
+table.t td.strong {
+    font-weight: 700;
+}
+
+table.t td.lbl-diff {
+    font-weight: 700;
+    color: var(--ink2);
+    text-transform: uppercase;
+}
+
+table.t td.diff-negative {
+    background: #fee2e2;
+    color: #b91c1c;
+    font-weight: 700;
+}
+
+table.t td.diff-positive {
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-weight: 700;
+}
+
+table.t td.diff-zero {
+    background: #dcfce7;
+    color: #15803d;
+    font-weight: 700;
+}
+
+/* Largo por agrupación: etiquetas a la izquierda, largo en rojo y cantidad en azul (como la orden anterior) */
+table.t.groupings tr td.lbl {
+    width: 12%;
+    background: #f8fafc;
+    color: var(--muted);
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: left;
+}
+
+table.t.groupings td.large {
+    color: #dc2626;
+    font-weight: 700;
+}
+
+table.t.groupings td.quantity {
+    color: #1d4ed8;
+    font-weight: 700;
+}
+
+table.t.groupings tr:nth-child(even) td:not(.lbl) {
+    background: transparent;
+}
+
+/* Página 2: piezas flota a la derecha, bajada hasta el final de la hoja y sin partirse; las secciones de la izquierda
+   tienen el mismo ancho en todas las hojas (margen a la derecha), así una tabla larga puede seguir en la siguiente hoja
+   con su encabezado repetido sin desacomodarse */
+.po-split {
+    display: flow-root;
+}
+
+.po-split .po-pieces-wrap {
+    float: right;
+    width: 36%;
+    margin-left: 18px;
+}
+
+.po-split .po-pieces-wrap.keep .po-pieces,
+.po-split .po-pieces-wrap.keep .tcard {
+    break-inside: avoid;
+}
+
+.po-split > .sec {
+    margin-right: calc(36% + 18px);
+}
+
+.po-split table.t tr {
+    break-inside: avoid;
+}
+
+/* Desde la página 2 de la orden, secciones más juntas */
+.po-page-one ~ .sec,
+.po-page-one ~ .po-split .sec {
+    margin-top: 18px;
+}
+
+/* Origen y derivados (sheet-origin): etiqueta de la fila a la izquierda y las referencias en negrita */
+table.t.origin tr td.lbl {
+    background: #f8fafc;
+    color: var(--muted);
+    font-size: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+table.t.origin td.code {
+    font-weight: 700;
+    color: var(--navy);
+}
+
+table.t.origin tr:nth-child(even) td:not(.lbl) {
+    background: transparent;
+}
+
+/* Encabezados de tallas en dos filas: línea entre «Tallas» y las tallas, y entre la última talla y «Total» */
+table.t thead tr:first-child th {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+table.t thead tr:nth-child(2) th:last-child {
+    border-right: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+/* Último renglón de cada tarjeta de proceso: cierra el borde abajo y redondea (si es una tabla, la cierra su última fila) */
+.proc > :last-child:not(table) {
+    border-bottom: 1px solid var(--line);
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+/* Si la tarjeta termina en una tabla, su última fila la cierra con la línea normal (las estáticas usan una casi invisible) */
+.proc > table.t:last-child tr:last-child > * {
+    border-bottom: 1px solid var(--line);
+}

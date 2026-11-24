@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\SortableByRelation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class City extends Model
 {
+    use SortableByRelation;
+
     protected $table = 'cities';
 
     protected $fillable = [
@@ -32,5 +35,13 @@ class City extends Model
         $search = trim((string) $search);
 
         return $search === '' ? $query : $query->where('name', 'LIKE', '%'.$search.'%');
+    }
+
+    public static function sortable_columns(): array
+    {
+        return [
+            'id' => 'id',
+            'name' => 'name',
+        ];
     }
 }

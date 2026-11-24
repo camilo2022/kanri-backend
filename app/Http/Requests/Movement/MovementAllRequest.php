@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Movement;
 
+use App\Models\Movement;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -13,7 +14,7 @@ class MovementAllRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
@@ -28,7 +29,7 @@ class MovementAllRequest extends FormRequest
             'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
-            'column' => ['nullable', 'string', 'in:id,status,created_at,updated_at'],
+            'column' => ['nullable', 'string', 'in:'.implode(',', array_keys(Movement::sortable_columns()))],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
         ];
     }

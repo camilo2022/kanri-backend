@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\SortableByRelation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 class Submodule extends Model implements Auditable
 {
     use Auditing, SoftDeletes;
+    use SortableByRelation;
 
     protected $table = 'submodules';
 
@@ -72,5 +74,16 @@ class Submodule extends Model implements Auditable
                 });
             }
         });
+    }
+
+    public static function sortable_columns(): array
+    {
+        return [
+            'id' => 'id',
+            'name' => 'name',
+            'icon' => 'icon',
+            'created_at' => 'created_at',
+            'updated_at' => 'updated_at',
+        ];
     }
 }

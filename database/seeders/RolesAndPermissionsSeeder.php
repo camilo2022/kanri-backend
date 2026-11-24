@@ -345,6 +345,7 @@ class RolesAndPermissionsSeeder extends Seeder
                     ['name' => 'collections.update', 'title' => 'Actualizar colección', 'description' => 'Permite actualizar colecciones.'],
                     ['name' => 'collections.delete', 'title' => 'Eliminar colección', 'description' => 'Permite eliminar colecciones.'],
                     ['name' => 'collections.restore', 'title' => 'Restaurar colección', 'description' => 'Permite restaurar colecciones.'],
+                    ['name' => 'collections.settings', 'title' => 'Configurar colecciones', 'description' => 'Permite configurar el formato de las colecciones.'],
                 ],
             ],
             [
@@ -472,6 +473,7 @@ class RolesAndPermissionsSeeder extends Seeder
                     ['name' => 'banks.update', 'title' => 'Actualizar banco', 'description' => 'Permite actualizar bancos.'],
                     ['name' => 'banks.delete', 'title' => 'Eliminar banco', 'description' => 'Permite eliminar bancos.'],
                     ['name' => 'banks.restore', 'title' => 'Restaurar banco', 'description' => 'Permite restaurar bancos.'],
+                    ['name' => 'banks.settings', 'title' => 'Configurar bancos', 'description' => 'Permite configurar las reglas de los números de cuenta de cada banco.'],
                 ],
             ],
             [

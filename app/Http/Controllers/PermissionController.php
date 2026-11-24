@@ -139,7 +139,7 @@ class PermissionController extends Controller
                     return $query->search($request->input('search'));
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                    return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
             $permissions = $permissions->paginate($request->integer('per_page', $permissions->count()));

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\SortableByRelation;
 use Illuminate\Database\Eloquent\Builder;
 use Spatie\Permission\Models\Role as SpatieRole;
 use OwenIt\Auditing\Contracts\Auditable;
@@ -10,6 +11,7 @@ use OwenIt\Auditing\Auditable as Auditing;
 class Role extends SpatieRole implements Auditable
 {
     use Auditing;
+    use SortableByRelation;
 
     protected $table = 'roles';
 
@@ -58,5 +60,17 @@ class Role extends SpatieRole implements Auditable
                 });
             }
         });
+    }
+
+    public static function sortable_columns(): array
+    {
+        return [
+            'id' => 'id',
+            'name' => 'name',
+            'title' => 'title',
+            'description' => 'description',
+            'created_at' => 'created_at',
+            'updated_at' => 'updated_at',
+        ];
     }
 }

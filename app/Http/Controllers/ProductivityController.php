@@ -190,7 +190,7 @@ class ProductivityController extends Controller
                     return $query->whereDate('date', '<=', $request->input('date_to'));
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
-                    return $query->orderBy($request->input('column'), $request->input('dir'));
+                    return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
             $productivities = $productivities->paginate(

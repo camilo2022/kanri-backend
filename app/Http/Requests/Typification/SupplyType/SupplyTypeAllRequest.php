@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Typification\SupplyType;
 
+use App\Models\SupplyType;
+
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -28,11 +30,12 @@ class SupplyTypeAllRequest extends FormRequest
             'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
-            'column' => ['nullable', 'string', 'in:id,name,description,created_at,updated_at,deleted_at'],
+            'column' => ['nullable', 'string', 'in:'.implode(',', array_keys(SupplyType::sortable_columns()))],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
             'with_trashed' => ['required', 'boolean'],
             'in_technical_sheet' => ['nullable', 'boolean'],
-            'in_production_order' => ['nullable', 'boolean']
+            'in_production_order' => ['nullable', 'boolean'],
+            'without_supplies' => ['nullable', 'boolean']
         ];
     }
 
@@ -45,7 +48,8 @@ class SupplyTypeAllRequest extends FormRequest
             'column' => 'Columna a ordenar.',
             'dir' => 'Sentido del orden.',
             'with_trashed' => 'Registros inactivos',
-            'in_technical_sheet' => 'Aplica a Ficha Técnica'
+            'in_technical_sheet' => 'Aplica a Ficha Técnica',
+            'without_supplies' => 'Sin insumos'
         ];
     }
 
@@ -57,6 +61,9 @@ class SupplyTypeAllRequest extends FormRequest
         }
         if ($this->has('in_production_order')) {
             $this->merge(['in_production_order' => $this->boolean('in_production_order')]);
+        }
+        if ($this->has('without_supplies')) {
+            $this->merge(['without_supplies' => $this->boolean('without_supplies')]);
         }
     }
 }

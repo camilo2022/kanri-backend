@@ -28,14 +28,14 @@ class UserSeeder extends Seeder
         $permissions = Permission::all();
 
         $person = new Person();
-        $person->document_type_id = DocumentType::where('name', 'No aplica')->value('id');
+        $person->document_type_id = DocumentType::where('name', 'NO APLICA')->value('id');
         $person->document = '0000000000';
         $person->names = 'Super';
         $person->last_names = 'Admin';
         $person->email = 'superadmin@kanri.com';
-        $person->gender_id = Gender::where('name', 'No aplica')->value('id');
+        $person->gender_id = Gender::where('name', 'NO APLICA')->value('id');
         $person->birth_date = '1990-01-01';
-        $person->blood_type_id = BloodType::where('name', 'No aplica')->value('id');
+        $person->blood_type_id = BloodType::where('name', 'NO APLICA')->value('id');
         $person->address = 'Dirección principal';
         $person->phone = '0000000000';
         $person->save();
@@ -43,11 +43,11 @@ class UserSeeder extends Seeder
         $employee = new Employee();
         $employee->person_id = $person->id;
         $employee->operation_center = 'Principal';
-        $employee->position_id = Position::where('name', 'No aplica')->value('id');
-        $employee->risk_manager_id = RiskManager::where('name', 'No aplica')->value('id');
-        $employee->health_entity_id = HealthEntity::where('name', 'No aplica')->value('id');
-        $employee->pension_fund_id = PensionFund::where('name', 'No aplica')->value('id');
-        $employee->compensation_fund_id = CompensationFund::where('name', 'No aplica')->value('id');
+        $employee->position_id = Position::where('name', 'NO APLICA')->value('id');
+        $employee->risk_manager_id = RiskManager::where('name', 'NO APLICA')->value('id');
+        $employee->health_entity_id = HealthEntity::where('name', 'NO APLICA')->value('id');
+        $employee->pension_fund_id = PensionFund::where('name', 'NO APLICA')->value('id');
+        $employee->compensation_fund_id = CompensationFund::where('name', 'NO APLICA')->value('id');
         $employee->start_date = Carbon::now();
         $employee->end_date = null;
         $employee->save();
