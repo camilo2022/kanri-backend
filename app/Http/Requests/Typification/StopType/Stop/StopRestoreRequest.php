@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Typification\StopType\Stop;
 
 use App\Models\Stop;
+use App\Services\PermissionService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -21,7 +22,12 @@ class StopRestoreRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['stop_types.stops.restore'];
     }
 
     public function rules(): array

@@ -11,6 +11,7 @@ use App\Models\Gender;
 use App\Models\Supplier;
 use App\Models\SupplierType;
 use App\Services\BankAccountService;
+use App\Services\PermissionService;
 use App\Services\PersonService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -29,7 +30,12 @@ class SupplierStoreRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['typification.supplier_types.suppliers.store'];
     }
 
     public function rules(): array

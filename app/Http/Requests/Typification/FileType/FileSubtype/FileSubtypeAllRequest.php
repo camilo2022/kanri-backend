@@ -5,6 +5,7 @@ namespace App\Http\Requests\Typification\FileType\FileSubtype;
 use App\Models\FileSubtype;
 
 use App\Models\FileType;
+use App\Services\PermissionService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -22,7 +23,12 @@ class FileSubtypeAllRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['typification.file_types.file_subtypes.all'];
     }
 
     public function rules(): array

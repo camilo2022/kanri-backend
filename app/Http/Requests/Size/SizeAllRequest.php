@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Size;
 
 use App\Models\Size;
+use App\Services\PermissionService;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -21,7 +22,12 @@ class SizeAllRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['sizes.all', 'workflow.processes.settings', 'workflow.processes.subprocesses.settings', 'workflow.processes.subprocesses.operations.settings', 'trademarks.find'];
     }
 
     public function rules(): array

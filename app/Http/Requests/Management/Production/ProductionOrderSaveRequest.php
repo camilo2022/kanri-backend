@@ -11,6 +11,7 @@ use App\Models\ProductionOrderDetail;
 use App\Models\Supplier;
 use App\Models\Supply;
 use App\Models\TechnicalSheet;
+use App\Services\PermissionService;
 use App\Services\ProductionPlanService;
 use App\Services\ProductionOrderCurveService;
 use Illuminate\Contracts\Validation\Validator;
@@ -30,7 +31,12 @@ class ProductionOrderSaveRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['management.production.save'];
     }
 
     public function rules(): array

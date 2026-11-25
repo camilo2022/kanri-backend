@@ -4,6 +4,7 @@ namespace App\Http\Requests\Typification\SupplyType\Supply;
 
 use App\Models\SupplyType;
 use App\Models\Supply;
+use App\Services\PermissionService;
 use App\Services\SupplyService;
 use App\Traits\ModelTypes;
 use Illuminate\Contracts\Validation\Validator;
@@ -28,7 +29,12 @@ class SupplyUpdateRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['typification.supply_types.supplies.update'];
     }
 
     public function rules(): array

@@ -6,6 +6,7 @@ use App\Models\Operation;
 use App\Models\Process;
 use App\Models\Rule;
 use App\Models\Subprocess;
+use App\Services\PermissionService;
 use App\Services\ProductivityDetailService;
 use App\Services\StandardRuleService;
 use App\Traits\ModelTypes;
@@ -29,7 +30,12 @@ class RuleStoreRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['rules.store'];
     }
 
     public function rules(): array

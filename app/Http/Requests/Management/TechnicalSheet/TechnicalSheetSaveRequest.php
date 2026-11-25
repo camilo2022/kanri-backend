@@ -18,6 +18,7 @@ use App\Models\TechnicalSheetDetail;
 use App\Models\Trademark;
 use App\Models\Typology;
 use App\Models\WashTone;
+use App\Services\PermissionService;
 use App\Services\ProductivityDetailService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -36,7 +37,12 @@ class TechnicalSheetSaveRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['management.collections.save'];
     }
 
     public function rules(): array

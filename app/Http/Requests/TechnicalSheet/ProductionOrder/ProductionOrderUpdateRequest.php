@@ -11,6 +11,7 @@ use App\Models\ProductionOrderDetailQuantities;
 use App\Models\Size;
 use App\Models\Supplier;
 use App\Models\Supply;
+use App\Services\PermissionService;
 use App\Services\ProductionOrderCurveService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -29,7 +30,12 @@ class ProductionOrderUpdateRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['technical_sheets.production_orders.update'];
     }
 
     public function rules(): array

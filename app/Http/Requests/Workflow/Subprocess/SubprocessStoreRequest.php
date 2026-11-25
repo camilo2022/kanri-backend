@@ -5,6 +5,7 @@ namespace App\Http\Requests\Workflow\Subprocess;
 use App\Models\Operation;
 use App\Models\Process;
 use App\Models\Subprocess;
+use App\Services\PermissionService;
 use App\Traits\ValidatesWorkflowChain;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -26,7 +27,12 @@ class SubprocessStoreRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['workflow.processes.subprocesses.store'];
     }
 
     public function rules(): array

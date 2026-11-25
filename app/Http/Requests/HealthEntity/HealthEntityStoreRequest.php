@@ -3,6 +3,7 @@
 namespace App\Http\Requests\HealthEntity;
 
 use App\Models\HealthEntity;
+use App\Services\PermissionService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -20,7 +21,12 @@ class HealthEntityStoreRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['health_entities.store'];
     }
 
     public function rules(): array

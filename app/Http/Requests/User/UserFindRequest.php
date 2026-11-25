@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\User;
 
+use App\Services\PermissionService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -19,7 +20,12 @@ class UserFindRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['users.find'];
     }
 
     public function rules(): array

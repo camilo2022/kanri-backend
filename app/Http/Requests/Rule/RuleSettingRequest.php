@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Rule;
 
 use App\Models\Rule;
+use App\Services\PermissionService;
 use App\Traits\ModelTypes;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -23,7 +24,12 @@ class RuleSettingRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['rules.setting'];
     }
 
     public function rules(): array

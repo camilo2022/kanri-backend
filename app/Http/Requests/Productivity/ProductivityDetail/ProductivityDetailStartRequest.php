@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\Process;
 use App\Models\ProductionOrder;
 use App\Models\TechnicalSheetDetail;
+use App\Services\PermissionService;
 use App\Services\ProductivityDetailService;
 use App\Services\StandardRuleService;
 use Illuminate\Contracts\Validation\Validator;
@@ -35,7 +36,12 @@ class ProductivityDetailStartRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['productivity.workstation'];
     }
 
     public function rules(): array

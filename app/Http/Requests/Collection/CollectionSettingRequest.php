@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Collection;
 
 use App\Models\Collection;
+use App\Services\PermissionService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -23,7 +24,12 @@ class CollectionSettingRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['collections.settings'];
     }
 
     public function rules(): array

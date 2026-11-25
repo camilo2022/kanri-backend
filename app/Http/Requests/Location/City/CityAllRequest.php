@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Location\City;
 
 use App\Models\City;
+use App\Services\PermissionService;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -21,7 +22,12 @@ class CityAllRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['locations.countries.all', 'people.store', 'people.update'];
     }
 
     public function rules(): array

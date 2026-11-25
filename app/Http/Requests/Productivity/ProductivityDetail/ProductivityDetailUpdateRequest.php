@@ -9,6 +9,7 @@ use App\Models\Productivity;
 use App\Models\ProductivityDetail;
 use App\Models\Subprocess;
 use App\Models\TechnicalSheetDetail;
+use App\Services\PermissionService;
 use App\Services\ProductivityDetailService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Validation\Validator;
@@ -32,7 +33,12 @@ class ProductivityDetailUpdateRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['productivity.update'];
     }
 
     public function rules(): array

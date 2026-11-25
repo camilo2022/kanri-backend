@@ -7,6 +7,7 @@ use App\Models\Size;
 use App\Models\Subcategory;
 use App\Models\Trademark;
 use App\Services\BuilderService;
+use App\Services\PermissionService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -25,7 +26,12 @@ class BuilderUpdateRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['cache.builders.update'];
     }
 
     public function rules(): array

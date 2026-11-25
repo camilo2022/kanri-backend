@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Productivity\ProductivityDetail;
 
+use App\Services\PermissionService;
 use Carbon\Carbon;
 use App\Services\ProductivityDetailService;
 use Illuminate\Contracts\Validation\Validator;
@@ -26,7 +27,12 @@ class ProductivityDetailFinishRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['productivity.workstation'];
     }
 
     public function rules(): array

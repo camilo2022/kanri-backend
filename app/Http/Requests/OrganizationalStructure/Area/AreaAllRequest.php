@@ -3,6 +3,7 @@
 namespace App\Http\Requests\OrganizationalStructure\Area;
 
 use App\Models\Area;
+use App\Services\PermissionService;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -21,7 +22,12 @@ class AreaAllRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['organizational_structure.areas.all', 'employees.store', 'employees.update'];
     }
 
     public function rules(): array

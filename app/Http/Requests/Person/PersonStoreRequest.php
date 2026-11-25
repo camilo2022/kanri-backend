@@ -6,6 +6,7 @@ use App\Models\BloodType;
 use App\Models\DocumentType;
 use App\Models\File;
 use App\Models\Gender;
+use App\Services\PermissionService;
 use App\Services\PersonService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -24,7 +25,12 @@ class PersonStoreRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['people.store'];
     }
 
     public function rules(): array

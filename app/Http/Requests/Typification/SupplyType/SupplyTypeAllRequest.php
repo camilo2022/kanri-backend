@@ -3,7 +3,7 @@
 namespace App\Http\Requests\Typification\SupplyType;
 
 use App\Models\SupplyType;
-
+use App\Services\PermissionService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -15,13 +15,18 @@ class SupplyTypeAllRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'message' => 'Error de validación.',
             'attributes' => $this->attributes(),
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['typification.supply_types.all', 'workflow.processes.settings', 'workflow.processes.subprocesses.settings', 'workflow.processes.subprocesses.operations.settings'];
     }
 
     public function rules(): array
@@ -35,7 +40,7 @@ class SupplyTypeAllRequest extends FormRequest
             'with_trashed' => ['required', 'boolean'],
             'in_technical_sheet' => ['nullable', 'boolean'],
             'in_production_order' => ['nullable', 'boolean'],
-            'without_supplies' => ['nullable', 'boolean']
+            'without_supplies' => ['nullable', 'boolean'],
         ];
     }
 
@@ -49,7 +54,7 @@ class SupplyTypeAllRequest extends FormRequest
             'dir' => 'Sentido del orden.',
             'with_trashed' => 'Registros inactivos',
             'in_technical_sheet' => 'Aplica a Ficha Técnica',
-            'without_supplies' => 'Sin insumos'
+            'without_supplies' => 'Sin insumos',
         ];
     }
 

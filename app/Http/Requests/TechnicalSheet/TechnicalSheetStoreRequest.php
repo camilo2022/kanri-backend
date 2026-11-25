@@ -16,6 +16,7 @@ use App\Models\Typology;
 use App\Models\WaistbandType;
 use App\Models\WashTone;
 use App\Models\YokeType;
+use App\Services\PermissionService;
 use App\Services\ProductivityDetailService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -35,7 +36,12 @@ class TechnicalSheetStoreRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['technical_sheets.store'];
     }
 
     public function rules(): array

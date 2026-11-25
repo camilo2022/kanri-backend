@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Workflow\Process;
 
+use App\Services\PermissionService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
@@ -20,7 +21,12 @@ class ProcessSettingRequest extends FormRequest
 
     public function authorize()
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['workflow.processes.settings'];
     }
 
     public function rules()

@@ -6,6 +6,7 @@ use App\Models\Movement;
 use App\Models\MovementDetail;
 use App\Models\Process;
 use App\Models\Size;
+use App\Services\PermissionService;
 use App\Services\ProductivityDetailService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -24,7 +25,12 @@ class MovementSaveRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['movements.save'];
     }
 
     public function rules(): array

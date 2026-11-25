@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Typification\SupplierType;
 
 use App\Models\SupplierType;
+use App\Services\PermissionService;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -21,7 +22,12 @@ class SupplierTypeAllRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['typification.supplier_types.all'];
     }
 
     public function rules(): array

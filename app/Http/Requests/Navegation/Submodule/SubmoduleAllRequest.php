@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Navegation\Submodule;
 
 use App\Models\Submodule;
+use App\Services\PermissionService;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -21,7 +22,12 @@ class SubmoduleAllRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['navegation.modules.submodules.all'];
     }
 
     public function rules(): array

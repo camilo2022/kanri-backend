@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Movement\ProductionOrderDetail;
 
+use App\Services\PermissionService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -19,7 +20,12 @@ class ProductionOrderDetailAllRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['movements.production_order_details.all', 'movements.find', 'movements.save'];
     }
 
     public function rules(): array

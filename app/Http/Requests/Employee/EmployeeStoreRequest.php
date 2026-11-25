@@ -11,6 +11,7 @@ use App\Models\Process;
 use App\Models\RiskManager;
 use App\Models\Subitem;
 use App\Models\Subprocess;
+use App\Services\PermissionService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -28,7 +29,12 @@ class EmployeeStoreRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['employees.store'];
     }
 
     public function rules(): array

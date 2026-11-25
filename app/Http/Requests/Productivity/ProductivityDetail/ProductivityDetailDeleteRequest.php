@@ -4,6 +4,7 @@ namespace App\Http\Requests\Productivity\ProductivityDetail;
 
 use App\Models\Productivity;
 use App\Models\ProductivityDetail;
+use App\Services\PermissionService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -24,7 +25,12 @@ class ProductivityDetailDeleteRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['productivity.delete'];
     }
 
     public function rules(): array

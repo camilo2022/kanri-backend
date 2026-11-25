@@ -7,6 +7,7 @@ use App\Models\ProductionOrder;
 use App\Models\Operation;
 use App\Models\Process;
 use App\Models\Subprocess;
+use App\Services\PermissionService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -24,7 +25,12 @@ class ProductionOrderAllRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['technical_sheets.production_orders.all'];
     }
 
     public function rules(): array

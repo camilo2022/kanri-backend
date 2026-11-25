@@ -20,6 +20,7 @@ use App\Models\Typology;
 use App\Models\WaistbandType;
 use App\Models\WashTone;
 use App\Models\YokeType;
+use App\Services\PermissionService;
 use App\Services\ProductivityDetailService;
 use App\Services\ProductionOrderCurveService;
 use Illuminate\Contracts\Validation\Validator;
@@ -41,7 +42,12 @@ class TransformationStoreRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['technical_sheets.transformations.store'];
     }
 
     public function rules(): array

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Typification\FileType;
 
 use App\Models\FileType;
+use App\Services\PermissionService;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -21,7 +22,12 @@ class FileTypeAllRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['typification.file_types.all'];
     }
 
     public function rules(): array

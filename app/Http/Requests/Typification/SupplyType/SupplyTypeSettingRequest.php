@@ -4,6 +4,7 @@ namespace App\Http\Requests\Typification\SupplyType;
 
 use App\Models\Size;
 use App\Models\SupplyType;
+use App\Services\PermissionService;
 use App\Traits\ModelTypes;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
@@ -25,7 +26,12 @@ class SupplyTypeSettingRequest extends FormRequest
 
     public function authorize()
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['typification.supply_types.settings'];
     }
 
     public function rules()

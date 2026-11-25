@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Typification\YokeType;
 
 use App\Models\YokeType;
+use App\Services\PermissionService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -20,7 +21,12 @@ class YokeTypeDeleteRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['yoke_types.delete'];
     }
 
     public function rules(): array

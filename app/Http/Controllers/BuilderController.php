@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Cache\Builder\BuilderAllRequest;
 use App\Http\Requests\Cache\Builder\BuilderDeleteRequest;
 use App\Http\Requests\Cache\Builder\BuilderStoreRequest;
 use App\Http\Requests\Cache\Builder\BuilderUpdateRequest;
@@ -126,7 +127,7 @@ class BuilderController extends Controller
      *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
-    public function all()
+    public function all(BuilderAllRequest $request)
     {
         try {
             $builder_ids = Cache::get('curve_builder:ids', []);

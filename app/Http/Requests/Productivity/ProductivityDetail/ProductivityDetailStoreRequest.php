@@ -8,6 +8,7 @@ use App\Models\ProductionOrder;
 use App\Models\Productivity;
 use App\Models\Subprocess;
 use App\Models\TechnicalSheetDetail;
+use App\Services\PermissionService;
 use App\Services\ProductivityDetailService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Validation\Validator;
@@ -33,7 +34,12 @@ class ProductivityDetailStoreRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['productivity.store'];
     }
 
     public function rules(): array

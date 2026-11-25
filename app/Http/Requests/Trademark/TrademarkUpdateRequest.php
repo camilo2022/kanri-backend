@@ -7,6 +7,7 @@ use App\Models\FileSubtype;
 use App\Models\FileType;
 use App\Models\Group;
 use App\Models\Trademark;
+use App\Services\PermissionService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -25,7 +26,12 @@ class TrademarkUpdateRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['trademarks.update'];
     }
 
     public function rules(): array

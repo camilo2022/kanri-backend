@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Rule;
 
 use App\Models\Rule;
+use App\Services\PermissionService;
 use App\Services\StandardRuleService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -22,7 +23,12 @@ class RuleRestoreRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['rules.restore'];
     }
 
     public function rules(): array

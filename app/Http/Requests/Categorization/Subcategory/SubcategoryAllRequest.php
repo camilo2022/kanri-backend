@@ -5,6 +5,7 @@ namespace App\Http\Requests\Categorization\Subcategory;
 use App\Models\Subcategory;
 
 use App\Models\Category;
+use App\Services\PermissionService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -22,7 +23,12 @@ class SubcategoryAllRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return app(PermissionService::class)->authorize($this->user(), $this->permissions());
+    }
+
+    public function permissions(): array
+    {
+        return ['categorization.categories.subcategories.all', 'categorization.categories.all', 'workflow.processes.settings', 'workflow.processes.subprocesses.settings', 'workflow.processes.subprocesses.operations.settings'];
     }
 
     public function rules(): array

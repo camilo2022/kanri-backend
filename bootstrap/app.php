@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Middleware\RejectUnsafeInput;
-use App\Http\Middleware\SpatieCheckRoleAndPermission;
 use App\Providers\EventServiceProvider;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -24,9 +23,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function ($middleware) {
         $middleware->redirectGuestsTo(fn () => null);
         $middleware->api(append: [RejectUnsafeInput::class]);
-        $middleware->alias([
-            'can' => SpatieCheckRoleAndPermission::class,
-        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (AuthenticationException $e, $request) {
