@@ -8,9 +8,13 @@ use App\Observers\MovementDetailObserver;
 use App\Policies\ReportPolicy;
 use App\Support\ApiValidator;
 use App\Support\ValidationMessages;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Passport\Passport;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,7 +23,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        Passport::ignoreRoutes();
     }
 
     public function boot(): void
@@ -34,5 +38,13 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(Report::class, ReportPolicy::class);
         MovementDetail::observe(MovementDetailObserver::class);
+
+        Passport::authorizationView('oauth.authorize');
+        Passport::tokensCan(['mcp:use' => 'Usar el asistente de Kanri']);
+        Passport::tokensExpireIn(now()->addHours(config('asistente.mcp_token_horas')));
+        Passport::refreshTokensExpireIn(now()->addHours(config('asistente.mcp_token_horas')));
+
+        RateLimiter::for('mcp', fn (Request $request) => Limit::perMinute(config('asistente.peticiones_por_minuto'))
+            ->by($request->user('mcp')?->id ?: $request->ip()));
     }
 }

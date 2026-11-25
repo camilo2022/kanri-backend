@@ -423,6 +423,12 @@ class RolesAndPermissionsSeeder extends Seeder
                 ],
             ],
             [
+                'role' => ['name' => 'assistant', 'title' => 'Asistente', 'description' => 'Conexión del asistente de IA.'],
+                'permissions' => [
+                    ['name' => 'assistant.connect', 'title' => 'Conectar el asistente', 'description' => 'Permite autorizar al asistente de IA para trabajar con el usuario.'],
+                ],
+            ],
+            [
                 'role' => ['name' => 'management', 'title' => 'Gestión', 'description' => 'Gestión.'],
                 'permissions' => [
                     ['name' => 'management.collections.find', 'title' => 'Consultar colecciones', 'description' => 'Permite consultar colecciones.'],
