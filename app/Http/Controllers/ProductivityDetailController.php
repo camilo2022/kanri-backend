@@ -112,6 +112,36 @@ use Illuminate\Support\Collection;
  *     @OA\Property(property="reference", type="object"),
  *     @OA\Property(property="rule", type="object")
  * )
+ *
+ * @OA\Schema(
+ *     schema="ProductivityDetailReprocessResponse",
+ *     type="object",
+ *     description="Reprocesos de un registro de trabajo y los pasos del lote a los que se pueden devolver unidades.",
+ *
+ *     @OA\Property(property="data", type="object",
+ *         @OA\Property(property="productivity_detail", type="object",
+ *             @OA\Property(property="id", type="integer", example=12, description="Registro de trabajo"),
+ *             @OA\Property(property="model", type="object", description="Puesto crudo (proceso, subproceso u operación) donde se trabaja"),
+ *             @OA\Property(property="production_order", type="object", description="Orden de producción (lote) cruda que se trabaja"),
+ *             @OA\Property(property="reprocesses", type="array", description="Reprocesos registrados (settings.reprocesses). Su posición en la lista es el `index` para anularlos", @OA\Items(
+ *                 @OA\Property(property="units", type="integer", example=30, description="Unidades devueltas"),
+ *                 @OA\Property(property="steps", type="array", description="Claves de los pasos que se vuelven a hacer (`key` de `steps`)", @OA\Items(type="string", example="App\Models\Operation:42")),
+ *                 @OA\Property(property="note", type="string", nullable=true, example="MANCHAS EN EL FRENTE", description="Motivo"),
+ *                 @OA\Property(property="user_id", type="integer", nullable=true, example=3, description="Usuario que lo registró"),
+ *                 @OA\Property(property="at", type="string", example="2026-10-24 10:15:00", description="Fecha y hora del registro")
+ *             ))
+ *         ),
+ *         @OA\Property(property="steps", type="array", description="Pasos que el lote lleva en el proceso, con lo que llevan hecho", @OA\Items(
+ *             @OA\Property(property="key", type="string", example="App\Models\Operation:42", description="Modelo y id del paso; es lo que se envía en `steps`"),
+ *             @OA\Property(property="model_type", type="string", example="App\Models\Operation"),
+ *             @OA\Property(property="model_id", type="integer", example=42),
+ *             @OA\Property(property="name", type="string", example="RESINA"),
+ *             @OA\Property(property="produced", type="integer", example=120, description="Unidades hechas en el paso")
+ *         ))
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
  */
 class ProductivityDetailController extends Controller
 {
@@ -284,6 +314,54 @@ class ProductivityDetailController extends Controller
 
     /**
      * @OA\Get(
+     *     path="/productivity/details/workstation/mine",
+     *     tags={"Productivities › Details › Workstation"},
+     *     summary="Puestos de trabajo del empleado que inició sesión",
+     *     description="Lo llama la pantalla de Productividad al entrar el empleado, para llevarlo a su puesto sin escanear el QR. Toma el empleado del usuario autenticado (si el usuario no tiene empleado, devuelve la lista vacía) y responde, en este orden de prioridad: 1) sus trabajos en curso (ya iniciados); 2) si no hay, lo programado para ahora en el turno de hoy (o, si no hay nada para ahora, lo atrasado sin iniciar o lo próximo del día), con la hora programada en `start`; 3) si no tiene nada programado, su puesto fijo (`workstation_id` del empleado), expandido a sus operaciones o subprocesos. Puede traer más de un puesto si el mismo grupo tiene dos puestos a la misma hora. El `token` de cada puesto sirve para llamar a `workstation/{token}`. No tiene parámetros.",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Response(response=200, description="Puestos del empleado", @OA\JsonContent(
+     *
+     *         @OA\Property(property="data", type="object",
+     *             @OA\Property(property="workstations", type="array", @OA\Items(
+     *                 @OA\Property(property="token", type="string", format="uuid", example="9b2f6c1e-4a7d-4c3b-8e5f-2d1a0b9c8e7f", description="Identificador (uuid) del puesto, el mismo de su QR"),
+     *                 @OA\Property(property="name", type="string", example="PRETINADO"),
+     *                 @OA\Property(property="path", type="string", example="CONFECCION › ENSAMBLE", description="Proceso y subproceso del puesto separados por ›; vacío si el puesto es un proceso"),
+     *                 @OA\Property(property="start", type="string", nullable=true, example="7:00 AM", description="Hora programada del trabajo (formato g:i A, hora del servidor); null cuando el puesto sale del puesto fijo del empleado")
+     *             ))
+     *         ),
+     *         @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+     *         @OA\Property(property="error", type="boolean", example=false)
+     *     )),
+     *
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     */
+    public function workstation_mine(ProductivityDetailWorkstationMineRequest $request)
+    {
+        try {
+            $employee = $request->user()->employee;
+
+            return $this->successResponse(
+                new ProductivityDetailWorkstationMineResource($employee ? app(ProductivityDetailService::class)->employeeWorkstations($employee) : collect()),
+                $this->getMessage('Success'),
+                200
+            );
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                [
+                    'message' => $this->getMessage(class_basename($e)),
+                    'error' => $e->getMessage(),
+                ],
+                $this->getCode(class_basename($e))
+            );
+        }
+    }
+
+    /**
+     * @OA\Get(
      *     path="/productivity/details/workstation/{token}",
      *     tags={"Productivities › Details › Workstation"},
      *     summary="Resolver el QR de un puesto de trabajo",
@@ -322,27 +400,6 @@ class ProductivityDetailController extends Controller
      *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
-    public function workstation_mine(ProductivityDetailWorkstationMineRequest $request)
-    {
-        try {
-            $employee = $request->user()->employee;
-
-            return $this->successResponse(
-                new ProductivityDetailWorkstationMineResource($employee ? app(ProductivityDetailService::class)->employeeWorkstations($employee) : collect()),
-                $this->getMessage('Success'),
-                200
-            );
-        } catch (\Throwable $e) {
-            return $this->errorResponse(
-                [
-                    'message' => $this->getMessage(class_basename($e)),
-                    'error' => $e->getMessage(),
-                ],
-                $this->getCode(class_basename($e))
-            );
-        }
-    }
-
     public function workstation(ProductivityDetailWorkstationRequest $request, $token)
     {
         try {
@@ -569,31 +626,6 @@ class ProductivityDetailController extends Controller
     }
 
     /**
-     * @OA\Get(
-     *     path="/productivity/details/options/{productivity_id}",
-     *     tags={"Productivities › Details"},
-     *     summary="Opciones para programar un turno",
-     *     description="Solo procesos por unidades. `busy`: empleados ocupados en otros turnos. Los puestos salen del `model` de `productivity/find`; los lotes y su `estimate` (unidades por hacer y tiempo por unidad de la regla) salen de `production_orders/all` con `process_id`, `model_type` y `model_id`.",
-     *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(name="productivity_id", in="path", required=true, description="Turno", @OA\Schema(type="integer", example=10)),
-     *
-     *     @OA\Response(response=200, description="Opciones", @OA\JsonContent(
-     *
-     *         @OA\Property(property="data", type="object",
-     *             @OA\Property(property="busy", type="array", @OA\Items(type="object"))
-     *         ),
-     *         @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *         @OA\Property(property="error", type="boolean", example=false)
-     *     )),
-     *
-     *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
-     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
-     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
-     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
-     * )
-     */
-    /**
      * Inicia el registro del lote en el puesto: el programado o uno nuevo, con su hora oficial y su grupo.
      */
     protected function startRow(ProductivityDetailService $service, Productivity $shift, Process $process, Model $workstation, ProductionOrder $production_order, ?ProductivityDetail $scheduled, Collection $employees, Collection $replaces): ProductivityDetail
@@ -644,6 +676,60 @@ class ProductivityDetailController extends Controller
         return $productivity_detail;
     }
 
+    /**
+     * @OA\Get(
+     *     path="/productivity/details/options/{productivity_id}",
+     *     tags={"Productivities › Details"},
+     *     summary="Opciones para programar un turno",
+     *     description="Datos que necesita la pantalla de programación de un turno. Solo aplica a turnos de un proceso con puestos que tengan medición (por lote o por unidades) y que aún no hayan terminado; en otro caso responde 422. `busy` trae los trabajos de otros turnos que se cruzan en el tiempo con este: sus empleados están ocupados ahí. `by_lot` es true si el proceso es el primero (se programa por lote, con la hora de fin que digita quien programa). `chain` es true si el turno se programa como cadena (proceso medido por lote con sus subprocesos en secuencia): se programan las referencias y su orden, y el sistema calcula las horas; solo en ese caso `workstations` trae los puestos en el orden de la cadena con sus empleados (si no, viene vacío). `parallel_groups` agrupa los puestos que se pueden trabajar a la vez (el mismo grupo de empleados puede estar en dos del mismo lote). Los lotes y su `estimate` (unidades por hacer y tiempo por unidad de la regla) salen de `production_orders/all` con `process_id`, `model_type` y `model_id`. Requiere el permiso `productivity.store`.",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(name="productivity_id", in="path", required=true, description="Turno (productivity) que se va a programar", @OA\Schema(type="integer", example=10)),
+     *
+     *     @OA\Response(response=200, description="Opciones de programación", @OA\JsonContent(
+     *
+     *         @OA\Property(property="data", type="object",
+     *             @OA\Property(property="busy", type="array", description="Trabajos de otros turnos que se cruzan con este", @OA\Items(
+     *                 @OA\Property(property="employees", type="array", description="Ids de los empleados ocupados en ese trabajo", @OA\Items(type="integer", example=15)),
+     *                 @OA\Property(property="name", type="string", example="PRETINADO (CONFECCION)", description="Puesto y entre paréntesis el proceso del turno"),
+     *                 @OA\Property(property="start", type="string", example="2026-10-24 07:00:00"),
+     *                 @OA\Property(property="end", type="string", example="2026-10-24 09:30:00", description="Hasta cuándo siguen ocupados")
+     *             )),
+     *             @OA\Property(property="by_lot", type="boolean", example=true, description="El proceso es el primero: se programa por lote"),
+     *             @OA\Property(property="chain", type="boolean", example=false, description="El turno se programa como cadena de referencias"),
+     *             @OA\Property(property="workstations", type="array", description="Solo si `chain` es true: puestos en el orden de la cadena con sus empleados asignados", @OA\Items(
+     *                 @OA\Property(property="model_type", type="string", example="App\Models\Operation"),
+     *                 @OA\Property(property="model_id", type="integer", example=42),
+     *                 @OA\Property(property="name", type="string", example="PRETINADO"),
+     *                 @OA\Property(property="group", type="string", nullable=true, example="ENSAMBLE", description="Subproceso de la operación; null si el puesto no es una operación"),
+     *                 @OA\Property(property="employees", type="array", @OA\Items(type="object"))
+     *             )),
+     *             @OA\Property(property="parallel_groups", type="array", description="Cada grupo reúne los puestos que se trabajan a la vez", @OA\Items(type="array", @OA\Items(
+     *                 @OA\Property(property="model_type", type="string", example="App\Models\Operation"),
+     *                 @OA\Property(property="model_id", type="integer", example=42)
+     *             )))
+     *         ),
+     *         @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+     *         @OA\Property(property="error", type="boolean", example=false)
+     *     )),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="El turno no existe, el proceso no tiene puestos con medición o el turno ya terminó.",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"productivity_id": "Turno."},
+     *                 "errors": {"productivity_id": {"El turno ya terminó; su programación no se puede cambiar."}}
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     */
     public function options(ProductivityDetailOptionsRequest $request, $productivity_id)
     {
         try {
@@ -1293,7 +1379,33 @@ class ProductivityDetailController extends Controller
     }
 
     /**
-     * Reprocesos de un trabajo iniciado y los pasos del lote a los que se pueden devolver unidades.
+     * @OA\Get(
+     *     path="/productivity/details/reprocess/{id}",
+     *     tags={"Productivities › Details"},
+     *     summary="Reprocesos de un registro de trabajo",
+     *     description="Devuelve los reprocesos ya registrados del trabajo (`settings.reprocesses`) y los pasos del lote en el proceso a los que se pueden devolver unidades, con lo que lleva hecho cada uno. Solo aplica a procesos que permiten reprocesos (`settings.reprocesses` del proceso) y a trabajos ya iniciados; si no, responde 422. Requiere el permiso `productivity.reprocess`.",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(name="id", in="path", required=true, description="Registro de trabajo (productivity_details)", @OA\Schema(type="integer", example=12)),
+     *
+     *     @OA\Response(response=200, description="Reprocesos y pasos disponibles", @OA\JsonContent(ref="#/components/schemas/ProductivityDetailReprocessResponse")),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="El registro no existe, el proceso no permite reprocesos o el trabajo aún no se ha iniciado.",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"id": "Registro de trabajo."},
+     *                 "errors": {"id": {"El trabajo aún no se ha iniciado: no tiene unidades para reprocesar."}}
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
      */
     public function reprocess_all(ProductivityDetailReprocessAllRequest $request, $id)
     {
@@ -1317,7 +1429,41 @@ class ProductivityDetailController extends Controller
     }
 
     /**
-     * Registra un reproceso: las unidades vuelven a los pasos elegidos (dejan de estar hechas ahí y se vuelven a hacer).
+     * @OA\Post(
+     *     path="/productivity/details/reprocess/{id}",
+     *     tags={"Productivities › Details"},
+     *     summary="Registrar un reproceso",
+     *     description="Registra que unas unidades vuelven a los pasos elegidos: dejan de contar como hechas ahí y se vuelven a hacer. Se agrega a `settings.reprocesses` del trabajo (con el usuario y la fecha) y responde 201 con la misma forma que la consulta. Solo en procesos que permiten reprocesos y con el trabajo ya iniciado. Cada paso debe ser de los que el lote lleva en el proceso (`key` de la consulta) y tener hechas al menos las unidades que se devuelven. Requiere el permiso `productivity.reprocess`.",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(name="id", in="path", required=true, description="Registro de trabajo (productivity_details)", @OA\Schema(type="integer", example=12)),
+     *
+     *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *         required={"units", "steps"},
+     *
+     *         @OA\Property(property="units", type="integer", minimum=1, maximum=100000, example=30, description="Unidades que se devuelven"),
+     *         @OA\Property(property="steps", type="array", minItems=1, description="Claves (`key`) de los pasos que se vuelven a hacer; sin repetir", @OA\Items(type="string", example="App\Models\Operation:42")),
+     *         @OA\Property(property="note", type="string", nullable=true, maxLength=255, example="MANCHAS EN EL FRENTE", description="Motivo")
+     *     )),
+     *
+     *     @OA\Response(response=201, description="Reproceso registrado", @OA\JsonContent(ref="#/components/schemas/ProductivityDetailReprocessResponse")),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Datos inválidos: proceso sin reprocesos, trabajo sin iniciar, paso que el lote no lleva o con menos unidades hechas que las devueltas.",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"id": "Registro de trabajo.", "units": "Unidades a reprocesar.", "steps": "Pasos que se vuelven a hacer.", "note": "Motivo."},
+     *                 "errors": {"steps.0": {"RESINA lleva 20 unidades hechas: no se pueden devolver 30."}}
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
      */
     public function reprocess_store(ProductivityDetailReprocessRequest $request, $id)
     {
@@ -1351,7 +1497,34 @@ class ProductivityDetailController extends Controller
     }
 
     /**
-     * Anula un reproceso registrado por error: las unidades vuelven a contar como hechas en sus pasos.
+     * @OA\Delete(
+     *     path="/productivity/details/reprocess/{id}/{index}",
+     *     tags={"Productivities › Details"},
+     *     summary="Anular un reproceso",
+     *     description="Anula un reproceso registrado por error: lo quita de `settings.reprocesses` y las unidades vuelven a contar como hechas en sus pasos. Los reprocesos restantes se reenumeran. Responde 200 con la misma forma que la consulta. Requiere el permiso `productivity.reprocess`.",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(name="id", in="path", required=true, description="Registro de trabajo (productivity_details)", @OA\Schema(type="integer", example=12)),
+     *     @OA\Parameter(name="index", in="path", required=true, description="Posición del reproceso en `reprocesses` (empieza en 0)", @OA\Schema(type="integer", minimum=0, example=0)),
+     *
+     *     @OA\Response(response=200, description="Reproceso anulado", @OA\JsonContent(ref="#/components/schemas/ProductivityDetailReprocessResponse")),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="El registro no existe o el reproceso no existe en el trabajo.",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"id": "Registro de trabajo.", "index": "Reproceso."},
+     *                 "errors": {"index": {"Ese reproceso no existe en el trabajo."}}
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
      */
     public function reprocess_delete(ProductivityDetailReprocessDeleteRequest $request, $id, $index)
     {

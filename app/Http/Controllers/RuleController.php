@@ -809,6 +809,57 @@ class RuleController extends Controller
         }
     }
 
+    /**
+     * @OA\Put(
+     *     path="/rules/setting/{id}",
+     *     tags={"Rules"},
+     *     summary="Configurar los pesos de las reglas",
+     *     description="Guarda los pesos (`settings.weights`) con los que se puntúa cada criterio de comparación de las reglas. **`{id}` no es el de una regla: es el del ítem 'Reglas' (44)**; cualquier otro identificador responde 422. Cada clave de `weights` es un criterio de las reglas (por ejemplo `trademark`, `group`, `subgroup`, `category`, `subcategory`, `garment_type`, `wash_tone`); el alcance (`process`, `subprocess`, `operation`) no pesa y se rechaza. Reemplaza solo `weights` y conserva el resto de `settings` del ítem. Requiere el permiso `rules.setting`.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, description="Identificador del ítem de reglas (siempre 44).", @OA\Schema(type="integer", example=44)),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"settings"},
+     *             @OA\Property(
+     *                 property="settings",
+     *                 type="object",
+     *                 required={"weights"},
+     *                 @OA\Property(property="weights", type="object", additionalProperties=true, description="Peso entero (0 o más) por criterio. La clave es el nombre del criterio.", example={"trademark": 1, "group": 2, "subgroup": 4, "category": 8})
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Pesos guardados correctamente",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", description="El identificador del ítem recibido en la ruta.", example=44),
+     *                 @OA\Property(property="settings", type="object", additionalProperties=true, description="Todo el `settings` del ítem tras guardar.", example={"weights": {"trademark": 1, "group": 2, "subgroup": 4, "category": 8}})
+     *             ),
+     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+     *             @OA\Property(property="error", type="boolean", example=false)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Identificador distinto del ítem de reglas, pesos que no son enteros o criterio inexistente.",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"id": "Identificador del ítem", "settings": "Configuraciones"},
+     *                 "errors": {"id": {"Solo se configura el ítem de reglas."}}
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     */
     public function setting(RuleSettingRequest $request, $id)
     {
         try {

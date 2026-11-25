@@ -21,24 +21,66 @@ use Carbon\Carbon;
  *     description="Endpoints para gestionar productividades"
  * )
  *
- * @OA\PathItem(
- *     path="/productivities",
- *     description="Rutas de gestión de productividades"
- * )
- *
  * @OA\Schema(
  *     schema="Productivity",
  *     type="object",
- *
+ *     description="Turno de productividad de un proceso, subproceso u operación en un día. `status`, `duration_hours` y `goal_day` se calculan en el servidor. Las claves `productivity_details` y `planned_orders` solo vienen cuando el controlador carga el detalle (`all` y `find`).",
  *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="model_type", type="string", example="App\\Models\\Process"),
- *     @OA\Property(property="model_id", type="integer", example=1),
+ *     @OA\Property(property="model_type", type="string", description="Elemento al que pertenece el turno. Al crear o editar solo se admite un proceso.", enum={"App\Models\Process", "App\Models\Subprocess", "App\Models\Operation"}, example="App\Models\Process"),
+ *     @OA\Property(property="model_id", type="integer", example=206),
  *     @OA\Property(property="date", type="string", format="date", example="2026-10-21"),
  *     @OA\Property(property="start_time", type="string", example="07:00:00"),
  *     @OA\Property(property="end_time", type="string", example="17:00:00"),
- *     @OA\Property(property="settings", type="object", example={}),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2026-10-21T13:17:29.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-10-21T13:17:29.000000Z")
+ *     @OA\Property(property="settings", type="object", description="Solo se expone la meta por hora.", @OA\Property(property="goal_hour", type="number", nullable=true, example=300)),
+ *     @OA\Property(property="duration_hours", type="integer", description="Horas entre el inicio y el fin.", example=10),
+ *     @OA\Property(property="goal_day", type="number", nullable=true, description="Meta del día: `goal_hour` por `duration_hours`. Nulo si no hay meta por hora.", example=3000),
+ *     @OA\Property(property="status", type="string", enum={"Por iniciar", "En curso", "Terminado"}, description="Según la hora actual frente al horario del turno.", example="Por iniciar"),
+ *     @OA\Property(property="created_at", type="string", example="2026-10-21 13:17:29"),
+ *     @OA\Property(property="updated_at", type="string", example="2026-10-21 13:17:29"),
+ *     @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
+ *     @OA\Property(property="model", type="object", nullable=true, additionalProperties=true, description="Proceso, subproceso u operación del turno, tal cual lo serializa Eloquent."),
+ *     @OA\Property(property="productivity_details", type="array", description="Detalle de trabajo del turno (programación y registros). En `all` trae sus movimientos con cantidades.", @OA\Items(type="object", additionalProperties=true))
+ * )
+ *
+ * @OA\Schema(
+ *     schema="ProductivityResponse",
+ *     type="object",
+ *     @OA\Property(
+ *         property="data",
+ *         type="object",
+ *         @OA\Property(property="productivity", ref="#/components/schemas/Productivity")
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="ProductivityListResponse",
+ *     type="object",
+ *     @OA\Property(
+ *         property="data",
+ *         type="object",
+ *         @OA\Property(property="productivities", type="array", @OA\Items(ref="#/components/schemas/Productivity")),
+ *         @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="ProductivityStoreRequest",
+ *     type="object",
+ *     required={"model_type", "model_id", "date", "start_time", "end_time", "settings"},
+ *     @OA\Property(property="model_type", type="string", enum={"App\Models\Process"}, description="Solo se crean turnos de procesos.", example="App\Models\Process"),
+ *     @OA\Property(property="model_id", type="integer", description="Proceso del turno.", example=206),
+ *     @OA\Property(property="date", type="string", format="date", description="No puede ser anterior a hoy.", example="2026-10-26"),
+ *     @OA\Property(property="start_time", type="string", description="Formato H:i.", example="07:00"),
+ *     @OA\Property(property="end_time", type="string", description="Formato H:i, posterior a `start_time`.", example="17:00"),
+ *     @OA\Property(
+ *         property="settings",
+ *         type="object",
+ *         @OA\Property(property="goal_hour", type="number", minimum=1, description="Meta por hora. Obligatoria si el proceso se mide por lotes (`productivity_measurement = lots`).", example=300)
+ *     )
  * )
  */
 class ProductivityController extends Controller
@@ -47,124 +89,47 @@ class ProductivityController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/productivities/all",
+     *     path="/productivity/all",
      *     tags={"Productivities"},
-     *     summary="Listar las productividades de un proceso",
+     *     summary="Listar los turnos de un proceso, subproceso u operación",
+     *     description="Lista los turnos del elemento indicado con `model_type` y `model_id` (ambos obligatorios), con su estado, la meta y el detalle de trabajo de cada turno. Se puede acotar a un día (`date`) o a un rango (`date_from`, `date_to`). Requiere el permiso `productivity.all`.",
      *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="process_id",
-     *         in="query",
-     *         description="Identificador del proceso.",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
+     *     @OA\Parameter(name="model_type", in="query", required=true, description="Tipo de elemento.", @OA\Schema(type="string", enum={"App\Models\Process", "App\Models\Subprocess", "App\Models\Operation"}, example="App\Models\Process")),
+     *     @OA\Parameter(name="model_id", in="query", required=true, description="Identificador del proceso, subproceso u operación, según `model_type`.", @OA\Schema(type="integer", example=206)),
+     *     @OA\Parameter(name="date", in="query", required=false, description="Solo los turnos de ese día (Y-m-d).", @OA\Schema(type="string", format="date", example="2026-10-26")),
+     *     @OA\Parameter(name="date_from", in="query", required=false, description="Turnos desde esta fecha (Y-m-d).", @OA\Schema(type="string", format="date", example="2026-10-01")),
+     *     @OA\Parameter(name="date_to", in="query", required=false, description="Turnos hasta esta fecha (Y-m-d). No puede ser anterior a `date_from`.", @OA\Schema(type="string", format="date", example="2026-10-31")),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
-     *         description="Columna a ordenar.",
      *         required=false,
-     *
-     *         @OA\Schema(type="string", enum={"id","date","start_time","end_time","created_at","updated_at"}, example="date")
+     *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *         @OA\Schema(type="string", enum={"id", "date", "start_time", "end_time", "created_at", "updated_at"}, example="date")
      *     ),
-     *
-     *     @OA\Parameter(
-     *         name="dir",
-     *         in="query",
-     *         description="Dirección de ordenamiento.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="string", enum={"asc","desc"}, example="asc")
-     *     ),
-     *
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Registros por página.",
-     *         required=false,
-     *
-     *         @OA\Schema(type="integer", example=10)
-     *     ),
-     *
+     *     @OA\Parameter(ref="#/components/parameters/Dir"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *     @OA\Parameter(name="with_trashed", in="query", required=false, description="Incluir los turnos desactivados. El Request no lo valida; el controlador lo lee como booleano.", @OA\Schema(type="boolean", example=false)),
      *     @OA\Response(
      *         response=200,
-     *         description="Lista de productividades cargada correctamente",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="productivities",
-     *                     type="array",
-     *
-     *                     @OA\Items(ref="#/components/schemas/Productivity")
-     *                 ),
-     *
-     *                 @OA\Property(
-     *                     property="meta",
-     *                     type="object",
-     *                     @OA\Property(
-     *                         property="pagination",
-     *                         type="object",
-     *                         @OA\Property(property="total", type="integer", example=1),
-     *                         @OA\Property(property="count", type="integer", example=1),
-     *                         @OA\Property(property="per_page", type="integer", example=1),
-     *                         @OA\Property(property="current_page", type="integer", example=1),
-     *                         @OA\Property(property="total_pages", type="integer", example=1)
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Operación completada con éxito."),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
+     *         description="Lista de turnos cargada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/ProductivityListResponse")
      *     ),
-     *
      *     @OA\Response(
      *         response=422,
-     *         description="Identificador del proceso no registrado.",
-     *
+     *         description="Parámetros de consulta inválidos.",
      *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Error de validación."),
-     *             @OA\Property(
-     *                 property="attributes",
-     *                 type="object",
-     *                 @OA\Property(property="process_id", type="string", example="Identificador del proceso.")
-     *             ),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="process_id",
-     *                     type="array",
-     *
-     *                     @OA\Items(type="string", example="No hay ningún registro.")
-     *                 )
-     *             )
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"model_type": "Tipo de elemento (proceso, subproceso u operación).", "model_id": "Identificador del elemento."},
+     *                 "errors": {"model_id": {"No hay ningún registro."}}
+     *             }
      *         )
      *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/UnauthorizedResponse"
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ServerErrorResponse"
-     *         )
-     *     )
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
      */
     public function all(ProductivityAllRequest $request)
@@ -213,6 +178,39 @@ class ProductivityController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/productivity/store",
+     *     tags={"Productivities"},
+     *     summary="Crear un turno",
+     *     description="Crea el turno de un proceso en un día. No se permiten fechas anteriores a hoy ni horarios que se crucen con otro turno del mismo proceso ese día. Si el proceso se mide por lotes, `settings.goal_hour` es obligatorio. Hoy responde 200 (no 201), tal como está escrito el controlador. Requiere el permiso `productivity.store`.",
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/ProductivityStoreRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Turno creado correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/ProductivityResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Datos inválidos.",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"date": "Fecha del turno.", "start_time": "Hora de inicio."},
+     *                 "errors": {"start_time": {"Ya existe un turno para este elemento que se cruza con este horario."}}
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     */
     public function store(ProductivityStoreRequest $request)
     {
         try {

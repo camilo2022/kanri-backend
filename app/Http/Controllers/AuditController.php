@@ -41,6 +41,7 @@ use OwenIt\Auditing\Models\Audit;
  *                 @OA\Property(property="url", type="string", example="http://kanri-backend.test/api/products/update/12"),
  *                 @OA\Property(property="ip_address", type="string", example="192.168.1.25"),
  *                 @OA\Property(property="user_agent", type="string", nullable=true, example="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0"),
+ *                 @OA\Property(property="origin", type="string", nullable=true, enum={"web", "mobile", "mcp", "api", "system"}, description="Desde dónde se hizo el cambio: la web, la aplicación móvil, el asistente de IA (MCP), la API sin cabecera de cliente o el sistema (consola). Las auditorías anteriores al 2026-11-25 no lo traen.", example="web"),
  *                 @OA\Property(property="old_values", type="object", description="Valores anteriores, con el nombre legible de cada campo.", additionalProperties=true, example={"Marca": "ADIDAS (#7)"}),
  *                 @OA\Property(property="new_values", type="object", description="Valores nuevos, con el nombre legible de cada campo.", additionalProperties=true, example={"Marca": "STARA DENIM (#91)"}),
  *                 @OA\Property(property="created_at", type="string", example="2026-11-05 10:02:45")
@@ -96,6 +97,839 @@ class AuditController extends Controller
      *     path="/technical_sheets/production_orders/audit/{id}",
      *     tags={"Audit"},
      *     summary="Historial de cambios de una orden de producción",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/authorization/permissions/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un permiso",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/authorization/roles/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un rol",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/banks/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un banco",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/categorization/categories/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de una categoría",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/categorization/categories/subcategories/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de una subcategoría",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/classification/groups/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un grupo",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/classification/subgroups/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un subgrupo",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/collections/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de una colección",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/colors/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un color",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/compensation_funds/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de una caja de compensación",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/employees/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un empleado",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/genders/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un género",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/health_entities/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de una entidad de salud",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/locations/countries/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un país",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/movements/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un movimiento",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/navegation/modules/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un módulo del menú",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/navegation/modules/submodules/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un submódulo del menú",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/organizational_structure/areas/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un área",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/organizational_structure/areas/positions/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un cargo",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/pension_funds/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un fondo de pensión",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/people/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de una persona",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/pieces/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de una pieza",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/risk_managers/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de una administradora de riesgos laborales (ARL)",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/rules/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de una regla",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/sizes/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de una talla",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/trademarks/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de una marca",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/typification/account_types/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un tipo de cuenta",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/typification/back_types/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un tipo de trasero",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/typification/blood_types/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un tipo de sangre",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/typification/boot_types/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un tipo de bota",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/typification/file_types/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un tipo de archivo",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/typification/file_types/file_subtypes/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un subtipo de archivo",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/typification/garment_types/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un tipo de prenda",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/typification/person_types/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un tipo de persona",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/typification/person_types/document_types/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un tipo de documento",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/typification/stop_types/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un tipo de parada",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/typification/stop_types/stops/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de una parada",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/typification/supplier_types/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un tipo de proveedor",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/typification/supplier_types/suppliers/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un proveedor",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/typification/supply_types/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un tipo de insumo",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/typification/supply_types/supplies/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un insumo",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/typification/typologies/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de una tipología",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/typification/waistband_types/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un tipo de pretina",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/typification/yoke_types/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un tipo de cotilla",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/users/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un usuario",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/wash_tones/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un tono de lavado",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/workflow/processes/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un proceso",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/workflow/processes/subprocesses/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de un subproceso",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *
+     *     @OA\Response(response=200, description="Historial cargado correctamente", @OA\JsonContent(ref="#/components/schemas/AuditTimelineResponse")),
+     *     @OA\Response(response=404, description="El registro no existe."),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     *
+     * @OA\Get(
+     *     path="/workflow/processes/subprocesses/operations/audit/{id}",
+     *     tags={"Audit"},
+     *     summary="Historial de cambios de una operación",
      *     security={{"sanctum":{}}},
      *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),

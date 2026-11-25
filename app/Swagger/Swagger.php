@@ -209,6 +209,36 @@ use OpenApi\Annotations as OA;
  *     description="Endpoints para gestionar constructores de curvas en caché"
  * )
  *
+ * @OA\Tag(
+ *     name="Locations › Cities",
+ *     description="Endpoints para gestionar las ciudades de cada departamento"
+ * )
+ *
+ * @OA\Tag(
+ *     name="Locations › Countries",
+ *     description="Endpoints para gestionar los países y su configuración de validaciones del teléfono"
+ * )
+ *
+ * @OA\Tag(
+ *     name="Locations › Departments",
+ *     description="Endpoints para gestionar los departamentos de cada país"
+ * )
+ *
+ * @OA\Tag(
+ *     name="Technical Sheets",
+ *     description="Endpoints para gestionar fichas técnicas"
+ * )
+ *
+ * @OA\Tag(
+ *     name="Technical Sheets › Production Orders",
+ *     description="Endpoints para gestionar las órdenes de producción de las fichas técnicas"
+ * )
+ *
+ * @OA\Tag(
+ *     name="Technical Sheets › Transformations",
+ *     description="Endpoints para gestionar transformaciones de fichas técnicas"
+ * )
+ *
  * @OA\Schema(
  *   schema="Role",
  *   type="object",

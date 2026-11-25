@@ -27,10 +27,184 @@ use Illuminate\Support\Facades\URL;
 use App\Services\QrCodeService;
 use App\Traits\ModelTypes;
 
+/**
+ * @OA\Schema(
+ *     schema="TransformationResponse",
+ *     type="object",
+ *     description="Respuesta de crear una transformación: el producto nuevo creado (no la ficha ni el lote).",
+ *     @OA\Property(
+ *         property="data",
+ *         type="object",
+ *         @OA\Property(
+ *             property="product",
+ *             type="object",
+ *             @OA\Property(property="id", type="integer", example=318),
+ *             @OA\Property(property="code", type="string", example="XJ2210"),
+ *             @OA\Property(property="trademark_id", type="integer", example=1101),
+ *             @OA\Property(property="subcategory_id", type="integer", example=1205),
+ *             @OA\Property(property="created_at", type="string", example="2026-05-14 09:32:10"),
+ *             @OA\Property(property="updated_at", type="string", example="2026-05-14 09:32:10"),
+ *             @OA\Property(property="deleted_at", type="string", nullable=true, example=null),
+ *             @OA\Property(property="trademark", ref="#/components/schemas/Subitem"),
+ *             @OA\Property(property="subcategory", ref="#/components/schemas/Subitem")
+ *         ),
+ *         @OA\Property(property="status_technical_sheet", type="array", @OA\Items(type="string"), example={"Pendiente", "En revision", "Aprobado", "Cancelado"}),
+ *         @OA\Property(property="status_technical_sheet_detail", type="array", @OA\Items(type="string"), example={"Pendiente", "En revision", "Aprobado"}),
+ *         @OA\Property(property="model_types", type="array", description="Catálogo de modelos que pueden alimentar las tablas dinámicas.", @OA\Items(type="object", additionalProperties=true))
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
+ *     @OA\Property(property="error", type="boolean", example=false)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="TransformationRequest",
+ *     type="object",
+ *     required={"technical_sheet_id", "product", "technical_sheet", "production_order"},
+ *     description="Crea, a partir de una ficha técnica original, una referencia nueva: producto, ficha, producto STARA opcional y lote con su curva. Se envía como `multipart/form-data` (las fotos son opcionales: si no se sube `file`, se copia la foto de la ficha original con `photo_d.id` / `photo_t.id`).",
+ *     @OA\Property(property="technical_sheet_id", type="integer", description="Ficha técnica original de la que se deriva la nueva (queda en `model_id` de la ficha nueva).", example=905),
+ *     @OA\Property(property="reasigned_curve", type="boolean", description="Si es verdadero, `reassigned_origins` es obligatorio y se reasigna curva de esos lotes al lote nuevo. Ojo: el nombre del campo lleva una sola `s` (`reasigned`).", example=false),
+ *     @OA\Property(
+ *         property="reassigned_origins",
+ *         type="array",
+ *         description="Lotes de origen de la reasignación. Obligatorio si `reasigned_curve` es verdadero. No admite lotes que ya se empezaron a trabajar o están programados.",
+ *         @OA\Items(
+ *             type="object",
+ *             required={"production_order_id", "selected_rows", "reassigned_details"},
+ *             @OA\Property(property="production_order_id", type="integer", description="Orden de producción de origen.", example=1204),
+ *             @OA\Property(property="selected_rows", type="array", description="Destinos seleccionados.", @OA\Items(type="string", enum={"NACIONAL", "MEDELLIN", "STARA"}), example={"NACIONAL"}),
+ *             @OA\Property(property="reassigned_details", type="array", description="Detalle de lo reasignado (estructura que consume `ProductionOrderCurveService`).", @OA\Items(type="object", additionalProperties=true))
+ *         )
+ *     ),
+ *     @OA\Property(
+ *         property="product",
+ *         type="object",
+ *         required={"code", "trademark_id", "subcategory_id"},
+ *         description="Producto nuevo. El código no lleva guion y debe cumplir alguna de las validaciones de la marca; la ficha debe llevar el código con guion que resulte del formato de la marca (por ejemplo `XJ-2210`).",
+ *         @OA\Property(property="code", type="string", description="Único entre los productos.", example="XJ2210"),
+ *         @OA\Property(property="trademark_id", type="integer", description="Marca.", example=1101),
+ *         @OA\Property(property="subcategory_id", type="integer", description="Subcategoría.", example=1205)
+ *     ),
+ *     @OA\Property(
+ *         property="product_stara",
+ *         type="object",
+ *         nullable=true,
+ *         description="Producto STARA opcional. Su marca la fija el servidor (STARA DENIM); su subcategoría debe ser la misma de `product`. Su código no puede repetir el de `product` ni existir ya.",
+ *         @OA\Property(property="code", type="string", example="ST2210"),
+ *         @OA\Property(property="subcategory_id", type="integer", example=1205)
+ *     ),
+ *     @OA\Property(
+ *         property="technical_sheet",
+ *         type="object",
+ *         required={"date", "status", "code", "collection_id", "garment_type_id", "subgroup_id", "wash_tone_id", "color_id", "waistband_type_id", "measure_of_waistband", "boot_type_id", "yoke_type_id", "back_type_id", "pattern_maker_id", "physical_sample", "number_of_buttons", "photo_d", "photo_t", "supplies", "technical_sheet_details"},
+ *         description="Datos de la ficha nueva. Mismos campos y reglas que `TechnicalSheetRequest` (sin `product_id`, que es el producto recién creado), más `status`.",
+ *         @OA\Property(property="date", type="string", format="date", description="Formato `Y-m-d`, no posterior a hoy.", example="2026-05-14"),
+ *         @OA\Property(property="status", type="string", enum={"Pendiente", "En revision", "Aprobado", "Cancelado"}, example="Pendiente"),
+ *         @OA\Property(property="code", type="string", maxLength=11, example="XJ-2210"),
+ *         @OA\Property(property="collection_id", type="integer", example=1201),
+ *         @OA\Property(property="garment_type_id", type="integer", example=1302),
+ *         @OA\Property(property="subgroup_id", type="integer", example=1403),
+ *         @OA\Property(property="wash_tone_id", type="integer", example=1504),
+ *         @OA\Property(property="color_id", type="integer", example=1605),
+ *         @OA\Property(property="waistband_type_id", type="integer", example=1706),
+ *         @OA\Property(property="measure_of_waistband", type="number", minimum=1, example=34),
+ *         @OA\Property(property="boot_type_id", type="integer", example=1807),
+ *         @OA\Property(property="yoke_type_id", type="integer", example=1908),
+ *         @OA\Property(property="back_type_id", type="integer", example=2009),
+ *         @OA\Property(property="pattern_maker_id", type="integer", example=42),
+ *         @OA\Property(property="physical_sample", type="boolean", example=true),
+ *         @OA\Property(property="number_of_buttons", type="number", minimum=1, example=5),
+ *         @OA\Property(property="observation", type="string", nullable=true, maxLength=1000, example="DERIVADA DEL LOTE ORIGINAL"),
+ *         @OA\Property(property="description", type="string", nullable=true, maxLength=1000, example="JEAN SLIM FIT TIRO MEDIO"),
+ *         @OA\Property(
+ *             property="photo_d",
+ *             type="object",
+ *             description="Foto delantera. Con `file` se sube una nueva; sin `file`, con `id` se copia la foto de la ficha original.",
+ *             @OA\Property(property="file", type="string", format="binary", description="Imagen de máximo 2 MB."),
+ *             @OA\Property(property="id", type="integer", description="Id del archivo de la foto original a copiar.", example=3120),
+ *             @OA\Property(property="photo_type_id", type="integer", example=3),
+ *             @OA\Property(property="photo_subtype_id", type="integer", example=9)
+ *         ),
+ *         @OA\Property(
+ *             property="photo_t",
+ *             type="object",
+ *             description="Foto trasera. Con `file` se sube una nueva; sin `file`, con `id` se copia la foto de la ficha original.",
+ *             @OA\Property(property="file", type="string", format="binary", description="Imagen de máximo 2 MB."),
+ *             @OA\Property(property="id", type="integer", description="Id del archivo de la foto original a copiar.", example=3121),
+ *             @OA\Property(property="photo_type_id", type="integer", example=3),
+ *             @OA\Property(property="photo_subtype_id", type="integer", example=10)
+ *         ),
+ *         @OA\Property(property="supplies", type="array", description="Ids de insumos; uno por cada tipo de insumo marcado `in_technical_sheet`.", @OA\Items(type="integer"), example={61, 74}),
+ *         @OA\Property(property="technical_sheet_details", type="array", description="Detalles por subproceso u operación, con la misma forma que en `TechnicalSheetRequest`.", @OA\Items(type="object", additionalProperties=true))
+ *     ),
+ *     @OA\Property(
+ *         property="production_order",
+ *         type="object",
+ *         required={"cut", "status", "production_order_details"},
+ *         description="Lote nuevo con su curva.",
+ *         @OA\Property(property="cut", type="string", maxLength=2, description="Lote en MAYÚSCULAS, de máximo 2 caracteres.", example="A"),
+ *         @OA\Property(property="status", type="string", enum={"Pendiente", "Aprobado", "Cancelado"}, example="Pendiente"),
+ *         @OA\Property(
+ *             property="production_order_details",
+ *             type="array",
+ *             description="Entre 1 y 5 destinos con su curva. Cada destino debe tener al menos una cantidad mayor que 0.",
+ *             @OA\Items(
+ *                 type="object",
+ *                 required={"model_type", "destination", "sizes"},
+ *                 @OA\Property(property="model_type", type="string", enum={"App\Models\Product"}, example="App\Models\Product"),
+ *                 @OA\Property(property="model_id", type="integer", nullable=true, description="Lo resuelve el servidor: el producto nuevo o el STARA según `destination`.", example=null),
+ *                 @OA\Property(property="destination", type="string", enum={"NACIONAL", "MEDELLIN", "STARA"}, example="NACIONAL"),
+ *                 @OA\Property(
+ *                     property="sizes",
+ *                     type="array",
+ *                     description="Cantidad por talla (no se valida en las reglas, pero se usa al guardar).",
+ *                     @OA\Items(
+ *                         type="object",
+ *                         @OA\Property(property="size_id", type="integer", example=101),
+ *                         @OA\Property(property="quantity", type="integer", example=24)
+ *                     )
+ *                 )
+ *             )
+ *         )
+ *     )
+ * )
+ */
 class TransformationController extends Controller
 {
     use ApiMessage, ApiResponser, ModelTypes;
 
+    /**
+     * @OA\Get(
+     *     path="/technical_sheets/transformations/find/{id}",
+     *     tags={"Technical Sheets › Transformations"},
+     *     summary="Obtener la ficha técnica de una transformación",
+     *     description="Devuelve una ficha técnica con el mismo formato que `GET /technical_sheets/find`. Ojo: el `{id}` de la URL **no se usa**; la ficha se busca con **uno** de los parámetros de consulta `id`, `product_id` o `uuid` (se exige exactamente uno; sin ellos responde 422). A diferencia de la ficha normal, no carga la tipología de los detalles. Permiso: `technical_sheets.find` o `technical_sheets.transformations.find`.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, description="Sin efecto (ver descripción).", @OA\Schema(type="integer", example=1)),
+     *     @OA\Parameter(name="id", in="query", required=false, description="Id de la ficha. No se combina con `product_id` ni `uuid`.", @OA\Schema(type="integer", example=905)),
+     *     @OA\Parameter(name="product_id", in="query", required=false, description="Id del producto de la ficha. No se combina con `id` ni `uuid`.", @OA\Schema(type="integer", example=318)),
+     *     @OA\Parameter(name="uuid", in="query", required=false, description="UUID de la ficha. No se combina con `id` ni `product_id`.", @OA\Schema(type="string", format="uuid", example="3f8c2a10-5b7d-4e6a-9c21-8d4e0f1a7b52")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Ficha técnica cargada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/TechnicalSheetResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="No se envió exactamente uno de los parámetros, o la ficha no existe.",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"id": "Identificador de la ficha técnica", "product_id": "Identificador del producto en la ficha técnica", "uuid": "Código uuid de la ficha técnica"},
+     *                 "errors": {"id": {"Este campo es obligatorio."}, "product_id": {"Este campo es obligatorio."}, "uuid": {"Este campo es obligatorio."}}
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     */
     public function find(TechnicalSheetFindRequest $request, $id = null)
     {
         try {
@@ -76,6 +250,39 @@ class TransformationController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/technical_sheets/transformations/store",
+     *     tags={"Technical Sheets › Transformations"},
+     *     summary="Crear una transformación",
+     *     description="Desde una ficha técnica original crea una referencia nueva derivada, todo en una sola petición: el producto nuevo, su ficha técnica (con `model_id` apuntando a la original, consecutivo y `uuid` generados, insumos, fotos subidas o copiadas de la original y detalles por proceso), un producto STARA opcional ligado a la ficha, y un lote con su curva por destino. Si `reasigned_curve` es verdadero, además reasigna curva de los lotes de `reassigned_origins` al lote nuevo. Responde con el **producto** creado, no con la ficha. Se envía como `multipart/form-data`. Permiso: `technical_sheets.transformations.store`.",
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(mediaType="multipart/form-data", @OA\Schema(ref="#/components/schemas/TransformationRequest"))
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Transformación creada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/TransformationResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Datos inválidos.",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"product.code": "Código de la Referencia del Producto", "product.trademark_id": "Marca", "product.subcategory_id": "Subcategoría", "technical_sheet.date": "Fecha de aporbación del producto"},
+     *                 "errors": {"product.code": {"Ya está registrado."}}
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     */
     public function store(TransformationStoreRequest $request)
     {
         try {
@@ -216,6 +423,48 @@ class TransformationController extends Controller
         }
     }
 
+    /**
+     * @OA\Put(
+     *     path="/technical_sheets/transformations/update/{id}",
+     *     tags={"Technical Sheets › Transformations"},
+     *     summary="Editar la ficha técnica de una transformación",
+     *     description="Comparte el Request de `PUT /technical_sheets/update/{id}` (mismos campos y validaciones), por lo que acepta `removed_details`, pero esta ruta **no** lo aplica: no quita subprocesos ni operaciones. Reemplaza los datos de la ficha, sincroniza insumos, guarda las fotos que lleguen y actualiza los detalles por proceso, sin descartar los subprocesos automáticos que no aplican. Para adjuntar fotos el frontend envía **POST** a esta URL con `_method=PUT`. Permiso: `technical_sheets.update` o `technical_sheets.transformations.update`.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 allOf={
+     *                     @OA\Schema(ref="#/components/schemas/TechnicalSheetUpdateRequest"),
+     *                     @OA\Schema(@OA\Property(property="_method", type="string", enum={"PUT"}, description="Solo si se envía como POST."))
+     *                 }
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Ficha técnica editada correctamente",
+     *         @OA\JsonContent(ref="#/components/schemas/TechnicalSheetResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Datos inválidos o ficha no registrada.",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/ValidationErrorResponse",
+     *             example={
+     *                 "message": "Error de validación.",
+     *                 "attributes": {"date": "Fecha de aporbación del producto", "removed_details": "Subprocesos y operaciones quitados de la ficha"},
+     *                 "errors": {"date": {"Debe ser una fecha anterior o igual a 2026-11-25."}}
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
+     * )
+     */
     public function update(TechnicalSheetUpdateRequest $request, $id)
     {
         try {
