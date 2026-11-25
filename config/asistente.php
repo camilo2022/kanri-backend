@@ -7,12 +7,14 @@ return [
     | Conector de Claude (Passport)
     |--------------------------------------------------------------------------
     |
-    | Horas que dura el token de acceso del conector. El token de refresco no
-    | puede durar más que el de acceso: a esa hora hay que volver a conectar.
+    | Años que dura el token de acceso del conector. El conector trabaja con un
+    | usuario sin permisos de negocio (solo assistant.connect), así que su token
+    | es de larga duración: no hay que volver a conectar cada pocas horas. Passport
+    | no tiene «sin vencimiento»; para cortarlo antes se revoca el token a mano.
     |
     */
 
-    'mcp_token_horas' => (int) env('MCP_TOKEN_HORAS', 12),
+    'mcp_token_anios' => (int) env('MCP_TOKEN_ANIOS', 10),
 
     /*
     |--------------------------------------------------------------------------
@@ -42,14 +44,13 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Techo de permisos
+    | Solo lectura
     |--------------------------------------------------------------------------
     |
-    | Únicos permisos de Kanri que el MCP puede usar, aunque el actor tenga más.
-    | Se llena herramienta por herramienta.
+    | Si está activo, las herramientas que escriben responden «solo_lectura».
     |
     */
 
-    'permisos_permitidos' => [],
+    'solo_lectura' => (bool) env('KANRI_SOLO_LECTURA', true),
 
 ];

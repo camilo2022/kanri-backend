@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\LoginRequest;
+use App\Mcp\ActorResolver;
 use App\Models\Module;
 use App\Models\User;
 use App\Traits\ApiMessage;
@@ -271,6 +272,8 @@ class AuthController extends Controller
             $user = Auth::user();
             // Solo se cierra esta sesión (el token con el que se hizo la petición); las de otros equipos siguen
             $user->currentAccessToken()->delete();
+            // La llave de IA muere con la sesión
+            $user->tokens()->where('name', ActorResolver::KEY_NAME)->delete();
 
             return $this->successResponse(
                 [

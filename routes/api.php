@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountTypeController;
 use App\Http\Controllers\AreaController;
+use App\Http\Controllers\AssistantKeyController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BackTypeController;
@@ -123,6 +124,15 @@ Route::prefix('/auth')->group(function () {
         Route::post('/login', 'login');
         Route::post('/logout', 'logout')->middleware(['auth:sanctum']);
         Route::get('/user', 'user')->middleware(['auth:sanctum']);
+    });
+});
+
+Route::prefix('/assistant')->group(function () {
+    Route::prefix('/key')->group(function () {
+        Route::controller(AssistantKeyController::class)->group(function () {
+            Route::post('/store', 'store')->middleware(['auth:sanctum']);
+            Route::delete('/delete', 'delete')->middleware(['auth:sanctum']);
+        });
     });
 });
 

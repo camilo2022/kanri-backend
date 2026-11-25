@@ -769,6 +769,78 @@
                 ]
             }
         },
+        "/assistant/key/store": {
+            "post": {
+                "tags": [
+                    "Assistant › Keys"
+                ],
+                "summary": "Generar mi llave de IA",
+                "description": "Crea la llave que la persona pega en el chat del asistente para que todo lo que dicte quede a su nombre. Solo hay una por persona: al generar una nueva, la anterior se revoca. La llave se muestra una sola vez. No sirve para las demás rutas de esta API: solo la acepta el asistente (`/mcp`). Deja de servir tras los minutos de inactividad que indica la respuesta, a la hora `expires_at`, al cerrar sesión o al revocarla. Permiso: `assistant.connect`.",
+                "operationId": "98e7bf7630e5247ff9abf435837fd402",
+                "responses": {
+                    "201": {
+                        "description": "Llave generada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssistantKeyResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/assistant/key/delete": {
+            "delete": {
+                "tags": [
+                    "Assistant › Keys"
+                ],
+                "summary": "Revocar mi llave de IA",
+                "description": "Revoca la llave de IA de la persona: el asistente deja de poder trabajar a su nombre. Se puede repetir; si ya no había llave, responde `deleted: false`. Permiso: `assistant.connect`.",
+                "operationId": "6c77b223f4cb9ebf94004ee9e30af55a",
+                "responses": {
+                    "200": {
+                        "description": "Llave revocada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssistantKeyDeleteResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/products/audit/{id}": {
             "get": {
                 "tags": [
@@ -31648,6 +31720,62 @@
                 },
                 "type": "object"
             },
+            "AssistantKeyResponse": {
+                "properties": {
+                    "data": {
+                        "properties": {
+                            "key": {
+                                "description": "La llave de IA completa. Solo se muestra esta vez: no se puede volver a consultar.",
+                                "type": "string",
+                                "example": "45|aB3dEfGhIjKlMnOpQrStUvWxYz0123456789abcd"
+                            },
+                            "expires_at": {
+                                "description": "Hora en la que vence aunque se siga usando (duración máxima).",
+                                "type": "string",
+                                "example": "2026-11-26 16:30:00"
+                            },
+                            "inactivity_minutes": {
+                                "description": "Minutos sin usarla tras los cuales deja de servir.",
+                                "type": "integer",
+                                "example": 30
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Operación completada con éxito."
+                    },
+                    "error": {
+                        "type": "boolean",
+                        "example": false
+                    }
+                },
+                "type": "object"
+            },
+            "AssistantKeyDeleteResponse": {
+                "properties": {
+                    "data": {
+                        "properties": {
+                            "deleted": {
+                                "description": "`true` si había una llave activa y se revocó; `false` si ya no había ninguna.",
+                                "type": "boolean",
+                                "example": true
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Operación completada con éxito."
+                    },
+                    "error": {
+                        "type": "boolean",
+                        "example": false
+                    }
+                },
+                "type": "object"
+            },
             "AuditTimelineResponse": {
                 "properties": {
                     "data": {
@@ -47055,6 +47183,10 @@
         {
             "name": "Wash Tones",
             "description": "Endpoints para gestionar tonos de lavado"
+        },
+        {
+            "name": "Assistant › Keys",
+            "description": "Endpoints para gestionar la llave de IA del asistente"
         },
         {
             "name": "Authorization › Permissions",

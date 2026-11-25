@@ -6,7 +6,8 @@ use Closure;
 use Illuminate\Http\Request;
 
 /**
- * Solo los usuarios con el permiso assistant.connect pueden autorizar al asistente. Si todavía no hay sesión web no
+ * Solo los usuarios con el permiso assistant.connect (el mismo que habilita el chat con llave de IA) pueden autorizar
+ * al asistente. Si todavía no hay sesión web no
  * se decide nada: la autorización pide primero el inicio de sesión y vuelve aquí.
  */
 class RequireAssistantPermission

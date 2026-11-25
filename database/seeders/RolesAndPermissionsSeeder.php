@@ -425,7 +425,7 @@ class RolesAndPermissionsSeeder extends Seeder
             [
                 'role' => ['name' => 'assistant', 'title' => 'Asistente', 'description' => 'Conexión del asistente de IA.'],
                 'permissions' => [
-                    ['name' => 'assistant.connect', 'title' => 'Conectar el asistente', 'description' => 'Permite autorizar al asistente de IA para trabajar con el usuario.'],
+                    ['name' => 'assistant.connect', 'title' => 'Usar el asistente de IA', 'description' => 'Permite usar el asistente de IA: ser el usuario del conector de Claude o trabajar desde el chat con su propia llave de IA.'],
                 ],
             ],
             [

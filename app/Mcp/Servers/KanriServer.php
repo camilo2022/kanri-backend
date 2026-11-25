@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Tools\CerrarLlaveTool;
 use App\Mcp\Tools\QuienSoyTool;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
@@ -15,6 +16,7 @@ class KanriServer extends Server
 {
     protected array $tools = [
         QuienSoyTool::class,
+        CerrarLlaveTool::class,
     ];
 
     protected array $resources = [];

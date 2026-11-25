@@ -30,6 +30,11 @@ use OpenApi\Annotations as OA;
  * )
  *
  * @OA\Tag(
+ *     name="Assistant › Keys",
+ *     description="Endpoints para gestionar la llave de IA del asistente"
+ * )
+ *
+ * @OA\Tag(
  *     name="Authorization › Permissions",
  *     description="Endpoints para gestionar permisos"
  * )
