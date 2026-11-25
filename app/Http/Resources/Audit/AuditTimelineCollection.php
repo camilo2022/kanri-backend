@@ -42,6 +42,7 @@ class AuditTimelineCollection extends ResourceCollection
                     'url' => $audit->url,
                     'ip_address' => $audit->ip_address,
                     'user_agent' => $audit->user_agent,
+                    'origin' => $audit->origin,
                     'old_values' => (object) $changes['old'],
                     'new_values' => (object) $changes['new'],
                     'created_at' => Carbon::parse($audit->created_at)->format('Y-m-d H:i:s'),

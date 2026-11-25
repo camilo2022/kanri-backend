@@ -29,6 +29,7 @@ return new class extends Migration
             $table->ipAddress('ip_address')->nullable();
             $table->string('user_agent', 1023)->nullable();
             $table->string('tags')->nullable();
+            $table->string('origin', 20)->nullable()->index()->comment('Desde dónde se hizo: web, mobile, ai, api o system');
             $table->timestamps();
 
             $table->index([$morphPrefix . '_id', $morphPrefix . '_type']);

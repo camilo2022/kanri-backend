@@ -5,6 +5,7 @@ namespace App\Listeners;
 use Spatie\Permission\Events\RoleAttached;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Collection;
+use App\Support\AuditOrigin;
 use OwenIt\Auditing\Models\Audit;
 
 class AuditRoleAssigned
@@ -32,6 +33,7 @@ class AuditRoleAssigned
             'ip_address' => request()->ip(),
             'url' => request()->fullUrl(),
             'user_agent' => request()->userAgent(),
+            'origin' => AuditOrigin::current(),
 
         ]);
     }

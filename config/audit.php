@@ -152,7 +152,7 @@ return [
     |
     */
 
-    'driver' => 'database',
+    'driver' => App\Support\AuditDatabaseDriver::class,
 
     /*
     |--------------------------------------------------------------------------

@@ -5,6 +5,7 @@ namespace App\Listeners;
 use Spatie\Permission\Events\RoleDetached;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Collection;
+use App\Support\AuditOrigin;
 use OwenIt\Auditing\Models\Audit;
 
 class AuditRoleRemoved
@@ -32,6 +33,7 @@ class AuditRoleRemoved
             'ip_address' => request()->ip(),
             'url' => request()->fullUrl(),
             'user_agent' => request()->userAgent(),
+            'origin' => AuditOrigin::current(),
 
         ]);
     }
