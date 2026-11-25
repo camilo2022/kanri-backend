@@ -7,8 +7,12 @@
     },
     "servers": [
         {
-            "url": "http://kanri-backend.test/api/",
-            "description": "Servidor API"
+            "url": "http://kanri-backend.test/api",
+            "description": "Servidor development"
+        },
+        {
+            "url": "https://kanri-backend.orgbless.com/api",
+            "description": "Servidor tester"
         }
     ],
     "paths": {
@@ -774,82 +778,17 @@
                 ]
             }
         },
-        "/audits/all": {
+        "/products/audit/{id}": {
             "get": {
                 "tags": [
                     "Audit"
                 ],
-                "summary": "Listar registros de auditoría",
-                "description": "Todos los filtros son opcionales y se combinan. No hay búsqueda por texto ni registros desactivados.",
-                "operationId": "1a3e0cfc03412c42107c7e2274cb88ae",
+                "summary": "Historial de cambios de un producto",
+                "description": "Cada grupo de rutas con listado tiene su `/audit/{id}` (por ejemplo `/typification/supply_types/supplies/audit/{id}`): todas devuelven solo los cambios de ese registro, del más reciente al más antiguo, con nombres legibles. Los eventos sin datos no se incluyen, y los +1 y −1 seguidos de un registro de trabajo llegan como un solo evento `units`.",
+                "operationId": "6f0df7a3d7cb622507d39f839d83bdc0",
                 "parameters": [
                     {
-                        "name": "user_id",
-                        "in": "query",
-                        "description": "Solo los cambios hechos por este usuario.",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "example": 15
-                        }
-                    },
-                    {
-                        "name": "event",
-                        "in": "query",
-                        "description": "Tipo de cambio.",
-                        "required": false,
-                        "schema": {
-                            "$ref": "#/components/schemas/AuditEvent"
-                        }
-                    },
-                    {
-                        "name": "auditable_name",
-                        "in": "query",
-                        "description": "Clase completa del modelo modificado (se compara con `auditable_type`, no con el nombre en español). No se valida.",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "example": "App\\Models\\Area"
-                        }
-                    },
-                    {
-                        "name": "start_date",
-                        "in": "query",
-                        "description": "Desde este día (00:00:00). Si no se envía `end_date`, el rango llega hasta hoy.",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "format": "date",
-                            "example": "2026-05-01"
-                        }
-                    },
-                    {
-                        "name": "end_date",
-                        "in": "query",
-                        "description": "Hasta este día (23:59:59). Envíalo junto con `start_date`: si va solo, el rango empieza hoy y una fecha pasada no devuelve nada.",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "format": "date",
-                            "example": "2026-05-31"
-                        }
-                    },
-                    {
-                        "name": "column",
-                        "in": "query",
-                        "description": "Columna para ordenar. Solo se aplica junto con `dir`.",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "created_at",
-                                "event"
-                            ],
-                            "example": "created_at"
-                        }
-                    },
-                    {
-                        "$ref": "#/components/parameters/Dir"
+                        "$ref": "#/components/parameters/PathId"
                     },
                     {
                         "$ref": "#/components/parameters/PerPage"
@@ -860,42 +799,17 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lista de auditoría cargada correctamente",
+                        "description": "Historial cargado correctamente",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/AuditListResponse"
+                                    "$ref": "#/components/schemas/AuditTimelineResponse"
                                 }
                             }
                         }
                     },
-                    "422": {
-                        "description": "Parámetros de consulta inválidos.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ValidationErrorResponse"
-                                },
-                                "example": {
-                                    "message": "Error de validación.",
-                                    "attributes": {
-                                        "per_page": "Registros por pagina.",
-                                        "page": "N° de pagina.",
-                                        "search": "Filtro de Busqueda.",
-                                        "column": "Columna a ordenar.",
-                                        "dir": "Sentido del orden.",
-                                        "event": "Tipo de evento.",
-                                        "start_date": "Fecha inicio de rango",
-                                        "end_date": "Fecha fin de rango"
-                                    },
-                                    "errors": {
-                                        "event": [
-                                            "Valor inválido. Permitidos: created, updated, deleted, restored, attach, detach, sync."
-                                        ]
-                                    }
-                                }
-                            }
-                        }
+                    "404": {
+                        "description": "El registro no existe."
                     },
                     "401": {
                         "$ref": "#/components/responses/Unauthorized"
@@ -914,31 +828,86 @@
                 ]
             }
         },
-        "/audits/find/{id}": {
+        "/technical_sheets/audit/{id}": {
             "get": {
                 "tags": [
                     "Audit"
                 ],
-                "summary": "Obtener un registro de auditoría",
-                "operationId": "e6218e6c01439fa6ea20ce265222ce9e",
+                "summary": "Historial de cambios de una ficha técnica",
+                "operationId": "901e61fb0df54089442963ebe07d1829",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/PathId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/PerPage"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Page"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Registro de auditoría cargado correctamente",
+                        "description": "Historial cargado correctamente",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/AuditResponse"
+                                    "$ref": "#/components/schemas/AuditTimelineResponse"
                                 }
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/RecordNotFound"
+                    "404": {
+                        "description": "El registro no existe."
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/technical_sheets/production_orders/audit/{id}": {
+            "get": {
+                "tags": [
+                    "Audit"
+                ],
+                "summary": "Historial de cambios de una orden de producción",
+                "operationId": "b3868e5fbe0c0b032d86d0891effca08",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/PathId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/PerPage"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Page"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Historial cargado correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuditTimelineResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "El registro no existe."
                     },
                     "401": {
                         "$ref": "#/components/responses/Unauthorized"
@@ -987,7 +956,7 @@
                         }
                     },
                     "404": {
-                        "description": "No existe un usuario con ese correo.",
+                        "description": "No existe un usuario con ese nombre de usuario.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1022,12 +991,12 @@
                                         "value": {
                                             "message": "Error de validación.",
                                             "attributes": {
-                                                "email": "Correo electrónico",
+                                                "username": "Nombre de usuario",
                                                 "password": "Contraseña"
                                             },
                                             "errors": {
-                                                "email": [
-                                                    "Debe ser una dirección de correo electrónico válida."
+                                                "username": [
+                                                    "Es obligatorio."
                                                 ]
                                             }
                                         }
@@ -1111,9 +1080,9 @@
                                                             "type": "integer",
                                                             "example": 42
                                                         },
-                                                        "email": {
+                                                        "username": {
                                                             "type": "string",
-                                                            "example": "laura.gomez@kanri.test"
+                                                            "example": "lauragomezr"
                                                         },
                                                         "created_at": {
                                                             "type": "string",
@@ -1895,6 +1864,88 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/banks/setting/{id}": {
+            "put": {
+                "tags": [
+                    "Bank"
+                ],
+                "summary": "Configurar las reglas de las cuentas del banco",
+                "description": "Reemplaza `settings.validations` del banco: una fila por cada tipo de cuenta que el banco maneja, con el regex y el mensaje del número de cuenta (los tres obligatorios). Un tipo que no esté en la lista no lo maneja el banco. Las cuentas de proveedores se validan con la regla de su banco y su tipo; una lista vacía deja al banco sin recibir cuentas.",
+                "operationId": "640432a0ce502f51f53ee4deb4b9a92e",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/PathId"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "settings"
+                                ]
+                            },
+                            "example": {
+                                "settings": {
+                                    "validations": [
+                                        {
+                                            "account_type_id": 452,
+                                            "regex": "/^\\d{11}$/",
+                                            "message": "La cuenta de ahorros de Bancolombia tiene 11 dígitos."
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Reglas guardadas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BankResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Falta el tipo, el regex o el mensaje de una fila, el regex no es válido o el tipo de cuenta no existe o se repite.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Error de validación.",
+                                    "errors": {
+                                        "settings.validations.0.regex": [
+                                            "Debe ser una expresión regular válida, con delimitadores (por ejemplo /^\\d{11}$/)."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "$ref": "#/components/responses/Unauthorized"
@@ -2698,68 +2749,6 @@
                 ]
             }
         },
-        "/cache/builders/find/{id}": {
-            "get": {
-                "tags": [
-                    "Cache › Builders"
-                ],
-                "summary": "Obtener un constructor (pendiente: hoy devuelve un área)",
-                "description": "**Pendiente de corregir en el código.** Este método es una copia del de `AreaController`: busca un ÁREA por `id` numérico y responde con `data.area`. No consulta la caché de constructores.",
-                "operationId": "aef3cc51acea2ab7a9313b354aeec752",
-                "parameters": [
-                    {
-                        "$ref": "#/components/parameters/PathId"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Hoy responde con el área del id indicado.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "properties": {
-                                                "area": {
-                                                    "$ref": "#/components/schemas/Area"
-                                                }
-                                            },
-                                            "type": "object"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Operación completada con éxito."
-                                        },
-                                        "error": {
-                                            "type": "boolean",
-                                            "example": false
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/RecordNotFound"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/ServerError"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
         "/cache/builders/store": {
             "post": {
                 "tags": [
@@ -2779,7 +2768,7 @@
                     }
                 },
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Constructor creado correctamente",
                         "content": {
                             "application/json": {
@@ -2941,13 +2930,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Constructor eliminado correctamente."
-                                        }
-                                    },
-                                    "type": "object"
+                                    "$ref": "#/components/schemas/BuilderResponse"
                                 }
                             }
                         }
@@ -2962,10 +2945,8 @@
                                 "example": {
                                     "message": "Error de validación.",
                                     "attributes": {
-                                        "trademark_id": "Marcas",
-                                        "category_id": "Categorías",
-                                        "subcategory_id": "Subcategorías",
-                                        "percentages": "Porcentajes"
+                                        "uuid": "Constructor",
+                                        "builder": "Constructor"
                                     },
                                     "errors": {
                                         "builder": [
@@ -3534,7 +3515,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Colección creada correctamente. `technical_sheets` llega vacío.",
+                        "description": "Colección creada correctamente",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3594,7 +3575,7 @@
                     "Collections"
                 ],
                 "summary": "Editar una colección",
-                "description": "**Hoy solo guarda `name` y `description`.** `settings` se valida (código único, fechas sin cruce) pero no se guarda (ver pendientes). Responde 201, no 200.",
+                "description": "Guarda nombre, descripción y `settings`. El código es único y las fechas no se cruzan con otra colección (activa o desactivada); las colecciones sin fechas no cuentan.",
                 "operationId": "cce298044d5f2d38a27f6c22b5192a8f",
                 "parameters": [
                     {
@@ -3621,7 +3602,7 @@
                     }
                 },
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "Colección editada correctamente",
                         "content": {
                             "application/json": {
@@ -3761,6 +3742,124 @@
                 ]
             }
         },
+        "/collections/setting/{id}": {
+            "put": {
+                "tags": [
+                    "Collections"
+                ],
+                "summary": "Configurar el formato de las colecciones",
+                "description": "Guarda en el ítem de colecciones (`items` id 30, `settings.formats`) el regex y el mensaje de error del nombre, la descripción y el código. El regex del nombre define partes con nombre, `(?<numero>…)` y `(?<anio>…)`, que la descripción y el código usan como `{numero}` y `{anio}`. Con esas dos partes, el número también debe ser consecutivo dentro del año. Un regex vacío deja ese campo sin revisión de formato. Las demás llaves de `settings` del ítem se conservan.",
+                "operationId": "d4502c3e77c584ab5eb1ec7006b73722",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Debe ser 30 (ítem de colecciones).",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 30
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "settings"
+                                ]
+                            },
+                            "example": {
+                                "settings": {
+                                    "formats": {
+                                        "name": {
+                                            "regex": "/^C(?<numero>\\\\d)(?<anio>(?:19|20)\\\\d{2})$/",
+                                            "message": "Debe ser C, un número de una cifra y el año (C52026)."
+                                        },
+                                        "description": {
+                                            "regex": "/^.+ {anio}$/",
+                                            "message": "Debe terminar en el año del nombre (COLOMBIA MODA 2026)."
+                                        },
+                                        "code": {
+                                            "regex": "/^0{numero}{anio}$/",
+                                            "message": "Debe ser 0, el número y el año del nombre (C52026 → 052026)."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Formatos guardados. Devuelve el id del ítem y su `settings` completo.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 30
+                                                },
+                                                "settings": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Regex inválido, marcador sin parte en el nombre, falta el mensaje o el ítem no es el de colecciones.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Error de validación.",
+                                    "errors": {
+                                        "settings.formats.code.regex": [
+                                            "El regex del nombre no tiene la parte {numero}: defínela con (?<numero>…)."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/colors/all": {
             "get": {
                 "tags": [
@@ -3801,6 +3900,16 @@
                     },
                     {
                         "$ref": "#/components/parameters/WithTrashedOptional"
+                    },
+                    {
+                        "name": "is_finished_product",
+                        "in": "query",
+                        "description": "`true`/`1`: solo los colores de producto terminado. `false`/`0`: solo los de insumo. Sin enviar: todos.",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
                     }
                 ],
                 "responses": {
@@ -3976,7 +4085,7 @@
                     "Color"
                 ],
                 "summary": "Editar un color",
-                "description": "Reemplaza nombre, descripción y `settings` completo. Responde 201, no 200.",
+                "description": "Reemplaza nombre, descripción y `settings` completo.",
                 "operationId": "fc83ae3a0f3f2bdc79b076a2ee5a9298",
                 "parameters": [
                     {
@@ -4002,7 +4111,7 @@
                     }
                 },
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "Color editado correctamente",
                         "content": {
                             "application/json": {
@@ -5136,7 +5245,7 @@
                                     },
                                     "errors": {
                                         "with_user": [
-                                            "Deber ser verdadero o falso."
+                                            "Debe ser verdadero o falso."
                                         ]
                                     }
                                 }
@@ -5984,7 +6093,7 @@
                     "Typification › File Types"
                 ],
                 "summary": "Obtener un tipo de archivo",
-                "description": "No incluye `file_subtypes` (el Resource no los devuelve, aunque se cargan).",
+                "description": "No incluye `file_subtypes`: los subtipos tienen su propia lista.",
                 "operationId": "f024569bac5f29dd945a30cbba1c77d0",
                 "parameters": [
                     {
@@ -6862,7 +6971,6 @@
                     "Genders"
                 ],
                 "summary": "Editar un género",
-                "description": "`description` es opcional: si no se envía, queda en `null`.",
                 "operationId": "21d7dc2a4ef5e10085dfcbcbd1f068d4",
                 "parameters": [
                     {
@@ -8077,11 +8185,21 @@
                     "Management › Production"
                 ],
                 "summary": "Obtener una colección con sus fichas y órdenes de producción para programar",
-                "description": "Carga la colección con sus fichas técnicas que **no** están en Pendiente, cada una con su producto (marca con sus tallas, subcategoría y categoría), catálogos, fotos, productos asociados (STARA) y órdenes de producción con detalles, cantidades por talla, tela, color, proveedor y reasignaciones. Incluye los catálogos de estados de orden y de prioridad (criterios, reglas y niveles).",
+                "description": "Carga la colección con sus fichas técnicas que **no** están en Pendiente, cada una con su producto (marca con sus tallas, subcategoría y categoría), catálogos, fotos, productos asociados (STARA) y órdenes de producción con detalles, cantidades por talla, tela, color, proveedor y reasignaciones. Incluye los catálogos de estados de orden y de prioridad (criterios, reglas y niveles). `ready_references` agrupa por proceso de Gestión los lotes listos para programar: el proceso está En revisión o Aprobado en la ficha y no tiene fecha; después del primero, además tiene un ingreso aprobado al proceso. `unworked_dates` lista las fechas que ya pasaron sin que el lote se trabajara en el proceso (no se borran: la pantalla las muestra en rojo para reprogramar).",
                 "operationId": "312894781b494141096d1b139aed8729",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/PathId"
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Solo las fichas cuya referencia empiece por este código. `ready_references` no se filtra.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "BO100000"
+                        }
                     }
                 ],
                 "responses": {
@@ -8644,7 +8762,7 @@
         "/movements/all": {
             "get": {
                 "tags": [
-                    "Movements › Movements"
+                    "Movements"
                 ],
                 "summary": "Listar los movimientos",
                 "description": "Cada movimiento trae su proceso, la curva del lote (con orden, ficha, colección y producto) y sus traslados de entrada y salida con cantidades. Sin `per_page` devuelve todo (respuesta pesada).",
@@ -8656,17 +8774,23 @@
                     {
                         "name": "column",
                         "in": "query",
-                        "description": "Columna para ordenar, junto con `dir`. ⚠️ `name`, `description` y `deleted_at` no existen en la tabla y producen error 500 (ver pendientes).",
+                        "description": "Columna para ordenar, junto con `dir`. Son las columnas de la tabla del frontend; las que viven en otra tabla (marca, colección, categoría, proceso…) se resuelven con las relaciones de `Movement::sortable_columns()`. Las columnas calculadas (lote, cantidad, inventario, pendiente) no se pueden ordenar.",
                         "required": false,
                         "schema": {
                             "type": "string",
                             "enum": [
                                 "id",
-                                "name",
-                                "description",
                                 "created_at",
                                 "updated_at",
-                                "deleted_at"
+                                "status",
+                                "trademark",
+                                "collection",
+                                "garment_type",
+                                "reference",
+                                "color",
+                                "category",
+                                "destination",
+                                "process"
                             ],
                             "example": "created_at"
                         }
@@ -8732,7 +8856,7 @@
         "/movements/find/{id}": {
             "get": {
                 "tags": [
-                    "Movements › Movements"
+                    "Movements"
                 ],
                 "summary": "Obtener un movimiento con sus traslados",
                 "description": "Para la pantalla de resumen y traslado de unidades: traslados de entrada y salida (con cantidades, redistribuciones y quién los creó o modificó), el proceso con sus procesos anterior y siguiente, y la curva del lote con las tallas de la marca.",
@@ -8776,7 +8900,7 @@
         "/movements/save": {
             "post": {
                 "tags": [
-                    "Movements › Movements"
+                    "Movements"
                 ],
                 "summary": "Trasladar unidades a otro proceso (o editar un traslado)",
                 "description": "Sin `movement_detail_id`: crea un traslado **Pendiente** desde el movimiento de origen (curva + proceso) hacia el de destino, que se crea en estado Ingreso si no existe. El destino puede ser la misma curva u otro lote. Con `movement_detail_id`: edita la observación y las cantidades de ese traslado (si una talla baja, se reducen sus redistribuciones). El movimiento de origen debe existir: hoy el primero de cada lote no lo crea este código (vendrá de la medición de productividad).",
@@ -8882,7 +9006,7 @@
         "/movements/approve": {
             "post": {
                 "tags": [
-                    "Movements › Movements"
+                    "Movements"
                 ],
                 "summary": "Aprobar un traslado (proceso que recibe)",
                 "description": "Marca el traslado como Aprobado y guarda las cantidades realmente recibidas. Si se recibe menos de lo enviado en una talla, se reducen las redistribuciones de esa talla. El traslado debe estar Pendiente. Al cambiar el estado se recalculan el estado del movimiento de origen y el saldo por talla del lote.",
@@ -8982,7 +9106,7 @@
         "/movements/decline": {
             "post": {
                 "tags": [
-                    "Movements › Movements"
+                    "Movements"
                 ],
                 "summary": "Rechazar un traslado (proceso que recibe)",
                 "description": "Marca el traslado como Rechazado con una observación. Solo usa `movement_detail_id` y `observation`, pero hoy el Request exige el cuerpo completo del traslado (ver pendientes). El traslado debe estar Pendiente.",
@@ -9051,7 +9175,7 @@
         "/movements/cancel": {
             "post": {
                 "tags": [
-                    "Movements › Movements"
+                    "Movements"
                 ],
                 "summary": "Cancelar un traslado (proceso que envía)",
                 "description": "Marca el traslado como Cancelado con una observación, antes de que el destino lo reciba. Solo usa `movement_detail_id` y `observation`, pero hoy el Request exige el cuerpo completo del traslado (ver pendientes). El traslado debe estar Pendiente.",
@@ -9330,7 +9454,7 @@
                     "Workflow › Operations"
                 ],
                 "summary": "Editar una operación",
-                "description": "Cambia nombre, descripción y `settings` (reemplaza el objeto completo, incluido el `schema`). No cambia el subproceso. Responde 201, no 200.",
+                "description": "Cambia nombre, descripción y `settings` (reemplaza el objeto completo, incluido el `schema`). No cambia el subproceso.",
                 "operationId": "bae340712acccd979f514cc8754a7b05",
                 "parameters": [
                     {
@@ -9357,7 +9481,7 @@
                     }
                 },
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "Operación editada correctamente",
                         "content": {
                             "application/json": {
@@ -13462,7 +13586,7 @@
                     "Productivities"
                 ],
                 "summary": "Editar un turno",
-                "description": "Por iniciar: se puede cambiar fecha, horario y meta por hora. En curso: solo la hora de fin (posterior a la hora actual; lo demás se ignora). Terminado o desactivado: 422. En todos los casos no puede cruzarse con otro turno del proceso. Las paradas ya no son del turno: se registran en cada registro de trabajo.",
+                "description": "Por iniciar: se puede cambiar fecha, horario y meta por hora. En curso: solo la hora de fin (posterior a la hora actual; lo demás se ignora). Terminado o desactivado: 422. En todos los casos no puede cruzarse con otro turno del proceso. Si cambia el inicio (hora o día), la programación sin iniciar del turno se corre lo mismo (start y settings.scheduled.start/end). Las paradas ya no son del turno: se registran en cada registro de trabajo.",
                 "operationId": "ce430f079d02d457be4c555bf6b7839f",
                 "parameters": [
                     {
@@ -13769,14 +13893,165 @@
                 ]
             }
         },
-        "/productivity/details/workstation/{token}": {
+        "/productivity/details/technical_sheet/{technical_sheet_id}": {
             "get": {
                 "tags": [
                     "Productivities › Details"
                 ],
+                "summary": "Productividad de una referencia",
+                "description": "Registros de trabajo iniciados de todos los lotes de la ficha técnica, de todos los turnos y procesos, crudos como en el listado del turno (con el turno y su proceso). La pantalla arma la línea por lote y proceso y calcula tiempos y eficiencia.",
+                "operationId": "02fe377601b4df6d83d8e7b002a136e4",
+                "parameters": [
+                    {
+                        "name": "technical_sheet_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 12
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Registros de trabajo de la referencia",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "productivity_details": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/details/movement/{movement_id}": {
+            "get": {
+                "tags": [
+                    "Productivities › Details"
+                ],
+                "summary": "Productividad de un movimiento",
+                "description": "Registros de trabajo iniciados del lote en los puestos del proceso del movimiento (todos los turnos), con las unidades que le tocaron a ese destino: por unidades, los +1 contados contra sus ingresos aprobados (y other_units, lo del mismo registro en otros destinos); en Corte, los ingresos que creó el registro para el destino; si no, null. Trae lo recibido por el destino (ingresos aprobados).",
+                "operationId": "4a69a66ba84132189104cf16229cc806",
+                "parameters": [
+                    {
+                        "name": "movement_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 12
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Productividad",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "measurement": {
+                                                    "type": "string",
+                                                    "example": "units",
+                                                    "nullable": true
+                                                },
+                                                "received": {
+                                                    "type": "integer",
+                                                    "example": 400
+                                                },
+                                                "productivity_details": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/details/workstation/{token}": {
+            "get": {
+                "tags": [
+                    "Productivities › Details › Workstation"
+                ],
                 "summary": "Resolver el QR de un puesto de trabajo",
-                "description": "Lo llama la pantalla de Productividad al escanear el QR del puesto. Devuelve el puesto (proceso, subproceso u operación, siempre el nivel más bajo y activo), su proceso y el turno abierto de ese proceso en este momento. Responde 422 si el código no existe, si el puesto no es del nivel más bajo o si no hay turno abierto.",
-                "operationId": "233f32294a695a624f9964987fd7328d",
+                "description": "Lo llama la pantalla de Productividad al escanear el QR del puesto. Devuelve el puesto crudo (proceso, subproceso u operación, siempre el nivel más bajo) con sus padres y los turnos de su proceso (de hoy en adelante y el del registro en curso), y el registro en curso del puesto si lo tiene. En references van los lotes que se pueden trabajar en el puesto, para elegirlos sin escanear: primero los programados y sin iniciar en el turno abierto (con start, su hora) y luego los demás (start null). La pantalla decide con qué turno se trabaja. Responde 422 si el código no existe o si el puesto no es del nivel más bajo.",
+                "operationId": "b54230d322c466086676e4d975112570",
                 "parameters": [
                     {
                         "name": "token",
@@ -13792,7 +14067,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Puesto de trabajo y turno abierto",
+                        "description": "Puesto de trabajo",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -13800,69 +14075,7 @@
                                         "data": {
                                             "properties": {
                                                 "workstation": {
-                                                    "properties": {
-                                                        "type": {
-                                                            "type": "string",
-                                                            "example": "operation"
-                                                        },
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": 215
-                                                        },
-                                                        "name": {
-                                                            "type": "string",
-                                                            "example": "Pegar bolsillo"
-                                                        },
-                                                        "path": {
-                                                            "type": "string",
-                                                            "example": "Confección › Delanteros › Pegar bolsillo"
-                                                        },
-                                                        "creates_ingress": {
-                                                            "description": "Al finalizar pide unidades y crea los ingresos",
-                                                            "type": "boolean",
-                                                            "example": false
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                },
-                                                "process": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": 205
-                                                        },
-                                                        "name": {
-                                                            "type": "string",
-                                                            "example": "Confección"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                },
-                                                "shift": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": 12
-                                                        },
-                                                        "date": {
-                                                            "type": "string",
-                                                            "example": "2026-10-23"
-                                                        },
-                                                        "start_time": {
-                                                            "type": "string",
-                                                            "example": "06:00:00"
-                                                        },
-                                                        "end_time": {
-                                                            "type": "string",
-                                                            "example": "14:00:00"
-                                                        },
-                                                        "settings": {
-                                                            "type": "object",
-                                                            "example": {
-                                                                "goal_hour": 120
-                                                            }
-                                                        }
-                                                    },
+                                                    "description": "Puesto crudo con subprocess.process.productivities (operación), process.productivities (subproceso) o productivities (proceso)",
                                                     "type": "object"
                                                 },
                                                 "productivity_detail": {
@@ -13872,48 +14085,6 @@
                                                         }
                                                     ],
                                                     "nullable": true
-                                                },
-                                                "stops": {
-                                                    "description": "Catálogo de paradas para registrar durante el trabajo",
-                                                    "properties": {
-                                                        "programmed": {
-                                                            "type": "array",
-                                                            "items": {
-                                                                "properties": {
-                                                                    "id": {
-                                                                        "type": "integer",
-                                                                        "example": 478
-                                                                    },
-                                                                    "name": {
-                                                                        "type": "string",
-                                                                        "example": "ALMUERZO"
-                                                                    },
-                                                                    "minutes": {
-                                                                        "type": "integer",
-                                                                        "example": 30
-                                                                    }
-                                                                },
-                                                                "type": "object"
-                                                            }
-                                                        },
-                                                        "unprogrammed": {
-                                                            "type": "array",
-                                                            "items": {
-                                                                "properties": {
-                                                                    "id": {
-                                                                        "type": "integer",
-                                                                        "example": 480
-                                                                    },
-                                                                    "name": {
-                                                                        "type": "string",
-                                                                        "example": "PARO MECANICO"
-                                                                    }
-                                                                },
-                                                                "type": "object"
-                                                            }
-                                                        }
-                                                    },
-                                                    "type": "object"
                                                 }
                                             },
                                             "type": "object"
@@ -13955,7 +14126,7 @@
         "/productivity/details/workstation/{token}/reference/{uuid}": {
             "get": {
                 "tags": [
-                    "Productivities › Details"
+                    "Productivities › Details › Workstation"
                 ],
                 "summary": "Resolver la ficha técnica escaneada en un puesto de trabajo",
                 "description": "Recibe el uuid del QR del puesto y el uuid de la orden de producción (sacado del QR de la ficha técnica impresa). Valida el puesto y el turno abierto como el endpoint del puesto, y devuelve la orden (código y lote), la referencia y la regla estándar que aplica: la del proceso del puesto, que coincide con su subproceso u operación si los tiene y con todos sus maestros, y que suma más puntos según los pesos configurados. Si ninguna aplica, `rule` es null.",
@@ -14206,11 +14377,11 @@
         "/productivity/details/workstation/{token}/start": {
             "post": {
                 "tags": [
-                    "Productivities › Details"
+                    "Productivities › Details › Workstation"
                 ],
                 "summary": "Iniciar trabajo en un puesto",
-                "description": "Crea el registro de trabajo (productivity_details) del puesto con la orden escaneada y sus empleados. Solo en procesos medidos por lotes. El inicio oficial es lo más tardío entre la hora de inicio del turno, el fin del registro anterior del puesto en el turno y, en una cadena en secuencia, el fin del lote en el puesto anterior; la hora real queda en settings.scanned_at. En una cadena en secuencia el lote debe haber terminado en los puestos anteriores. Responde 422 si el puesto ya tiene un trabajo en curso, si el turno ya terminó, si el primer proceso trabaja sus hijos en paralelo, si no hay regla estándar que aplique, si el puesto crea ingresos y la orden no tiene curva por destino, si el lote ya se trabajó en el puesto o si la regla no tiene capacidad para las personas del puesto (por lotes, una capacidad con ese número exacto; por unidades, la de 1 persona multiplicada).",
-                "operationId": "293c9135b12ff7defc3bb54a357fd7b1",
+                "description": "Retoma el registro programado del lote en el puesto dentro del turno (422 si no está programado o si aún no llega su hora: no se empieza antes de la hora programada, salvo en la cadena de Corte, donde se puede adelantar la siguiente del orden programado del puesto si el lote ya pasó por el puesto anterior; adelantada, su inicio oficial es apenas quedó libre el puesto y el lote soltó el puesto anterior) y le pone los empleados que vinieron; solo los puestos que no se programan crean el registro al escanear. En los procesos en paralelo el inicio oficial es la hora real del escaneo; si no, es lo más tardío entre la hora programada, la hora de inicio del turno, el fin del registro anterior del puesto en el turno y, en una cadena en secuencia, el fin del lote en el puesto anterior; la hora real queda en settings.scanned_at. En una cadena en secuencia el lote debe haber terminado en los puestos anteriores. Responde 422 si el puesto ya tiene un trabajo en curso, si el turno ya terminó, si el primer proceso trabaja sus hijos en paralelo, si no hay regla estándar que aplique, si el puesto crea ingresos y la orden no tiene curva por destino, si el lote ya se trabajó en el puesto o si la regla no tiene capacidad para las personas del puesto (por lotes, una capacidad con ese número exacto; por unidades, la de 1 persona multiplicada).",
+                "operationId": "c3b3c6e39740a0f64624743490bb66b3",
                 "parameters": [
                     {
                         "name": "token",
@@ -14239,11 +14410,18 @@
                                         "format": "uuid"
                                     },
                                     "employees": {
-                                        "description": "Empleados del puesto que trabajan (se pueden retirar los que no vinieron); la capacidad de la regla sale de cuántos son",
+                                        "description": "Empleados que trabajan; si está programado, el grupo programado (la capacidad de la regla sale de cuántos son)",
                                         "type": "array",
                                         "items": {
                                             "type": "integer",
                                             "example": 15
+                                        }
+                                    },
+                                    "replaces": {
+                                        "description": "Reemplazos de programados ocupados en otro trabajo en curso, uno por uno: { id del que entra: id del programado }. Queda en el settings del empleado como replaces",
+                                        "type": "object",
+                                        "example": {
+                                            "31": 29
                                         }
                                     }
                                 },
@@ -14301,14 +14479,351 @@
                 ]
             }
         },
-        "/productivity/details/workstation/{token}/stops": {
+        "/productivity/details/store": {
             "post": {
                 "tags": [
                     "Productivities › Details"
                 ],
+                "summary": "Programar un registro de trabajo",
+                "description": "Solo procesos por unidades y antes de que inicie el turno. Crea el registro (sin settings.scanned_at = programado) con el lote, el puesto, la regla, el inicio y los empleados; crea en 0 los contadores que falten y reparte las unidades por hacer del lote entre sus registros del turno en partes iguales y enteras (settings.scheduled: start, end, units = tope, people, unit_time, time_unit, minutes).",
+                "operationId": "e3613bdebba55d099a20e480449a1f77",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "productivity_id",
+                                    "model_type",
+                                    "model_id",
+                                    "production_order_id",
+                                    "start",
+                                    "employees"
+                                ],
+                                "properties": {
+                                    "productivity_id": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "model_type": {
+                                        "type": "string",
+                                        "example": "App\\\\Models\\\\Operation"
+                                    },
+                                    "model_id": {
+                                        "type": "integer",
+                                        "example": 343
+                                    },
+                                    "production_order_id": {
+                                        "type": "integer",
+                                        "example": 61
+                                    },
+                                    "start": {
+                                        "type": "string",
+                                        "example": "07:00"
+                                    },
+                                    "employees": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer",
+                                            "example": 15
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Programado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/details/schedule/{productivity_id}": {
+            "post": {
+                "tags": [
+                    "Productivities › Details"
+                ],
+                "summary": "Programar en cadena un turno de Corte",
+                "description": "Para el primer proceso con sus subprocesos en secuencia (Corte): recibe las referencias en el orden en que se trabajan, cada una con los puestos que el líder le quitó (`removed`, «model_type:model_id»; desde el primero quitado no sigue a los siguientes) y sus empleados por puesto (`employees`: los elige el líder; sin personas la fila no tiene tiempo y no se puede guardar). Con `preview: true` solo calcula y responde `{rows, errors}` (lo iniciado y lo calculado) sin guardar. Sin `preview` quita lo programado sin iniciar del turno y lo vuelve a crear: cada lote entra a cada puesto cuando lo soltó el puesto anterior y el puesto terminó el lote anterior, con el tiempo de la regla para esas personas (settings.scheduled: start, end, minutes, units). Lo ya iniciado se queda. Responde 422 si falta una regla o su capacidad, si un puesto no tiene empleados, si una referencia no alcanza a terminar en el turno o si un empleado está ocupado en esa franja.",
+                "operationId": "0d244f98899902d6d3453f084cbb7501",
+                "parameters": [
+                    {
+                        "name": "productivity_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "production_orders"
+                                ],
+                                "properties": {
+                                    "preview": {
+                                        "description": "Solo calcular, sin guardar",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "production_orders": {
+                                        "description": "En el orden en que se trabajan",
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 61
+                                                },
+                                                "removed": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "App\\Models\\Subprocess:604"
+                                                    }
+                                                },
+                                                "employees": {
+                                                    "type": "object",
+                                                    "example": {
+                                                        "App\\Models\\Subprocess:602": [
+                                                            15,
+                                                            16
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Programado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/details/update/{id}": {
+            "put": {
+                "tags": [
+                    "Productivities › Details"
+                ],
+                "summary": "Editar un registro programado",
+                "description": "Lo mismo que programar, sin contar el registro mismo. Solo antes de que inicie el turno y si la estación no lo ha iniciado. Rehace el reparto del lote (y del lote anterior si cambió).",
+                "operationId": "9a904845ad0232ac399050ebfd51a517",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Actualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/details/delete/{id}": {
+            "delete": {
+                "tags": [
+                    "Productivities › Details"
+                ],
+                "summary": "Quitar un registro programado",
+                "description": "Solo antes de que inicie el turno y si la estación no lo ha iniciado. Rehace el reparto del lote entre los registros que quedan; los contadores del lote no se tocan.",
+                "operationId": "d8d318ce019efd8ded32eba36308bdee",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Quitado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/RecordNotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/productivity/details/workstation/{token}/stop": {
+            "post": {
+                "tags": [
+                    "Productivities › Details › Workstation"
+                ],
                 "summary": "Registrar una parada",
                 "description": "Registra que el trabajo en curso del puesto se detuvo ahora. La parada programada (almuerzo, pausa activa…) termina sola con la duración del catálogo; la no programada (paro mecánico, falta de insumos…) queda abierta hasta «Terminar parada». Una a la vez y solo mientras el turno no haya terminado. Responde 422 si la programada terminaría después del fin del turno.",
-                "operationId": "0b5574bc8227fb1670d8afe3cda4fbf1",
+                "operationId": "2889a6651a0f337d2c6b860854c0a5cb",
                 "parameters": [
                     {
                         "name": "token",
@@ -14390,13 +14905,13 @@
                 ]
             }
         },
-        "/productivity/details/workstation/{token}/stops/end": {
+        "/productivity/details/workstation/{token}/stop_end": {
             "post": {
                 "tags": [
-                    "Productivities › Details"
+                    "Productivities › Details › Workstation"
                 ],
                 "summary": "Terminar la parada no programada en curso",
-                "operationId": "3ebe1c33be19590362e8cc07e23811e1",
+                "operationId": "7993db304253ff65c145eb882a4d1f64",
                 "parameters": [
                     {
                         "name": "token",
@@ -14461,7 +14976,7 @@
         "/productivity/details/workstation/{token}/plus": {
             "post": {
                 "tags": [
-                    "Productivities › Details"
+                    "Productivities › Details › Workstation"
                 ],
                 "summary": "Sumar una unidad (+1)",
                 "description": "Proceso medido por unidades: suma una unidad en el contador del primer detalle recibido del lote que no esté lleno (Nacional, luego Medellín, luego Stara; dentro de cada destino por orden de llegada) y en el registro (settings.produced). El contador es una fila de movement_detail_quantities sin talla dentro del detalle recibido; su tope es lo recibido en ese detalle. 422 si el turno terminó, si hay una parada en curso o si el lote está completo.",
@@ -14530,7 +15045,7 @@
         "/productivity/details/workstation/{token}/minus": {
             "post": {
                 "tags": [
-                    "Productivities › Details"
+                    "Productivities › Details › Workstation"
                 ],
                 "summary": "Quitar una unidad (−1)",
                 "description": "Quita la última unidad que sumó este mismo registro (por si se tocó de más); no toca lo de otros registros. 422 si el registro no tiene unidades.",
@@ -14599,10 +15114,10 @@
         "/productivity/details/workstation/{token}/finish": {
             "post": {
                 "tags": [
-                    "Productivities › Details"
+                    "Productivities › Details › Workstation"
                 ],
                 "summary": "Finalizar el trabajo en curso",
-                "description": "Termina el registro: el fin oficial es ahora o, si ya pasó, la hora de fin del turno (la real queda en settings.finished_at) y calcula tiempos y eficiencia. Responde 422 si hay una parada en curso (programada o no programada): primero debe terminar. Solo el último puesto de la cadena del primer proceso (creates_ingress) envía `quantities` y crea un ingreso por destino: un detalle de movimiento cuyo origen es el registro de trabajo, en estado Pendiente, en el movimiento del proceso y destino (se crea si no existe), con las unidades por talla. El proceso lo aprueba en Movimientos y la curva de la orden se ajusta. Los demás puestos no envían unidades.",
+                "description": "Termina el registro: el fin oficial es ahora o, si ya pasó, la hora de fin del turno y devuelve tiempos y eficiencia (no se guardan: el frontend los calcula). Responde 422 si hay una parada en curso (programada o no programada): primero debe terminar. Solo el último puesto de la cadena del primer proceso (creates_ingress) envía `quantities` y crea un ingreso por destino: un detalle de movimiento cuyo origen es el registro de trabajo, en estado Pendiente, en el movimiento del proceso y destino (se crea si no existe), con las unidades por talla. El proceso lo aprueba en Movimientos y la curva de la orden se ajusta. Los demás puestos no envían unidades.",
                 "operationId": "0d1f3da1a1741f6c38753f02dd315dce",
                 "parameters": [
                     {
@@ -14734,93 +15249,6 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/RecordNotFound"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/ServerError"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/productivity/details/stops": {
-            "get": {
-                "tags": [
-                    "Productivities › Details"
-                ],
-                "summary": "Paradas del catálogo para productividad",
-                "description": "Paradas programadas (con su duración en minutos; terminan solas) y no programadas (hasta «Terminar parada»). Las dos se registran durante un trabajo, desde el puesto.",
-                "operationId": "99b9c4cc749d559a84c9a76af539271b",
-                "responses": {
-                    "200": {
-                        "description": "Paradas por tipo",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "properties": {
-                                                "programmed": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 478
-                                                            },
-                                                            "name": {
-                                                                "type": "string",
-                                                                "example": "ALMUERZO"
-                                                            },
-                                                            "minutes": {
-                                                                "type": "integer",
-                                                                "example": 30
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                },
-                                                "unprogrammed": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 480
-                                                            },
-                                                            "name": {
-                                                                "type": "string",
-                                                                "example": "PARO MECANICO"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Operación completada con éxito."
-                                        },
-                                        "error": {
-                                            "type": "boolean",
-                                            "example": false
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
                     },
                     "401": {
                         "$ref": "#/components/responses/Unauthorized"
@@ -16711,7 +17139,7 @@
                     {
                         "name": "is_finished_product",
                         "in": "query",
-                        "description": "`true`/`1`: solo las tallas de producto terminado. `false` o sin enviar: todas.",
+                        "description": "`true`/`1`: solo las tallas de producto terminado. `false`/`0`: solo las que no lo son (tallas de insumo). Sin enviar: todas.",
                         "required": false,
                         "schema": {
                             "type": "boolean",
@@ -17092,17 +17520,135 @@
                 ]
             }
         },
-        "/typification/stop_types/stops/all/{file_type_id}": {
+        "/sizes/setting/{id}": {
+            "put": {
+                "tags": [
+                    "Sizes"
+                ],
+                "summary": "Configurar el formato de las tallas",
+                "description": "Guarda en el ítem de tallas (`items` id 16, `settings.formats`) el regex y el mensaje de error del nombre, la descripción y el código. Los tres solo se revisan en tallas de producto terminado. El regex de nombre y descripción puede usar `{talla}`, que se reemplaza por el código enviado (`/^T{talla}$/`). Un regex vacío deja ese campo sin revisión de formato. Las demás llaves de `settings` del ítem se conservan.",
+                "operationId": "aa2fdd21cc7b394d87abc865cf304490",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Debe ser 16 (ítem de tallas).",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 16
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "settings"
+                                ]
+                            },
+                            "example": {
+                                "settings": {
+                                    "formats": {
+                                        "name": {
+                                            "regex": "/^(?:T\\\\d[02468]|XXS|XS|S|M|L|XL|XXL|U)$/",
+                                            "message": "Debe ser T y un número par de 2 dígitos."
+                                        },
+                                        "description": {
+                                            "regex": "/^TALLA (?:\\\\d[02468]|XXS|XS|S|M|L|XL|XXL|U)$/",
+                                            "message": "Debe ser Talla seguido del código."
+                                        },
+                                        "code": {
+                                            "regex": "/^[A-Z0-9]{1,5}$/",
+                                            "message": "Solo letras mayúsculas y números, máximo 5."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Formatos guardados. Devuelve el id del ítem y su `settings` completo.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 16
+                                                },
+                                                "settings": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operación completada con éxito."
+                                        },
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Regex inválido, falta el mensaje o el ítem no es el de tallas.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Error de validación.",
+                                    "errors": {
+                                        "settings.formats.code.regex": [
+                                            "Debe ser una expresión regular válida, con delimitadores (por ejemplo /^T\\\\d{2}$/)."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/ServerError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/typification/stop_types/stops/all/{stop_type_id}": {
             "get": {
                 "tags": [
                     "Typification › Stops"
                 ],
                 "summary": "Listar las paradas de un tipo de parada",
                 "description": "Cada parada trae su `item` y `settings`; no trae `item_id` ni el tipo de parada.",
-                "operationId": "1e3b92c7917f23f031820430b2aade34",
+                "operationId": "3c36ddd128e9af421c43aa3fb6b2f401",
                 "parameters": [
                     {
-                        "name": "file_type_id",
+                        "name": "stop_type_id",
                         "in": "path",
                         "description": "Identificador del **tipo de parada** (el nombre del parámetro en la ruta está copiado de tipos de archivo). No se valida: un id que no existe devuelve la lista vacía.",
                         "required": true,
@@ -19345,7 +19891,7 @@
                                                 "example": true
                                             },
                                             "operation_flow": {
-                                                "description": "Obligatorio si `operations` es verdadero. Al guardar un valor distinto de `sequence` se borran las cadenas entre sus operaciones.",
+                                                "description": "Obligatorio si `operations` es verdadero. En `sequence` las relaciones entre sus operaciones son la cadena; en `parallel` son dependencias («Depende de»).",
                                                 "type": "string",
                                                 "enum": [
                                                     "sequence",
@@ -19550,7 +20096,7 @@
                                                 "example": true
                                             },
                                             "operation_flow": {
-                                                "description": "Obligatorio si `operations` es verdadero. Al guardar un valor distinto de `sequence` se borran las cadenas entre sus operaciones.",
+                                                "description": "Obligatorio si `operations` es verdadero. En `sequence` las relaciones entre sus operaciones son la cadena; en `parallel` son dependencias («Depende de»).",
                                                 "type": "string",
                                                 "enum": [
                                                     "sequence",
@@ -20293,7 +20839,7 @@
                                     },
                                     "errors": {
                                         "settings.code": [
-                                            "Debe tener entre 2 y 5 dígitos."
+                                            "Debe tener entre 1 y 5 dígitos."
                                         ],
                                         "account_bank.bank_certificate.file": [
                                             "Es obligatorio."
@@ -20892,7 +21438,7 @@
                     "Typification › Supplies"
                 ],
                 "summary": "Listar los insumos de un tipo de insumo",
-                "description": "Cada insumo trae `item`, `settings`, sus detalles de órdenes de producción y sus relaciones dinámicas. También la pueden consultar quienes configuran procesos, subprocesos u operaciones. Hoy responde **500** si el tipo de insumo tiene campos `selectdinamic` (TELA, ROLLO…), porque el modelo `Supply` no tiene el método `related()` (ver pendientes).",
+                "description": "Cada insumo trae `item`, `settings`, sus detalles de órdenes de producción y sus relaciones dinámicas. También la pueden consultar quienes configuran procesos, subprocesos u operaciones. Con `supply_id` trae solo los relacionados con ese insumo (los rollos de una tela, en la orden de producción).",
                 "operationId": "cc24481271dcfedbb8129ae4c90dfa8a",
                 "parameters": [
                     {
@@ -20937,6 +21483,16 @@
                     },
                     {
                         "$ref": "#/components/parameters/WithTrashedOptional"
+                    },
+                    {
+                        "name": "supply_id",
+                        "in": "query",
+                        "description": "Solo los insumos relacionados con este insumo (por ejemplo, los rollos de una tela).",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 26029
+                        }
                     }
                 ],
                 "responses": {
@@ -20999,7 +21555,7 @@
                     "Typification › Supplies"
                 ],
                 "summary": "Obtener un insumo",
-                "description": "Trae el insumo con su tipo, sus relaciones dinámicas y `model_types`. Hoy responde **500** si el tipo de insumo tiene campos `selectdinamic` (TELA, ROLLO…), porque el modelo `Supply` no tiene el método `related()` (ver pendientes).",
+                "description": "Trae el insumo con su tipo y sus relaciones dinámicas (cada una por su nombre, por ejemplo `color`, y por el campo, `color_id`).",
                 "operationId": "b0e1093cf1b17819a764f25281bf35cf",
                 "parameters": [
                     {
@@ -21043,36 +21599,14 @@
                     "Typification › Supplies"
                 ],
                 "summary": "Crear un insumo",
-                "description": "Crea el insumo, lo asocia a su tipo y guarda como relaciones los campos `selectdinamic` que lleguen en `class`. Hoy responde **500** si el tipo de insumo tiene campos `selectdinamic` (TELA, ROLLO…), porque el modelo `Supply` no tiene el método `related()` (ver pendientes).",
+                "description": "Crea el insumo, lo asocia a su tipo, guarda como relaciones los campos `selectdinamic` que lleguen en `class` y sube las fotos (siempre con el subtipo FOTO INSUMO, `Supply::PHOTO_FILE_SUBTYPE_ID`, carpeta `storage/supply`).",
                 "operationId": "bd19bd22382ad8626d359a21e55ff132",
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "application/json": {
+                        "multipart/form-data": {
                             "schema": {
                                 "$ref": "#/components/schemas/SupplyRequest"
-                            },
-                            "example": {
-                                "supply_type_id": 218,
-                                "name": "DENIM STRETCH 12 OZ",
-                                "description": "DENIM AZUL ÍNDIGO CON ELASTANO",
-                                "values": {
-                                    "width": 150,
-                                    "heigth": 1200
-                                },
-                                "class": {
-                                    "supplier_id": 470,
-                                    "color_id": [
-                                        512,
-                                        515
-                                    ]
-                                },
-                                "settings": {
-                                    "values": {
-                                        "width": 150,
-                                        "heigth": 1200
-                                    }
-                                }
                             }
                         }
                     }
@@ -21137,7 +21671,7 @@
                     "Typification › Supplies"
                 ],
                 "summary": "Editar un insumo",
-                "description": "Reemplaza nombre, descripción y `settings`, y sincroniza las relaciones de `class` que lleguen. No cambia el tipo de insumo. Hoy responde **500** si el tipo de insumo tiene campos `selectdinamic` (TELA, ROLLO…), porque el modelo `Supply` no tiene el método `related()` (ver pendientes).",
+                "description": "Reemplaza nombre, descripción y `settings`, sincroniza las relaciones de `class` que lleguen y actualiza las fotos: sube las nuevas, borra las de `deleted_files` y las de elementos del origen que ya no están elegidos. No cambia el tipo de insumo. El frontend lo envía por POST con `_method=PUT` porque lleva archivos.",
                 "operationId": "5af3d8532b847d66219b58cb5b071cb3",
                 "parameters": [
                     {
@@ -21147,30 +21681,9 @@
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "application/json": {
+                        "multipart/form-data": {
                             "schema": {
                                 "$ref": "#/components/schemas/SupplyRequest"
-                            },
-                            "example": {
-                                "supply_type_id": 218,
-                                "name": "DENIM STRETCH 12 OZ",
-                                "description": "DENIM AZUL ÍNDIGO CON ELASTANO Y LAVADO OSCURO",
-                                "values": {
-                                    "width": 150,
-                                    "heigth": 1000
-                                },
-                                "class": {
-                                    "supplier_id": 470,
-                                    "color_id": [
-                                        512
-                                    ]
-                                },
-                                "settings": {
-                                    "values": {
-                                        "width": 150,
-                                        "heigth": 1000
-                                    }
-                                }
                             }
                         }
                     }
@@ -21320,7 +21833,7 @@
                     "Typification › Supplies"
                 ],
                 "summary": "Exportar a Excel los insumos de un tipo",
-                "description": "Descarga `supplys.xlsx`: una hoja con los insumos del tipo y, por cada campo `selectdinamic` múltiple del formulario, una hoja con sus relaciones. Sirve también como plantilla para importar.",
+                "description": "Descarga `insumos.xlsx`: una hoja con los insumos del tipo y, por cada campo `selectdinamic` múltiple del formulario, una hoja con sus relaciones. Sirve también como plantilla para importar.",
                 "operationId": "a76aca468a0f8ca002de9bb20ef5a1de",
                 "parameters": [
                     {
@@ -21390,7 +21903,7 @@
                     "Typification › Supplies"
                 ],
                 "summary": "Importar insumos desde Excel",
-                "description": "Lee el archivo (mismo formato que la exportación), valida todas las filas y, si no hay errores, crea o actualiza cada insumo por su nombre. Si hay errores, responde 422 con un reporte en texto (`file`, ruta en el disco `public`). **Hoy siempre responde 422**: el controlador valida la lista con la clave `supplys` y las reglas esperan `supplies` (ver pendientes). El archivo no se valida y el `{supply_type_id}` inexistente responde 404.",
+                "description": "Lee el archivo (mismo formato que la exportación), valida todas las filas y, si no hay errores, crea o actualiza cada insumo por su nombre. Si hay errores, responde 422 con un reporte en texto (`file`, ruta en el disco `public`). El archivo debe ser un Excel (.xlsx) y el `{supply_type_id}` inexistente responde 404.",
                 "operationId": "b64672328e5dd740837b458ddc1572f2",
                 "parameters": [
                     {
@@ -21510,7 +22023,7 @@
                     "Typification › Supply Types"
                 ],
                 "summary": "Listar los tipos de insumo",
-                "description": "Cada tipo trae sus insumos (`supplies`). También la pueden consultar quienes configuran procesos, subprocesos u operaciones.",
+                "description": "Cada tipo trae sus insumos (`supplies`), salvo con `without_supplies`. También la pueden consultar quienes configuran procesos, subprocesos u operaciones.",
                 "operationId": "c5b081244dc1f86d3661243344e797ed",
                 "parameters": [
                     {
@@ -21530,6 +22043,16 @@
                         "name": "in_production_order",
                         "in": "query",
                         "description": "Filtra por `settings.in_production_order`. Si no se envía, no filtra.",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
+                    },
+                    {
+                        "name": "without_supplies",
+                        "in": "query",
+                        "description": "Con `true`/`1` los tipos llegan sin `supplies`. Lo usa el catálogo de los campos `selectdinamic`, que solo muestra los tipos.",
                         "required": false,
                         "schema": {
                             "type": "boolean",
@@ -21942,7 +22465,6 @@
                                     "in_technical_sheet": false,
                                     "in_production_order": true,
                                     "paragraph": "roll",
-                                    "has_variants": true,
                                     "form": [
                                         {
                                             "id": 1,
@@ -23121,11 +23643,11 @@
                             "type": "string",
                             "enum": [
                                 "id",
-                                "email",
+                                "username",
                                 "created_at",
                                 "updated_at"
                             ],
-                            "example": "email"
+                            "example": "username"
                         }
                     },
                     {
@@ -23380,7 +23902,6 @@
                             "schema": {
                                 "required": [
                                     "employee_id",
-                                    "email",
                                     "password",
                                     "password_confirmation"
                                 ],
@@ -23389,12 +23910,6 @@
                                         "description": "Empleado",
                                         "type": "string",
                                         "example": "1"
-                                    },
-                                    "email": {
-                                        "description": "Correo electrónico del usuario",
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "user@example.com"
                                     },
                                     "password": {
                                         "description": "Contraseña del usuario",
@@ -23429,9 +23944,10 @@
                                                             "type": "integer",
                                                             "example": 1
                                                         },
-                                                        "email": {
+                                                        "username": {
+                                                            "description": "Generado por el procedimiento generate_username; en pantalla se muestra con @",
                                                             "type": "string",
-                                                            "example": "email_user_example"
+                                                            "example": "juancarlospg"
                                                         },
                                                         "updated_at": {
                                                             "type": "string",
@@ -23548,10 +24064,6 @@
                                                     "type": "string",
                                                     "example": "Empleado"
                                                 },
-                                                "email": {
-                                                    "type": "string",
-                                                    "example": "Correo electrónico del usuario"
-                                                },
                                                 "password": {
                                                     "type": "string",
                                                     "example": "Contraseña del usuario"
@@ -23565,7 +24077,7 @@
                                         },
                                         "errors": {
                                             "properties": {
-                                                "email": {
+                                                "employee_id": {
                                                     "type": "array",
                                                     "items": {
                                                         "type": "string",
@@ -23635,7 +24147,6 @@
                             "schema": {
                                 "required": [
                                     "employee_id",
-                                    "email",
                                     "password",
                                     "password_confirmation"
                                 ],
@@ -23644,12 +24155,6 @@
                                         "description": "Empleado",
                                         "type": "string",
                                         "example": "1"
-                                    },
-                                    "email": {
-                                        "description": "Correo electrónico del usuario",
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "user@example.com"
                                     },
                                     "password": {
                                         "description": "Contraseña del usuario",
@@ -23690,9 +24195,10 @@
                                                                 "type": "integer",
                                                                 "example": 4
                                                             },
-                                                            "email": {
+                                                            "username": {
+                                                                "description": "Generado por el procedimiento generate_username; en pantalla se muestra con @",
                                                                 "type": "string",
-                                                                "example": "email_user_example"
+                                                                "example": "juancarlospg"
                                                             },
                                                             "updated_at": {
                                                                 "type": "string",
@@ -23746,10 +24252,6 @@
                                                     "type": "string",
                                                     "example": "Empleado"
                                                 },
-                                                "email": {
-                                                    "type": "string",
-                                                    "example": "Correo electrónico del usuario"
-                                                },
                                                 "password": {
                                                     "type": "string",
                                                     "example": "Contraseña del usuario"
@@ -23763,7 +24265,7 @@
                                         },
                                         "errors": {
                                             "properties": {
-                                                "email": {
+                                                "employee_id": {
                                                     "type": "array",
                                                     "items": {
                                                         "type": "string",
@@ -23847,9 +24349,10 @@
                                                                 "type": "integer",
                                                                 "example": 1
                                                             },
-                                                            "email": {
+                                                            "username": {
+                                                                "description": "Generado por el procedimiento generate_username; en pantalla se muestra con @",
                                                                 "type": "string",
-                                                                "example": "email_user_example"
+                                                                "example": "juancarlospg"
                                                             },
                                                             "created_at": {
                                                                 "type": "string",
@@ -23990,9 +24493,10 @@
                                                             "type": "integer",
                                                             "example": 1
                                                         },
-                                                        "email": {
+                                                        "username": {
+                                                            "description": "Generado por el procedimiento generate_username; en pantalla se muestra con @",
                                                             "type": "string",
-                                                            "example": "email_user_example"
+                                                            "example": "juancarlospg"
                                                         },
                                                         "updated_at": {
                                                             "type": "string",
@@ -24350,9 +24854,10 @@
                                                     "type": "integer",
                                                     "example": 1
                                                 },
-                                                "email": {
+                                                "username": {
+                                                    "description": "Generado por el procedimiento generate_username; en pantalla se muestra con @",
                                                     "type": "string",
-                                                    "example": "email_user_example"
+                                                    "example": "juancarlospg"
                                                 },
                                                 "created_at": {
                                                     "type": "string",
@@ -26366,284 +26871,104 @@
                 },
                 "type": "object"
             },
-            "AuditEvent": {
-                "description": "Tipo de cambio registrado.",
-                "type": "string",
-                "enum": [
-                    "created",
-                    "updated",
-                    "deleted",
-                    "restored",
-                    "attach",
-                    "detach",
-                    "sync"
-                ],
-                "example": "updated"
-            },
-            "AuditValues": {
-                "description": "Valores de los campos auditados antes (`old_values`) o después (`new_values`) del cambio. Las claves dependen del modelo; en attach/detach/sync traen la relación afectada.",
-                "type": "object",
-                "example": {
-                    "name": "CALIDAD",
-                    "description": "ÁREA DE CALIDAD"
-                },
-                "additionalProperties": true
-            },
-            "AuditListItem": {
-                "description": "Registro como lo entrega `AuditCollection` (all). No incluye `user_id` ni `auditable_id`.",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1842
-                    },
-                    "user_type": {
-                        "type": "string",
-                        "example": "App\\Models\\User",
-                        "nullable": true
-                    },
-                    "event": {
-                        "$ref": "#/components/schemas/AuditEvent"
-                    },
-                    "auditable_type": {
-                        "description": "Clase del modelo modificado.",
-                        "type": "string",
-                        "example": "App\\Models\\Area"
-                    },
-                    "auditable_name": {
-                        "description": "Nombre en español del modelo; `null` si no está en `model_types`.",
-                        "type": "string",
-                        "example": "Área",
-                        "nullable": true
-                    },
-                    "url": {
-                        "type": "string",
-                        "example": "http://kanri-backend.test/api/organizational_structure/areas/update/12"
-                    },
-                    "ip_address": {
-                        "type": "string",
-                        "example": "192.168.1.25"
-                    },
-                    "user_agent": {
-                        "description": "Navegador o cliente que hizo el cambio.",
-                        "type": "string",
-                        "example": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0",
-                        "nullable": true
-                    },
-                    "resolved": {
-                        "description": "Nombre actual de los registros a los que apuntan los campos `*_id` de `old_values`/`new_values`: {campo: {id: nombre}}. Incluye desactivados.",
-                        "type": "object",
-                        "example": {
-                            "wash_tone_id": {
-                                "189": "MEDIO",
-                                "191": "OSCURO PD"
-                            }
-                        },
-                        "additionalProperties": true
-                    },
-                    "tags": {
-                        "description": "Etiqueta de la relación afectada en attach/detach/sync.",
-                        "type": "string",
-                        "example": null,
-                        "nullable": true
-                    },
-                    "audit_tag": {
-                        "description": "Nombre en español de `tags`; `null` si no tiene traducción.",
-                        "type": "string",
-                        "example": null,
-                        "nullable": true
-                    },
-                    "old_values": {
-                        "$ref": "#/components/schemas/AuditValues"
-                    },
-                    "new_values": {
-                        "example": {
-                            "name": "CONTROL DE CALIDAD",
-                            "description": "ÁREA ENCARGADA DE INSPECCIONAR LAS PRENDAS TERMINADAS"
-                        },
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/AuditValues"
-                            }
-                        ]
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "example": "2026-05-14 10:02:45"
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "example": "2026-05-14 10:02:45"
-                    },
-                    "user": {
-                        "description": "Usuario que hizo el cambio, con empleado, persona, cargo y área. `null` si lo hizo el sistema (seeders, comandos).",
-                        "nullable": true,
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/User"
-                            }
-                        ]
-                    },
-                    "auditable": {
-                        "description": "Registro modificado tal como está hoy (serializado por Eloquent). `null` si ya no existe.",
-                        "type": "object",
-                        "example": {
-                            "id": 12,
-                            "item_id": 3,
-                            "name": "CONTROL DE CALIDAD",
-                            "description": "ÁREA ENCARGADA DE INSPECCIONAR LAS PRENDAS TERMINADAS",
-                            "settings": [],
-                            "created_at": "2026-05-14T09:32:10.000000Z",
-                            "updated_at": "2026-05-14T10:02:45.000000Z",
-                            "deleted_at": null
-                        },
-                        "nullable": true,
-                        "additionalProperties": true
-                    }
-                },
-                "type": "object"
-            },
-            "Audit": {
-                "description": "Registro como lo entrega `find`: el modelo tal cual, con fechas ISO. No incluye `auditable_name` ni `audit_tag`.",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1842
-                    },
-                    "user_type": {
-                        "type": "string",
-                        "example": "App\\Models\\User",
-                        "nullable": true
-                    },
-                    "user_id": {
-                        "type": "integer",
-                        "example": 15,
-                        "nullable": true
-                    },
-                    "event": {
-                        "$ref": "#/components/schemas/AuditEvent"
-                    },
-                    "auditable_type": {
-                        "type": "string",
-                        "example": "App\\Models\\Area"
-                    },
-                    "auditable_id": {
-                        "type": "integer",
-                        "example": 12
-                    },
-                    "old_values": {
-                        "$ref": "#/components/schemas/AuditValues"
-                    },
-                    "new_values": {
-                        "example": {
-                            "name": "CONTROL DE CALIDAD",
-                            "description": "ÁREA ENCARGADA DE INSPECCIONAR LAS PRENDAS TERMINADAS"
-                        },
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/AuditValues"
-                            }
-                        ]
-                    },
-                    "url": {
-                        "type": "string",
-                        "example": "http://kanri-backend.test/api/organizational_structure/areas/update/12"
-                    },
-                    "ip_address": {
-                        "type": "string",
-                        "example": "192.168.1.25"
-                    },
-                    "user_agent": {
-                        "type": "string",
-                        "example": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36",
-                        "nullable": true
-                    },
-                    "tags": {
-                        "type": "string",
-                        "example": null,
-                        "nullable": true
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2026-05-14T15:02:45.000000Z"
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2026-05-14T15:02:45.000000Z"
-                    },
-                    "user": {
-                        "nullable": true,
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/User"
-                            }
-                        ]
-                    },
-                    "auditable": {
-                        "type": "object",
-                        "example": {
-                            "id": 12,
-                            "item_id": 3,
-                            "name": "CONTROL DE CALIDAD",
-                            "description": "ÁREA ENCARGADA DE INSPECCIONAR LAS PRENDAS TERMINADAS",
-                            "settings": [],
-                            "created_at": "2026-05-14T09:32:10.000000Z",
-                            "updated_at": "2026-05-14T10:02:45.000000Z",
-                            "deleted_at": null
-                        },
-                        "nullable": true,
-                        "additionalProperties": true
-                    }
-                },
-                "type": "object"
-            },
-            "AuditListResponse": {
+            "AuditTimelineResponse": {
                 "properties": {
                     "data": {
                         "properties": {
                             "audits": {
                                 "type": "array",
                                 "items": {
-                                    "$ref": "#/components/schemas/AuditListItem"
-                                }
-                            },
-                            "model_types": {
-                                "description": "Catálogo fijo: nombre corto de la clase → nombre en español. Sirve para armar el filtro `auditable_name`.",
-                                "type": "object",
-                                "example": {
-                                    "Area": "Área",
-                                    "Position": "Cargo",
-                                    "Trademark": "Marca",
-                                    "User": "Usuario"
-                                },
-                                "additionalProperties": {
-                                    "type": "string"
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1842
+                                        },
+                                        "event": {
+                                            "description": "Tipo de cambio, o `units` para un bloque de +1 y −1.",
+                                            "type": "string",
+                                            "enum": [
+                                                "created",
+                                                "updated",
+                                                "deleted",
+                                                "restored",
+                                                "attach",
+                                                "detach",
+                                                "sync",
+                                                "units"
+                                            ],
+                                            "example": "updated"
+                                        },
+                                        "clicks": {
+                                            "description": "Solo en `units`: clics del bloque.",
+                                            "properties": {
+                                                "plus": {
+                                                    "type": "integer",
+                                                    "example": 84
+                                                },
+                                                "minus": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object",
+                                            "nullable": true
+                                        },
+                                        "started_at": {
+                                            "description": "Solo en `units`: hora del primer clic.",
+                                            "type": "string",
+                                            "example": "2026-10-28 17:46:57",
+                                            "nullable": true
+                                        },
+                                        "record": {
+                                            "description": "Nombre del registro modificado.",
+                                            "type": "string",
+                                            "example": "BO100000",
+                                            "nullable": true
+                                        },
+                                        "user": {
+                                            "description": "Persona que hizo el cambio; `Sistema` si no hay usuario.",
+                                            "type": "string",
+                                            "example": "Ana Gómez"
+                                        },
+                                        "url": {
+                                            "type": "string",
+                                            "example": "http://kanri-backend.test/api/products/update/12"
+                                        },
+                                        "ip_address": {
+                                            "type": "string",
+                                            "example": "192.168.1.25"
+                                        },
+                                        "user_agent": {
+                                            "type": "string",
+                                            "example": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0",
+                                            "nullable": true
+                                        },
+                                        "old_values": {
+                                            "description": "Valores anteriores, con el nombre legible de cada campo.",
+                                            "type": "object",
+                                            "example": {
+                                                "Marca": "ADIDAS (#7)"
+                                            },
+                                            "additionalProperties": true
+                                        },
+                                        "new_values": {
+                                            "description": "Valores nuevos, con el nombre legible de cada campo.",
+                                            "type": "object",
+                                            "example": {
+                                                "Marca": "STARA DENIM (#91)"
+                                            },
+                                            "additionalProperties": true
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "example": "2026-11-05 10:02:45"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             },
                             "meta": {
                                 "$ref": "#/components/schemas/PaginationMeta"
-                            }
-                        },
-                        "type": "object"
-                    },
-                    "message": {
-                        "type": "string",
-                        "example": "Operación completada con éxito."
-                    },
-                    "error": {
-                        "type": "boolean",
-                        "example": false
-                    }
-                },
-                "type": "object"
-            },
-            "AuditResponse": {
-                "properties": {
-                    "data": {
-                        "properties": {
-                            "audit": {
-                                "$ref": "#/components/schemas/Audit"
                             }
                         },
                         "type": "object"
@@ -26695,14 +27020,14 @@
             },
             "LoginRequest": {
                 "required": [
-                    "email",
+                    "username",
                     "password"
                 ],
                 "properties": {
-                    "email": {
+                    "username": {
+                        "description": "Nombre de usuario, con o sin @",
                         "type": "string",
-                        "format": "email",
-                        "example": "laura.gomez@kanri.test"
+                        "example": "lauragomezr"
                     },
                     "password": {
                         "type": "string",
@@ -26960,9 +27285,17 @@
                         "example": "BANCO AGRARIO DE COLOMBIA S.A."
                     },
                     "settings": {
+                        "description": "`validations`: regla del número de cuenta por cada tipo de cuenta que el banco maneja (los tipos asociados al banco). Un tipo sin regla no lo maneja; un banco sin reglas no recibe cuentas.",
                         "type": "object",
-                        "example": null,
-                        "nullable": true
+                        "example": {
+                            "validations": [
+                                {
+                                    "account_type_id": 452,
+                                    "regex": "/^\\d{11}$/",
+                                    "message": "La cuenta de ahorros de Bancolombia tiene 11 dígitos."
+                                }
+                            ]
+                        }
                     },
                     "created_at": {
                         "type": "string",
@@ -27971,78 +28304,12 @@
                 },
                 "type": "object"
             },
-            "CollectionDetail": {
-                "description": "Colección como la entrega `CollectionResource`: incluye sus fichas técnicas.",
-                "allOf": [
-                    {
-                        "$ref": "#/components/schemas/Collection"
-                    },
-                    {
-                        "properties": {
-                            "technical_sheets": {
-                                "description": "Fichas técnicas de la colección. En `find` cada ficha trae además `technical_sheet_details`, `product` (con `trademark.sizes` y `subcategory.category`), `garment_type`, `wash_tone`, `boot_type`, `photo_d`, `photo_t`, `products` y `production_orders` (con detalles, cantidades, tela, color, proveedor y reasignaciones). En store/update/delete/restore vienen sin relaciones.",
-                                "type": "array",
-                                "items": {
-                                    "properties": {
-                                        "id": {
-                                            "type": "integer",
-                                            "example": 905
-                                        },
-                                        "uuid": {
-                                            "type": "string",
-                                            "format": "uuid",
-                                            "example": "3f6d2a1c-8b4e-4c7a-9e21-6a5b0d4c2f18"
-                                        },
-                                        "code": {
-                                            "type": "string",
-                                            "example": "CU85"
-                                        },
-                                        "collection_id": {
-                                            "type": "integer",
-                                            "example": 118
-                                        },
-                                        "product_id": {
-                                            "type": "integer",
-                                            "example": 1460
-                                        },
-                                        "status": {
-                                            "type": "string",
-                                            "enum": [
-                                                "Pendiente",
-                                                "En revision",
-                                                "Aprobado",
-                                                "Cancelado"
-                                            ],
-                                            "example": "En revision"
-                                        }
-                                    },
-                                    "type": "object",
-                                    "additionalProperties": true
-                                }
-                            }
-                        },
-                        "type": "object"
-                    }
-                ]
-            },
             "CollectionResponse": {
                 "properties": {
                     "data": {
                         "properties": {
                             "collection": {
-                                "$ref": "#/components/schemas/CollectionDetail"
-                            },
-                            "status_production_order": {
-                                "description": "Catálogo fijo de estados de una orden de producción.",
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                },
-                                "example": [
-                                    "Pendiente",
-                                    "Cancelado",
-                                    "Aprobado"
-                                ]
+                                "$ref": "#/components/schemas/Collection"
                             }
                         },
                         "type": "object"
@@ -28093,7 +28360,7 @@
                 ],
                 "properties": {
                     "name": {
-                        "description": "`C`, un dígito y el año (de 1900 a 2026; ver pendientes). Único entre las colecciones.",
+                        "description": "`C`, un dígito y el año (19xx o 20xx). Único entre las colecciones.",
                         "type": "string",
                         "pattern": "^C\\d(19\\d{2}|20([0-1]\\d|2[0-6]))$",
                         "example": "C32026"
@@ -28421,7 +28688,7 @@
                     "name": {
                         "description": "Nombre en MAYÚSCULAS. Único entre las cajas de compensación.",
                         "type": "string",
-                        "maxLength": 50,
+                        "maxLength": 100,
                         "minLength": 4,
                         "example": "CAFAM"
                     },
@@ -28817,15 +29084,20 @@
                             }
                         ]
                     },
-                    "workstation": {
-                        "description": "Puesto de trabajo asignado: un proceso sin subprocesos, un subproceso sin operaciones o una operación. `parent` dice de dónde cuelga («CONFECCION › EMBONADO» para una operación, «CORTE» para un subproceso, null para un proceso).",
-                        "type": "object",
-                        "example": {
-                            "model_type": "App\\\\Models\\\\Subprocess",
-                            "model_id": 602,
-                            "name": "EXTENDIDO"
-                        },
+                    "workstation_id": {
+                        "description": "Puesto de trabajo (id en subitems).",
+                        "type": "integer",
+                        "example": 602,
                         "nullable": true
+                    },
+                    "workstation": {
+                        "description": "Puesto de trabajo tal cual está en subitems: `item_id` dice si es proceso (24), subproceso (25) u operación (26). El frontend arma la ruta con la lista de procesos.",
+                        "nullable": true,
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Subitem"
+                            }
+                        ]
                     }
                 },
                 "type": "object"
@@ -28938,24 +29210,10 @@
                         "example": null,
                         "nullable": true
                     },
-                    "workstation": {
-                        "description": "Puesto de trabajo (opcional): un solo elemento del último nivel de la cadena. Al editar reemplaza el anterior; null lo quita.",
-                        "properties": {
-                            "model_type": {
-                                "type": "string",
-                                "enum": [
-                                    "App\\Models\\Process",
-                                    "App\\Models\\Subprocess",
-                                    "App\\Models\\Operation"
-                                ],
-                                "example": "App\\Models\\Subprocess"
-                            },
-                            "model_id": {
-                                "type": "integer",
-                                "example": 602
-                            }
-                        },
-                        "type": "object",
+                    "workstation_id": {
+                        "description": "Puesto de trabajo (opcional): id en subitems de un proceso sin subprocesos, un subproceso sin operaciones o una operación. Se guarda en `employees.workstation_id`; null lo quita.",
+                        "type": "integer",
+                        "example": 602,
                         "nullable": true
                     }
                 },
@@ -29636,9 +29894,10 @@
                 "type": "object"
             },
             "GenderRequest": {
-                "description": "Sin regla de mayúsculas. `description` es obligatoria al crear y opcional al editar.",
+                "description": "Nombre y descripción en MAYÚSCULAS.",
                 "required": [
-                    "name"
+                    "name",
+                    "description"
                 ],
                 "properties": {
                     "name": {
@@ -29651,7 +29910,7 @@
                     "description": {
                         "type": "string",
                         "maxLength": 255,
-                        "example": "Otro"
+                        "example": "OTRO"
                     }
                 },
                 "type": "object"
@@ -29939,7 +30198,7 @@
                     "name": {
                         "description": "Nombre en MAYÚSCULAS. Único entre las entidades de salud.",
                         "type": "string",
-                        "maxLength": 50,
+                        "maxLength": 100,
                         "minLength": 4,
                         "example": "ALIANSALUD"
                     },
@@ -31514,7 +31773,6 @@
                         }
                     },
                     "movement_detail_redistributions": {
-                        "description": "Solo en `find`.",
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/MovementDetailRedistribution"
@@ -31558,7 +31816,7 @@
                         "example": 40122
                     },
                     "status": {
-                        "description": "Ingreso = recibió y aún no envía; Movimiento = ya envió una parte; Salida = envió todo lo recibido. Lo recalcula el observer al cambiar un traslado.",
+                        "description": "Ingreso = recibió y aún no envía; Movimiento = ya envió una parte o lo enviado espera que el otro proceso lo acepte; Salida = envió todo lo recibido y se lo aceptaron (los rechazados y cancelados no cuentan). Se recalcula al crear o editar un traslado y al aprobarlo, rechazarlo o cancelarlo.",
                         "type": "string",
                         "enum": [
                             "Ingreso",
@@ -31691,60 +31949,12 @@
                 "type": "object"
             },
             "MovementTransferResponse": {
-                "description": "Respuesta de save, approve, decline y cancel. Devuelve el **traslado** pasado por `MovementResource` (pensado para un movimiento): solo vienen con datos `id`, `model_type`, `model_id` (movimiento de origen), `status` y las fechas; el resto llega en `null` y **no incluye cantidades ni redistribuciones** (ver pendientes).",
+                "description": "Respuesta de save, approve, decline y cancel: el traslado con sus cantidades y redistribuciones.",
                 "properties": {
                     "data": {
                         "properties": {
-                            "movement": {
-                                "properties": {
-                                    "id": {
-                                        "description": "Id del traslado.",
-                                        "type": "integer",
-                                        "example": 2210
-                                    },
-                                    "model_id": {
-                                        "description": "Movimiento de origen.",
-                                        "type": "integer",
-                                        "example": 87
-                                    },
-                                    "model_type": {
-                                        "type": "string",
-                                        "example": "App\\Models\\Movement"
-                                    },
-                                    "model": {
-                                        "example": null,
-                                        "nullable": true
-                                    },
-                                    "production_order_detail_id": {
-                                        "example": null,
-                                        "nullable": true
-                                    },
-                                    "status": {
-                                        "type": "string",
-                                        "example": "Aprobado"
-                                    },
-                                    "created_at": {
-                                        "type": "string",
-                                        "example": "2026-11-05 14:00:00"
-                                    },
-                                    "updated_at": {
-                                        "type": "string",
-                                        "example": "2026-11-05 16:20:00"
-                                    },
-                                    "production_order_detail": {
-                                        "example": null,
-                                        "nullable": true
-                                    },
-                                    "movement_details_input": {
-                                        "example": null,
-                                        "nullable": true
-                                    },
-                                    "movement_details_output": {
-                                        "example": null,
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
+                            "movement_detail": {
+                                "$ref": "#/components/schemas/MovementTransfer"
                             },
                             "statuses": {
                                 "type": "array",
@@ -32134,6 +32344,13 @@
                         "items": {
                             "$ref": "#/components/schemas/Subitem"
                         }
+                    },
+                    "after_subprocesses": {
+                        "description": "Subprocesos siguientes en la cadena del proceso: la operación sale de su subproceso y abre una línea (RESINA → LAVADO RESINA).",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Subitem"
+                        }
                     }
                 },
                 "type": "object"
@@ -32150,7 +32367,7 @@
                                 "type": "object",
                                 "example": {
                                     "trademarks": {
-                                        "label": "Marcas",
+                                        "label": "MARCAS",
                                         "model": "App\\Models\\Trademark",
                                         "url": "/trademarks/all",
                                         "value": "id",
@@ -32232,6 +32449,22 @@
                         "items": {
                             "type": "integer",
                             "example": 361
+                        }
+                    },
+                    "before_operations": {
+                        "description": "«Depende de»: solo si el subproceso tiene `settings.operation_flow = parallel`. Operaciones del mismo subproceso que deben estar hechas antes (RELOJERA depende de PARCHE), distintas de ella misma y sin formar ciclos. Es obligatoria aunque la ficha técnica no la traiga. En `update`, si no se envía, se conservan las guardadas.",
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "example": 343
+                        }
+                    },
+                    "after_subprocesses": {
+                        "description": "Subprocesos siguientes en la cadena del proceso: solo si el proceso tiene `settings.subprocess_flow = sequence`, del mismo proceso y distintos del subproceso de la operación. La operación deja de esperar lo anterior de su subproceso y abre una línea. En `update`, si no se envía, se conservan los guardados.",
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "example": 1301
                         }
                     },
                     "settings": {
@@ -32389,9 +32622,9 @@
                 ],
                 "properties": {
                     "name": {
-                        "description": "Único entre los fondos de pensión. A diferencia de otros catálogos, no exige mayúsculas.",
+                        "description": "Nombre en MAYÚSCULAS. Único entre los fondos de pensión.",
                         "type": "string",
-                        "maxLength": 50,
+                        "maxLength": 100,
                         "minLength": 4,
                         "example": "SKANDIA"
                     },
@@ -33750,11 +33983,11 @@
                     },
                     "name": {
                         "type": "string",
-                        "example": "No Aplica"
+                        "example": "NO APLICA"
                     },
                     "description": {
                         "type": "string",
-                        "example": "No Aplica"
+                        "example": "NO APLICA"
                     },
                     "created_at": {
                         "type": "string",
@@ -33865,7 +34098,7 @@
                         "example": 12
                     },
                     "start": {
-                        "description": "Inicio oficial: la hora de inicio del turno o el fin del registro anterior del puesto",
+                        "description": "Inicio oficial: la hora programada; sin programación, la hora de inicio del turno o el fin del registro anterior del puesto. La hora real del escaneo queda en settings.scanned_at",
                         "type": "string",
                         "example": "2026-10-24 07:00:00"
                     },
@@ -34076,11 +34309,11 @@
                     },
                     "name": {
                         "type": "string",
-                        "example": "No Aplica"
+                        "example": "NO APLICA"
                     },
                     "description": {
                         "type": "string",
-                        "example": "No Aplica"
+                        "example": "NO APLICA"
                     },
                     "created_at": {
                         "type": "string",
@@ -34274,7 +34507,7 @@
                     "name": {
                         "description": "Nombre en MAYÚSCULAS. Único entre las administradoras de riesgos.",
                         "type": "string",
-                        "maxLength": 50,
+                        "maxLength": 100,
                         "minLength": 4,
                         "example": "POSITIVA"
                     },
@@ -34490,11 +34723,11 @@
                     },
                     "name": {
                         "type": "string",
-                        "example": "No Aplica"
+                        "example": "NO APLICA"
                     },
                     "description": {
                         "type": "string",
-                        "example": "No Aplica"
+                        "example": "NO APLICA"
                     },
                     "created_at": {
                         "type": "string",
@@ -34559,10 +34792,9 @@
                 ],
                 "properties": {
                     "code": {
-                        "description": "Código numérico de 2 a 5 dígitos. Obligatorio al crear.",
+                        "description": "Código único de la talla. Su formato lo da `formats.code` del ítem 16 (Tallas → Configurar).",
                         "type": "string",
-                        "pattern": "^[0-9]{2,5}$",
-                        "example": "24"
+                        "example": "T24"
                     },
                     "finished_product": {
                         "description": "Es talla de producto terminado.",
@@ -34685,6 +34917,11 @@
                                     "$ref": "#/components/schemas/Size"
                                 }
                             },
+                            "item": {
+                                "description": "Ítem de tallas (id 16) con `settings.formats`, para la pantalla Configurar.",
+                                "type": "object",
+                                "nullable": true
+                            },
                             "meta": {
                                 "$ref": "#/components/schemas/PaginationMeta"
                             }
@@ -34710,17 +34947,16 @@
                 ],
                 "properties": {
                     "name": {
-                        "description": "Única entre las tallas. Si es de producto terminado, debe ser un número par de 2 dígitos o XS, S, M, L, XL, XXL (regla guardada en el ítem 16, `settings.finished_product.name`).",
-                        "type": "string",
-                        "maxLength": 50,
-                        "minLength": 2,
-                        "example": "24"
-                    },
-                    "description": {
-                        "description": "Si es de producto terminado, debe ser T seguida de al menos 2 dígitos (regla en `settings.finished_product.description` del ítem 16).",
+                        "description": "Única entre las tallas. Si es de producto terminado, debe cumplir `settings.formats.name` del ítem 16 (Tallas → Configurar). Al editar solo se revisa si cambia.",
                         "type": "string",
                         "maxLength": 50,
                         "example": "T24"
+                    },
+                    "description": {
+                        "description": "Si es de producto terminado, debe cumplir `settings.formats.description` del ítem 16. Al editar solo se revisa si cambia.",
+                        "type": "string",
+                        "maxLength": 50,
+                        "example": "TALLA 24"
                     },
                     "settings": {
                         "$ref": "#/components/schemas/SizeSettings"
@@ -35717,11 +35953,11 @@
                     },
                     "name": {
                         "type": "string",
-                        "example": "No Aplica"
+                        "example": "NO APLICA"
                     },
                     "description": {
                         "type": "string",
-                        "example": "No Aplica"
+                        "example": "NO APLICA"
                     },
                     "created_at": {
                         "type": "string",
@@ -35786,9 +36022,9 @@
                 ],
                 "properties": {
                     "code": {
-                        "description": "Código numérico de 2 a 5 dígitos.",
+                        "description": "Código numérico de 1 a 5 dígitos.",
                         "type": "string",
-                        "pattern": "^[0-9]{2,5}$",
+                        "pattern": "^[0-9]{1,5}$",
                         "example": "1045"
                     }
                 },
@@ -36145,9 +36381,9 @@
                                 "example": 3
                             },
                             "account_number": {
-                                "description": "10 dígitos.",
+                                "description": "Debe cumplir la regla (`settings.validations`) de su banco para su tipo de cuenta; un banco sin reglas o sin regla para ese tipo no se acepta.",
                                 "type": "string",
-                                "example": "4508123967"
+                                "example": "45081239671"
                             },
                             "bank_certificate": {
                                 "description": "Certificado bancario. Obligatorio al crear.",
@@ -36389,13 +36625,27 @@
                 "type": "object"
             },
             "SupplySettings": {
-                "description": "Configuración del insumo. Se guarda tal cual llega. El frontend guarda en `values` los campos simples del formulario de su tipo (los `selectdinamic` van como relaciones, no aquí).",
+                "description": "Configuración del insumo. La arma el Request: en `values` van los campos simples del formulario de su tipo y las listas «asociado a» (`[{origin_id, ids}]`: por cada elemento del campo de origen, los ids elegidos). Los `selectdinamic` van como relaciones y las fotos como archivos (`files`), no aquí.",
                 "properties": {
                     "values": {
                         "type": "object",
                         "example": {
                             "width": 150,
-                            "heigth": 1200
+                            "tallas": [
+                                {
+                                    "origin_id": 512,
+                                    "ids": [
+                                        30,
+                                        31
+                                    ]
+                                },
+                                {
+                                    "origin_id": 515,
+                                    "ids": [
+                                        30
+                                    ]
+                                }
+                            ]
                         },
                         "additionalProperties": true
                     }
@@ -36523,11 +36773,6 @@
                         "properties": {
                             "supply": {
                                 "$ref": "#/components/schemas/SupplyDetail"
-                            },
-                            "model_types": {
-                                "description": "Modelos que se pueden usar en los campos `selectdinamic` (igual que en tipos de insumo).",
-                                "type": "object",
-                                "additionalProperties": true
                             }
                         },
                         "type": "object"
@@ -36571,7 +36816,7 @@
                 "type": "object"
             },
             "SupplyRequest": {
-                "description": "Además de los campos fijos, se validan los del formulario del tipo de insumo (`settings.form`) con sus propias reglas: los campos simples en `values.<campo>` y los `selectdinamic` en `class.<campo>` (un id, o una lista si son `multiple`).",
+                "description": "Se envía como `multipart/form-data`. Además de los campos fijos, se validan los del formulario del tipo de insumo (`settings.form`) con sus propias reglas: los campos simples en `values.<campo>`, los `selectdinamic` en `class.<campo>` (un id, o una lista si son `multiple`), las listas «asociado a» en `values.<campo>` como `[{origin_id, ids[]}]` (el `origin_id` debe estar elegido en el campo de origen) y las fotos en `photos.<campo>[]` (foto general) o `photos.<campo>.<origin_id>[]` (foto asociada), JPG o PNG de máximo 2 MB. Con «una sola foto», la nueva reemplaza la anterior.",
                 "required": [
                     "supply_type_id",
                     "name",
@@ -36616,6 +36861,21 @@
                             ]
                         },
                         "additionalProperties": true
+                    },
+                    "photos": {
+                        "description": "Fotos nuevas por campo: `photos[foto_general][]` o `photos[foto][512][]`.",
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "deleted_files": {
+                        "description": "Al editar: ids de fotos del insumo que se borran.",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "example": [
+                            901
+                        ]
                     },
                     "settings": {
                         "$ref": "#/components/schemas/SupplySettings"
@@ -36725,11 +36985,6 @@
                         ],
                         "example": "roll",
                         "nullable": true
-                    },
-                    "has_variants": {
-                        "description": "Presente en los datos; no lo validan `store` ni `update`.",
-                        "type": "boolean",
-                        "example": true
                     },
                     "form": {
                         "description": "Formulario de sus insumos (lo escribe `setting`).",
@@ -37487,9 +37742,10 @@
                         "type": "integer",
                         "example": 1
                     },
-                    "email": {
+                    "username": {
+                        "description": "Generado por el procedimiento generate_username; en pantalla se muestra con @",
                         "type": "string",
-                        "example": "email_user_example"
+                        "example": "juancarlospg"
                     },
                     "created_at": {
                         "type": "string",
@@ -38655,7 +38911,7 @@
     "tags": [
         {
             "name": "Audit",
-            "description": "Endpoints para gestionar auditorias"
+            "description": "Endpoints para gestionar el historial de cambios de cada registro"
         },
         {
             "name": "Auth",
@@ -38708,6 +38964,10 @@
         {
             "name": "Productivities › Details",
             "description": "Endpoints para gestionar los registros de trabajo de los turnos"
+        },
+        {
+            "name": "Productivities › Details › Workstation",
+            "description": "Endpoints para gestionar el trabajo en la estación de cada puesto"
         },
         {
             "name": "Reports",
@@ -38870,7 +39130,7 @@
             "description": "Endpoints para gestionar las órdenes de producción de las colecciones"
         },
         {
-            "name": "Movements › Movements",
+            "name": "Movements",
             "description": "Endpoints para gestionar los movimientos y traslados de unidades entre procesos"
         },
         {

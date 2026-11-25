@@ -12,8 +12,12 @@ use OpenApi\Annotations as OA;
  *         description="Documentación de endpoints de autenticación"
  *     ),
  *     @OA\Server(
- *         url=L5_SWAGGER_CONST_HOST,
- *         description="Servidor API"
+ *         url="http://kanri-backend.test/api",
+ *         description="Servidor development"
+ *     ),
+ *     @OA\Server(
+ *         url="https://kanri-backend.orgbless.com/api",
+ *         description="Servidor tester"
  *     )
  * )
  *
@@ -191,7 +195,7 @@ use OpenApi\Annotations as OA;
  * )
  *
  * @OA\Tag(
- *     name="Movements › Movements",
+ *     name="Movements",
  *     description="Endpoints para gestionar los movimientos y traslados de unidades entre procesos"
  * )
  *

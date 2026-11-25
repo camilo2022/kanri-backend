@@ -193,7 +193,7 @@ class MovementController extends Controller
     /**
      * @OA\Get(
      *     path="/movements/all",
-     *     tags={"Movements › Movements"},
+     *     tags={"Movements"},
      *     summary="Listar los movimientos",
      *     description="Cada movimiento trae su proceso, la curva del lote (con orden, ficha, colección y producto) y sus traslados de entrada y salida con cantidades. Sin `per_page` devuelve todo (respuesta pesada).",
      *     security={{"sanctum":{}}},
@@ -271,7 +271,7 @@ class MovementController extends Controller
     /**
      * @OA\Get(
      *     path="/movements/find/{id}",
-     *     tags={"Movements › Movements"},
+     *     tags={"Movements"},
      *     summary="Obtener un movimiento con sus traslados",
      *     description="Para la pantalla de resumen y traslado de unidades: traslados de entrada y salida (con cantidades, redistribuciones y quién los creó o modificó), el proceso con sus procesos anterior y siguiente, y la curva del lote con las tallas de la marca.",
      *     security={{"sanctum":{}}},
@@ -316,7 +316,7 @@ class MovementController extends Controller
     /**
      * @OA\Post(
      *     path="/movements/save",
-     *     tags={"Movements › Movements"},
+     *     tags={"Movements"},
      *     summary="Trasladar unidades a otro proceso (o editar un traslado)",
      *     description="Sin `movement_detail_id`: crea un traslado **Pendiente** desde el movimiento de origen (curva + proceso) hacia el de destino, que se crea en estado Ingreso si no existe. El destino puede ser la misma curva u otro lote. Con `movement_detail_id`: edita la observación y las cantidades de ese traslado (si una talla baja, se reducen sus redistribuciones). El movimiento de origen debe existir: hoy el primero de cada lote no lo crea este código (vendrá de la medición de productividad).",
      *     security={{"sanctum":{}}},
@@ -525,7 +525,7 @@ class MovementController extends Controller
     /**
      * @OA\Post(
      *     path="/movements/approve",
-     *     tags={"Movements › Movements"},
+     *     tags={"Movements"},
      *     summary="Aprobar un traslado (proceso que recibe)",
      *     description="Marca el traslado como Aprobado y guarda las cantidades realmente recibidas. Si se recibe menos de lo enviado en una talla, se reducen las redistribuciones de esa talla. El traslado debe estar Pendiente. Al cambiar el estado se recalculan el estado del movimiento de origen y el saldo por talla del lote.",
      *     security={{"sanctum":{}}},
@@ -674,7 +674,7 @@ class MovementController extends Controller
     /**
      * @OA\Post(
      *     path="/movements/decline",
-     *     tags={"Movements › Movements"},
+     *     tags={"Movements"},
      *     summary="Rechazar un traslado (proceso que recibe)",
      *     description="Marca el traslado como Rechazado con una observación. Solo usa `movement_detail_id` y `observation`, pero hoy el Request exige el cuerpo completo del traslado (ver pendientes). El traslado debe estar Pendiente.",
      *     security={{"sanctum":{}}},
@@ -762,7 +762,7 @@ class MovementController extends Controller
     /**
      * @OA\Post(
      *     path="/movements/cancel",
-     *     tags={"Movements › Movements"},
+     *     tags={"Movements"},
      *     summary="Cancelar un traslado (proceso que envía)",
      *     description="Marca el traslado como Cancelado con una observación, antes de que el destino lo reciba. Solo usa `movement_detail_id` y `observation`, pero hoy el Request exige el cuerpo completo del traslado (ver pendientes). El traslado debe estar Pendiente.",
      *     security={{"sanctum":{}}},
