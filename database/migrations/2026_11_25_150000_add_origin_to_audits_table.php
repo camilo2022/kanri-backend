@@ -16,7 +16,7 @@ return new class extends Migration
         }
 
         Schema::connection($connection)->table($table, function (Blueprint $table) {
-            $table->string('origin', 20)->nullable()->after('tags')->index()->comment('Desde dónde se hizo: web, mobile, ai, api o system');
+            $table->string('origin', 20)->nullable()->after('tags')->index()->comment('Desde dónde se hizo: web, mobile, mcp, api o system');
         });
     }
 
