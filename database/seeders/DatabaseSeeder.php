@@ -19,7 +19,6 @@ class DatabaseSeeder extends Seeder
             ItemsAndSubitemsSeeder::class,
             UserSeeder::class,
             ModulesAndSubmodulesSeeder::class,
-            EmployeeSeeder::class
         ]);
     }
 }
