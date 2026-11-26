@@ -6,11 +6,11 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Mcp\ActorResolver;
 use App\Models\Module;
 use App\Models\User;
+use App\Support\LoginThrottle;
 use App\Traits\ApiMessage;
 use App\Traits\ApiResponser;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\RateLimiter;
 use OpenApi\Annotations as OA;
 
 /**
@@ -79,10 +79,6 @@ class AuthController extends Controller
 {
     use ApiMessage, ApiResponser;
 
-    /** Intentos fallidos de inicio de sesión permitidos por IP, y cuánto dura el bloqueo al superarlos (15 minutos). */
-    private const LOGIN_MAX_ATTEMPTS = 5;
-    private const LOGIN_LOCK_SECONDS = 900;
-
     /**
      * @OA\Post(
      *     path="/auth/login",
@@ -131,27 +127,27 @@ class AuthController extends Controller
      */
     public function login(LoginRequest $request)
     {
-        // Hasta 5 intentos fallidos por IP; al superarlos, esa IP queda bloqueada 15 minutos (desde el primer fallo)
-        $limiterKey = 'login:' . $request->ip();
-        if (RateLimiter::tooManyAttempts($limiterKey, self::LOGIN_MAX_ATTEMPTS)) {
-            $seconds = RateLimiter::availableIn($limiterKey);
-
+        // Hasta 5 intentos fallidos con el mismo usuario desde la misma red; al superarlos solo ese usuario queda
+        // bloqueado 15 minutos. Equivocarse con un usuario no bloquea a los demás
+        $username = ltrim(trim((string) $request->input('username')), '@');
+        $throttle = new LoginThrottle('api');
+        if ($block = $throttle->blocked($username, $request->ip())) {
             return $this->errorResponse(
                 [
-                    'message' => 'Demasiados intentos fallidos. Tu dirección IP quedó bloqueada temporalmente.',
-                    'error' => 'Inténtalo de nuevo en ' . max(1, (int) ceil($seconds / 60)) . ' minuto(s).',
+                    'message' => $block['message'],
+                    'error' => $block['detail'],
                 ],
                 429
-            )->header('Retry-After', $seconds);
+            )->header('Retry-After', $block['seconds']);
         }
 
         try {
             // Se acepta con o sin la @ que se muestra en pantalla
-            $user = User::with(['employee' => ['person']])->where('username', ltrim(trim((string) $request->input('username')), '@'))->first();
+            $user = User::with(['employee' => ['person']])->where('username', $username)->first();
 
             // Usuario inexistente y contraseña incorrecta responden igual, para no revelar qué usuarios existen
             if (! $user || ! Hash::check($request->input('password'), $user->password)) {
-                RateLimiter::hit($limiterKey, self::LOGIN_LOCK_SECONDS);
+                $throttle->fail($username, $request->ip());
 
                 return $this->errorResponse(
                     [
@@ -162,7 +158,7 @@ class AuthController extends Controller
                 );
             }
 
-            RateLimiter::clear($limiterKey);
+            $throttle->succeed($username, $request->ip());
 
             // Cada inicio de sesión crea su propio token: las sesiones de otros equipos (web, app móvil) siguen activas
             $token = $user->createToken('auth_token')->plainTextToken;
