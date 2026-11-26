@@ -14,6 +14,8 @@ class CheckAssistantReadonlyCommand extends Command
 
     private int $failures = 0;
 
+    private int $warnings = 0;
+
     public function handle(): int
     {
         $name = config('assistant.sql_connection');
@@ -69,13 +71,13 @@ class CheckAssistantReadonlyCommand extends Command
             }
         }
 
-        $this->report('NO puede leer las tablas prohibidas (tokens, OAuth, sesiones, cachés, jobs, migraciones, cuentas bancarias)', ! $open, $open ? 'puede leer: '.implode(', ', $open) : null);
+        $this->report('NO puede leer las tablas prohibidas (tokens, OAuth, sesiones, cachés, jobs, migraciones, cuentas bancarias)', ! $open, $open ? 'puede leer: '.implode(', ', $open).'. Solo el validador de SQL del asistente las bloquea' : null, true);
 
         foreach (config('assistant_tables.hidden_columns', []) as $table => $columns) {
             foreach ($columns as $column) {
                 try {
                     $connection->select("SELECT `{$column}` FROM `{$table}` LIMIT 1");
-                    $this->report("NO puede leer la columna {$table}.{$column}", false, 'puede leerla');
+                    $this->report("NO puede leer la columna {$table}.{$column}", false, 'puede leerla. Solo el validador de SQL del asistente la bloquea', true);
                 } catch (Throwable $e) {
                     $this->report("NO puede leer la columna {$table}.{$column}", true);
                 }
@@ -113,17 +115,25 @@ class CheckAssistantReadonlyCommand extends Command
             return self::FAILURE;
         }
 
+        if ($this->warnings) {
+            $this->warn("Funciona, con {$this->warnings} advertencia(s): el usuario de la base de datos tiene más permisos de lectura de los necesarios (por ejemplo se creó con SELECT sobre toda la base). La base impide escribir, y las tablas y columnas sensibles las protege solo el validador de SQL del asistente. Para tener también esa capa en la base, un administrador debe ejecutar: php artisan mcp:readonly-user --user={$username} --grants-only");
+
+            return self::SUCCESS;
+        }
+
         $this->info('Todo bien: el asistente consulta con un usuario que solo puede leer las tablas habilitadas.');
 
         return self::SUCCESS;
     }
 
-    private function report(string $what, bool $ok, ?string $detail = null): void
+    private function report(string $what, bool $ok, ?string $detail = null, bool $warning = false): void
     {
         if (! $ok) {
-            $this->failures++;
+            $warning ? $this->warnings++ : $this->failures++;
         }
 
-        $this->line(($ok ? '<info>  OK  </info>' : '<error> FALLA </error>').' '.$what.(! $ok && $detail ? " — {$detail}" : ''));
+        $label = $ok ? '<info>  OK  </info>' : ($warning ? '<comment> AVISO </comment>' : '<error> FALLA </error>');
+
+        $this->line($label.' '.$what.(! $ok && $detail ? " — {$detail}" : ''));
     }
 }
