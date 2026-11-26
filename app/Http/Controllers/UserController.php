@@ -775,6 +775,7 @@ class UserController extends Controller
         try {
             // Conserva roles y permisos: al activarlo vuelve como estaba (desactivado no puede entrar)
             $user = User::findOrFail($id);
+            $user->tokens()->delete();
             $user->delete();
 
             return $this->successResponse(

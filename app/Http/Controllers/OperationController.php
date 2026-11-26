@@ -509,7 +509,7 @@ class OperationController extends Controller
     {
         try {
             $operation = Operation::findOrFail($id);
-            $operation->settings = $request->input('settings');
+            $operation->settings = array_merge((array) $operation->settings, $request->input('settings'));
 
             $operation->save();
 

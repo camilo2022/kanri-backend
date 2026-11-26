@@ -529,7 +529,7 @@ class SubprocessController extends Controller
     {
         try {
             $subprocess = Subprocess::findOrFail($id);
-            $subprocess->settings = $request->input('settings');
+            $subprocess->settings = array_merge((array) $subprocess->settings, $request->input('settings'));
 
             $subprocess->save();
 

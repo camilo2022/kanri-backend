@@ -532,7 +532,7 @@ class ProcessController extends Controller
     {
         try {
             $process = Process::findOrFail($id);
-            $process->settings = $request->input('settings');
+            $process->settings = array_merge((array) $process->settings, $request->input('settings'));
 
             $process->save();
 

@@ -129,6 +129,13 @@ class MovementSaveRequest extends FormRequest
                 }
             }
 
+            if ($this->filled('movement_detail_id') && MovementDetail::where('id', $this->input('movement_detail_id'))->where('status', '!=', MovementDetail::PENDING)->exists()) {
+                $validator->errors()->add(
+                    'status',
+                    'Solo se pueden guardar movimientos que estén pendientes.'
+                );
+            }
+
             if (
                 $this->input('status') === MovementDetail::APPROVED &&
                 $this->filled('movement_detail_id') &&
@@ -147,13 +154,6 @@ class MovementSaveRequest extends FormRequest
                         $validator->errors()->add(
                             'movement_detail_id',
                             'El detalle no pertenece al movimiento indicado.'
-                        );
-                    }
-
-                    if ($movement_detail->status !== MovementDetail::PENDING) {
-                        $validator->errors()->add(
-                            'status',
-                            'Solo se pueden guardar movimientos que estén pendientes.'
                         );
                     }
 
