@@ -27,4 +27,13 @@ class RouteGuard
 
         return $method === 'POST' && Str::is(config('assistant.read_post_routes', []), $uri);
     }
+
+    public function isWritable(string $method, string $uri): bool
+    {
+        if ($this->isExcluded($uri) || Str::is(config('assistant.write_excluded_routes', []), $uri)) {
+            return false;
+        }
+
+        return in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true) && ! $this->isReadable($method, $uri);
+    }
 }

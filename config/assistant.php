@@ -93,6 +93,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Rutas que el asistente no puede escribir
+    |--------------------------------------------------------------------------
+    |
+    | Rutas de escritura que no se pueden usar desde el chat: las que reciben un archivo, porque el chat no puede
+    | enviarlo. Se pueden consultar y preparar a mano en Kanri.
+    |
+    */
+
+    'write_excluded_routes' => [
+        'api/typification/supply_types/supplies/import/*',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Rutas POST que solo leen
     |--------------------------------------------------------------------------
     |

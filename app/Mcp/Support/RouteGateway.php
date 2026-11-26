@@ -5,7 +5,10 @@ namespace App\Mcp\Support;
 use App\Mcp\McpFailure;
 use App\Models\User;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Facade;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -52,6 +55,102 @@ class RouteGateway
             $status === 429 => McpFailure::server('Se hicieron demasiadas peticiones. Espera un momento y vuelve a intentar.'),
             default => McpFailure::server('Kanri no pudo completar la consulta.'),
         };
+    }
+
+    /**
+     * Prepara una escritura sin guardar nada: comprueba el permiso y las reglas con el FormRequest real de la ruta (sin
+     * llegar al controlador), trae el registro actual cuando hay uno y deja un código de confirmación.
+     */
+    public function prepare(User $actor, string $method, string $path, array $data = []): array
+    {
+        $method = strtoupper($method);
+        $route = $this->catalog->route($method, $path);
+
+        if (! $this->guard->isWritable($method, $route->uri())) {
+            throw McpFailure::routeNotAllowed(
+                "La ruta {$method} {$path} no se puede escribir desde el asistente. Usa search_routes para ver las rutas disponibles."
+            );
+        }
+
+        $details = $this->catalog->details($route);
+
+        if (! $details['request']) {
+            throw McpFailure::routeNotAllowed("La ruta {$method} {$path} no tiene validación propia y el asistente no la puede preparar.");
+        }
+
+        $this->validate($actor, $route, $details['request'], $method, $path, $data);
+
+        $entry = $this->catalog->entries()->first(fn (array $entry) => $entry['method'] === $method && $entry['uri'] === $route->uri());
+
+        return [
+            'ok' => true,
+            'executed' => false,
+            'method' => $method,
+            'path' => $path,
+            'summary' => $entry['summary'] ?? null,
+            'permissions' => $details['permissions'],
+            'data' => $data,
+            'current' => $this->current($actor, $route),
+        ] + app(WriteTicket::class)->issue($actor, $method, $path, $data);
+    }
+
+    private function validate(User $actor, $route, string $class, string $method, string $path, array $data): void
+    {
+        $base = Request::create('/api/'.ltrim($path, '/'), $method, $data, [], [], [
+            'HTTP_ACCEPT' => 'application/json',
+            'HTTP_X_KANRI_CLIENT' => 'mcp',
+        ]);
+
+        $base->setUserResolver(fn () => $actor);
+        $route->bind($base);
+        $base->setRouteResolver(fn () => $route);
+
+        $form = $class::createFrom($base);
+        $form->setContainer(app())->setRedirector(app(Redirector::class));
+
+        $original = app('request');
+
+        try {
+            Auth::guard('sanctum')->setUser($actor);
+            Auth::shouldUse('sanctum');
+            app()->instance('request', $form);
+
+            $form->validateResolved();
+        } catch (HttpResponseException $e) {
+            $status = $e->getResponse()->getStatusCode();
+            $body = json_decode((string) $e->getResponse()->getContent(), true) ?: [];
+
+            throw match (true) {
+                $status === 401 => McpFailure::expiredKey(),
+                $status === 403 => McpFailure::forbidden($this->catalog->permissionsFor($route), $this->message($body, 'No tienes permiso para realizar esta acción.')),
+                $status === 422 => McpFailure::invalid($body['errors'] ?? [], $body['message'] ?? null),
+                default => McpFailure::server('Kanri no pudo preparar la acción.'),
+            };
+        } finally {
+            app()->instance('request', $original);
+            Facade::clearResolvedInstance('request');
+        }
+    }
+
+    /**
+     * El registro tal como está hoy, para mostrarlo junto a lo que cambiaría. Si la persona no puede consultarlo o es
+     * muy grande, no se incluye.
+     */
+    private function current(User $actor, $route): ?array
+    {
+        $find = $this->catalog->findPath($route);
+
+        if (! $find) {
+            return null;
+        }
+
+        try {
+            $current = $this->read($actor, 'GET', $find);
+        } catch (McpFailure) {
+            return null;
+        }
+
+        return strlen(json_encode($current['data'] ?? null)) <= 20000 ? ($current['data'] ?? null) : null;
     }
 
     private function send(User $actor, string $method, string $path, array $parameters)

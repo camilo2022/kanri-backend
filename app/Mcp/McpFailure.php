@@ -72,6 +72,15 @@ class McpFailure extends RuntimeException
         ]);
     }
 
+    public static function invalidCode(): self
+    {
+        return new self([
+            'ok' => false,
+            'type' => 'confirmation_invalid',
+            'message' => 'El código de confirmación no sirve: venció, ya se usó o no es de esta persona. Vuelve a llamar a prepare_write y muestra la vista previa de nuevo.',
+        ]);
+    }
+
     public static function notFound(string $message): self
     {
         return new self([

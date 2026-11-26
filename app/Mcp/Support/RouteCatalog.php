@@ -122,8 +122,40 @@ class RouteCatalog
             'action' => $route->getActionName(),
             'summary' => $operation['summary'] ?? null,
             'description' => $operation['description'] ?? null,
-            'usable' => $this->guard->isReadable($method, $uri) ? 'read_data' : null,
+            'usable' => match (true) {
+                $this->guard->isReadable($method, $uri) => 'read_data',
+                $this->guard->isWritable($method, $uri) => 'prepare_write',
+                default => null,
+            },
         ];
+    }
+
+    /**
+     * La ruta de consulta de un registro (la «find» del mismo controlador) para una ruta de escritura que tiene un solo
+     * parámetro en la ruta, o null si no hay.
+     */
+    public function findPath(LaravelRoute $route): ?string
+    {
+        $parameters = $route->parameters();
+
+        if (count($parameters) !== 1) {
+            return null;
+        }
+
+        [$controller] = explode('@', $route->getActionName());
+
+        foreach (Route::getRoutes()->getRoutes() as $candidate) {
+            $is_find = $candidate->getActionName() === $controller.'@find'
+                && in_array('GET', $candidate->methods(), true)
+                && count($candidate->parameterNames()) === 1
+                && ! $this->guard->isExcluded($candidate->uri());
+
+            if ($is_find) {
+                return '/'.substr(preg_replace('/\{\w+\??\}/', (string) head($parameters), $candidate->uri()), 4);
+            }
+        }
+
+        return null;
     }
 
     public function routeByUri(string $method, string $uri): ?LaravelRoute

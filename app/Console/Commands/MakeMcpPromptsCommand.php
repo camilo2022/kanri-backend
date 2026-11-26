@@ -24,8 +24,8 @@ class MakeMcpPromptsCommand extends Command
         $only = $this->option('only');
 
         $entries = $catalog->entries()->filter(fn (array $entry) => match ($only) {
-            'read' => $entry['usable'] !== null,
-            'write' => $entry['usable'] === null,
+            'read' => $entry['usable'] === 'read_data',
+            'write' => $entry['usable'] !== 'read_data',
             default => true,
         });
 
