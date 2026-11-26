@@ -124,7 +124,7 @@ abstract class RoutePrompt extends Prompt
             $lines[] = "- method: {$this->method}";
             $lines[] = "- path: {$concrete}";
             $lines[] = '- data: los datos de arriba, tal como los envía el frontend'.($parameters ? ': '.json_encode($parameters, JSON_UNESCAPED_UNICODE) : '');
-            $lines[] = 'prepare_write no guarda nada: comprueba el permiso y las reglas, trae el registro actual y devuelve la vista previa con un código de confirmación. Muéstrale a la persona qué se haría y pide su confirmación expresa. Guardar los cambios todavía no se puede ejecutar desde el asistente.';
+            $lines[] = 'prepare_write no guarda nada: comprueba el permiso y las reglas, trae el registro actual y devuelve la vista previa con un código de confirmación. Muéstrale a la persona qué se haría y pide su confirmación expresa. Solo cuando ella confirme, llama a execute_write con ese código para guardarlo (nunca por iniciativa propia ni con datos distintos). Si responde type=read_only, guardar aún no está habilitado.';
             $lines[] = 'Si la persona te dio una llave de IA, envíala como ai_key.';
             $lines[] = 'Si responde type=permission: explícale que no tiene ese permiso en Kanri. Nunca pidas ni uses la clave de nadie.';
             $lines[] = 'Si responde type=validation: explica los errores en español, pide o corrige los datos y vuelve a preparar.';

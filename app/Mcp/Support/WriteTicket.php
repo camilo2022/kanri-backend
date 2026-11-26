@@ -31,6 +31,29 @@ class WriteTicket
         return ['code' => $id.'.'.$this->signature($id, $actor->id), 'expires_in_minutes' => $minutes];
     }
 
+    /**
+     * Recoge los datos del código, una sola vez. Devuelve null si la firma no es de esta persona, si venció o si ya se
+     * usó. Con la firma de otra persona el código no se gasta.
+     *
+     * @return array{user_id: int, method: string, path: string, data: array}|null
+     */
+    public function claim(string $code, User $actor): ?array
+    {
+        [$id, $signature] = array_pad(explode('.', trim($code), 2), 2, '');
+
+        if ($id === '' || ! hash_equals($this->signature($id, $actor->id), $signature)) {
+            return null;
+        }
+
+        if (! Cache::add($this->cacheKey($id).':used', true, now()->addMinutes((int) config('assistant.confirmation_minutes', 10) + 1))) {
+            return null;
+        }
+
+        $ticket = Cache::pull($this->cacheKey($id));
+
+        return $ticket && $ticket['user_id'] === $actor->id ? $ticket : null;
+    }
+
     private function signature(string $id, int $user_id): string
     {
         return hash_hmac('sha256', $id.'|'.$user_id, (string) config('app.key'));

@@ -37,6 +37,27 @@ class RouteGateway
             );
         }
 
+        return $this->run($actor, $route, $method, $path, $parameters, 'la consulta');
+    }
+
+    /**
+     * Ejecuta una escritura ya preparada y confirmada: la misma petición que haría el frontend, con el mismo Request
+     * (que vuelve a validar permiso y reglas), controlador y auditoría. La llama execute_write con los datos del código.
+     */
+    public function write(User $actor, string $method, string $path, array $data = []): array
+    {
+        $method = strtoupper($method);
+        $route = $this->catalog->route($method, $path);
+
+        if (! $this->guard->isWritable($method, $route->uri())) {
+            throw McpFailure::routeNotAllowed("La ruta {$method} {$path} no se puede escribir desde el asistente.");
+        }
+
+        return $this->run($actor, $route, $method, $path, $data, 'la acción');
+    }
+
+    private function run(User $actor, $route, string $method, string $path, array $parameters, string $what): array
+    {
         $response = $this->send($actor, $method, $path, $parameters);
         $body = $this->body($response);
         $status = $response->getStatusCode();
@@ -53,7 +74,7 @@ class RouteGateway
             $status === 404 => McpFailure::notFound($this->message($body, 'No se encontró lo que pides.')),
             $status === 422 => McpFailure::invalid($body['errors'] ?? [], $body['message'] ?? null),
             $status === 429 => McpFailure::server('Se hicieron demasiadas peticiones. Espera un momento y vuelve a intentar.'),
-            default => McpFailure::server('Kanri no pudo completar la consulta.'),
+            default => McpFailure::server("Kanri no pudo completar {$what}."),
         };
     }
 
