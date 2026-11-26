@@ -41,9 +41,12 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Report::class, ReportPolicy::class);
         MovementDetail::observe(MovementDetailObserver::class);
 
-        // La llave de IA solo la acepta el asistente (ActorResolver); la API normal la trata como inexistente
+        // La llave de IA (token ai_token) solo la acepta el asistente (ActorResolver); la API normal la trata como inexistente.
+        // Se reconoce también por su única habilidad, para que un token con el nombre anterior (ai_key) tampoco sirva
         Sanctum::authenticateAccessTokensUsing(
-            fn ($access_token, bool $is_valid) => $is_valid && $access_token->name !== ActorResolver::KEY_NAME
+            fn ($access_token, bool $is_valid) => $is_valid
+                && $access_token->name !== ActorResolver::KEY_NAME
+                && $access_token->abilities !== [ActorResolver::KEY_ABILITY]
         );
 
         Passport::authorizationView('oauth.authorize');

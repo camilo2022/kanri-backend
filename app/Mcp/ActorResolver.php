@@ -10,13 +10,13 @@ use Laravel\Sanctum\PersonalAccessToken;
 /**
  * Decide a nombre de quién actúa el asistente. Lo usan todas las herramientas.
  *
- * - Sin llave de IA: actúa el usuario que conectó el conector (modo conector).
- * - Con llave de IA: actúa su dueño (modo llave_ia). Si la llave no sirve se rechaza; nunca se pasa en silencio al
+ * - Sin llave de IA: actúa el usuario que conectó el conector (modo connector).
+ * - Con llave de IA: actúa su dueño (modo ai_key). Si la llave no sirve se rechaza; nunca se pasa en silencio al
  *   usuario del conector. La herramienta recibe la llave, jamás un user_id.
  */
 class ActorResolver
 {
-    public const KEY_NAME = 'ia_token';
+    public const KEY_NAME = 'ai_token';
 
     public const KEY_ABILITY = 'assistant';
 
@@ -29,10 +29,10 @@ class ActorResolver
     {
         if ($assistant_key === null || trim($assistant_key) === '') {
             $actor = auth('mcp')->user();
-            $mode = 'conector';
+            $mode = 'connector';
         } else {
             $actor = $this->usableKey($assistant_key)->tokenable;
-            $mode = 'llave_ia';
+            $mode = 'ai_key';
         }
 
         if (! $actor instanceof User || $actor->trashed()) {

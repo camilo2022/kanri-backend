@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AssistantLoginController;
 use App\Http\Controllers\WebAuthController;
 use App\Http\Middleware\RequireAssistantPermission;
 use App\Http\Middleware\RequireS256;
@@ -16,6 +17,9 @@ Route::get('/', function () {
 
 Route::get('/login', [WebAuthController::class, 'show'])->name('login');
 Route::post('/login', [WebAuthController::class, 'login']);
+
+Route::get('/assistant/login/{code}', [AssistantLoginController::class, 'show'])->name('assistant.login.show');
+Route::post('/assistant/login/{code}', [AssistantLoginController::class, 'login'])->name('assistant.login.submit');
 
 Mcp::oauthRoutes('oauth', registration: false);
 

@@ -18,7 +18,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Llave de IA (Sanctum, name = ia_token)
+    | Llave de IA (Sanctum, name = ai_token)
     |--------------------------------------------------------------------------
     */
 
@@ -28,11 +28,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Código de confirmación de las escrituras
+    | Inicio de sesión desde el chat
     |--------------------------------------------------------------------------
+    |
+    | Minutos que vale el enlace que devuelve start_login. En ese tiempo la persona debe iniciar sesión en la página
+    | de Kanri y el chat debe recoger la llave con finish_login.
+    |
     */
 
-    'codigo_minutos' => (int) env('ASISTENTE_CODIGO_MINUTOS', 10),
+    'login_minutes' => (int) env('ASSISTANT_LOGIN_MINUTES', 10),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Código de confirmación de las escrituras
+    |--------------------------------------------------------------------------
+    |
+    | Minutos que vale el código firmado que devuelve prepare_write.
+    |
+    */
+
+    'confirmation_minutes' => (int) env('ASSISTANT_CONFIRMATION_MINUTES', 10),
 
     /*
     |--------------------------------------------------------------------------
@@ -47,10 +62,61 @@ return [
     | Solo lectura
     |--------------------------------------------------------------------------
     |
-    | Si está activo, las herramientas que escriben responden «solo_lectura».
+    | Si está activo, las herramientas que escriben responden «read_only».
     |
     */
 
-    'solo_lectura' => (bool) env('KANRI_SOLO_LECTURA', true),
+    'read_only' => (bool) env('KANRI_READ_ONLY', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Rutas que el asistente no puede usar
+    |--------------------------------------------------------------------------
+    |
+    | Patrones sobre la URI de la ruta (Str::is). No se listan en search_routes, no se
+    | pueden ejecutar y no tienen prompt. Son rutas de acceso, de la llave de IA, de
+    | documentación, de ajustes globales y las que devuelven o reciben archivos.
+    |
+    */
+
+    'excluded_routes' => [
+        'api/auth/*',
+        'api/assistant/key/*',
+        'api/documentation',
+        'api/oauth2-callback',
+        'api/collections/setting/*',
+        'api/reports/*/export',
+        'api/technical_sheets/pdf/*',
+        'api/technical_sheets/process_pdf/*',
+        'api/technical_sheets/production_orders/pdf/*',
+        'api/typification/supply_types/supplies/export/*',
+        'api/typification/supply_types/supplies/import/*',
+        'api/workflow/*/qr/*',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Rutas POST que solo leen
+    |--------------------------------------------------------------------------
+    |
+    | read_data solo ejecuta GET, salvo estas rutas que generan datos sin guardar nada.
+    |
+    */
+
+    'read_post_routes' => [
+        'api/reports/*/generate',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tamaño máximo de una respuesta de read_data
+    |--------------------------------------------------------------------------
+    |
+    | Caracteres del JSON. Si se supera, la herramienta pide a la IA que use per_page,
+    | page, search o un filtro, para no llenar su contexto.
+    |
+    */
+
+    'max_response_chars' => (int) env('ASSISTANT_MAX_RESPONSE_CHARS', 60000),
 
 ];

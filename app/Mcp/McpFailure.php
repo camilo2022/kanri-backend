@@ -13,15 +13,33 @@ class McpFailure extends RuntimeException
 {
     public function __construct(public readonly array $payload)
     {
-        parent::__construct($payload['mensaje'] ?? $payload['tipo']);
+        parent::__construct($payload['message'] ?? $payload['type']);
     }
 
     public static function expiredKey(): self
     {
         return new self([
             'ok' => false,
-            'tipo' => 'llave_vencida',
-            'mensaje' => 'Tu llave de IA venció o no es válida. Genera una nueva en Kanri.',
+            'type' => 'key_expired',
+            'message' => 'Tu llave de IA venció o no es válida. Genera una nueva en Kanri.',
+        ]);
+    }
+
+    public static function loginPending(): self
+    {
+        return new self([
+            'ok' => false,
+            'type' => 'login_pending',
+            'message' => 'La persona aún no inicia sesión en la página de Kanri. Pídele que abra el enlace, inicie sesión y te avise.',
+        ]);
+    }
+
+    public static function loginExpired(): self
+    {
+        return new self([
+            'ok' => false,
+            'type' => 'login_expired',
+            'message' => 'El enlace de inicio de sesión ya se usó o venció. Llama de nuevo a start_login.',
         ]);
     }
 
@@ -29,27 +47,64 @@ class McpFailure extends RuntimeException
     {
         return new self([
             'ok' => false,
-            'tipo' => 'permiso',
-            'permiso' => $permissions,
-            'mensaje' => $message,
+            'type' => 'permission',
+            'permission' => $permissions,
+            'message' => $message,
         ]);
     }
 
-    public static function invalid(array $errors): self
+    public static function invalid(array $errors, ?string $message = null): self
     {
-        return new self([
+        return new self(array_filter([
             'ok' => false,
-            'tipo' => 'validacion',
-            'errores' => $errors,
-        ]);
+            'type' => 'validation',
+            'message' => $message,
+            'errors' => $errors,
+        ], fn ($value) => $value !== null));
     }
 
     public static function readOnly(): self
     {
         return new self([
             'ok' => false,
-            'tipo' => 'solo_lectura',
-            'mensaje' => 'El asistente está en modo solo lectura: por ahora no puede guardar cambios.',
+            'type' => 'read_only',
+            'message' => 'El asistente está en modo solo lectura: por ahora no puede guardar cambios.',
+        ]);
+    }
+
+    public static function notFound(string $message): self
+    {
+        return new self([
+            'ok' => false,
+            'type' => 'not_found',
+            'message' => $message,
+        ]);
+    }
+
+    public static function routeNotAllowed(string $message): self
+    {
+        return new self([
+            'ok' => false,
+            'type' => 'route_not_allowed',
+            'message' => $message,
+        ]);
+    }
+
+    public static function tooLarge(array $details): self
+    {
+        return new self(array_merge([
+            'ok' => false,
+            'type' => 'too_large',
+            'message' => 'La respuesta es demasiado grande. Pide menos datos: usa per_page y page, search o un filtro.',
+        ], $details));
+    }
+
+    public static function server(string $message): self
+    {
+        return new self([
+            'ok' => false,
+            'type' => 'server_error',
+            'message' => $message,
         ]);
     }
 
