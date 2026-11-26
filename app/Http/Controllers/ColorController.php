@@ -105,6 +105,13 @@ class ColorController extends Controller
      *     @OA\Parameter(ref="#/components/parameters/PerPage"),
      *     @OA\Parameter(ref="#/components/parameters/Page"),
      *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
+     *     @OA\Parameter(
+     *         name="is_finished_product",
+     *         in="query",
+     *         required=false,
+     *         description="`true`/`1`: solo los colores de producto terminado. `false`/`0`: solo los de insumo. Sin enviar: todos.",
+     *         @OA\Schema(type="boolean", example=true)
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Lista de colores cargada correctamente",
@@ -136,6 +143,9 @@ class ColorController extends Controller
                 })
                 ->when($request->boolean('with_trashed'), function ($query) {
                     return $query->withTrashed();
+                })
+                ->when($request->has('is_finished_product'), function ($query) use ($request) {
+                    return $query->where('settings->finished_product', $request->boolean('is_finished_product'));
                 })
                 ->when($request->filled('column') && $request->filled('dir'), function ($query) use ($request) {
                     return $query->sort($request->input('column'), $request->input('dir'));

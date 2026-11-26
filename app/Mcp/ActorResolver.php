@@ -79,7 +79,7 @@ class ActorResolver
             && $token->name === self::KEY_NAME
             && $token->can(self::KEY_ABILITY)
             && (! $token->expires_at || $token->expires_at->isFuture())
-            && (! $token->last_used_at || $token->last_used_at->gte(now()->subMinutes(config('asistente.ia_token_inactividad_min'))))
+            && (! $token->last_used_at || $token->last_used_at->gte(now()->subMinutes(config('assistant.ai_token_inactivity_minutes'))))
             && $token->tokenable;
 
         if (! $usable) {

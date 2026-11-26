@@ -534,13 +534,25 @@ class ReportController extends Controller
                 );
             }
 
-            $data = $query->get();
+            // En pantalla llega page y se trae solo esa página de registros; el Excel (export) no la envía y lleva todo
+            $page = $request->validated('page');
+            $per_page = $request->integer('per_page', 50);
+            $total = $page ? (clone $query)->count() : null;
+            $data = $page ? $query->orderBy($query->getModel()->getQualifiedKeyName())->forPage($page, $per_page)->get() : $query->get();
 
             $model_type = $request->input('model_type');
             $model_id = $request->input('model_id');
 
             return $this->successResponse(
-                new DataCollection($data, $fields, $configured_fields, data_get($report->settings, 'context'), $model_type, $model_id),
+                [
+                    ...(new DataCollection($data, $fields, $configured_fields, data_get($report->settings, 'context'), $model_type, $model_id))->resolve($request),
+                    'pagination' => $page ? [
+                        'total' => $total,
+                        'per_page' => $per_page,
+                        'current_page' => (int) $page,
+                        'total_pages' => max(1, (int) ceil($total / $per_page)),
+                    ] : null,
+                ],
                 $this->getMessage('Success'),
                 200
             );

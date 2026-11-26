@@ -19,7 +19,7 @@ class LoginTicket
     public function start(): array
     {
         $code = Str::random(48);
-        $minutes = (int) config('asistente.login_minutes', 10);
+        $minutes = (int) config('assistant.login_minutes', 10);
 
         Cache::put($this->cacheKey($code), ['status' => 'pending'], now()->addMinutes($minutes));
 
@@ -40,7 +40,7 @@ class LoginTicket
         Cache::put(
             $this->cacheKey($code),
             ['status' => 'ready', 'token' => Crypt::encryptString($plain_token)],
-            now()->addMinutes((int) config('asistente.login_minutes', 10))
+            now()->addMinutes((int) config('assistant.login_minutes', 10))
         );
     }
 

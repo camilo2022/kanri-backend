@@ -61,14 +61,14 @@ class AssistantKeyController extends Controller
             $user = $request->user();
             $user->tokens()->where('name', ActorResolver::KEY_NAME)->delete();
 
-            $expires_at = now()->addHours(config('asistente.ia_token_duracion_max_horas'));
+            $expires_at = now()->addHours(config('assistant.ai_token_max_hours'));
             $token = $user->createToken(ActorResolver::KEY_NAME, [ActorResolver::KEY_ABILITY], $expires_at);
 
             return $this->successResponse(
                 [
                     'key' => $token->plainTextToken,
                     'expires_at' => $expires_at->format('Y-m-d H:i:s'),
-                    'inactivity_minutes' => config('asistente.ia_token_inactividad_min'),
+                    'inactivity_minutes' => config('assistant.ai_token_inactivity_minutes'),
                 ],
                 $this->getMessage('Success'),
                 201

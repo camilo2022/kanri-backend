@@ -6,13 +6,13 @@ use Illuminate\Support\Str;
 
 /**
  * Decide qué rutas del API puede usar el asistente. La lista de rutas excluidas y la de rutas POST que solo leen
- * viven en config/asistente.php.
+ * viven en config/assistant.php.
  */
 class RouteGuard
 {
     public function isExcluded(string $uri): bool
     {
-        return Str::is(config('asistente.excluded_routes', []), $uri);
+        return Str::is(config('assistant.excluded_routes', []), $uri);
     }
 
     public function isReadable(string $method, string $uri): bool
@@ -25,6 +25,6 @@ class RouteGuard
             return true;
         }
 
-        return $method === 'POST' && Str::is(config('asistente.read_post_routes', []), $uri);
+        return $method === 'POST' && Str::is(config('assistant.read_post_routes', []), $uri);
     }
 }

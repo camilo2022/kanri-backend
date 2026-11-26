@@ -94,7 +94,7 @@ class ReportExportRequest extends FormRequest
                 }
 
                 if (! $chosen($key)) {
-                    $validator->errors()->add('filters', 'Para descargar el Excel elige una opción del filtro «'.data_get($config, 'label', $key).'».');
+                    $validator->errors()->add("filters.$key", 'Es obligatorio');
 
                     continue;
                 }

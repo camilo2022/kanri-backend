@@ -45,7 +45,7 @@ class FinishLoginTool extends Tool
             'ok' => true,
             'user' => $user?->username,
             'ai_key' => $claim['token'],
-            'inactivity_minutes' => config('asistente.ia_token_inactividad_min'),
+            'inactivity_minutes' => config('assistant.ai_token_inactivity_minutes'),
             'message' => 'Sesión iniciada. Envía esta llave como ai_key en cada herramienta y no la muestres en la conversación.',
         ]);
     }

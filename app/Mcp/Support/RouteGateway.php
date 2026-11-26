@@ -77,15 +77,18 @@ class RouteGateway
     private function body($response): array
     {
         if ($response instanceof BinaryFileResponse || $response instanceof StreamedResponse) {
-            throw McpFailure::routeNotAllowed('Esa ruta devuelve un archivo, y el asistente no puede manejarlo.');
+            return [
+                'file' => $this->file($response),
+                'message' => 'El archivo está listo. Entrégale a la persona el enlace file.url: lo descarga con su navegador y vence en '.config('assistant.file_minutes').' minutos. El archivo no se puede abrir desde el chat.',
+            ];
         }
 
         $content = (string) $response->getContent();
 
-        if (strlen($content) > config('asistente.max_response_chars')) {
+        if (strlen($content) > config('assistant.max_response_chars')) {
             throw McpFailure::tooLarge([
                 'size' => strlen($content),
-                'limit' => config('asistente.max_response_chars'),
+                'limit' => config('assistant.max_response_chars'),
                 'pagination' => json_decode($content, true)['data']['meta']['pagination'] ?? null,
             ]);
         }
@@ -93,6 +96,24 @@ class RouteGateway
         $body = json_decode($content, true);
 
         return is_array($body) ? $body : ['data' => $content];
+    }
+
+    private function file($response): array
+    {
+        if ($response instanceof BinaryFileResponse) {
+            $content = (string) file_get_contents($response->getFile()->getPathname());
+        } else {
+            ob_start();
+            $response->sendContent();
+            $content = (string) ob_get_clean();
+        }
+
+        preg_match('/filename="?([^";]+)"?/', (string) $response->headers->get('Content-Disposition'), $match);
+
+        $name = $match[1] ?? 'archivo';
+        $mime = $response->headers->get('Content-Type') ?: 'application/octet-stream';
+
+        return app(FileLink::class)->store($content, $name, $mime);
     }
 
     private function message(array $body, string $default): string

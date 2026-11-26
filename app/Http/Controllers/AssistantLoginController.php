@@ -59,7 +59,7 @@ class AssistantLoginController extends Controller
 
         $user->tokens()->where('name', ActorResolver::KEY_NAME)->delete();
 
-        $expires_at = now()->addHours(config('asistente.ia_token_duracion_max_horas'));
+        $expires_at = now()->addHours(config('assistant.ai_token_max_hours'));
         $token = $user->createToken(ActorResolver::KEY_NAME, [ActorResolver::KEY_ABILITY], $expires_at);
 
         $ticket->complete($code, $token->plainTextToken);

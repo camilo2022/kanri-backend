@@ -38,7 +38,8 @@ class ColorAllRequest extends FormRequest
             'search' => ['nullable', 'string'],
             'column' => ['nullable', 'string', 'in:'.implode(',', array_keys(Color::sortable_columns()))],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
-            'with_trashed' => ['required', 'boolean']
+            'with_trashed' => ['required', 'boolean'],
+            'is_finished_product' => ['nullable', 'boolean']
         ];
     }
 
@@ -50,12 +51,16 @@ class ColorAllRequest extends FormRequest
             'search' => 'Filtro de Busqueda.',
             'column' => 'Columna a ordenar.',
             'dir' => 'Sentido del orden.',
-            'with_trashed' => 'Registros inactivos'
+            'with_trashed' => 'Registros inactivos',
+            'is_finished_product' => 'Aplica a Producto Terminado'
         ];
     }
 
     protected function prepareForValidation()
     {
         $this->merge(['with_trashed' => $this->boolean('with_trashed')]);
+        if ($this->has('is_finished_product')) {
+            $this->merge(['is_finished_product' => $this->boolean('is_finished_product')]);
+        }
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AssistantFileController;
 use App\Http\Controllers\AssistantLoginController;
 use App\Http\Controllers\WebAuthController;
 use App\Http\Middleware\RequireAssistantPermission;
@@ -20,6 +21,8 @@ Route::post('/login', [WebAuthController::class, 'login']);
 
 Route::get('/assistant/login/{code}', [AssistantLoginController::class, 'show'])->name('assistant.login.show');
 Route::post('/assistant/login/{code}', [AssistantLoginController::class, 'login'])->name('assistant.login.submit');
+
+Route::get('/assistant/files/{token}', [AssistantFileController::class, 'show'])->middleware('signed')->name('assistant.file');
 
 Mcp::oauthRoutes('oauth', registration: false);
 

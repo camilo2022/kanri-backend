@@ -334,7 +334,6 @@ trait ModelTypes
                 'value' => 'id',
                 'option' => 'name',
             ],
-            // Procesos como lista simple (el filtro «processes» es proceso + estado de la ficha): qué procesos muestra un reporte
             'route_processes' => [
                 'label' => 'PROCESOS',
                 'model' => Process::class,

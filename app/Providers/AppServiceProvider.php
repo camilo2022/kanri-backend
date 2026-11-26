@@ -51,10 +51,10 @@ class AppServiceProvider extends ServiceProvider
 
         Passport::authorizationView('oauth.authorize');
         Passport::tokensCan(['mcp:use' => 'Usar el asistente de Kanri']);
-        Passport::tokensExpireIn(now()->addYears(config('asistente.mcp_token_anios')));
-        Passport::refreshTokensExpireIn(now()->addYears(config('asistente.mcp_token_anios')));
+        Passport::tokensExpireIn(now()->addYears(config('assistant.mcp_token_years')));
+        Passport::refreshTokensExpireIn(now()->addYears(config('assistant.mcp_token_years')));
 
-        RateLimiter::for('mcp', fn (Request $request) => Limit::perMinute(config('asistente.peticiones_por_minuto'))
+        RateLimiter::for('mcp', fn (Request $request) => Limit::perMinute(config('assistant.requests_per_minute'))
             ->by($request->user('mcp')?->id ?: $request->ip()));
     }
 }

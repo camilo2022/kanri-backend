@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'mcp_token_anios' => (int) env('MCP_TOKEN_ANIOS', 10),
+    'mcp_token_years' => (int) env('MCP_TOKEN_YEARS', 10),
 
     /*
     |--------------------------------------------------------------------------
@@ -22,9 +22,9 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'ia_token_inactividad_min' => (int) env('IA_TOKEN_INACTIVIDAD_MIN', 30),
+    'ai_token_inactivity_minutes' => (int) env('AI_TOKEN_INACTIVITY_MINUTES', 30),
 
-    'ia_token_duracion_max_horas' => (int) env('IA_TOKEN_DURACION_MAX_HORAS', 4),
+    'ai_token_max_hours' => (int) env('AI_TOKEN_MAX_HOURS', 4),
 
     /*
     |--------------------------------------------------------------------------
@@ -55,7 +55,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'peticiones_por_minuto' => (int) env('MCP_PETICIONES_POR_MINUTO', 60),
+    'requests_per_minute' => (int) env('MCP_REQUESTS_PER_MINUTE', 60),
 
     /*
     |--------------------------------------------------------------------------
@@ -74,8 +74,9 @@ return [
     |--------------------------------------------------------------------------
     |
     | Patrones sobre la URI de la ruta (Str::is). No se listan en search_routes, no se
-    | pueden ejecutar y no tienen prompt. Son rutas de acceso, de la llave de IA, de
-    | documentación, de ajustes globales y las que devuelven o reciben archivos.
+    | pueden ejecutar y no tienen prompt. Solo son las de acceso (login), la llave de IA,
+    | la documentación, el callback de OAuth, los enlaces firmados de los PDF (no sirven sin su firma; los PDF con sesión son download_pdf) y los QR de los procesos. Todo lo demás se
+    | puede usar con los permisos de la persona.
     |
     */
 
@@ -84,13 +85,9 @@ return [
         'api/assistant/key/*',
         'api/documentation',
         'api/oauth2-callback',
-        'api/collections/setting/*',
-        'api/reports/*/export',
         'api/technical_sheets/pdf/*',
         'api/technical_sheets/process_pdf/*',
         'api/technical_sheets/production_orders/pdf/*',
-        'api/typification/supply_types/supplies/export/*',
-        'api/typification/supply_types/supplies/import/*',
         'api/workflow/*/qr/*',
     ],
 
@@ -99,12 +96,13 @@ return [
     | Rutas POST que solo leen
     |--------------------------------------------------------------------------
     |
-    | read_data solo ejecuta GET, salvo estas rutas que generan datos sin guardar nada.
+    | read_data solo ejecuta GET, salvo estas rutas que generan datos o un archivo sin guardar nada en Kanri.
     |
     */
 
     'read_post_routes' => [
         'api/reports/*/generate',
+        'api/reports/*/export',
     ],
 
     /*
@@ -117,6 +115,20 @@ return [
     |
     */
 
-    'max_response_chars' => (int) env('ASSISTANT_MAX_RESPONSE_CHARS', 60000),
+    'max_response_chars' => (int) env('ASSISTANT_MAX_RESPONSE_CHARS', 500000),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Archivos que devuelven las rutas
+    |--------------------------------------------------------------------------
+    |
+    | Excel y otros archivos se guardan unos minutos y se entregan con una dirección firmada. file_minutes es lo que
+    | dura esa dirección y max_file_mb el tamaño máximo del archivo.
+    |
+    */
+
+    'file_minutes' => (int) env('ASSISTANT_FILE_MINUTES', 10),
+
+    'max_file_mb' => (int) env('ASSISTANT_MAX_FILE_MB', 20),
 
 ];
