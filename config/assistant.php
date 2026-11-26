@@ -135,8 +135,10 @@ return [
     | Consultas SQL de solo lectura (query_data)
     |--------------------------------------------------------------------------
     |
-    | Todas las rutas `all` se consultan por SQL con un usuario de base de datos que solo puede leer (conexión
-    | assistant_readonly, ver config/database.php). Qué tablas y con qué permiso: config/assistant_tables.php.
+    | Todas las rutas `all` se consultan por SQL con la conexión assistant_readonly (config/database.php), cuya sesión se
+    | pone en solo lectura: MySQL rechaza cualquier escritura. Por defecto usa el mismo usuario de la aplicación; si se
+    | define DB_ASSISTANT_USERNAME y DB_ASSISTANT_PASSWORD usa ese usuario (opcional; ver php artisan mcp:readonly-user),
+    | que además solo puede leer las tablas habilitadas. Qué tablas y con qué permiso: config/assistant_tables.php.
     |
     | sql_max_rows: filas que se devuelven al chat si no se pide otra cantidad; sql_max_rows_limit: máximo que se puede
     | pedir; sql_max_chars: tamaño máximo del resultado en el chat (lo que sobra se corta); sql_timeout_seconds: tiempo

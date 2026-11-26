@@ -15,7 +15,7 @@ class MakeAssistantReadonlyUserCommand extends Command
         {--execute : Crea el usuario y sus permisos en esta base (si no, solo muestra el SQL)}
         {--reveal : En la simulación, muestra la contraseña en el SQL (para copiarlo y correrlo en otra herramienta, como phpMyAdmin)}';
 
-    protected $description = 'Crea el usuario de base de datos de solo lectura del asistente, con SELECT solo en las tablas habilitadas';
+    protected $description = '(Opcional) Crea el usuario de base de datos de solo lectura del asistente, con SELECT solo en las tablas habilitadas';
 
     public function handle(): int
     {

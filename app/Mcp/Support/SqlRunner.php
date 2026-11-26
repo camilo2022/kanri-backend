@@ -121,13 +121,12 @@ class SqlRunner
 
     private function connection()
     {
-        $name = config('assistant.sql_connection');
+        $connection = DB::connection(config('assistant.sql_connection'));
 
-        if (! config("database.connections.{$name}.username")) {
-            throw McpFailure::server('Las consultas SQL del asistente no están configuradas en este servidor (falta el usuario de base de datos de solo lectura).');
-        }
+        // Toda la sesión es de solo lectura: MySQL rechaza cualquier escritura aunque el usuario tenga permiso para escribir
+        $connection->statement('SET SESSION TRANSACTION READ ONLY');
 
-        return DB::connection($name);
+        return $connection;
     }
 
     private function result(array $prepared, array $rows, ?string $truncated, int $max_rows): array
