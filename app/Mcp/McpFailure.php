@@ -81,6 +81,25 @@ class McpFailure extends RuntimeException
         ]);
     }
 
+    public static function tableNotAllowed(string $table, string $message): self
+    {
+        return new self([
+            'ok' => false,
+            'type' => 'table_not_allowed',
+            'table' => $table,
+            'message' => $message,
+        ]);
+    }
+
+    public static function invalidSql(string $message): self
+    {
+        return new self([
+            'ok' => false,
+            'type' => 'invalid_sql',
+            'message' => $message,
+        ]);
+    }
+
     public static function notFound(string $message): self
     {
         return new self([

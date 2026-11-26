@@ -75,7 +75,7 @@ return [
     |
     | Patrones sobre la URI de la ruta (Str::is). No se listan en search_routes, no se
     | pueden ejecutar y no tienen prompt. Solo son las de acceso (login), la llave de IA,
-    | la documentación, el callback de OAuth, los enlaces firmados de los PDF (no sirven sin su firma; los PDF con sesión son download_pdf) y los QR de los procesos. Todo lo demás se
+    | la documentación, el callback de OAuth, la generación y exportación de reportes (tardan mucho: se hacen en Kanri), los enlaces firmados de los PDF (no sirven sin su firma; los PDF con sesión son download_pdf) y los QR de los procesos. Todo lo demás se
     | puede usar con los permisos de la persona.
     |
     */
@@ -85,6 +85,8 @@ return [
         'api/assistant/key/*',
         'api/documentation',
         'api/oauth2-callback',
+        'api/reports/*/generate',
+        'api/reports/*/export',
         'api/technical_sheets/pdf/*',
         'api/technical_sheets/process_pdf/*',
         'api/technical_sheets/production_orders/pdf/*',
@@ -110,14 +112,11 @@ return [
     | Rutas POST que solo leen
     |--------------------------------------------------------------------------
     |
-    | read_data solo ejecuta GET, salvo estas rutas que generan datos o un archivo sin guardar nada en Kanri.
+    | read_data solo ejecuta GET, salvo las rutas POST que se listen aquí y que solo lean (hoy ninguna).
     |
     */
 
-    'read_post_routes' => [
-        'api/reports/*/generate',
-        'api/reports/*/export',
-    ],
+    'read_post_routes' => [],
 
     /*
     |--------------------------------------------------------------------------
@@ -130,6 +129,32 @@ return [
     */
 
     'max_response_chars' => (int) env('ASSISTANT_MAX_RESPONSE_CHARS', 500000),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Consultas SQL de solo lectura (query_data)
+    |--------------------------------------------------------------------------
+    |
+    | Todas las rutas `all` se consultan por SQL con un usuario de base de datos que solo puede leer (conexión
+    | assistant_readonly, ver config/database.php). Qué tablas y con qué permiso: config/assistant_tables.php.
+    |
+    | sql_max_rows: filas que se devuelven al chat si no se pide otra cantidad; sql_max_rows_limit: máximo que se puede
+    | pedir; sql_max_chars: tamaño máximo del resultado en el chat (lo que sobra se corta); sql_timeout_seconds: tiempo
+    | máximo de cada consulta; sql_export_max_rows: filas máximas de un Excel.
+    |
+    */
+
+    'sql_connection' => env('ASSISTANT_SQL_CONNECTION', 'assistant_readonly'),
+
+    'sql_max_rows' => (int) env('ASSISTANT_SQL_MAX_ROWS', 200),
+
+    'sql_max_rows_limit' => (int) env('ASSISTANT_SQL_MAX_ROWS_LIMIT', 1000),
+
+    'sql_max_chars' => (int) env('ASSISTANT_SQL_MAX_CHARS', 100000),
+
+    'sql_timeout_seconds' => (int) env('ASSISTANT_SQL_TIMEOUT_SECONDS', 15),
+
+    'sql_export_max_rows' => (int) env('ASSISTANT_SQL_EXPORT_MAX_ROWS', 50000),
 
     /*
     |--------------------------------------------------------------------------

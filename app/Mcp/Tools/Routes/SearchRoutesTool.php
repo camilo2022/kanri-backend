@@ -18,7 +18,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
 #[Name('search_routes')]
 #[Title('Buscar rutas de Kanri')]
-#[Description('Busca las rutas del API de Kanri por texto (en español o en inglés) o por grupo, y las describe: método, ruta, resumen, permisos que exige y, cuando hay pocas coincidencias, los campos con sus reglas y la explicación de negocio de la acción. Úsala antes de read_data para saber qué ruta llamar y con qué datos. Sin texto ni grupo devuelve los grupos disponibles. No consulta datos del negocio.')]
+#[Description('Busca las rutas del API de Kanri por texto (en español o en inglés) o por grupo, y las describe: método, ruta, resumen, permisos que exige y, cuando hay pocas coincidencias, los campos con sus reglas y la explicación de negocio de la acción. Úsala antes de read_data, query_data o prepare_write para saber qué ruta es y con qué herramienta se usa (usable_with: read_data para consultar uno, query_data para los listados /all, prepare_write para cambiar datos). Sin texto ni grupo devuelve los grupos disponibles. No consulta datos del negocio.')]
 #[IsReadOnly]
 #[IsIdempotent]
 class SearchRoutesTool extends Tool

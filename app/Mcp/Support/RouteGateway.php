@@ -37,6 +37,12 @@ class RouteGateway
             );
         }
 
+        if ($this->catalog->isBulk($route)) {
+            throw McpFailure::routeNotAllowed(
+                "La ruta {$method} {$path} es un listado: se consulta con query_data (SQL de solo lectura), no con read_data. Llama a describe_tables para ver las tablas y columnas."
+            );
+        }
+
         return $this->run($actor, $route, $method, $path, $parameters, 'la consulta');
     }
 

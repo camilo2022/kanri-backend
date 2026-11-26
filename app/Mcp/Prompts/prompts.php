@@ -313,8 +313,6 @@ return [
     'POST /productivity/details/workstation/{token}/stop_end' => \App\Mcp\Prompts\ProductivityDetail\ProductivityDetailStopEndPrompt::class,
     'POST /productivity/store' => \App\Mcp\Prompts\Productivity\ProductivityStorePrompt::class,
     'POST /products/store' => \App\Mcp\Prompts\Product\ProductStorePrompt::class,
-    'POST /reports/{id}/export' => \App\Mcp\Prompts\Report\ReportExportPrompt::class,
-    'POST /reports/{id}/generate' => \App\Mcp\Prompts\Report\ReportGeneratePrompt::class,
     'POST /risk_managers/store' => \App\Mcp\Prompts\RiskManager\RiskManagerStorePrompt::class,
     'POST /rules/store' => \App\Mcp\Prompts\Rule\RuleStorePrompt::class,
     'POST /sizes/store' => \App\Mcp\Prompts\Size\SizeStorePrompt::class,

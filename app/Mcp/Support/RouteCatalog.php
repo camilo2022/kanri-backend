@@ -123,6 +123,7 @@ class RouteCatalog
             'summary' => $operation['summary'] ?? null,
             'description' => $operation['description'] ?? null,
             'usable' => match (true) {
+                $this->isBulk($route) => 'query_data',
                 $this->guard->isReadable($method, $uri) => 'read_data',
                 $this->guard->isWritable($method, $uri) => 'prepare_write',
                 default => null,
@@ -156,6 +157,14 @@ class RouteCatalog
         }
 
         return null;
+    }
+
+    /**
+     * Las rutas `all` (listados) se consultan por SQL con query_data, no con read_data.
+     */
+    public function isBulk(LaravelRoute $route): bool
+    {
+        return str_ends_with($route->getActionName(), '@all');
     }
 
     public function routeByUri(string $method, string $uri): ?LaravelRoute
