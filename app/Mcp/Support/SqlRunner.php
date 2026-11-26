@@ -18,7 +18,7 @@ use Throwable;
  */
 class SqlRunner
 {
-    public function __construct(private SqlGate $gate, private FileLink $files) {}
+    public function __construct(private SqlGate $gate, private FileLink $files, private Dataset $datasets) {}
 
     /**
      * @return array<string, mixed>
@@ -91,6 +91,101 @@ class SqlRunner
             throw $this->failure($e);
         }
 
+        $file = $this->excel($headings, $rows, $name);
+
+        return [
+            'ok' => true,
+            'row_count' => count($rows),
+            'truncated' => $truncated,
+            'tables' => $prepared['tables'],
+            'file' => $file,
+            'message' => 'El Excel está listo. Entrégale a la persona el enlace file.url: lo descarga con su navegador y vence en '.config('assistant.file_minutes').' minutos.'.($truncated ? ' Se cortó en '.$max.' filas: pide un filtro más estrecho si necesita el resto.' : ''),
+        ];
+    }
+
+    /**
+     * Ejecuta la consulta y deja el resultado (hasta el tope) guardado para mostrarlo en la tabla de la pantalla.
+     *
+     * @return array<string, mixed>
+     */
+    public function dataset(User $actor, string $sql, bool $include_deleted = false, ?string $title = null): array
+    {
+        $prepared = $this->gate->prepare($actor, $sql, $include_deleted);
+        $max = config('assistant.sql_export_max_rows');
+        $columns = [];
+        $truncated = false;
+        $connection = $this->connection();
+
+        $rows = (function () use ($connection, $prepared, $max, &$columns, &$truncated) {
+            $count = 0;
+
+            foreach ($connection->cursor($prepared['sql']) as $row) {
+                if ($count >= $max) {
+                    $truncated = true;
+
+                    return;
+                }
+
+                $row = (array) $row;
+                $columns = $columns ?: array_keys($row);
+                $count++;
+
+                yield array_values($row);
+            }
+        })();
+
+        try {
+            $created = $this->datasets->create($rows, function () use (&$columns) {
+                return $columns;
+            }, [
+                'title' => $title,
+                'tables' => $prepared['tables'],
+                'user_id' => $actor->id,
+            ]);
+        } catch (Throwable $e) {
+            throw $e instanceof McpFailure ? $e : $this->failure($e);
+        }
+
+        $meta = $this->datasets->meta($created['token']);
+        $page = $this->datasets->page($created['token'], 1, 5);
+
+        $result = [
+            'ok' => true,
+            'token' => $created['token'],
+            'row_count' => $created['row_count'],
+            'truncated' => $truncated,
+            'columns' => $meta['columns'],
+            'sample' => $page['rows'],
+            'tables' => $prepared['tables'],
+            'expires_in_minutes' => (int) config('assistant.dataset_minutes', 20),
+        ];
+
+        if ($prepared['catalogs'] !== null) {
+            $result['catalogs_visible'] = $prepared['catalogs'];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Excel con todo el resultado guardado de una tabla de la pantalla; devuelve el enlace de descarga.
+     *
+     * @return array{name: string, mime: string, size: int, url: string, expires_in_minutes: int}
+     */
+    public function excelFromDataset(string $token, string $name = 'consulta'): array
+    {
+        $meta = $this->datasets->meta($token);
+
+        return $this->excel($meta['columns'], iterator_to_array($this->datasets->rows($token), false), $name);
+    }
+
+    /**
+     * @param  array<int, string>  $headings
+     * @param  array<int, array<int|string, mixed>>  $rows
+     * @return array{name: string, mime: string, size: int, url: string, expires_in_minutes: int}
+     */
+    private function excel(array $headings, array $rows, string $name): array
+    {
         $export = new class($rows, $headings) implements FromArray, ShouldAutoSize, WithHeadings
         {
             public function __construct(private array $rows, private array $headings) {}
@@ -107,23 +202,20 @@ class SqlRunner
         };
 
         $content = app(Excel::class)->raw($export, Excel::XLSX);
-        $file = $this->files->store($content, preg_replace('/[^\w\-]/', '_', $name).'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 
-        return [
-            'ok' => true,
-            'row_count' => count($rows),
-            'truncated' => $truncated,
-            'tables' => $prepared['tables'],
-            'file' => $file,
-            'message' => 'El Excel está listo. Entrégale a la persona el enlace file.url: lo descarga con su navegador y vence en '.config('assistant.file_minutes').' minutos.'.($truncated ? ' Se cortó en '.$max.' filas: pide un filtro más estrecho si necesita el resto.' : ''),
-        ];
+        return $this->files->store($content, preg_replace('/[^\w\-]/', '_', $name).'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
-
     private function connection()
     {
-        $connection = DB::connection(config('assistant.sql_connection'));
+        $name = config('assistant.sql_connection');
 
-        // Toda la sesión es de solo lectura: MySQL rechaza cualquier escritura aunque el usuario tenga permiso para escribir
+        if (! config("database.connections.{$name}.username")) {
+            throw McpFailure::server('Las consultas SQL del asistente no están configuradas en este servidor: falta el usuario de base de datos de solo lectura (DB_ASSISTANT_USERNAME y DB_ASSISTANT_PASSWORD en el .env).');
+        }
+
+        $connection = DB::connection($name);
+
+        // Además del usuario de solo lectura, la sesión se pone en solo lectura: MySQL rechaza cualquier escritura
         $connection->statement('SET SESSION TRANSACTION READ ONLY');
 
         return $connection;
@@ -140,11 +232,11 @@ class SqlRunner
         ];
 
         if ($truncated === 'rows') {
-            $result['message'] = "Se devolvieron las primeras {$max_rows} filas y hay más. Pide un filtro más estrecho, usa LIMIT y OFFSET para paginar, o pide el resultado completo en un Excel (export=true).";
+            $result['message'] = "Se devolvieron las primeras {$max_rows} filas y hay más. Pide un filtro más estrecho, usa LIMIT y OFFSET para paginar, o muéstrale todo en una tabla en pantalla con show_table (mismo SQL), o en un Excel con export=true.";
         }
 
         if ($truncated === 'chars') {
-            $result['message'] = 'El resultado se cortó por tamaño. Pide menos columnas, un filtro más estrecho, o el resultado completo en un Excel (export=true).';
+            $result['message'] = 'El resultado se cortó por tamaño. Pide menos columnas, un filtro más estrecho, o muéstrale todo en una tabla en pantalla con show_table (mismo SQL), o en un Excel con export=true.';
         }
 
         if ($prepared['catalogs'] !== null) {
@@ -156,6 +248,10 @@ class SqlRunner
 
     private function failure(Throwable $e): McpFailure
     {
+        if ($e instanceof McpFailure) {
+            return $e;
+        }
+
         $message = $e->getMessage();
 
         if (str_contains($message, 'maximum statement execution time')) {
