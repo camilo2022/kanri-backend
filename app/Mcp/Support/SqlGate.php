@@ -23,8 +23,10 @@ class SqlGate
     private const FORBIDDEN_WORDS = [
         'INTO', 'OUTFILE', 'DUMPFILE', 'LOAD_FILE', 'SLEEP', 'BENCHMARK', 'GET_LOCK', 'RELEASE_LOCK', 'IS_FREE_LOCK',
         'IS_USED_LOCK', 'LOCK', 'PROCEDURE', 'HANDLER', 'MASTER_POS_WAIT', 'WAIT_FOR_EXECUTED_GTID_SET', 'USE', 'FORCE',
-        'IGNORE', 'FOR', 'WITH',
+        'IGNORE', 'FOR', 'WITH', 'STRAIGHT_JOIN', 'TABLE', 'VALUES',
     ];
+
+    private const CLAUSE_ENDS = ['WHERE', 'GROUP', 'HAVING', 'ORDER', 'LIMIT', 'UNION', 'EXCEPT', 'INTERSECT', 'WINDOW'];
 
     private const NOT_ALIAS = [
         'WHERE', 'JOIN', 'INNER', 'LEFT', 'RIGHT', 'CROSS', 'NATURAL', 'STRAIGHT_JOIN', 'ON', 'USING', 'GROUP', 'ORDER',
@@ -244,7 +246,19 @@ class SqlGate
 
             $next = $tokens[$i + 1] ?? null;
 
-            if (! $next || ($next['t'] === 'sym' && $next['v'] === '(')) {
+            if (! $next) {
+                continue;
+            }
+
+            if ($next['t'] === 'sym' && $next['v'] === '(') {
+                $inner = $tokens[$i + 2] ?? null;
+
+                if (! $inner || $inner['t'] !== 'word' || strtoupper($inner['v']) !== 'SELECT') {
+                    throw McpFailure::invalidSql('Después de FROM o JOIN solo se permite el nombre de una tabla o una subconsulta (SELECT ...), no tablas entre paréntesis.');
+                }
+
+                $this->assertNoImplicitJoin($tokens, $i);
+
                 continue;
             }
 
@@ -269,16 +283,40 @@ class SqlGate
                 $end_index = $i + 2;
             }
 
-            $following = $tokens[$end_index + 1] ?? null;
-
-            if ($following && $following['t'] === 'sym' && $following['v'] === ',') {
-                throw McpFailure::invalidSql('No se permite listar tablas separadas por coma en FROM. Usa JOIN ... ON.');
-            }
+            $this->assertNoImplicitJoin($tokens, $i);
 
             $references[] = ['table' => strtolower($next['v']), 'start' => $next['s'], 'end' => $next['e'], 'alias' => $alias];
         }
 
         return $references;
+    }
+
+    /**
+     * Dentro de una cláusula FROM, una coma fuera de paréntesis separa tablas (join implícito) y esa segunda tabla no se
+     * revisaría. Las comas de funciones, IN (...) y USING (...) van entre paréntesis y no cuentan.
+     */
+    private function assertNoImplicitJoin(array $tokens, int $from): void
+    {
+        $depth = 0;
+        $count = count($tokens);
+
+        for ($j = $from + 1; $j < $count; $j++) {
+            $token = $tokens[$j];
+
+            if ($token['t'] === 'sym' && $token['v'] === '(') {
+                $depth++;
+            } elseif ($token['t'] === 'sym' && $token['v'] === ')') {
+                if ($depth === 0) {
+                    return;
+                }
+
+                $depth--;
+            } elseif ($depth === 0 && $token['t'] === 'word' && in_array(strtoupper($token['v']), self::CLAUSE_ENDS, true)) {
+                return;
+            } elseif ($depth === 0 && $token['t'] === 'sym' && $token['v'] === ',') {
+                throw McpFailure::invalidSql('No se permite listar tablas separadas por coma en FROM. Usa JOIN ... ON.');
+            }
+        }
     }
 
     private function authorize(User $actor, string $table): void

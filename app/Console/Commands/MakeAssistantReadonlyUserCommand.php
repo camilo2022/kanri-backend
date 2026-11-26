@@ -13,6 +13,7 @@ class MakeAssistantReadonlyUserCommand extends Command
         {--host=localhost : Desde dónde se conecta (localhost, 127.0.0.1 o %)}
         {--password= : Contraseña; si no se da, se genera una}
         {--execute : Crea el usuario y sus permisos en esta base (si no, solo muestra el SQL)}
+        {--grants-only : Solo los permisos (quita los de toda la base y da SELECT tabla por tabla); no crea el usuario ni toca su contraseña. Sirve para corregir un usuario creado en cPanel}
         {--reveal : En la simulación, muestra la contraseña en el SQL (para copiarlo y correrlo en otra herramienta, como phpMyAdmin)}';
 
     protected $description = 'Crea el usuario de base de datos de solo lectura del asistente, con SELECT solo en las tablas habilitadas';
@@ -35,11 +36,15 @@ class MakeAssistantReadonlyUserCommand extends Command
 
         $account = "'{$user}'@'{$host}'";
         $quoted = DB::getPdo()->quote($password);
-        $statements = [
-            "CREATE USER IF NOT EXISTS {$account} IDENTIFIED BY {$quoted}",
-            "ALTER USER {$account} IDENTIFIED BY {$quoted}",
-            "REVOKE ALL PRIVILEGES, GRANT OPTION FROM {$account}",
-        ];
+        $grants_only = (bool) $this->option('grants-only');
+
+        $statements = $grants_only
+            ? ["REVOKE ALL PRIVILEGES ON `{$database}`.* FROM {$account}"]
+            : [
+                "CREATE USER IF NOT EXISTS {$account} IDENTIFIED BY {$quoted}",
+                "ALTER USER {$account} IDENTIFIED BY {$quoted}",
+                "REVOKE ALL PRIVILEGES, GRANT OPTION FROM {$account}",
+            ];
 
         $tables = array_merge(
             array_keys(config('assistant_tables.tables', [])),
@@ -70,7 +75,7 @@ class MakeAssistantReadonlyUserCommand extends Command
         $this->info("Usuario {$account} sobre la base {$database}: SELECT en ".count($tables).' tablas (nunca tokens, OAuth, sesiones, cachés, jobs, migraciones ni cuentas bancarias; sin las columnas ocultas).');
 
         if (! $this->option('execute')) {
-            $this->line('Simulación: no se ejecutó nada. Este es el SQL'.($this->option('reveal') ? ':' : ' (la contraseña se oculta; usa --reveal para verla):'));
+            $this->line('Simulación: no se ejecutó nada. Este es el SQL'.($grants_only || $this->option('reveal') ? ':' : ' (la contraseña se oculta; usa --reveal para verla):'));
 
             foreach ($statements as $statement) {
                 $this->line($this->option('reveal') ? $statement.';' : str_replace($quoted, "'********'", $statement).';');
@@ -83,13 +88,15 @@ class MakeAssistantReadonlyUserCommand extends Command
             DB::unprepared($statement);
         }
 
-        $this->info('Listo. Usuario y permisos creados.');
+        $this->info($grants_only ? 'Listo. Permisos aplicados.' : 'Listo. Usuario y permisos creados.');
 
-        if ($generated) {
+        if ($generated && ! $grants_only) {
             $this->warn("Contraseña generada (guárdala en DB_ASSISTANT_PASSWORD del .env; no se vuelve a mostrar): {$password}");
         }
 
-        $this->line("En el .env: DB_ASSISTANT_USERNAME={$user}");
+        if (! $grants_only) {
+            $this->line("En el .env: DB_ASSISTANT_USERNAME={$user}");
+        }
 
         return self::SUCCESS;
     }
