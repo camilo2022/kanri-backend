@@ -72,10 +72,11 @@ class MakeAssistantReadonlyUserCommand extends Command
 
         $statements[] = 'FLUSH PRIVILEGES';
 
-        $this->info("Usuario {$account} sobre la base {$database}: SELECT en ".count($tables).' tablas (nunca tokens, OAuth, sesiones, cachés, jobs, migraciones ni cuentas bancarias; sin las columnas ocultas).');
+        $summary = "Usuario {$account} sobre la base {$database}: SELECT en ".count($tables).' tablas (nunca tokens, OAuth, sesiones, cachés, jobs, migraciones ni cuentas bancarias; sin las columnas ocultas).';
 
         if (! $this->option('execute')) {
-            $this->line('Simulación: no se ejecutó nada. Este es el SQL'.($grants_only || $this->option('reveal') ? ':' : ' (la contraseña se oculta; usa --reveal para verla):'));
+            $this->line('-- '.$summary);
+            $this->line('-- Simulación: no se ejecutó nada. Pega este SQL en phpMyAdmin (pestaña SQL, con la base elegida)'.($grants_only || $this->option('reveal') ? '.' : '. La contraseña se oculta: usa --reveal para verla.'));
 
             foreach ($statements as $statement) {
                 $this->line($this->option('reveal') ? $statement.';' : str_replace($quoted, "'********'", $statement).';');
@@ -83,6 +84,8 @@ class MakeAssistantReadonlyUserCommand extends Command
 
             return self::SUCCESS;
         }
+
+        $this->info($summary);
 
         foreach ($statements as $statement) {
             DB::unprepared($statement);
