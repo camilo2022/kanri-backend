@@ -162,8 +162,7 @@ use Illuminate\Support\Str;
  * @OA\Schema(
  *     schema="TechnicalSheetUpdateRequest",
  *     type="object",
- *     required={"date", "status", "code", "product_id", "collection_id", "garment_type_id", "subgroup_id", "wash_tone_id", "color_id", "waistband_type_id", "measure_of_waistband", "boot_type_id", "yoke_type_id", "back_type_id", "pattern_maker_id", "physical_sample", "number_of_buttons", "photo_d", "photo_t", "technical_sheet_details", "supplies"},
- *     description="Mismos campos que `TechnicalSheetRequest`, con estas diferencias: `status` es obligatorio, `technical_sheet_details` es obligatorio, las fotos son opcionales (si no se envía `file`, se conserva la actual) y se puede enviar `removed_details`. El id de la ficha va en la URL.",
+ *     description="Mismos campos que `TechnicalSheetRequest`, pero **ninguno es obligatorio**: se envían solo los que cambian (uno o varios) y el resto de la ficha queda como está. Lo que se envía se valida con las mismas reglas de siempre. `status` acepta Pendiente, En revision, Aprobado o Cancelado; las fotos son opcionales (si no se envía `file`, se conserva la actual); `supplies` y `technical_sheet_details` solo se actualizan si se envían; y se puede enviar `removed_details`. El id de la ficha va en la URL.",
  *     @OA\Property(property="status", type="string", enum={"Pendiente", "En revision", "Aprobado", "Cancelado"}, example="En revision"),
  *     @OA\Property(
  *         property="removed_details",
@@ -369,7 +368,7 @@ class TechnicalSheetController extends Controller
      *     path="/technical_sheets/update/{id}",
      *     tags={"Technical Sheets"},
      *     summary="Editar una ficha técnica",
-     *     description="Reemplaza los datos de la ficha, sincroniza sus insumos, guarda las fotos que lleguen y actualiza los detalles por proceso. Lo que ya está Aprobado se conserva. `removed_details` quita subprocesos u operaciones de la ficha. Para adjuntar fotos (multipart) el frontend envía **POST** a esta misma URL con el campo `_method=PUT`, porque PHP no lee archivos en un PUT multipart. Permiso: `technical_sheets.update` o `technical_sheets.transformations.update`.",
+     *     description="Actualiza solo los campos que se envían (por ejemplo, únicamente `collection_id`); lo demás de la ficha no se toca. Si llegan, sincroniza sus insumos, guarda las fotos y actualiza los detalles por proceso. Lo que ya está Aprobado se conserva. `removed_details` quita subprocesos u operaciones de la ficha. Para adjuntar fotos (multipart) el frontend envía **POST** a esta misma URL con el campo `_method=PUT`, porque PHP no lee archivos en un PUT multipart. Permiso: `technical_sheets.update` o `technical_sheets.transformations.update`.",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
      *     @OA\RequestBody(
@@ -411,28 +410,24 @@ class TechnicalSheetController extends Controller
         try {
             $technical_sheet = TechnicalSheet::findOrFail($id);
 
-            $technical_sheet->date = $request->input('date');
-            $technical_sheet->code = $request->input('code');
-            $technical_sheet->product_id = $request->integer('product_id');
-            $technical_sheet->collection_id = $request->integer('collection_id');
-            $technical_sheet->garment_type_id = $request->integer('garment_type_id');
-            $technical_sheet->subgroup_id = $request->integer('subgroup_id');
-            $technical_sheet->wash_tone_id = $request->integer('wash_tone_id');
-            $technical_sheet->color_id = $request->integer('color_id');
-            $technical_sheet->waistband_type_id = $request->integer('waistband_type_id');
-            $technical_sheet->measure_of_waistband = $request->integer('measure_of_waistband');
-            $technical_sheet->boot_type_id = $request->integer('boot_type_id');
-            $technical_sheet->yoke_type_id = $request->integer('yoke_type_id');
-            $technical_sheet->back_type_id = $request->integer('back_type_id');
-            $technical_sheet->physical_sample = $request->integer('physical_sample');
-            $technical_sheet->number_of_buttons = $request->integer('number_of_buttons');
-            $technical_sheet->description = $request->input('description');
-            $technical_sheet->observation = $request->input('observation');
-            $technical_sheet->pattern_maker_id = $request->integer('pattern_maker_id');
-            $technical_sheet->status = $request->input('status');
+            // Solo se actualiza lo que llega: lo demás de la ficha queda como está
+            foreach (['date', 'code', 'description', 'observation', 'status'] as $field) {
+                if ($request->has($field)) {
+                    $technical_sheet->{$field} = $request->input($field);
+                }
+            }
+
+            foreach (['product_id', 'collection_id', 'garment_type_id', 'subgroup_id', 'wash_tone_id', 'color_id', 'waistband_type_id', 'measure_of_waistband', 'boot_type_id', 'yoke_type_id', 'back_type_id', 'physical_sample', 'number_of_buttons', 'pattern_maker_id'] as $field) {
+                if ($request->has($field)) {
+                    $technical_sheet->{$field} = $request->integer($field);
+                }
+            }
 
             $technical_sheet->save();
-            $technical_sheet->auditSync('supplies', $request->input('supplies', []));
+
+            if ($request->has('supplies')) {
+                $technical_sheet->auditSync('supplies', $request->input('supplies', []));
+            }
 
             if ($request->hasFile('photo_d')) {
                 app(FileService::class)->save(
@@ -456,7 +451,9 @@ class TechnicalSheetController extends Controller
                 );
             }
 
-            $this->save($request->input('technical_sheet_details', []), $technical_sheet->id, $request->integer('wash_tone_id') ?: null);
+            if ($request->has('technical_sheet_details')) {
+                $this->save($request->input('technical_sheet_details', []), $technical_sheet->id, $technical_sheet->wash_tone_id ?: null);
+            }
 
             // Lo quitado de la ficha (ya validado): el subproceso con sus operaciones
             foreach ($request->input('removed_details', []) as $item) {

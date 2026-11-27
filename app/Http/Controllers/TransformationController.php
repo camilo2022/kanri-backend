@@ -470,28 +470,24 @@ class TransformationController extends Controller
         try {
             $technical_sheet = TechnicalSheet::findOrFail($id);
 
-            $technical_sheet->date = $request->input('date');
-            $technical_sheet->code = $request->input('code');
-            $technical_sheet->product_id = $request->integer('product_id');
-            $technical_sheet->collection_id = $request->integer('collection_id');
-            $technical_sheet->garment_type_id = $request->integer('garment_type_id');
-            $technical_sheet->subgroup_id = $request->integer('subgroup_id');
-            $technical_sheet->wash_tone_id = $request->integer('wash_tone_id');
-            $technical_sheet->color_id = $request->integer('color_id');
-            $technical_sheet->waistband_type_id = $request->integer('waistband_type_id');
-            $technical_sheet->measure_of_waistband = $request->integer('measure_of_waistband');
-            $technical_sheet->boot_type_id = $request->integer('boot_type_id');
-            $technical_sheet->yoke_type_id = $request->integer('yoke_type_id');
-            $technical_sheet->back_type_id = $request->integer('back_type_id');
-            $technical_sheet->physical_sample = $request->integer('physical_sample');
-            $technical_sheet->number_of_buttons = $request->integer('number_of_buttons');
-            $technical_sheet->description = $request->input('description');
-            $technical_sheet->observation = $request->input('observation');
-            $technical_sheet->pattern_maker_id = $request->integer('pattern_maker_id');
-            $technical_sheet->status = $request->input('status');
+            // Este Request ya no exige todos los campos: solo se actualiza lo que llega, lo demás queda como está
+            foreach (['date', 'code', 'description', 'observation', 'status'] as $field) {
+                if ($request->has($field)) {
+                    $technical_sheet->{$field} = $request->input($field);
+                }
+            }
+
+            foreach (['product_id', 'collection_id', 'garment_type_id', 'subgroup_id', 'wash_tone_id', 'color_id', 'waistband_type_id', 'measure_of_waistband', 'boot_type_id', 'yoke_type_id', 'back_type_id', 'physical_sample', 'number_of_buttons', 'pattern_maker_id'] as $field) {
+                if ($request->has($field)) {
+                    $technical_sheet->{$field} = $request->integer($field);
+                }
+            }
 
             $technical_sheet->save();
-            $technical_sheet->auditSync('supplies', $request->input('supplies', []));
+
+            if ($request->has('supplies')) {
+                $technical_sheet->auditSync('supplies', $request->input('supplies', []));
+            }
 
             if ($request->hasFile('photo_d')) {
                 app(FileService::class)->save(
@@ -515,8 +511,9 @@ class TransformationController extends Controller
                 );
             }
 
-            $this->save($request->input('technical_sheet_details', []), $technical_sheet->id);
-
+            if ($request->has('technical_sheet_details')) {
+                $this->save($request->input('technical_sheet_details', []), $technical_sheet->id);
+            }
 
             return $this->successResponse(
                 new TechnicalSheetResource($technical_sheet),

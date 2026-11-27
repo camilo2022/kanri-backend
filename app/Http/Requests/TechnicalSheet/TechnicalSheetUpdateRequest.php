@@ -51,31 +51,32 @@ class TechnicalSheetUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // Se pueden enviar solo los campos que cambian: cada uno se valida únicamente si llega
             'id' => ['required', 'exists:technical_sheets,id'],
-            'date' => ['required', 'date_format:Y-m-d', 'before_or_equal:now'],
-            'status' => ['required', 'in:'.implode(',', [TechnicalSheet::PENDING, TechnicalSheet::REVIEW, TechnicalSheet::APPROVED, TechnicalSheet::CANCELLED])],
-            'code' => ['required', 'string', 'max:11', 'unique:technical_sheets,code,'.$this->input('id').',id'],
-            'product_id' => ['required', 'exists:products,id', 'unique:technical_sheets,product_id,'.$this->route('id').',id'],
-            'collection_id' => ['required', 'exists:subitems,id,item_id,'.Collection::ITEM_ID],
-            'garment_type_id' => ['required', 'exists:subitems,id,item_id,'.GarmentType::ITEM_ID],
-            'subgroup_id' => ['required', 'exists:subitems,id,item_id,'.Subgroup::ITEM_ID],
-            'wash_tone_id' => ['required', 'exists:subitems,id,item_id,'.WashTone::ITEM_ID],
-            'color_id' => ['required', 'exists:subitems,id,item_id,'.Color::ITEM_ID],
-            'waistband_type_id' => ['required', 'exists:subitems,id,item_id,'.WaistbandType::ITEM_ID],
-            'measure_of_waistband' => ['required', 'numeric', 'min:1'],
-            'boot_type_id' => ['required', 'exists:subitems,id,item_id,'.BootType::ITEM_ID],
-            'yoke_type_id' => ['required', 'exists:subitems,id,item_id,'.YokeType::ITEM_ID],
-            'back_type_id' => ['required', 'exists:subitems,id,item_id,'.BackType::ITEM_ID],
-            'pattern_maker_id' => ['required',  'exists:employees,id,deleted_at,NULL'],
-            'physical_sample' => ['required', 'boolean'],
-            'number_of_buttons' => ['required', 'numeric', 'min:1'],
+            'date' => ['sometimes', 'required', 'date_format:Y-m-d', 'before_or_equal:now'],
+            'status' => ['sometimes', 'required', 'in:'.implode(',', [TechnicalSheet::PENDING, TechnicalSheet::REVIEW, TechnicalSheet::APPROVED, TechnicalSheet::CANCELLED])],
+            'code' => ['sometimes', 'required', 'string', 'max:11', 'unique:technical_sheets,code,'.$this->input('id').',id'],
+            'product_id' => ['sometimes', 'required', 'exists:products,id', 'unique:technical_sheets,product_id,'.$this->route('id').',id'],
+            'collection_id' => ['sometimes', 'required', 'exists:subitems,id,item_id,'.Collection::ITEM_ID],
+            'garment_type_id' => ['sometimes', 'required', 'exists:subitems,id,item_id,'.GarmentType::ITEM_ID],
+            'subgroup_id' => ['sometimes', 'required', 'exists:subitems,id,item_id,'.Subgroup::ITEM_ID],
+            'wash_tone_id' => ['sometimes', 'required', 'exists:subitems,id,item_id,'.WashTone::ITEM_ID],
+            'color_id' => ['sometimes', 'required', 'exists:subitems,id,item_id,'.Color::ITEM_ID],
+            'waistband_type_id' => ['sometimes', 'required', 'exists:subitems,id,item_id,'.WaistbandType::ITEM_ID],
+            'measure_of_waistband' => ['sometimes', 'required', 'numeric', 'min:1'],
+            'boot_type_id' => ['sometimes', 'required', 'exists:subitems,id,item_id,'.BootType::ITEM_ID],
+            'yoke_type_id' => ['sometimes', 'required', 'exists:subitems,id,item_id,'.YokeType::ITEM_ID],
+            'back_type_id' => ['sometimes', 'required', 'exists:subitems,id,item_id,'.BackType::ITEM_ID],
+            'pattern_maker_id' => ['sometimes', 'required', 'exists:employees,id,deleted_at,NULL'],
+            'physical_sample' => ['sometimes', 'required', 'boolean'],
+            'number_of_buttons' => ['sometimes', 'required', 'numeric', 'min:1'],
             'observation' => ['nullable', 'string', 'max:1000'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'photo_d' => ['required', 'array'],
+            'photo_d' => ['sometimes', 'required', 'array'],
             'photo_d.file' => ['sometimes', 'image', 'max:2048', 'dimensions:max_width='.File::MAX_IMAGE_SIDE.',max_height='.File::MAX_IMAGE_SIDE],
-            'photo_t' => ['required', 'array'],
+            'photo_t' => ['sometimes', 'required', 'array'],
             'photo_t.file' => ['sometimes', 'image', 'max:2048', 'dimensions:max_width='.File::MAX_IMAGE_SIDE.',max_height='.File::MAX_IMAGE_SIDE],
-            'technical_sheet_details' => ['required', 'array'],
+            'technical_sheet_details' => ['sometimes', 'required', 'array'],
             'removed_details' => ['nullable', 'array'],
             'removed_details.*.model_type' => ['required', 'in:'.Subprocess::class.','.Operation::class],
             'removed_details.*.model_id' => ['required', 'integer'],
@@ -88,7 +89,7 @@ class TechnicalSheetUpdateRequest extends FormRequest
             'technical_sheet_details.*.settings.static' => ['sometimes', 'array'],
             'technical_sheet_details.*.settings.static.values' => ['sometimes', 'array'],
             'technical_sheet_details.*.settings.static.insert_values' => ['required_with:technical_sheet_details.*.settings.static', 'boolean'],
-            'supplies' => ['required', 'array'],
+            'supplies' => ['sometimes', 'required', 'array'],
         ];
     }
 
@@ -236,13 +237,17 @@ class TechnicalSheetUpdateRequest extends FormRequest
                 ->diff($removed)
                 ->values();
 
-            foreach (app(ProductivityDetailService::class)->sheetSequenceErrors($keys, $this->integer('wash_tone_id') ?: null) as $id => $message) {
+            // Lo que no llega se toma de la ficha guardada
+            $technical_sheet = TechnicalSheet::find($this->route('id'));
+
+            foreach (app(ProductivityDetailService::class)->sheetSequenceErrors($keys, $this->integer('wash_tone_id') ?: $technical_sheet?->wash_tone_id) as $id => $message) {
                 $validator->errors()->add("technical_sheet_details.$id", $message);
             }
 
-            $product = Product::find($this->integer('product_id'));
-            $supply_types = SupplyType::with('supplies')
-                ->where('settings->in_technical_sheet', true)->get();
+            $product = Product::find($this->integer('product_id') ?: $technical_sheet?->product_id);
+            $supply_types = $this->has('supplies')
+                ? SupplyType::with('supplies')->where('settings->in_technical_sheet', true)->get()
+                : collect();
 
             $messages = [];
 
@@ -556,8 +561,14 @@ class TechnicalSheetUpdateRequest extends FormRequest
             }
         }
 
-        $this->merge(['technical_sheet_details' => $details]);
-        $this->merge(['physical_sample' => $this->boolean('physical_sample')]);
+        if ($this->has('technical_sheet_details')) {
+            $this->merge(['technical_sheet_details' => $details]);
+        }
+
+        if ($this->has('physical_sample')) {
+            $this->merge(['physical_sample' => $this->boolean('physical_sample')]);
+        }
+
         $this->merge(['id' => $this->route('id')]);
     }
 }
