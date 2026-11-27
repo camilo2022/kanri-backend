@@ -48,7 +48,7 @@ class TablePageTool extends Tool
         return [
             'token' => $schema->string()->description('Código del resultado que entregó show_table.')->required(),
             'page' => $schema->integer()->description('Número de página, desde 1.'),
-            'per_page' => $schema->integer()->description('Filas por página (máximo 200).'),
+            'per_page' => $schema->integer()->description('Filas por página (máximo 1000).'),
             'search' => $schema->string()->description('Texto a buscar en cualquier columna.'),
             'sort' => $schema->integer()->description('Posición de la columna por la que se ordena, desde 0.'),
             'dir' => $schema->string()->description('asc o desc.'),

@@ -3,6 +3,7 @@
 namespace App\Mcp\Support;
 
 use App\Mcp\McpFailure;
+use App\Models\Permission;
 use App\Models\User;
 
 /**
@@ -337,12 +338,13 @@ class SqlGate
         $items_table = config('assistant_tables.catalog_items_table');
 
         if ($table === $catalog_table || $table === $items_table) {
-            throw McpFailure::forbidden([], 'No tienes permiso para consultar ningún catálogo de Kanri (la tabla '.$table.' guarda los catálogos y cada uno tiene su permiso de listar).');
+            throw McpFailure::forbidden([], 'No tienes permiso para ver esta información en Kanri. Pídeselo a un administrador.');
         }
 
         $permissions = $this->schema->permissions($table);
+        $titles = Permission::whereIn('name', $permissions)->pluck('title')->unique()->join(', ');
 
-        throw McpFailure::forbidden($permissions, 'No tienes permiso para consultar la tabla '.$table.'. Necesitas uno de estos permisos: '.implode(', ', $permissions).'.');
+        throw McpFailure::forbidden($permissions, 'No tienes permiso para ver esta información en Kanri.'.($titles !== '' ? ' Te falta uno de estos permisos: '.$titles.'.' : '').' Pídeselo a un administrador.');
     }
 
     /**

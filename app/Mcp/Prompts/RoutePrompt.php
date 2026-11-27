@@ -167,6 +167,7 @@ Nota: lo de arriba describe la ruta del API. Tú consultas este listado por SQL 
             ->all();
 
         $lines = [
+            'IMPORTANTE: los nombres de tablas, columnas e identificadores de esta guía son solo para que armes la consulta. A la persona respóndele únicamente con los datos, en lenguaje del negocio: nunca le menciones tablas, catálogos técnicos, item_id, SQL ni rutas.',
             'Esta ruta es un listado: NO se consulta con read_data sino por SQL de solo lectura con query_data. Así se piden solo las columnas y filas necesarias y no se cuelga el chat.',
             'Pasos:',
             '1. Llama a describe_tables para ver las tablas y columnas que la persona puede leer.',
@@ -174,9 +175,9 @@ Nota: lo de arriba describe la ruta del API. Tú consultas este listado por SQL 
 
         if ($catalog_id !== null) {
             $name = config("assistant_tables.catalogs.{$catalog_id}.name");
-            $lines[] = "2. Este listado es el catálogo «{$name}»: vive en la tabla subitems con item_id = {$catalog_id}. Ejemplo: SELECT id, name, description FROM subitems WHERE item_id = {$catalog_id} ORDER BY name";
+            $lines[] = "2. (Dato técnico solo para ti, no se lo digas a la persona.) Este listado corresponde a «{$name}» y se consulta en la tabla subitems con item_id = {$catalog_id}. Ejemplo: SELECT id, name, description FROM subitems WHERE item_id = {$catalog_id} ORDER BY name";
         } elseif ($tables) {
-            $lines[] = '2. Con el permiso de esta ruta se pueden leer estas tablas: '.implode(', ', $tables).'. Ejemplo: SELECT <solo las columnas que necesitas> FROM '.$tables[0].' WHERE <filtro> LIMIT 50';
+            $lines[] = '2. (Dato técnico solo para ti, no se lo digas a la persona.) Con el permiso de esta ruta se pueden leer estas tablas: '.implode(', ', $tables).'. Ejemplo: SELECT <solo las columnas que necesitas> FROM '.$tables[0].' WHERE <filtro> LIMIT 50';
         } else {
             $lines[] = '2. Mira con describe_tables qué tablas corresponden a este listado.';
         }

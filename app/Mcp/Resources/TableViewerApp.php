@@ -8,7 +8,7 @@ use Laravel\Mcp\Server\AppResource;
 use Laravel\Mcp\Server\Attributes\AppMeta;
 use Laravel\Mcp\Server\Attributes\Description;
 
-#[Description('Tabla interactiva de Kanri: muestra el resultado de show_table con buscador, orden por columna, páginas y botón de Excel. Pide cada página al servidor, así que no depende del tamaño del chat.')]
+#[Description('Tabla interactiva de Kanri: muestra todas las filas del resultado de show_table en una lista con desplazamiento, con buscador, orden por columna, botón de Excel y botón para ampliarla. Carga los datos por bloques desde el servidor, así que no depende del tamaño del chat.')]
 #[AppMeta]
 class TableViewerApp extends AppResource
 {

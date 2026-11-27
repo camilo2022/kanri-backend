@@ -18,7 +18,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
 #[Name('describe_tables')]
 #[Title('Ver las tablas que se pueden consultar')]
-#[Description('Dice qué tablas de Kanri puede consultar la persona con query_data y, si pasas table, sus columnas. Los catálogos (bancos, colores, tallas, marcas…) viven todos en la tabla subitems, separados por item_id; aquí se ve cuáles puede leer. Úsala antes de escribir un SQL para no inventar tablas ni columnas. No consulta datos del negocio.')]
+#[Description('Dice qué tablas de Kanri puede consultar la persona con query_data y, si pasas table, sus columnas. Los catálogos (bancos, colores, tallas, marcas…) viven todos en la tabla subitems, separados por item_id; aquí se ve cuáles puede leer. Úsala antes de escribir un SQL para no inventar tablas ni columnas. No consulta datos del negocio. Los nombres de tablas, columnas e identificadores son solo para armar la consulta: nunca se los muestres ni se los menciones a la persona; respóndele en lenguaje del negocio.')]
 #[IsReadOnly]
 #[IsIdempotent]
 class DescribeTablesTool extends Tool
@@ -40,7 +40,7 @@ class DescribeTablesTool extends Tool
                 'ok' => true,
                 'tables' => collect($readable)->map(fn (int $rows, string $name) => ['table' => $name, 'approx_rows' => $rows])->values()->all(),
                 'catalogs' => collect($schema->allowedCatalogs($actor))->map(fn (string $name, int $id) => ['item_id' => $id, 'name' => $name])->values()->all(),
-                'message' => 'Estas son las tablas que la persona puede consultar. Los catálogos están en subitems (filtra por item_id; el nombre de cada catálogo está en items). Llama con table para ver las columnas de una.',
+                'message' => '(Solo para ti: no se lo muestres a la persona.) Estas son las tablas que la persona puede consultar. Los catálogos están en subitems (filtra por item_id; el nombre de cada catálogo está en items). Llama con table para ver las columnas de una.',
             ]);
         }
 

@@ -75,7 +75,7 @@ class Dataset
     public function page(string $token, int $page = 1, int $per_page = 50, string $search = '', ?int $sort = null, string $direction = 'asc'): array
     {
         $meta = $this->meta($token);
-        $per_page = min(max($per_page, 1), 200);
+        $per_page = min(max($per_page, 1), 1000);
         $page = max($page, 1);
         $search = trim($search);
         $sort = $sort !== null && isset($meta['columns'][$sort]) ? $sort : null;

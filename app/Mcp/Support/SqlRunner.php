@@ -97,7 +97,6 @@ class SqlRunner
             'ok' => true,
             'row_count' => count($rows),
             'truncated' => $truncated,
-            'tables' => $prepared['tables'],
             'file' => $file,
             'message' => 'El Excel está listo. Entrégale a la persona el enlace file.url: lo descarga con su navegador y vence en '.config('assistant.file_minutes').' minutos.'.($truncated ? ' Se cortó en '.$max.' filas: pide un filtro más estrecho si necesita el resto.' : ''),
         ];
@@ -156,12 +155,11 @@ class SqlRunner
             'truncated' => $truncated,
             'columns' => $meta['columns'],
             'sample' => $page['rows'],
-            'tables' => $prepared['tables'],
             'expires_in_minutes' => (int) config('assistant.dataset_minutes', 20),
         ];
 
         if ($prepared['catalogs'] !== null) {
-            $result['catalogs_visible'] = $prepared['catalogs'];
+            $result['catalogs_visible'] = array_values($prepared['catalogs']);
         }
 
         return $result;
@@ -227,7 +225,6 @@ class SqlRunner
             'ok' => true,
             'row_count' => count($rows),
             'truncated' => $truncated !== null,
-            'tables' => $prepared['tables'],
             'rows' => $rows,
         ];
 
@@ -240,7 +237,7 @@ class SqlRunner
         }
 
         if ($prepared['catalogs'] !== null) {
-            $result['catalogs_visible'] = $prepared['catalogs'];
+            $result['catalogs_visible'] = array_values($prepared['catalogs']);
         }
 
         return $result;
