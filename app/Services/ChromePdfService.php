@@ -11,6 +11,21 @@ use HeadlessChromium\BrowserFactory;
  */
 class ChromePdfService
 {
+    private function home(): ?string
+    {
+        $home = getenv('HOME') ?: ($_SERVER['HOME'] ?? null);
+
+        if (! $home && function_exists('posix_getpwuid')) {
+            $home = posix_getpwuid(posix_geteuid())['dir'] ?? null;
+        }
+
+        if (! $home && preg_match('#^(/home[0-9]*/[^/]+)/#', base_path().'/', $matches)) {
+            $home = $matches[1];
+        }
+
+        return $home ?: null;
+    }
+
     /**
      * @param  string  $html  Página completa
      * @param  array{header?: string, footer?: string, margin_top?: float, margin_bottom?: float, margin_side?: float, landscape?: bool}  $options
@@ -28,9 +43,11 @@ class ChromePdfService
         $file = $temp_dir.'/pdf_'.uniqid().'.html';
         file_put_contents($file, $html);
 
+        // El servidor web arranca a Chrome sin HOME y entonces no encuentra las fuentes de ~/.fonts, que el pie necesita
         $browser = (new BrowserFactory)->createBrowser([
             'noSandbox' => true,
             'windowSize' => [1240, 1754],
+            'envVariables' => array_filter(['HOME' => $this->home()]),
         ]);
 
         try {
