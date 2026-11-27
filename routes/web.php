@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AssistantFileController;
 use App\Http\Controllers\AssistantLoginController;
+use App\Http\Controllers\BrandImageController;
 use App\Http\Controllers\WebAuthController;
 use App\Http\Middleware\RequireAssistantPermission;
 use App\Http\Middleware\RequireS256;
@@ -15,6 +16,8 @@ use Laravel\Passport\Http\Controllers\DenyAuthorizationController;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/brand/{file}', BrandImageController::class)->where('file', 'logo-b|logo-kanri')->name('brand.image');
 
 Route::get('/login', [WebAuthController::class, 'show'])->name('login');
 Route::post('/login', [WebAuthController::class, 'login']);

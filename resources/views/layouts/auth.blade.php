@@ -467,11 +467,11 @@
             <path d="M0 660 C280 610 560 760 860 680 C1040 630 1170 690 1280 665 L1280 800 L0 800 Z" />
             <path d="M0 725 C300 685 600 800 900 740 C1070 705 1190 750 1280 735 L1280 800 L0 800 Z" />
         </svg>
-        <img src="{{ asset('images/brand/logo-b.png') }}" alt="" class="login-monogram" aria-hidden="true">
+        <img src="{{ route('brand.image', ['file' => 'logo-b'], false) }}" alt="" class="login-monogram" aria-hidden="true">
 
         <div class="login-content">
             <div class="login-brand">
-                <img src="{{ asset('images/brand/logo-kanri.png') }}" alt="Kanri" class="login-brand-logo">
+                <img src="{{ route('brand.image', ['file' => 'logo-kanri'], false) }}" alt="Kanri" class="login-brand-logo">
                 <h1 class="font-poppins">
                     Toda la organización,
                     <br>
@@ -486,7 +486,7 @@
 
             <div class="login-card-wrapper">
                 <div class="login-card">
-                    <img src="{{ asset('images/brand/logo-b.png') }}" alt="Kanri" class="login-card-logo">
+                    <img src="{{ route('brand.image', ['file' => 'logo-b'], false) }}" alt="Kanri" class="login-card-logo">
                     @yield('card')
                 </div>
             </div>
