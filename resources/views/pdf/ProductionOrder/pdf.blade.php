@@ -110,10 +110,10 @@
     $by_size = $fabric_detail ? $fabric_detail->production_order_detail_quantities->groupBy('size_id') : collect();
     $fabric_rows = $by_size->count() ? $by_size->max(fn($items) => $items->count()) : 0;
     $groupings_settings = collect($production_order->settings)->filter(fn($item) => isset($item->large));
-    $real_meters = $groupings_settings->sum(fn($item) => $item->large * $item->quantity);
+    $real_meters = $groupings_settings->sum(fn($item) => (float) $item->large * (float) $item->quantity);
     $produced_units = $fabric_detail ? $fabric_detail->production_order_detail_quantities->sum('quantity') : 0;
     $average = $produced_units > 0 ? $real_meters / $produced_units : 0;
-    $square_cm = $production_order->width * $average * 10000;
+    $square_cm = (float) $production_order->width * $average * 10000;
 
     // Curva por destino y lo que se espera por talla (suma de los destinos)
     $destinations = collect(['NACIONAL', 'MEDELLIN', 'STARA'])->map(fn($destination) => [

@@ -82,7 +82,7 @@
     $fabric_detail = $production_order->production_order_details->first(fn($item) => $item->model_type === Supply::class);
     $by_size = $fabric_detail ? $fabric_detail->production_order_detail_quantities->groupBy('size_id') : collect();
     $fabric_rows = $by_size->count() ? $by_size->max(fn($items) => $items->count()) : 1;
-    $real_meters = collect($production_order->settings)->sum(fn($item) => ($item->large ?? 0) * ($item->quantity ?? 0));
+    $real_meters = collect($production_order->settings)->sum(fn($item) => (float) ($item->large ?? 0) * (float) ($item->quantity ?? 0));
     $produced_units = $fabric_detail ? $fabric_detail->production_order_detail_quantities->sum('quantity') : 0;
     $color = $production_order->color->first();
     $fabric = ($production_order->fabric->model->name ?? '-') . ' - ' . ($production_order->fabric->model->description ?? '-');
@@ -151,24 +151,44 @@
     $pattern_maker_role = null;
     $pattern_maker = $person ? mb_strtoupper(trim(($person->document ?? '') . ' · ' . ($person->names ?? '') . ' ' . ($person->last_names ?? ''))) : '-';
 
-    // Fotos reducidas en el servidor sin recortarlas (conservan su proporción), para que el PDF no cargue la imagen original
-    $photo_crop = function ($file) {
+    // Fotos en recuadros anchos (1100×500, más anchos que el espacio de cada foto, que cambia con el largo de la ficha): la
+    // foto completa va centrada y lo que sobra se llena con la misma foto ampliada y desenfocada. La hoja la recorta por
+    // los lados (object-fit: cover), así que la foto siempre llena el alto de su espacio
+    $photo_box = function ($file) {
         $source = $file ? @imagecreatefromstring((string) @file_get_contents($file->pdf_path)) : false;
         if (!$source) {
             return null;
         }
+        [$box_width, $box_height] = [1100, 500];
         $source_width = imagesx($source);
         $source_height = imagesy($source);
-        $scale = min(1, 700 / $source_width, 900 / $source_height);
-        $target_width = (int) round($source_width * $scale);
-        $target_height = (int) round($source_height * $scale);
-        $target = imagecreatetruecolor($target_width, $target_height);
-        imagecopyresampled($target, $source, 0, 0, 0, 0, $target_width, $target_height, $source_width, $source_height);
+        $box = imagecreatetruecolor($box_width, $box_height);
+
+        // Fondo: la foto cubriendo el recuadro, reducida, desenfocada varias veces y vuelta a ampliar (sin cuadritos)
+        $cover = max($box_width / $source_width, $box_height / $source_height);
+        $small = imagecreatetruecolor(220, 100);
+        imagecopyresampled($small, $source, 0, 0, (int) (($source_width - $box_width / $cover) / 2), (int) (($source_height - $box_height / $cover) / 2), 220, 100, (int) ($box_width / $cover), (int) ($box_height / $cover));
+        for ($i = 0; $i < 12; $i++) {
+            imagefilter($small, IMG_FILTER_GAUSSIAN_BLUR);
+        }
+        imagecopyresampled($box, $small, 0, 0, 0, 0, $box_width, $box_height, 220, 100);
+        for ($i = 0; $i < 4; $i++) {
+            imagefilter($box, IMG_FILTER_GAUSSIAN_BLUR);
+        }
+        imagefilledrectangle($box, 0, 0, $box_width, $box_height, imagecolorallocatealpha($box, 255, 255, 255, 80));
+
+        // Encima, la foto completa centrada
+        $contain = min($box_width / $source_width, $box_height / $source_height);
+        $width = (int) round($source_width * $contain);
+        $height = (int) round($source_height * $contain);
+        imagecopyresampled($box, $source, (int) (($box_width - $width) / 2), (int) (($box_height - $height) / 2), 0, 0, $width, $height, $source_width, $source_height);
+
         ob_start();
-        imagejpeg($target, null, 85);
+        imagejpeg($box, null, 85);
         $jpeg = ob_get_clean();
         imagedestroy($source);
-        imagedestroy($target);
+        imagedestroy($small);
+        imagedestroy($box);
 
         return 'data:image/jpeg;base64,' . base64_encode($jpeg);
     };
@@ -269,7 +289,7 @@
         <div class="photo-cards">
             @foreach ([$sheet->photo_d, $sheet->photo_t] as $file)
                 <div class="photo-card">
-                    @if ($src = $photo_crop($file))
+                    @if ($src = $photo_box($file))
                         <img src="{{ $src }}">
                     @else
                         <div class="photo-empty"></div>

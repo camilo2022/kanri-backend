@@ -211,14 +211,15 @@ body {
     padding: 2px 10px;
 }
 
-/* Fotos: solo la foto, completa, en su proporción original y sin recortar (sin recuadro ni leyenda) */
+/* Fotos: la foto completa sobre su propia imagen desenfocada (la vista arma el recuadro ancho); llenan el alto de su espacio y
+   se recortan solo por los lados, donde está el fondo desenfocado */
 .photo-cards {
     flex: 1;
     min-height: 0;
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: minmax(0, 1fr);
-    align-items: start;
+    align-items: stretch;
     gap: 12px;
 }
 
@@ -230,11 +231,11 @@ body {
 }
 
 .photo-card img {
-    flex: 0 1 auto;
+    flex: 1 1 0;
     min-height: 0;
     width: 100%;
     height: auto;
-    object-fit: contain;
+    object-fit: cover;
     border-radius: 8px;
     display: block;
 }
