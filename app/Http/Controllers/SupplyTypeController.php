@@ -21,6 +21,7 @@ use App\Traits\ApiResponser;
  *     type="object",
  *     required={"field", "label", "type"},
  *     description="Campo del formulario de los insumos de este tipo. Al crear o editar un insumo, sus `rules` se aplican al valor que llega en `settings.<field>`.",
+ *
  *     @OA\Property(property="id", type="integer", example=2),
  *     @OA\Property(property="field", type="string", pattern="^[a-z]+(_[a-z]+)*$", description="Nombre del campo: minúsculas y guiones bajos. Único en el formulario.", example="width"),
  *     @OA\Property(property="label", type="string", description="Texto visible, en MAYÚSCULAS. Único en el formulario.", example="ANCHO"),
@@ -36,6 +37,7 @@ use App\Traits\ApiResponser;
  *     schema="SupplyTypeSettings",
  *     type="object",
  *     description="Configuración del tipo de insumo. `store`/`update` escriben las banderas y `setting` escribe `form`; cada uno reemplaza el objeto completo, así que hay que enviar todo (el frontend mezcla lo que ya había).",
+ *
  *     @OA\Property(property="has_supplies", type="boolean", description="Tiene insumos propios.", example=true),
  *     @OA\Property(property="in_technical_sheet", type="boolean", description="Aplica a la ficha técnica.", example=false),
  *     @OA\Property(property="in_production_order", type="boolean", description="Aplica a la orden de producción.", example=true),
@@ -47,6 +49,7 @@ use App\Traits\ApiResponser;
  *     schema="SupplyType",
  *     type="object",
  *     description="Tipo de insumo (TELA, HILO, ROLLO…). Su `settings` dice dónde se usa y, en `form`, qué campos se piden al crear sus insumos.",
+ *
  *     @OA\Property(property="id", type="integer", example=420),
  *     @OA\Property(property="item_id", type="integer", description="No viene en la respuesta de `all`.", example=28),
  *     @OA\Property(property="name", type="string", example="BOTONES"),
@@ -71,6 +74,7 @@ use App\Traits\ApiResponser;
  * @OA\Schema(
  *     schema="SupplyTypeResponse",
  *     type="object",
+ *
  *     @OA\Property(
  *         property="data",
  *         type="object",
@@ -84,13 +88,16 @@ use App\Traits\ApiResponser;
  * @OA\Schema(
  *     schema="SupplyTypeListResponse",
  *     type="object",
+ *
  *     @OA\Property(
  *         property="data",
  *         type="object",
  *         @OA\Property(property="supply_types", type="array", @OA\Items(allOf={
+ *
  *             @OA\Schema(ref="#/components/schemas/SupplyType"),
  *             @OA\Schema(@OA\Property(property="supplies", type="array", description="Insumos del tipo, serializados por Eloquent.", @OA\Items(type="object", additionalProperties=true)))
  *         })),
+ *
  *         @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
  *     ),
  *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
@@ -101,6 +108,7 @@ use App\Traits\ApiResponser;
  *     schema="SupplyTypeRequest",
  *     type="object",
  *     required={"name", "description", "settings"},
+ *
  *     @OA\Property(property="name", type="string", minLength=4, maxLength=50, description="Nombre en MAYÚSCULAS. Único entre los tipos de insumo.", example="BOTONES"),
  *     @OA\Property(property="description", type="string", maxLength=255, description="Descripción en MAYÚSCULAS.", example="BOTONES METÁLICOS PARA JEAN"),
  *     @OA\Property(
@@ -125,47 +133,60 @@ class SupplyTypeController extends Controller
      *     summary="Listar los tipos de insumo",
      *     description="Cada tipo trae sus insumos (`supplies`), salvo con `without_supplies`. También la pueden consultar quienes configuran procesos, subprocesos u operaciones.",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/Search"),
      *     @OA\Parameter(
      *         name="in_technical_sheet",
      *         in="query",
      *         required=false,
      *         description="Filtra por `settings.in_technical_sheet` (`true`/`1` o `false`/`0`). Si no se envía, no filtra.",
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="in_production_order",
      *         in="query",
      *         required=false,
      *         description="Filtra por `settings.in_production_order`. Si no se envía, no filtra.",
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="without_supplies",
      *         in="query",
      *         required=false,
      *         description="Con `true`/`1` los tipos llegan sin `supplies`. Lo usa el catálogo de los campos `selectdinamic`, que solo muestra los tipos.",
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
      *         required=false,
      *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *
      *         @OA\Schema(type="string", enum={"id", "name", "description", "created_at", "updated_at", "deleted_at"}, example="name")
      *     ),
+     *
      *     @OA\Parameter(ref="#/components/parameters/Dir"),
      *     @OA\Parameter(ref="#/components/parameters/PerPage"),
      *     @OA\Parameter(ref="#/components/parameters/Page"),
      *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Lista de tipos de insumo cargada correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/SupplyTypeListResponse")
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Parámetros de consulta inválidos.",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ValidationErrorResponse",
      *             example={
@@ -175,6 +196,7 @@ class SupplyTypeController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
      *     @OA\Response(response=500, ref="#/components/responses/ServerError")
@@ -183,7 +205,6 @@ class SupplyTypeController extends Controller
     public function all(SupplyTypeAllRequest $request)
     {
         try {
-            // Los insumos van anidados en cada tipo; el catálogo de las tablas de procesos los omite porque son miles
             $supply_types = SupplyType::with(['item'])
                 ->when(! $request->boolean('without_supplies'), function ($query) {
                     return $query->with(['supplies']);
@@ -228,12 +249,16 @@ class SupplyTypeController extends Controller
      *     tags={"Typification › Supply Types"},
      *     summary="Obtener un tipo de insumo",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tipo de insumo cargado correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/SupplyTypeResponse")
      *     ),
+     *
      *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
@@ -268,18 +293,24 @@ class SupplyTypeController extends Controller
      *     tags={"Typification › Supply Types"},
      *     summary="Crear un tipo de insumo",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(ref="#/components/schemas/SupplyTypeRequest")
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Tipo de insumo creado correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/SupplyTypeResponse")
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Datos inválidos.",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ValidationErrorResponse",
      *             example={
@@ -289,6 +320,7 @@ class SupplyTypeController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
      *     @OA\Response(response=500, ref="#/components/responses/ServerError")
@@ -327,22 +359,29 @@ class SupplyTypeController extends Controller
      *     summary="Editar un tipo de insumo",
      *     description="Reemplaza nombre, descripción y `settings` completo: si no se envía `form`, el formulario de sus insumos se pierde (ver pendientes).",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/SupplyTypeRequest",
      *             example={"name": "BOTONES", "description": "BOTONES Y REMACHES METÁLICOS", "settings": {"has_supplies": true, "in_technical_sheet": true, "in_production_order": false}}
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tipo de insumo editado correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/SupplyTypeResponse")
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Datos inválidos o tipo de insumo no registrado.",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ValidationErrorResponse",
      *             example={
@@ -352,6 +391,7 @@ class SupplyTypeController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
      *     @OA\Response(response=500, ref="#/components/responses/ServerError")
@@ -389,12 +429,16 @@ class SupplyTypeController extends Controller
      *     summary="Desactivar un tipo de insumo",
      *     description="Desactivación lógica (soft delete): el registro se conserva y puede restaurarse.",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tipo de insumo desactivado correctamente. `deleted_at` queda con la fecha de desactivación.",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/SupplyTypeResponse")
      *     ),
+     *
      *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
@@ -430,12 +474,16 @@ class SupplyTypeController extends Controller
      *     summary="Restaurar un tipo de insumo desactivado",
      *     description="Solo acepta registros desactivados.",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tipo de insumo restaurado correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/SupplyTypeResponse")
      *     ),
+     *
      *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
@@ -471,24 +519,32 @@ class SupplyTypeController extends Controller
      *     summary="Configurar el formulario de los insumos de un tipo",
      *     description="Guarda `settings.form`: los campos que se piden al crear o editar los insumos de este tipo. Reemplaza `settings` completo, así que hay que enviar también las banderas (`has_supplies`, `in_technical_sheet`, `in_production_order`, `paragraph`); el frontend las mezcla con lo que ya había. Requiere el permiso `typification.supply_types.settings`. El `{id}` no se valida: si no existe, responde 404.",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             type="object",
      *             required={"settings"},
+     *
      *             @OA\Property(property="settings", ref="#/components/schemas/SupplyTypeSettings"),
      *             example={"settings": {"has_supplies": true, "in_technical_sheet": false, "in_production_order": true, "paragraph": "roll", "form": {{"id": 1, "field": "width", "label": "ANCHO", "type": "number", "rules": {"numeric", "required"}}, {"id": 2, "field": "meters", "label": "METROS", "type": "number", "rules": {"numeric", "required"}}, {"id": 3, "field": "supplier_id", "label": "PROVEEDOR", "type": "selectdinamic", "model": "App\Models\Supplier", "param": "App\Models\SupplierType", "supplier_type_id": "424", "path": "name", "cardinality": "single", "rules": {"exists:subitems,id,item_id,App\Models\Supplier::ITEM_ID", "required"}}}}}
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Configuración guardada correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/SupplyTypeResponse")
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Formulario inválido.",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ValidationErrorResponse",
      *             example={
@@ -498,6 +554,7 @@ class SupplyTypeController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
      *     @OA\Response(response=500, ref="#/components/responses/ServerError")

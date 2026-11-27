@@ -20,6 +20,7 @@ use App\Traits\ApiResponser;
  *     type="object",
  *     required={"has_person", "has_account_bank", "in_production_order"},
  *     description="Configuración del tipo de proveedor. Se guarda tal cual llega (reemplaza la anterior).",
+ *
  *     @OA\Property(property="has_person", type="boolean", description="Sus proveedores llevan datos de persona (contacto).", example=true),
  *     @OA\Property(property="has_account_bank", type="boolean", description="Sus proveedores llevan cuenta bancaria.", example=true),
  *     @OA\Property(property="in_production_order", type="boolean", description="Sus proveedores aparecen en la orden de producción.", example=true),
@@ -30,6 +31,7 @@ use App\Traits\ApiResponser;
  *     schema="SupplierType",
  *     type="object",
  *     description="Tipo de proveedor (SERVICIO, MATERIA PRIMA…). Su `settings` decide qué datos se piden al crear sus proveedores y si aparecen en la orden de producción.",
+ *
  *     @OA\Property(property="id", type="integer", example=425),
  *     @OA\Property(property="item_id", type="integer", example=27),
  *     @OA\Property(property="name", type="string", example="LAVANDERÍA"),
@@ -54,10 +56,13 @@ use App\Traits\ApiResponser;
  * @OA\Schema(
  *     schema="SupplierTypeResponse",
  *     type="object",
+ *
  *     @OA\Property(property="data", type="object", @OA\Property(property="supplier_type", allOf={
+ *
  *         @OA\Schema(ref="#/components/schemas/SupplierType"),
  *         @OA\Schema(@OA\Property(property="process", nullable=true, example=null, description="Siempre `null`: el modelo no tiene esa relación (ver pendientes)."))
  *     })),
+ *
  *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
  *     @OA\Property(property="error", type="boolean", example=false)
  * )
@@ -65,6 +70,7 @@ use App\Traits\ApiResponser;
  * @OA\Schema(
  *     schema="SupplierTypeListResponse",
  *     type="object",
+ *
  *     @OA\Property(
  *         property="data",
  *         type="object",
@@ -79,6 +85,7 @@ use App\Traits\ApiResponser;
  *     schema="SupplierTypeRequest",
  *     type="object",
  *     required={"name", "description", "settings"},
+ *
  *     @OA\Property(property="name", type="string", minLength=4, maxLength=50, description="Nombre en MAYÚSCULAS. Único entre los tipos de proveedor.", example="LAVANDERÍA"),
  *     @OA\Property(property="description", type="string", maxLength=255, description="Descripción en MAYÚSCULAS.", example="PROVEEDORES DE LAVADO Y TINTURA DE PRENDAS"),
  *     @OA\Property(property="settings", ref="#/components/schemas/SupplierTypeSettings")
@@ -94,26 +101,33 @@ class SupplierTypeController extends Controller
      *     tags={"Typification › Supplier Types"},
      *     summary="Listar los tipos de proveedor",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/Search"),
      *     @OA\Parameter(
      *         name="column",
      *         in="query",
      *         required=false,
      *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
+     *
      *         @OA\Schema(type="string", enum={"id", "name", "description", "created_at", "updated_at", "deleted_at"}, example="name")
      *     ),
+     *
      *     @OA\Parameter(ref="#/components/parameters/Dir"),
      *     @OA\Parameter(ref="#/components/parameters/PerPage"),
      *     @OA\Parameter(ref="#/components/parameters/Page"),
      *     @OA\Parameter(ref="#/components/parameters/WithTrashedOptional"),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Lista de tipos de proveedor cargada correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/SupplierTypeListResponse")
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Parámetros de consulta inválidos.",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ValidationErrorResponse",
      *             example={
@@ -123,6 +137,7 @@ class SupplierTypeController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
      *     @OA\Response(response=500, ref="#/components/responses/ServerError")
@@ -131,7 +146,7 @@ class SupplierTypeController extends Controller
     public function all(SupplierTypeAllRequest $request)
     {
         try {
-            $supplier_type_types = SupplierType::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
+            $supplier_type = SupplierType::with(['item'])->when($request->filled('search'), function ($query) use ($request) {
                 return $query->search($request->input('search'));
             })
                 ->when($request->boolean('with_trashed'), function ($query) {
@@ -141,10 +156,10 @@ class SupplierTypeController extends Controller
                     return $query->sort($request->input('column'), $request->input('dir'));
                 });
 
-            $supplier_type_types = $supplier_type_types->paginate($request->integer('per_page', $supplier_type_types->count()));
+            $supplier_type = $supplier_type->paginate($request->integer('per_page', $supplier_type->count()));
 
             return $this->successResponse(
-                new SupplierTypeCollection($supplier_type_types),
+                new SupplierTypeCollection($supplier_type),
                 $this->getMessage('Success'),
                 200
             );
@@ -165,12 +180,16 @@ class SupplierTypeController extends Controller
      *     tags={"Typification › Supplier Types"},
      *     summary="Obtener un tipo de proveedor",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tipo de proveedor cargado correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/SupplierTypeResponse")
      *     ),
+     *
      *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
@@ -204,18 +223,24 @@ class SupplierTypeController extends Controller
      *     tags={"Typification › Supplier Types"},
      *     summary="Crear un tipo de proveedor",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(ref="#/components/schemas/SupplierTypeRequest")
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Tipo de proveedor creado correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/SupplierTypeResponse")
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Datos inválidos.",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ValidationErrorResponse",
      *             example={
@@ -225,6 +250,7 @@ class SupplierTypeController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
      *     @OA\Response(response=500, ref="#/components/responses/ServerError")
@@ -263,22 +289,29 @@ class SupplierTypeController extends Controller
      *     summary="Editar un tipo de proveedor",
      *     description="Reemplaza nombre, descripción y `settings` completo.",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/SupplierTypeRequest",
      *             example={"name": "LAVANDERÍA", "description": "PROVEEDORES DE LAVADO DE PRENDAS", "settings": {"has_person": true, "has_account_bank": true, "in_production_order": false}}
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tipo de proveedor editado correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/SupplierTypeResponse")
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Datos inválidos o tipo de proveedor no registrado.",
+     *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/ValidationErrorResponse",
      *             example={
@@ -288,6 +321,7 @@ class SupplierTypeController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
      *     @OA\Response(response=500, ref="#/components/responses/ServerError")
@@ -326,12 +360,16 @@ class SupplierTypeController extends Controller
      *     summary="Desactivar un tipo de proveedor",
      *     description="Desactivación lógica (soft delete): el registro se conserva y puede restaurarse.",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tipo de proveedor desactivado correctamente. `deleted_at` queda con la fecha de desactivación.",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/SupplierTypeResponse")
      *     ),
+     *
      *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
@@ -367,12 +405,16 @@ class SupplierTypeController extends Controller
      *     summary="Restaurar un tipo de proveedor desactivado",
      *     description="Solo acepta registros desactivados.",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tipo de proveedor restaurado correctamente",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/SupplierTypeResponse")
      *     ),
+     *
      *     @OA\Response(response=422, ref="#/components/responses/RecordNotFound"),
      *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
