@@ -87,9 +87,11 @@
                     const wrap = $('wrap');
                     clear(wrap);
                     const table = document.createElement('table');
-                    table.style.width = S.widths.reduce((a, b) => a + b, 0) + 'px';
+                    const sum = S.widths.reduce((a, b) => a + b, 0);
+                    const scale = Math.max(1, (wrap.clientWidth - 4) / sum);
+                    table.style.width = Math.round(sum * scale) + 'px';
                     const group = document.createElement('colgroup');
-                    S.widths.forEach((w) => { const col = document.createElement('col'); col.style.width = w + 'px'; group.appendChild(col); });
+                    S.widths.forEach((w) => { const col = document.createElement('col'); col.style.width = Math.round(w * scale) + 'px'; group.appendChild(col); });
                     table.appendChild(group);
                     const thead = document.createElement('thead');
                     const head = document.createElement('tr');
@@ -232,8 +234,8 @@
                     app.resize();
                 }
 
-                $('wrap').addEventListener('scroll', () => requestAnimationFrame(paint));
-                window.addEventListener('resize', () => requestAnimationFrame(paint));
+                $('wrap').addEventListener('scroll', paint, { passive: true });
+                window.addEventListener('resize', paint);
                 $('search').addEventListener('input', (event) => {
                     clearTimeout(timer);
                     timer = setTimeout(() => { S.search = event.target.value.trim(); $('wrap').scrollTop = 0; rebuild(); }, 250);
