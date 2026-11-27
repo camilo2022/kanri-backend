@@ -40,4 +40,9 @@ return [
         'password' => env('SIESA_PASSWORD'),
     ],
 
+    // Chrome con el que se imprimen los PDF. Sin ruta, ChromePdfService lo busca solo en el equipo
+    'chrome' => [
+        'path' => env('CHROME_PATH'),
+    ],
+
 ];

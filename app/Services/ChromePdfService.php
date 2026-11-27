@@ -44,7 +44,8 @@ class ChromePdfService
         file_put_contents($file, $html);
 
         // El servidor web arranca a Chrome sin HOME y entonces no encuentra las fuentes de ~/.fonts, que el pie necesita
-        $browser = (new BrowserFactory)->createBrowser([
+        // La ruta sale de la configuración y no del .env, para que siga funcionando cuando la configuración está en caché
+        $browser = (new BrowserFactory(config('services.chrome.path') ?: null))->createBrowser([
             'noSandbox' => true,
             'windowSize' => [1240, 1754],
             'envVariables' => array_filter(['HOME' => $this->home()]),
