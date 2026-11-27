@@ -51,7 +51,7 @@ class AssistantLoginController extends Controller
 
         $throttle->succeed($username, $request->ip());
 
-        if (! $user->hasAnyPermission([ActorResolver::PERMISSION])) {
+        if (! $user->hasDirectPermission(ActorResolver::PERMISSION)) {
             return back()->withInput($request->only('username'))->withErrors([
                 'username' => 'Tu usuario no tiene permiso para usar el asistente. Pide a un administrador de Kanri que te lo dé.',
             ]);

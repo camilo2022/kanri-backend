@@ -45,7 +45,7 @@ class SchemaCatalog
         $allowed = [];
 
         foreach (config('assistant_tables.catalogs', []) as $item_id => $catalog) {
-            if ($catalog['permissions'] && $actor->hasAnyPermission($catalog['permissions'])) {
+            if ($catalog['permissions'] && $actor->getDirectPermissions()->whereIn('name', $catalog['permissions'])->isNotEmpty()) {
                 $allowed[$item_id] = $catalog['name'];
             }
         }
@@ -63,7 +63,7 @@ class SchemaCatalog
             return $this->allowedCatalogs($actor) !== [];
         }
 
-        return $actor->hasAnyPermission($this->permissions($table));
+        return $actor->getDirectPermissions()->whereIn('name', $this->permissions($table))->isNotEmpty();
     }
 
     /**

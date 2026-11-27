@@ -19,7 +19,8 @@ class PermissionService
      */
     public function authorize(?Authenticatable $user, array $permissions): bool
     {
-        if ($user && $user->hasAnyPermission($permissions)) {
+        // Solo permisos directos: el rol agrupa, no da acceso a todas sus acciones
+        if ($user && $user->getDirectPermissions()->whereIn('name', $permissions)->isNotEmpty()) {
             return true;
         }
 

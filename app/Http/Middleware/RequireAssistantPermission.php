@@ -16,7 +16,7 @@ class RequireAssistantPermission
     {
         $user = $request->user('web');
 
-        if ($user && ! $user->can('assistant.connect')) {
+        if ($user && ! $user->hasDirectPermission('assistant.connect')) {
             return response()->view('oauth.denied', ['username' => $user->username], 403);
         }
 
