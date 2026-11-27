@@ -107,7 +107,7 @@
             @font-face {
                 font-family: "{{ $family }}";
                 font-weight: {{ $weight }};
-                src: url("data:font/ttf;base64,{{ base64_encode(file_get_contents(storage_path('fonts/' . $file . '.ttf'))) }}") format("truetype");
+                src: url("file:///{{ ltrim(str_replace('\\', '/', storage_path('fonts/' . $file . '.ttf')), '/') }}") format("truetype");
             }
         @endforeach
 
