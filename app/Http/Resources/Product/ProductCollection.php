@@ -36,6 +36,8 @@ class ProductCollection extends ResourceCollection
                     'subcategory' => $product->subcategory,
                     'technical_sheet' => $product->technical_sheet ?? $product->technical_sheets->first(),
                     'original' => $product->technical_sheets->isEmpty(),
+                    // Dirección firmada (sin vencimiento) de la ficha de procesos que abre el navegador
+                    'process_pdf_url' => $product->technical_sheet?->uuid ? TechnicalSheet::processPdfUrl($product->technical_sheet->uuid, $product->code) : null,
                     'technical_sheet_has_audits' => isset($sheet_audited[$product->technical_sheet?->id]),
                 ];
             }),

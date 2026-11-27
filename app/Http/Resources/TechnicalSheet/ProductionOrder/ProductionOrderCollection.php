@@ -23,6 +23,9 @@ class ProductionOrderCollection extends ResourceCollection
                     'id' => $production_order->id,
                     'has_audits' => isset($audited[$production_order->id]),
                     'uuid' => $production_order->uuid ?? null,
+                    // Direcciones firmadas (sin vencimiento) que abre el navegador para ver los PDF
+                    'pdf_url' => $production_order->uuid ? $production_order->pdfUrl() : null,
+                    'technical_sheet_pdf_url' => $production_order->uuid ? $production_order->technicalSheetPdfUrl() : null,
                     'technical_sheet_id' => $production_order->technical_sheet_id,
                     'production_place' => $production_order->production_place,
                     'supplier_id' => $production_order->supplier_id,

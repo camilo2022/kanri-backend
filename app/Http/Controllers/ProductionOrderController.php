@@ -18,7 +18,6 @@ use App\Models\ProductionOrderDetailQuantities;
 use App\Models\Supply;
 use App\Services\ChromePdfService;
 use App\Services\FileService;
-use App\Services\PdfLinkService;
 use App\Services\ProductionOrderCurveService;
 use App\Services\QrCodeService;
 use App\Traits\ApiMessage;
@@ -863,7 +862,7 @@ class ProductionOrderController extends Controller
      *     path="/technical_sheets/production_orders/pdf/{uuid}/{name}",
      *     tags={"Technical Sheets › Production Orders"},
      *     summary="Ver el PDF de una orden de producción (enlace firmado temporal)",
-     *     description="Entrega el PDF de la orden sin pedir sesión: la ruta está protegida por **firma** en la dirección (`signature`, y `expires` en las temporales), no por token. Hay dos clases de enlace: el temporal (con `{name}` y vence a los 5 minutos) lo devuelve `download_pdf` y entrega el PDF ya generado; el del código QR del documento, sin `name` ni vencimiento, genera el PDF de nuevo. El PDF (A4 horizontal, nombre `PO-<referencia>-<corte>.pdf`) lleva el diseño de la orden y, al final, las páginas del PDF de trazos si existe. Responde el archivo, no JSON.",
+     *     description="Entrega el PDF de la orden sin pedir sesión: la ruta está protegida por **firma** en la dirección (`signature`, sin vencimiento), no por token. La dirección con `{name}` la envía la lista de órdenes en `pdf_url`; la del código QR del documento va sin `name`. En los dos casos genera el PDF en ese momento. El PDF (A4 horizontal, nombre `PO-<referencia>-<corte>.pdf`) lleva el diseño de la orden y, al final, las páginas del PDF de trazos si existe. Responde el archivo, no JSON.",
      *     @OA\Parameter(
      *         name="uuid",
      *         in="path",
@@ -875,7 +874,7 @@ class ProductionOrderController extends Controller
      *         name="name",
      *         in="path",
      *         required=true,
-     *         description="Nombre del archivo que devolvió `download_pdf`; permite entregar el PDF guardado en lugar de generarlo de nuevo.",
+     *         description="Nombre del archivo (`PO-<referencia>-<corte>.pdf`), para que el navegador lo muestre y lo guarde con ese nombre.",
      *         @OA\Schema(type="string", example="PO-LM4521-A.pdf")
      *     ),
      *     @OA\Parameter(
@@ -884,13 +883,6 @@ class ProductionOrderController extends Controller
      *         required=true,
      *         description="Firma de la dirección; la agrega el sistema al generar el enlace.",
      *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\Parameter(
-     *         name="expires",
-     *         in="query",
-     *         required=false,
-     *         description="Marca de vencimiento; solo viene en los enlaces temporales.",
-     *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -936,13 +928,6 @@ class ProductionOrderController extends Controller
      *         description="Firma de la dirección; la agrega el sistema al generar el enlace.",
      *         @OA\Schema(type="string")
      *     ),
-     *     @OA\Parameter(
-     *         name="expires",
-     *         in="query",
-     *         required=false,
-     *         description="Marca de vencimiento; solo viene en los enlaces temporales.",
-     *         @OA\Schema(type="integer")
-     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="PDF de la orden de producción (se muestra en línea).",
@@ -967,54 +952,10 @@ class ProductionOrderController extends Controller
      *     ),
      *     @OA\Response(response=500, ref="#/components/responses/ServerError")
      * )
-     *
-     * @OA\Get(
-     *     path="/technical_sheets/production_orders/download_pdf/{uuid}",
-     *     tags={"Technical Sheets › Production Orders"},
-     *     summary="Generar el PDF de una orden de producción desde el sistema",
-     *     description="Ruta con sesión que atiende el mismo método `pdf`: genera el PDF, lo guarda unos minutos y devuelve la dirección firmada temporal (5 minutos) que lo entrega en `/pdf/{uuid}/{name}`; el navegador abre esa dirección. No exige un permiso concreto, solo estar autenticado.",
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="uuid",
-     *         in="path",
-     *         required=true,
-     *         description="Identificador público (`uuid`) de la orden, el que trae la lista en `uuid`. Debe existir.",
-     *         @OA\Schema(type="string", format="uuid", example="9b2f3a54-6c1e-4d57-8a0f-1e2d3c4b5a69")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Dirección firmada del PDF generado",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(property="url", type="string", description="Enlace firmado temporal que termina en el nombre del PDF.", example="http://kanri-backend.test/api/technical_sheets/production_orders/pdf/9b2f3a54-6c1e-4d57-8a0f-1e2d3c4b5a69/PO-LM4521-A.pdf?expires=1795600000&signature=0f1e2d3c4b5a6978")
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Success"),
-     *             @OA\Property(property="error", type="boolean", example=false)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="No existe una orden con ese `uuid`.",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ValidationErrorResponse",
-     *             example={"message": "Error de validación.", "attributes": {"id": "Identificador de la orden de producción"}, "errors": {"uuid": {"No hay ningún registro."}}}
-     *         )
-     *     ),
-     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
-     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
-     * )
      */
     public function pdf(ProductionOrderExportPDFRequest $request, string $uuid)
     {
         try {
-            // La dirección firmada que pidió el sistema entrega el PDF que ya se generó (ver PdfLinkService)
-            if ($request->routeIs('production_orders.technical_sheets.pdf') && ($cached = app(PdfLinkService::class)->cached('production_orders.technical_sheets.pdf', $uuid, $request->route('name')))) {
-                return $cached;
-            }
-
             $production_order = ProductionOrder::with([
                 'technical_sheet' => [
                     'collection',
@@ -1050,8 +991,7 @@ class ProductionOrderController extends Controller
 
             $qr = app(QrCodeService::class)->generate($pdfUrl);
 
-            // El documento se llama PO- + la referencia con su lote
-            $name = 'PO-'.($production_order->technical_sheet->product->code ?? '-').'-'.($production_order->cut ?? '-');
+            $name = $production_order->pdfName();
 
             // Se imprime con Chrome en A4 horizontal, con el diseño de las fichas; los trazos se pegan después con FPDI
             $image = fn (string $path) => 'data:image/png;base64,'.base64_encode(file_get_contents(public_path($path)));
@@ -1140,11 +1080,6 @@ class ProductionOrderController extends Controller
             $fileName = $name.'.pdf';
 
             $fpdi->SetTitle($name, true);
-
-            // Desde el sistema (ruta con sesión) se guarda y se devuelve la dirección firmada que termina en el nombre
-            if (! $request->routeIs('production_orders.technical_sheets.pdf')) {
-                return $this->successResponse(['url' => app(PdfLinkService::class)->store('production_orders.technical_sheets.pdf', $uuid, $fileName, $fpdi->Output('S'))]);
-            }
 
             return response(
                 $fpdi->Output('S'),

@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\URL;
 use OwenIt\Auditing\Auditable as Auditing;
 use OwenIt\Auditing\Contracts\Auditable;
 
@@ -80,6 +81,32 @@ class ProductionOrder extends Model implements Auditable
         'settings' => 'object',
         'date' => 'datetime',
     ];
+
+    /**
+     * PDF de la orden: PO- + la referencia con su lote. Su dirección firmada no vence (la usan las listas y el QR).
+     */
+    public function pdfName(): string
+    {
+        return 'PO-'.($this->technical_sheet->product->code ?? '-').'-'.($this->cut ?? '-');
+    }
+
+    public function pdfUrl(): string
+    {
+        return URL::signedRoute('production_orders.technical_sheets.pdf', ['uuid' => $this->uuid, 'name' => $this->pdfName().'.pdf']);
+    }
+
+    /**
+     * Ficha técnica del lote en PDF: TS- + la referencia con su lote (TS-BL563082-A).
+     */
+    public function technicalSheetPdfName(): string
+    {
+        return 'TS-'.($this->technical_sheet->product->code ?? '-').'-'.($this->cut ?? '-');
+    }
+
+    public function technicalSheetPdfUrl(): string
+    {
+        return URL::signedRoute('technical_sheets.pdf', ['uuid' => $this->uuid, 'name' => $this->technicalSheetPdfName().'.pdf']);
+    }
 
     public function technical_sheet(): BelongsTo
     {

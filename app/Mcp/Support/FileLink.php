@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 /**
  * Archivos que devuelven las rutas (Excel, etc.) cuando las pide el asistente. El chat no puede recibir un archivo, así
  * que se guarda unos minutos y se entrega una dirección firmada y temporal para que la persona lo descargue con su
- * navegador. Mismo mecanismo que los PDF (PdfLinkService).
+ * navegador.
  */
 class FileLink
 {

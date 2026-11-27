@@ -14,7 +14,6 @@ use App\Models\Subprocess;
 use App\Models\TechnicalSheet;
 use App\Models\TechnicalSheetDetail;
 use App\Services\ChromePdfService;
-use App\Services\PdfLinkService;
 use App\Services\FileService;
 use App\Services\ProductivityDetailService;
 use App\Services\QrCodeService;
@@ -102,19 +101,6 @@ use Illuminate\Support\Str;
  *         @OA\Property(property="model_types", type="array", description="Catálogo de modelos que pueden alimentar las tablas dinámicas (`getModelTypes()`).", @OA\Items(type="object", additionalProperties=true))
  *     ),
  *     @OA\Property(property="message", type="string", example="Operación completada con éxito."),
- *     @OA\Property(property="error", type="boolean", example=false)
- * )
- *
- * @OA\Schema(
- *     schema="TechnicalSheetPdfLinkResponse",
- *     type="object",
- *     description="Respuesta de las rutas `download_*` (con sesión): no devuelve el PDF sino la dirección firmada desde la cual se entrega.",
- *     @OA\Property(
- *         property="data",
- *         type="object",
- *         @OA\Property(property="url", type="string", description="Dirección firmada y temporal (vence a los 5 minutos) que termina en el nombre del PDF.", example="http://kanri-backend.test/api/technical_sheets/pdf/9b2f3c1e-7a44-4d0e-8f5a-2c61d0b7e913/TS-XJ1042-A.pdf?expires=1795600000&signature=firma")
- *     ),
- *     @OA\Property(property="message", type="string", example="Success"),
  *     @OA\Property(property="error", type="boolean", example=false)
  * )
  *
@@ -683,57 +669,20 @@ class TechnicalSheetController extends Controller
     }
 
     /**
-     * Nombre de la ficha técnica en PDF: TS- + la referencia y el lote de la orden (TS-BL563082-A).
-     */
-    private function pdfName(TechnicalSheet $technical_sheet, ProductionOrder $production_order): string
-    {
-        return 'TS-'.($technical_sheet->product->code ?? '-').'-'.($production_order->cut ?? '-');
-    }
-
-    /**
-     * @OA\Get(
-     *     path="/technical_sheets/download_pdf/{uuid}",
-     *     tags={"Technical Sheets"},
-     *     summary="Pedir el PDF de la ficha técnica de un lote",
-     *     description="Ruta con sesión. Genera el PDF de la ficha técnica del lote (orden de producción) con ese `uuid`, lo guarda unos minutos y **no devuelve el archivo** sino una dirección firmada y temporal (vence a los 5 minutos) que termina en el nombre `TS-<referencia>-<lote>.pdf`; esa dirección se abre con la ruta `GET /technical_sheets/pdf/{uuid}/{name}`. Ojo: el `uuid` es el de la **orden de producción**, no el de la ficha. El Request no exige permisos: basta con estar autenticado.",
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(name="uuid", in="path", required=true, description="UUID de la orden de producción (lote) cuya ficha se imprime.", @OA\Schema(type="string", format="uuid", example="9b2f3c1e-7a44-4d0e-8f5a-2c61d0b7e913")),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Dirección firmada del PDF generado",
-     *         @OA\JsonContent(ref="#/components/schemas/TechnicalSheetPdfLinkResponse")
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="El `uuid` no corresponde a ninguna orden de producción.",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ValidationErrorResponse",
-     *             example={
-     *                 "message": "Error de validación.",
-     *                 "attributes": {"uuid": "Código UUID de la ficha tecníca", "production_order_id": "Identificador de la orden de producción"},
-     *                 "errors": {"uuid": {"No está registrado."}}
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
-     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
-     * )
-     *
      * @OA\Get(
      *     path="/technical_sheets/pdf/{uuid}/{name}",
      *     tags={"Technical Sheets"},
      *     summary="Descargar el PDF de la ficha técnica de un lote (dirección firmada)",
-     *     description="Sin token Bearer: la protege la firma de la URL (middleware `signed`), no la sesión. Es la dirección que devuelve `download_pdf` (con `expires` y `signature`) y la que lleva el código QR del PDF (sin `name` ni `expires`, ver la operación siguiente). Si hay un PDF guardado para ese `uuid` y `name` y no ha vencido, lo entrega tal cual; si no, lo genera de nuevo. Responde el archivo `application/pdf` (`inline`), no JSON. El `uuid` es el de la **orden de producción**.",
+     *     description="Sin token Bearer: la protege la firma de la URL (middleware `signed`), no la sesión. Es la dirección que envía la lista de órdenes en `technical_sheet_pdf_url` (firma sin vencimiento); la del código QR va sin `name` (ver la operación siguiente). Genera el PDF en ese momento. Responde el archivo `application/pdf` (`inline`), no JSON. El `uuid` es el de la **orden de producción**.",
      *     @OA\Parameter(name="uuid", in="path", required=true, description="UUID de la orden de producción (lote).", @OA\Schema(type="string", format="uuid", example="9b2f3c1e-7a44-4d0e-8f5a-2c61d0b7e913")),
-     *     @OA\Parameter(name="name", in="path", required=true, description="Nombre del archivo que devolvió `download_pdf`. Solo sirve para encontrar el PDF guardado y como nombre del archivo.", @OA\Schema(type="string", example="TS-XJ1042-A.pdf")),
+     *     @OA\Parameter(name="name", in="path", required=true, description="Nombre del archivo (`TS-<referencia>-<lote>.pdf`), para que el navegador lo muestre y lo guarde con ese nombre.", @OA\Schema(type="string", example="TS-XJ1042-A.pdf")),
      *     @OA\Parameter(name="signature", in="query", required=true, description="Firma de la URL, generada por el servidor.", @OA\Schema(type="string", example="firma")),
-     *     @OA\Parameter(name="expires", in="query", required=false, description="Marca de vencimiento (timestamp). Solo viene en las direcciones temporales de `download_pdf`.", @OA\Schema(type="integer", example=1795600000)),
      *     @OA\Response(
      *         response=200,
      *         description="PDF de la ficha técnica del lote",
      *         @OA\MediaType(mediaType="application/pdf", @OA\Schema(type="string", format="binary"))
      *     ),
-     *     @OA\Response(response=403, description="La firma de la URL no es válida o la dirección venció."),
+     *     @OA\Response(response=403, description="La firma de la URL no es válida."),
      *     @OA\Response(
      *         response=422,
      *         description="El `uuid` no corresponde a ninguna orden de producción.",
@@ -766,11 +715,6 @@ class TechnicalSheetController extends Controller
     public function pdf(TechnicalSheetExportPDFRequest $request, string $uuid)
     {
         try {
-            // La dirección firmada que pidió el sistema entrega el PDF que ya se generó (ver PdfLinkService)
-            if ($request->routeIs('technical_sheets.pdf') && ($cached = app(PdfLinkService::class)->cached('technical_sheets.pdf', $uuid, $request->route('name')))) {
-                return $cached;
-            }
-
             $production_order = ProductionOrder::with([
                 'technical_sheet' => [
                     'collection',
@@ -806,7 +750,7 @@ class TechnicalSheetController extends Controller
 
             $qr = app(QrCodeService::class)->generate($pdfUrl);
 
-            $name = $this->pdfName($production_order->technical_sheet, $production_order);
+            $name = $production_order->technicalSheetPdfName();
 
             $production_order->technical_sheet->technical_sheet_details =
                 $this->formatTechnicalSheetDetails(
@@ -837,11 +781,6 @@ class TechnicalSheetController extends Controller
 
             $fileName = $name.'.pdf';
 
-            // Desde el sistema (ruta con sesión) se guarda y se devuelve la dirección firmada que termina en el nombre
-            if (! $request->routeIs('technical_sheets.pdf')) {
-                return $this->successResponse(['url' => app(PdfLinkService::class)->store('technical_sheets.pdf', $uuid, $fileName, $output)]);
-            }
-
             return response(
                 $output,
                 200,
@@ -867,48 +806,19 @@ class TechnicalSheetController extends Controller
      * subprocesos y operaciones y, al final, la línea de trabajo por la que pasa la referencia.
      *
      * @OA\Get(
-     *     path="/technical_sheets/download_process_pdf/{uuid}",
-     *     tags={"Technical Sheets"},
-     *     summary="Pedir el PDF de la ficha de procesos",
-     *     description="Ruta con sesión. Genera la ficha de procesos de la ficha técnica con ese `uuid`: la ficha sin lote, curva ni destinos, con sus procesos, subprocesos y operaciones y, al final, la línea de trabajo por la que pasa la referencia. **No devuelve el archivo** sino una dirección firmada y temporal (vence a los 5 minutos) que termina en el nombre `WS-<referencia>.pdf`; esa dirección se abre con `GET /technical_sheets/process_pdf/{uuid}/{name}`. Aquí el `uuid` es el de la **ficha técnica**. El Request no exige permisos: basta con estar autenticado.",
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(name="uuid", in="path", required=true, description="UUID de la ficha técnica (activa).", @OA\Schema(type="string", format="uuid", example="3f8c2a10-5b7d-4e6a-9c21-8d4e0f1a7b52")),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Dirección firmada del PDF generado",
-     *         @OA\JsonContent(ref="#/components/schemas/TechnicalSheetPdfLinkResponse")
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="El `uuid` no es válido o no corresponde a una ficha técnica activa.",
-     *         @OA\JsonContent(
-     *             ref="#/components/schemas/ValidationErrorResponse",
-     *             example={
-     *                 "message": "Error de validación.",
-     *                 "attributes": {"uuid": "Código UUID de la ficha técnica"},
-     *                 "errors": {"uuid": {"No está registrado."}}
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
-     *     @OA\Response(response=500, ref="#/components/responses/ServerError")
-     * )
-     *
-     * @OA\Get(
      *     path="/technical_sheets/process_pdf/{uuid}/{name}",
      *     tags={"Technical Sheets"},
      *     summary="Descargar el PDF de la ficha de procesos (dirección firmada)",
-     *     description="Sin token Bearer: la protege la firma de la URL (middleware `signed`). Es la dirección que devuelve `download_process_pdf` (con `expires` y `signature`). Si hay un PDF guardado para ese `uuid` y `name` y no ha vencido, lo entrega tal cual; si no, lo genera de nuevo. Responde el archivo `application/pdf` (`inline`), no JSON. El `uuid` es el de la **ficha técnica**.",
+     *     description="Sin token Bearer: la protege la firma de la URL (middleware `signed`). Es la dirección que envía la lista de productos en `process_pdf_url` (firma sin vencimiento). Genera el PDF en ese momento. Responde el archivo `application/pdf` (`inline`), no JSON. El `uuid` es el de la **ficha técnica**.",
      *     @OA\Parameter(name="uuid", in="path", required=true, description="UUID de la ficha técnica.", @OA\Schema(type="string", format="uuid", example="3f8c2a10-5b7d-4e6a-9c21-8d4e0f1a7b52")),
-     *     @OA\Parameter(name="name", in="path", required=true, description="Nombre del archivo que devolvió `download_process_pdf`. Solo sirve para encontrar el PDF guardado y como nombre del archivo.", @OA\Schema(type="string", example="WS-XJ1042.pdf")),
+     *     @OA\Parameter(name="name", in="path", required=true, description="Nombre del archivo (`WS-<referencia>.pdf`), para que el navegador lo muestre y lo guarde con ese nombre.", @OA\Schema(type="string", example="WS-XJ1042.pdf")),
      *     @OA\Parameter(name="signature", in="query", required=true, description="Firma de la URL, generada por el servidor.", @OA\Schema(type="string", example="firma")),
-     *     @OA\Parameter(name="expires", in="query", required=false, description="Marca de vencimiento (timestamp). Solo viene en las direcciones temporales de `download_process_pdf`.", @OA\Schema(type="integer", example=1795600000)),
      *     @OA\Response(
      *         response=200,
      *         description="PDF de la ficha de procesos",
      *         @OA\MediaType(mediaType="application/pdf", @OA\Schema(type="string", format="binary"))
      *     ),
-     *     @OA\Response(response=403, description="La firma de la URL no es válida o la dirección venció."),
+     *     @OA\Response(response=403, description="La firma de la URL no es válida."),
      *     @OA\Response(
      *         response=422,
      *         description="El `uuid` no corresponde a una ficha técnica activa.",
@@ -941,11 +851,6 @@ class TechnicalSheetController extends Controller
     public function process_pdf(TechnicalSheetProcessPdfRequest $request, string $uuid)
     {
         try {
-            // La dirección firmada que pidió el sistema entrega el PDF que ya se generó (ver PdfLinkService)
-            if ($request->routeIs('technical_sheets.process_pdf') && ($cached = app(PdfLinkService::class)->cached('technical_sheets.process_pdf', $uuid, $request->route('name')))) {
-                return $cached;
-            }
-
             $technical_sheet = TechnicalSheet::with([
                 'collection',
                 'subgroup',
@@ -966,8 +871,7 @@ class TechnicalSheetController extends Controller
 
             $technical_sheet->technical_sheet_details = $this->formatTechnicalSheetDetails($technical_sheet->technical_sheet_details);
 
-            // La ficha de procesos (workflow sheet) se llama WS- + la referencia
-            $name = 'WS-'.($technical_sheet->product->code ?? '-');
+            $name = TechnicalSheet::processPdfName($technical_sheet->product->code ?? null);
 
             // Se imprime con Chrome para que salga como el diseño (esquinas redondeadas, sombras, diagrama en SVG)
             $image = fn (string $path) => 'data:image/png;base64,'.base64_encode(file_get_contents(public_path($path)));
@@ -987,11 +891,6 @@ class TechnicalSheetController extends Controller
                     'margin_side' => 20,
                 ]
             );
-
-            // Desde el sistema (ruta con sesión) se guarda y se devuelve la dirección firmada que termina en el nombre
-            if (! $request->routeIs('technical_sheets.process_pdf')) {
-                return $this->successResponse(['url' => app(PdfLinkService::class)->store('technical_sheets.process_pdf', $uuid, $name.'.pdf', $output)]);
-            }
 
             return response($output, 200, [
                 'Content-Type' => 'application/pdf',

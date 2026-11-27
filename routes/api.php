@@ -548,9 +548,7 @@ Route::prefix('/technical_sheets')->group(function () {
         Route::post('/store', 'store')->middleware(['auth:sanctum']);
         Route::put('/update/{id}', 'update')->middleware(['auth:sanctum']);
         Route::get('/pdf/{uuid}/{name?}', 'pdf')->middleware(['signed'])->name('technical_sheets.pdf');
-        Route::get('/download_pdf/{uuid}', 'pdf')->middleware(['auth:sanctum']);
         Route::get('/process_pdf/{uuid}/{name?}', 'process_pdf')->middleware(['signed'])->name('technical_sheets.process_pdf');
-        Route::get('/download_process_pdf/{uuid}', 'process_pdf')->middleware(['auth:sanctum']);
     });
     Route::get('/audit/{id}', [AuditController::class, 'timeline'])->defaults('model', TechnicalSheet::class)->middleware(['auth:sanctum']);
 
@@ -561,7 +559,6 @@ Route::prefix('/technical_sheets')->group(function () {
             Route::post('/store', 'store')->middleware(['auth:sanctum']);
             Route::put('/update/{id}', 'update')->middleware(['auth:sanctum']);
             Route::get('/pdf/{uuid}/{name?}', 'pdf')->middleware(['signed'])->name('production_orders.technical_sheets.pdf');
-            Route::get('/download_pdf/{uuid}', 'pdf')->middleware(['auth:sanctum']);
         });
         Route::get('/audit/{id}', [AuditController::class, 'timeline'])->defaults('model', ProductionOrder::class)->middleware(['auth:sanctum']);
     });

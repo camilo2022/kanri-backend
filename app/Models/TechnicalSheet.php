@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use OwenIt\Auditing\Auditable as Auditing;
 use OwenIt\Auditing\Contracts\Auditable;
@@ -98,6 +99,19 @@ class TechnicalSheet extends Model implements Auditable
     public function derivatives()
     {
         return $this->morphMany(TechnicalSheet::class, 'model');
+    }
+
+    /**
+     * Ficha de procesos (workflow sheet) en PDF: WS- + la referencia. Su dirección firmada no vence (lista y QR).
+     */
+    public static function processPdfName(?string $code): string
+    {
+        return 'WS-'.($code ?? '-');
+    }
+
+    public static function processPdfUrl(string $uuid, ?string $code): string
+    {
+        return URL::signedRoute('technical_sheets.process_pdf', ['uuid' => $uuid, 'name' => self::processPdfName($code).'.pdf']);
     }
 
     public function product(): BelongsTo
