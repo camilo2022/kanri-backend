@@ -243,6 +243,9 @@ class MovementController extends Controller
     {
         try {
             $movements = Movement::with(['movement_details_input' => ['movement_detail_quantities'], 'movement_details_output' => ['movement_detail_quantities'], 'model', 'production_order_detail' => ['production_order_detail_quantities', 'production_order' => ['technical_sheet' => ['collection']], 'model' => ['trademark', 'subcategory' => ['category'], 'technical_sheets' => ['collection', 'subgroup', 'color', 'waistband_type', 'garment_type', 'wash_tone', 'boot_type', 'yoke_type', 'back_type'], 'technical_sheet' => ['collection', 'subgroup', 'color', 'waistband_type', 'garment_type', 'wash_tone', 'boot_type', 'yoke_type', 'back_type']]]])
+                ->when($request->boolean('with_stock'), function ($query) {
+                    return $query->withStock();
+                })
                 ->when($request->filled('search'), function ($query) use ($request) {
                     return $query->search($request->input('search'));
                 })

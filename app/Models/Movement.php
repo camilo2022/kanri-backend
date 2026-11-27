@@ -73,6 +73,21 @@ class Movement extends Model implements Auditable
         ];
     }
 
+    /**
+     * Movimientos con algo por mover: inventario (ingresos aprobados − salidas aprobadas y pendientes) mayor a 0, o un
+     * ingreso pendiente de aprobar. Las mismas cuentas de la columna Inventario de la lista.
+     */
+    public function scopeWithStock(Builder $query): Builder
+    {
+        $units = 'SELECT COALESCE(SUM(quantities.quantity), 0) FROM movement_details AS details JOIN movement_detail_quantities AS quantities ON quantities.movement_detail_id = details.id';
+
+        return $query->whereRaw(
+            "(({$units} WHERE details.movement_id = movements.id AND details.status = ?) > ({$units} WHERE details.model_type = ? AND details.model_id = movements.id AND details.status IN (?, ?))
+            OR EXISTS (SELECT 1 FROM movement_details AS details WHERE details.movement_id = movements.id AND details.status = ?))",
+            [MovementDetail::APPROVED, self::class, MovementDetail::APPROVED, MovementDetail::PENDING, MovementDetail::PENDING]
+        );
+    }
+
     public function scopeSearch(Builder $query, ?string $search = null): Builder
     {
         $search = trim((string) $search);

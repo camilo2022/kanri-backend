@@ -35,6 +35,7 @@ class MovementAllRequest extends FormRequest
             'per_page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['nullable', 'numeric'],
             'search' => ['nullable', 'string'],
+            'with_stock' => ['nullable', 'boolean'],
             'column' => ['nullable', 'string', 'in:'.implode(',', array_keys(Movement::sortable_columns()))],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
         ];
@@ -48,6 +49,12 @@ class MovementAllRequest extends FormRequest
             'search' => 'Filtro de Busqueda.',
             'column' => 'Columna a ordenar.',
             'dir' => 'Sentido del orden.',
+            'with_stock' => 'Solo con inventario',
         ];
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->merge(['with_stock' => $this->boolean('with_stock')]);
     }
 }
