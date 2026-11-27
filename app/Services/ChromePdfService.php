@@ -37,6 +37,9 @@ class ChromePdfService
             $page = $browser->createPage();
             $page->navigate('file:///'.str_replace('\\', '/', $file))->waitForNavigation();
 
+            // Sin esperar, en un servidor sin fuentes instaladas se imprime antes de que carguen las incrustadas y el texto sale invisible
+            $page->evaluate('Promise.all(Array.from(document.fonts).map(font => font.load().catch(() => null))).then(() => document.fonts.ready).then(() => true)')->getReturnValue(30000);
+
             $mm = fn (float $value) => $value / 25.4;
 
             return base64_decode($page->pdf([
