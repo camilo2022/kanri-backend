@@ -20,7 +20,6 @@ return new class extends Migration
         Schema::create('employees', function (Blueprint $table) {
             $table->id()->comment('Identificador');
             $table->foreignIdFor(Person::class)->unique()->comment('Persona')->constrained()->onUpdate('cascade')->onDelete('cascade');
-            $table->string('operation_center')->nullable()->comment('Centro de operación');
             $table->foreignIdFor(Position::class)->comment('Cargo')->constrained()->onUpdate('cascade')->onDelete('cascade');
             $table->foreignIdFor(RiskManager::class)->comment('Administradora de riesgos')->constrained()->onUpdate('cascade')->onDelete('cascade');
             $table->foreignIdFor(HealthEntity::class)->comment('Entidad de salud')->constrained()->onUpdate('cascade')->onDelete('cascade');

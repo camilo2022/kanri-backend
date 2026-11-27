@@ -42,7 +42,6 @@ class UserSeeder extends Seeder
 
         $employee = new Employee();
         $employee->person_id = $person->id;
-        $employee->operation_center = 'Principal';
         $employee->position_id = Position::where('name', 'NO APLICA')->value('id');
         $employee->risk_manager_id = RiskManager::where('name', 'NO APLICA')->value('id');
         $employee->health_entity_id = HealthEntity::where('name', 'NO APLICA')->value('id');

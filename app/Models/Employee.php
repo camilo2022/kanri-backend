@@ -20,7 +20,6 @@ class Employee extends Model implements Auditable
 
     protected $fillable = [
         'person_id',
-        'operation_center',
         'position_id',
         'risk_manager_id',
         'health_entity_id',
@@ -33,7 +32,6 @@ class Employee extends Model implements Auditable
 
     protected $auditInclude = [
         'person_id',
-        'operation_center',
         'position_id',
         'risk_manager_id',
         'health_entity_id',
@@ -142,7 +140,6 @@ class Employee extends Model implements Auditable
     {
         return [
             'id' => 'id',
-            'operation_center' => 'operation_center',
             'start_date' => 'start_date',
             'end_date' => 'end_date',
             'document' => 'person.document',

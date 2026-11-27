@@ -17,7 +17,6 @@ class EmployeeCollection extends ResourceCollection
                     'id' => $employee->id,
                     'has_audits' => isset($audited[$employee->id]),
                     'person_id' => $employee->person_id,
-                    'operation_center' => $employee->operation_center,
                     'position_id' => $employee->position_id,
                     'risk_manager_id' => $employee->risk_manager_id,
                     'health_entity_id' => $employee->health_entity_id,

@@ -43,7 +43,6 @@ use App\Traits\ApiResponser;
  *
  *     @OA\Property(property="id", type="integer", example=42),
  *     @OA\Property(property="person_id", type="integer", example=57),
- *     @OA\Property(property="operation_center", type="string", nullable=true, description="Código del centro de operaciones (texto libre).", example="050"),
  *     @OA\Property(property="position_id", type="integer", example=58),
  *     @OA\Property(property="risk_manager_id", type="integer", example=94),
  *     @OA\Property(property="health_entity_id", type="integer", example=101),
@@ -94,7 +93,6 @@ use App\Traits\ApiResponser;
  *     required={"person_id", "position_id", "risk_manager_id", "health_entity_id", "pension_fund_id", "compensation_fund_id", "start_date"},
  *
  *     @OA\Property(property="person_id", type="integer", description="Persona activa. Una persona solo puede tener un empleado.", example=57),
- *     @OA\Property(property="operation_center", type="string", nullable=true, description="Centro de operaciones. Opcional.", example="050"),
  *     @OA\Property(property="position_id", type="integer", description="Cargo activo.", example=58),
  *     @OA\Property(property="risk_manager_id", type="integer", description="Administradora de riesgos (ARL) activa.", example=94),
  *     @OA\Property(property="health_entity_id", type="integer", description="Entidad de salud (EPS) activa.", example=101),
@@ -150,7 +148,7 @@ class EmployeeController extends Controller
      *         required=false,
      *         description="Columna para ordenar. Solo se aplica junto con `dir`.",
      *
-     *         @OA\Schema(type="string", enum={"id", "person_id", "operation_center", "position_id", "risk_manager_id", "health_entity_id", "pension_fund_id", "compensation_fund_id", "start_date", "end_date", "created_at", "updated_at", "deleted_at"}, example="start_date")
+     *         @OA\Schema(type="string", enum={"id", "person_id", "position_id", "risk_manager_id", "health_entity_id", "pension_fund_id", "compensation_fund_id", "start_date", "end_date", "created_at", "updated_at", "deleted_at"}, example="start_date")
      *     ),
      *
      *     @OA\Parameter(ref="#/components/parameters/Dir"),
@@ -313,7 +311,7 @@ class EmployeeController extends Controller
      *             ref="#/components/schemas/ValidationErrorResponse",
      *             example={
      *                 "message": "Error de validación.",
-     *                 "attributes": {"person_id": "Persona", "operation_center": "Centro de operaciones", "position_id": "Cargo", "risk_manager_id": "Administradora de Riesgos", "health_entity_id": "Entidad de Salud", "pension_fund_id": "Fondo de pensión", "compensation_fund_id": "Caja de compensación", "start_date": "Fecha inicio", "end_date": "Fecha fin"},
+     *                 "attributes": {"person_id": "Persona", "position_id": "Cargo", "risk_manager_id": "Administradora de Riesgos", "health_entity_id": "Entidad de Salud", "pension_fund_id": "Fondo de pensión", "compensation_fund_id": "Caja de compensación", "start_date": "Fecha inicio", "end_date": "Fecha fin"},
      *                 "errors": {"person_id": {"Ya está registrado."}, "start_date": {"Formato inválido. Permitido Y-m-d."}}
      *             }
      *         )
@@ -329,7 +327,6 @@ class EmployeeController extends Controller
         try {
             $employee = new Employee;
             $employee->person_id = $request->integer('person_id');
-            $employee->operation_center = $request->input('operation_center', null);
             $employee->position_id = $request->integer('position_id');
             $employee->risk_manager_id = $request->integer('risk_manager_id');
             $employee->health_entity_id = $request->integer('health_entity_id');
@@ -362,7 +359,7 @@ class EmployeeController extends Controller
      *     path="/employees/update/{id}",
      *     tags={"Employees"},
      *     summary="Editar un empleado",
-     *     description="Reemplaza todos los campos. Si no se envía `operation_center` o `end_date`, quedan en `null`.",
+     *     description="Reemplaza todos los campos. Si no se envía `end_date`, queda en `null`.",
      *     security={{"sanctum":{}}},
      *
      *     @OA\Parameter(ref="#/components/parameters/PathId"),
@@ -372,7 +369,7 @@ class EmployeeController extends Controller
      *
      *         @OA\JsonContent(
      *             ref="#/components/schemas/EmployeeRequest",
-     *             example={"person_id": 57, "operation_center": "051", "position_id": 59, "risk_manager_id": 94, "health_entity_id": 101, "pension_fund_id": 152, "compensation_fund_id": 163, "start_date": "2026-06-02", "end_date": "2026-12-31"}
+     *             example={"person_id": 57, "position_id": 59, "risk_manager_id": 94, "health_entity_id": 101, "pension_fund_id": 152, "compensation_fund_id": 163, "start_date": "2026-06-02", "end_date": "2026-12-31"}
      *         )
      *     ),
      *
@@ -391,7 +388,7 @@ class EmployeeController extends Controller
      *             ref="#/components/schemas/ValidationErrorResponse",
      *             example={
      *                 "message": "Error de validación.",
-     *                 "attributes": {"id": "Identificador del empleado", "person_id": "Persona", "operation_center": "Centro de operaciones", "position_id": "Cargo", "risk_manager_id": "Administradora de Riesgos", "health_entity_id": "Entidad de Salud", "pension_fund_id": "Fondo de pensión", "compensation_fund_id": "Caja de compensación", "start_date": "Fecha inicio", "end_date": "Fecha fin"},
+     *                 "attributes": {"id": "Identificador del empleado", "person_id": "Persona", "position_id": "Cargo", "risk_manager_id": "Administradora de Riesgos", "health_entity_id": "Entidad de Salud", "pension_fund_id": "Fondo de pensión", "compensation_fund_id": "Caja de compensación", "start_date": "Fecha inicio", "end_date": "Fecha fin"},
      *                 "errors": {"end_date": {"Debe ser una fecha posterior a Fecha inicio."}}
      *             }
      *         )
@@ -407,7 +404,6 @@ class EmployeeController extends Controller
         try {
             $employee = Employee::findOrFail($id);
             $employee->person_id = $request->integer('person_id');
-            $employee->operation_center = $request->input('operation_center', null);
             $employee->position_id = $request->integer('position_id');
             $employee->risk_manager_id = $request->integer('risk_manager_id');
             $employee->health_entity_id = $request->integer('health_entity_id');
