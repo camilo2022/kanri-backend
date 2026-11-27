@@ -73,7 +73,6 @@ class ModulesAndSubmodulesSeeder extends Seeder
                     ['name' => 'Productos', 'url' => '/products', 'icon' => 'FaBoxes', 'permission' => 'products.all'],
                     ['name' => 'G. de Producción', 'url' => '/management/production', 'icon' => 'FaCubes', 'permission' => 'technical_sheets.production_orders.all'],
                     ['name' => 'C. de Producción', 'url' => '/production_schedule', 'icon' => 'FaCalendarAlt', 'permission' => 'technical_sheets.production_orders.find'],
-                    ['name' => 'Reportes', 'url' => '/reports', 'icon' => 'FaFileInvoice', 'permission' => 'reports.view'],
                 ],
             ],
             [
@@ -81,6 +80,12 @@ class ModulesAndSubmodulesSeeder extends Seeder
                 'submodules' => [
                     ['name' => 'Movimientos', 'url' => '/movements', 'icon' => 'FaExchangeAlt', 'permission' => 'movements.all'],
                     ['name' => 'Productividad', 'url' => '/productivity', 'icon' => 'FaBusinessTime', 'permission' => 'productivity.all'],
+                ],
+            ],
+            [
+                'module' => ['name' => 'Reportes', 'icon' => 'FaFileInvoice'],
+                'submodules' => [
+                    ['name' => 'Reportes', 'url' => '/reports', 'icon' => 'FaFileInvoice', 'permission' => 'reports.view'],
                 ],
             ],
         ];
