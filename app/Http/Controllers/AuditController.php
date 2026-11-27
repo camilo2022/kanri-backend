@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Audit\AuditTimelineRequest;
 use App\Http\Resources\Audit\AuditTimelineCollection;
+use App\Models\Productivity;
 use App\Models\ProductivityDetail;
 use App\Models\Stop;
 use App\Support\AuditResolver;
@@ -948,7 +949,8 @@ class AuditController extends Controller
         try {
             $model = $request->route('model');
             $record = AuditResolver::queryOf($model)->findOrFail($id);
-            $blocks = $this->timeline_block([$model => [$record->id]]);
+            // El turno muestra también sus registros de trabajo (excepción a «solo el registro», 2026-11-27)
+            $blocks = $this->timeline_block($record instanceof Productivity ? $record->auditTrail() : [$model => [$record->id]]);
 
             $page = DB::query()->fromSub($blocks, 'blocks')
                 ->selectRaw('MIN(id) as first_id, MAX(id) as last_id, MAX(is_click) as is_click, SUM(is_plus) as plus, SUM(is_minus) as minus, MAX(created_at) as last_at')

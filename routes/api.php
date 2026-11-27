@@ -96,6 +96,7 @@ use App\Models\Position;
 use App\Models\Process;
 use App\Models\Product;
 use App\Models\ProductionOrder;
+use App\Models\Productivity;
 use App\Models\RiskManager;
 use App\Models\Role;
 use App\Models\Rule;
@@ -454,6 +455,7 @@ Route::prefix('/productivity')->group(function () {
         Route::delete('/delete/{id}', 'delete')->middleware(['auth:sanctum']);
         Route::patch('/restore/{id}', 'restore')->middleware(['auth:sanctum']);
     });
+    Route::get('/audit/{id}', [AuditController::class, 'timeline'])->defaults('model', Productivity::class)->middleware(['auth:sanctum']);
 
     Route::prefix('/details')->group(function () {
         Route::controller(ProductivityDetailController::class)->group(function () {

@@ -2,6 +2,9 @@
 
 namespace App\Http\Resources\Productivity;
 
+use App\Models\Productivity;
+use App\Models\ProductivityDetail;
+use App\Support\AuditResolver;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
@@ -9,8 +12,14 @@ class ProductivityCollection extends ResourceCollection
 {
     public function toArray($request)
     {
+        $ids = $this->collection->pluck('id')->all();
+        $audited = AuditResolver::auditedIds(Productivity::class, $ids);
+        $details = Productivity::auditDetailIds($ids);
+        $with_details = collect(array_keys(AuditResolver::auditedIds(ProductivityDetail::class, $details->keys()->all())))
+            ->map(fn ($detail_id) => $details[$detail_id])->flip();
+
         return [
-            'productivities' => $this->collection->map(function ($productivity) {
+            'productivities' => $this->collection->map(function ($productivity) use ($audited, $with_details) {
                 return [
                     'id' => $productivity->id,
                     'model_type' => $productivity->model_type,
@@ -26,6 +35,7 @@ class ProductivityCollection extends ResourceCollection
                     'updated_at' => $this->formatDate($productivity->updated_at),
                     'deleted_at' => $this->formatDate($productivity->deleted_at),
                     'status' => $productivity->status,
+                    'has_audits' => isset($audited[$productivity->id]) || isset($with_details[$productivity->id]),
                 ];
             }),
             'meta' => [

@@ -54,7 +54,7 @@ class RouteCatalog
     public function details(LaravelRoute $route): array
     {
         $request_class = $this->requestClass($route);
-        $instance = $this->instance($request_class);
+        $instance = $this->instance($request_class, $route);
 
         return [
             'request' => $request_class,
@@ -78,7 +78,7 @@ class RouteCatalog
 
     public function permissionsFor(LaravelRoute $route): array
     {
-        return $this->permissions($this->instance($this->requestClass($route)));
+        return $this->permissions($this->instance($this->requestClass($route), $route));
     }
 
     public function promptClass(string $method, string $path): ?string
@@ -203,14 +203,15 @@ class RouteCatalog
         return null;
     }
 
-    private function instance(?string $class): ?FormRequest
+    private function instance(?string $class, ?LaravelRoute $route = null): ?FormRequest
     {
         if (! $class) {
             return null;
         }
 
         try {
-            return new $class;
+            // Con la ruta, permissions() puede leer su defaults (el historial pide el permiso según el modelo)
+            return (new $class)->setRouteResolver(fn () => $route);
         } catch (Throwable) {
             return null;
         }

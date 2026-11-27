@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable as Auditing;
+use OwenIt\Auditing\Models\Audit;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class Productivity extends Model implements Auditable
@@ -115,6 +116,25 @@ class Productivity extends Model implements Auditable
 
         return $plan->plannedOrders($this->model, $date, $this->endsAt()->min(now()))
             ->each(fn (ProductionOrder $production_order) => $production_order->setAttribute('plan_progress', $plan->progress($production_order, $this->model, $date)));
+    }
+
+    /**
+     * Registros de trabajo de los turnos para su historial: [detalle => turno]. Incluye los eliminados, que solo quedan
+     * en la auditoría (su `deleted` guarda el productivity_id).
+     */
+    public static function auditDetailIds(array $productivity_ids): \Illuminate\Support\Collection
+    {
+        $existing = ProductivityDetail::whereIn('productivity_id', $productivity_ids)->pluck('productivity_id', 'id');
+        $deleted = Audit::where('auditable_type', ProductivityDetail::class)->where('event', 'deleted')
+            ->whereIn('old_values->productivity_id', $productivity_ids)->get(['auditable_id', 'old_values'])
+            ->mapWithKeys(fn ($audit) => [$audit->auditable_id => $audit->old_values['productivity_id']]);
+
+        return $existing->union($deleted);
+    }
+
+    public function auditTrail(): array
+    {
+        return [self::class => [$this->id], ProductivityDetail::class => self::auditDetailIds([$this->id])->keys()->all()];
     }
 
     public static function sortable_columns(): array
